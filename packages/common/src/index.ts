@@ -29,7 +29,8 @@ export {
   SyncStreamConnectionMethod,
   FetchStrategy,
   // TODO: Stop exporting this, move to separate package instead
-  ResolvedSyncOptions
+  ResolvedSyncOptions,
+  resolveSyncOptions
 } from './client/sync/options.js';
 
 export * from './client/ConnectionManager.js';

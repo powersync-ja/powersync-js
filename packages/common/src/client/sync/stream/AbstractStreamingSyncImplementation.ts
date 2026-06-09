@@ -75,6 +75,9 @@ export interface StreamingSyncImplementationListener extends BaseListener {
   statusChanged?: ((status: SyncStatus) => void) | undefined;
 }
 
+/**
+ * @internal
+ */
 export interface StreamingSyncImplementation
   extends BaseObserverInterface<StreamingSyncImplementationListener>, Disposable {
   /**
@@ -97,6 +100,9 @@ export interface StreamingSyncImplementation
   markConnectionMayHaveChanged(): void;
 }
 
+/**
+ * @internal
+ */
 export type SubscribedStream = {
   name: string;
   params: Record<string, any> | null;

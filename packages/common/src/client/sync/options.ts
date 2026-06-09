@@ -70,11 +70,18 @@ export function resolveSyncOptions(options: SyncOptions): ResolvedSyncOptions {
 
 // TODO: This should not be part of SyncOptions. Remove the WebSocket options from @powersync/common into a separate
 // package and make this an option only available when creating a custom remote.
+
+/**
+ * @public
+ */
 export enum SyncStreamConnectionMethod {
   HTTP = 'http',
   WEB_SOCKET = 'web-socket'
 }
 
+/**
+ * @public
+ */
 export enum FetchStrategy {
   /**
    * Queues multiple sync events before processing, reducing round-trips.

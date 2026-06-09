@@ -63,7 +63,7 @@ const openFactory = new WASQLiteOpenFactory({
  * Components can use PowerSyncContext.Provider value={localStateDb} for useQuery/usePowerSync.
  */
 export const localStateDb = new PowerSyncDatabase({
-  database: openFactory,
+  factory: openFactory,
   schema: LocalStateSchema
 });
 

@@ -158,7 +158,7 @@ export const DEFAULT_POWERSYNC_CLOSE_OPTIONS: PowerSyncCloseOptions = {
   disconnect: true
 };
 
-export const DEFAULT_CRUD_BATCH_LIMIT = 100;
+const DEFAULT_CRUD_BATCH_LIMIT = 100;
 
 /**
  * Requesting nested or recursive locks can block the application in some circumstances.

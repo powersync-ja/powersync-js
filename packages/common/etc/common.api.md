@@ -18,18 +18,15 @@ export class AbortOperation extends Error {
 // Warning: (ae-incompatible-release-tags) The symbol "AbstractPowerSyncDatabase" is marked as @public, but its signature references "BaseObserver" which is marked as @internal
 //
 // @public (undocumented)
-export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDBListener> {
-    constructor(options: PowerSyncDatabaseOptionsWithDBAdapter);
-    constructor(options: PowerSyncDatabaseOptionsWithOpenFactory);
-    constructor(options: PowerSyncDatabaseOptionsWithSettings);
-    constructor(options: PowerSyncDatabaseOptions);
+export abstract class AbstractPowerSyncDatabase<Options extends BasePowerSyncDatabaseOptions = BasePowerSyncDatabaseOptions> extends BaseObserver<PowerSyncDBListener> {
+    constructor(options: Options, openDatabase: () => DBAdapter);
     // Warning: (ae-incompatible-release-tags) The symbol "bucketStorageAdapter" is marked as @public, but its signature references "BucketStorageAdapter" which is marked as @internal
     //
     // (undocumented)
     protected bucketStorageAdapter: BucketStorageAdapter;
     close(options?: PowerSyncCloseOptions): Promise<void>;
     closed: boolean;
-    connect(connector: PowerSyncBackendConnector, options?: PowerSyncConnectionOptions): Promise<void>;
+    connect(connector: PowerSyncBackendConnector, options?: SyncOptions): Promise<void>;
     get connected(): boolean;
     // (undocumented)
     get connecting(): boolean;
@@ -37,8 +34,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     //
     // (undocumented)
     protected connectionManager: ConnectionManager;
-    // Warning: (ae-incompatible-release-tags) The symbol "connectionOptions" is marked as @public, but its signature references "InternalConnectionOptions" which is marked as @internal
-    get connectionOptions(): InternalConnectionOptions | null;
+    get connectionOptions(): Required<SyncOptions> | null;
     get connector(): PowerSyncBackendConnector | null;
     currentStatus: SyncStatus;
     customQuery<RowType>(query: WatchCompatibleQuery<RowType[]>): Query<RowType>;
@@ -55,11 +51,10 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     // (undocumented)
     protected abstract generateBucketStorageAdapter(): BucketStorageAdapter;
     // Warning: (ae-incompatible-release-tags) The symbol "generateSyncStreamImplementation" is marked as @public, but its signature references "CreateSyncImplementationOptions" which is marked as @internal
-    // Warning: (ae-incompatible-release-tags) The symbol "generateSyncStreamImplementation" is marked as @public, but its signature references "RequiredAdditionalConnectionOptions" which is marked as @internal
     // Warning: (ae-incompatible-release-tags) The symbol "generateSyncStreamImplementation" is marked as @public, but its signature references "StreamingSyncImplementation" which is marked as @internal
     //
     // (undocumented)
-    protected abstract generateSyncStreamImplementation(connector: PowerSyncBackendConnector, options: CreateSyncImplementationOptions & RequiredAdditionalConnectionOptions): StreamingSyncImplementation;
+    protected abstract generateSyncStreamImplementation(connector: PowerSyncBackendConnector, options: CreateSyncImplementationOptions): StreamingSyncImplementation;
     // Warning: (ae-incompatible-release-tags) The symbol "generateTriggerManagerConfig" is marked as @public, but its signature references "TriggerManagerConfig" which is marked as @internal
     protected generateTriggerManagerConfig(): TriggerManagerConfig;
     get<T>(sql: string, parameters?: any[]): Promise<T>;
@@ -83,19 +78,13 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     onChange(handler?: WatchOnChangeHandler, options?: SQLOnChangeOptions): () => void;
     onChangeWithAsyncGenerator(options?: SQLWatchOptions): AsyncIterable<WatchOnChangeEvent>;
     onChangeWithCallback(handler?: WatchOnChangeHandler, options?: SQLOnChangeOptions): () => void;
-    protected abstract openDBAdapter(options: PowerSyncDatabaseOptionsWithSettings): DBAdapter;
     // (undocumented)
-    protected options: PowerSyncDatabaseOptions;
+    protected options: Options;
     query<RowType>(query: ArrayQueryDefinition<RowType>): Query<RowType>;
     readLock<T>(callback: (db: LockContext) => Promise<T>): Promise<T>;
     readTransaction<T>(callback: (tx: Transaction) => Promise<T>, lockTimeout?: number): Promise<T>;
     // (undocumented)
     ready: boolean;
-    // Warning: (ae-incompatible-release-tags) The symbol "resolvedConnectionOptions" is marked as @public, but its signature references "CreateSyncImplementationOptions" which is marked as @internal
-    // Warning: (ae-incompatible-release-tags) The symbol "resolvedConnectionOptions" is marked as @public, but its signature references "RequiredAdditionalConnectionOptions" which is marked as @internal
-    //
-    // (undocumented)
-    protected resolvedConnectionOptions(options: CreateSyncImplementationOptions): CreateSyncImplementationOptions & RequiredAdditionalConnectionOptions;
     // (undocumented)
     protected resolveOfflineSyncStatus(): Promise<void>;
     resolveTables(sql: string, parameters?: any[], options?: SQLWatchOptions): Promise<string[]>;
@@ -136,26 +125,6 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     watchWithCallback(sql: string, parameters?: any[], handler?: WatchHandler, options?: SQLWatchOptions): void;
     writeLock<T>(callback: (db: LockContext) => Promise<T>): Promise<T>;
     writeTransaction<T>(callback: (tx: Transaction) => Promise<T>, lockTimeout?: number): Promise<T>;
-}
-
-// Warning: (ae-internal-missing-underscore) The name "AbstractPowerSyncDatabaseOpenFactory" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export abstract class AbstractPowerSyncDatabaseOpenFactory {
-    constructor(options: PowerSyncOpenFactoryOptions);
-    // (undocumented)
-    abstract generateInstance(options: PowerSyncDatabaseOptions): AbstractPowerSyncDatabase;
-    // (undocumented)
-    generateOptions(): PowerSyncDatabaseOptions;
-    // (undocumented)
-    getInstance(): AbstractPowerSyncDatabase;
-    // (undocumented)
-    protected abstract openDB(): DBAdapter;
-    // (undocumented)
-    protected options: PowerSyncOpenFactoryOptions;
-    get schema(): Schema<{
-        [x: string]: Table<any>;
-    }>;
 }
 
 // Warning: (ae-forgotten-export) The symbol "MetaBaseObserver" needs to be exported by the entry point index.d.ts
@@ -273,7 +242,7 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
     // (undocumented)
     protected abortController: AbortController | null;
     // (undocumented)
-    connect(options?: PowerSyncConnectionOptions): Promise<void>;
+    connect(options: ResolvedSyncOptions): Promise<void>;
     // (undocumented)
     protected crudUpdateListener?: () => void;
     // (undocumented)
@@ -297,7 +266,7 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
     // Warning: (ae-forgotten-export) The symbol "RustIterationResult" needs to be exported by the entry point index.d.ts
     //
     // (undocumented)
-    protected streamingSyncIteration(signal: AbortSignal, options?: PowerSyncConnectionOptions): Promise<RustIterationResult | null>;
+    protected streamingSyncIteration(signal: AbortSignal, options: ResolvedSyncOptions): Promise<RustIterationResult | null>;
     // (undocumented)
     protected streamingSyncPromise?: Promise<[void, void]>;
     // (undocumented)
@@ -319,7 +288,7 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
 // Warning: (ae-internal-missing-underscore) The name "AbstractStreamingSyncImplementationOptions" should be prefixed with an underscore because the declaration is marked as @internal
 //
 // @internal (undocumented)
-export interface AbstractStreamingSyncImplementationOptions extends RequiredAdditionalConnectionOptions {
+export interface AbstractStreamingSyncImplementationOptions {
     // (undocumented)
     adapter: BucketStorageAdapter;
     identifier?: string;
@@ -327,18 +296,11 @@ export interface AbstractStreamingSyncImplementationOptions extends RequiredAddi
     logger: PowerSyncLogger;
     // (undocumented)
     remote: AbstractRemote;
+    serializedSchema: any;
     // (undocumented)
     subscriptions: SubscribedStream[];
     // (undocumented)
     uploadCrud: () => Promise<void>;
-}
-
-// Warning: (ae-internal-missing-underscore) The name "AdditionalConnectionOptions" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export interface AdditionalConnectionOptions {
-    crudUploadThrottleMs?: number;
-    retryDelayMs?: number;
 }
 
 // @public
@@ -511,18 +473,6 @@ export type BaseColumnType<T extends number | string | null> = {
 };
 
 // @public (undocumented)
-export interface BaseConnectionOptions {
-    appMetadata?: Record<string, string>;
-    // @deprecated (undocumented)
-    clientImplementation?: SyncClientImplementation;
-    connectionMethod?: SyncStreamConnectionMethod;
-    fetchStrategy?: FetchStrategy;
-    includeDefaultStreams?: boolean;
-    params?: Record<string, StreamingSyncRequestParameterType>;
-    serializedSchema?: any;
-}
-
-// @public (undocumented)
 export type BaseListener = Record<string, ((...event: any) => any) | undefined>;
 
 // Warning: (ae-internal-missing-underscore) The name "BaseObserver" should be prefixed with an underscore because the declaration is marked as @internal
@@ -547,14 +497,10 @@ export interface BaseObserverInterface<T extends BaseListener> {
     registerListener(listener: Partial<T>): () => void;
 }
 
-// Warning: (ae-incompatible-release-tags) The symbol "BasePowerSyncDatabaseOptions" is marked as @public, but its signature references "AdditionalConnectionOptions" which is marked as @internal
-//
-// @public (undocumented)
-export interface BasePowerSyncDatabaseOptions extends AdditionalConnectionOptions {
+// @public
+export interface BasePowerSyncDatabaseOptions {
     // (undocumented)
     logger?: PowerSyncLogger;
-    // @deprecated (undocumented)
-    retryDelay?: number;
     schema: Schema;
 }
 
@@ -702,12 +648,12 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
     // (undocumented)
     close(): Promise<void>;
     // (undocumented)
-    connect(connector: PowerSyncBackendConnector, options: InternalConnectionOptions): Promise<void>;
+    connect(connector: PowerSyncBackendConnector, options: SyncOptions, serializedSchema: any): Promise<void>;
     protected connectingPromise: Promise<void> | null;
     // (undocumented)
     protected connectInternal(): Promise<void>;
     // (undocumented)
-    get connectionOptions(): InternalConnectionOptions | null;
+    get connectionOptions(): Required<SyncOptions> | null;
     // (undocumented)
     get connector(): PowerSyncBackendConnector | null;
     disconnect(): Promise<void>;
@@ -808,7 +754,9 @@ export interface CreateLoggerOptions {
 // Warning: (ae-internal-missing-underscore) The name "CreateSyncImplementationOptions" should be prefixed with an underscore because the declaration is marked as @internal
 //
 // @internal
-export interface CreateSyncImplementationOptions extends AdditionalConnectionOptions {
+export interface CreateSyncImplementationOptions {
+    // (undocumented)
+    serializedSchema: any;
     // (undocumented)
     subscriptions: SubscribedStream[];
 }
@@ -858,6 +806,15 @@ export class CrudTransaction extends CrudBatch {
     crud: CrudEntry[];
     transactionId?: number | undefined;
 }
+
+// @public
+export type DatabaseSource<OpenOptions extends SQLOpenOptions = SQLOpenOptions> = {
+    opened: DBAdapter;
+} | {
+    factory: SQLOpenFactory;
+} | {
+    database: OpenOptions;
+};
 
 // @public (undocumented)
 export interface DBAdapter extends ConnectionPool, SqlExecutor, DBGetUtils {
@@ -921,16 +878,6 @@ export interface DBLockOptions {
     timeoutMs?: number;
 }
 
-// Warning: (ae-internal-missing-underscore) The name "DEFAULT_CRUD_BATCH_LIMIT" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export const DEFAULT_CRUD_BATCH_LIMIT = 100;
-
-// Warning: (ae-internal-missing-underscore) The name "DEFAULT_CRUD_UPLOAD_THROTTLE_MS" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export const DEFAULT_CRUD_UPLOAD_THROTTLE_MS = 1000;
-
 // Warning: (ae-internal-missing-underscore) The name "DEFAULT_INDEX_COLUMN_OPTIONS" should be prefixed with an underscore because the declaration is marked as @internal
 //
 // @internal (undocumented)
@@ -951,44 +898,15 @@ export const DEFAULT_LOCK_TIMEOUT_MS = 120000;
 // @internal (undocumented)
 export const DEFAULT_POWERSYNC_CLOSE_OPTIONS: PowerSyncCloseOptions;
 
-// Warning: (ae-internal-missing-underscore) The name "DEFAULT_POWERSYNC_DB_OPTIONS" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export const DEFAULT_POWERSYNC_DB_OPTIONS: {
-    retryDelayMs: number;
-    crudUploadThrottleMs: number;
-};
-
 // Warning: (ae-internal-missing-underscore) The name "DEFAULT_REMOTE_OPTIONS" should be prefixed with an underscore because the declaration is marked as @internal
 //
 // @internal (undocumented)
 export const DEFAULT_REMOTE_OPTIONS: AbstractRemoteOptions;
 
-// Warning: (ae-internal-missing-underscore) The name "DEFAULT_RETRY_DELAY_MS" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export const DEFAULT_RETRY_DELAY_MS = 5000;
-
 // Warning: (ae-internal-missing-underscore) The name "DEFAULT_ROW_COMPARATOR" should be prefixed with an underscore because the declaration is marked as @internal
 //
 // @internal
 export const DEFAULT_ROW_COMPARATOR: DifferentialWatchedQueryComparator<any>;
-
-// Warning: (ae-internal-missing-underscore) The name "DEFAULT_STREAM_CONNECTION_OPTIONS" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export const DEFAULT_STREAM_CONNECTION_OPTIONS: RequiredPowerSyncConnectionOptions;
-
-// Warning: (ae-internal-missing-underscore) The name "DEFAULT_STREAMING_SYNC_OPTIONS" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export const DEFAULT_STREAMING_SYNC_OPTIONS: {
-    retryDelayMs: number;
-    crudUploadThrottleMs: number;
-};
-
-// @public @deprecated
-export const DEFAULT_SYNC_CLIENT_IMPLEMENTATION = SyncClientImplementation.RUST;
 
 // Warning: (ae-internal-missing-underscore) The name "DEFAULT_TABLE_OPTIONS" should be prefixed with an underscore because the declaration is marked as @internal
 //
@@ -1225,12 +1143,6 @@ export interface IndexOptions {
 // @public (undocumented)
 export type IndexShorthand = Record<string, string[]>;
 
-// Warning: (ae-internal-missing-underscore) The name "InternalConnectionOptions" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export interface InternalConnectionOptions extends BaseConnectionOptions, AdditionalConnectionOptions {
-}
-
 // Warning: (ae-internal-missing-underscore) The name "InternalSubscriptionAdapter" should be prefixed with an underscore because the declaration is marked as @internal
 //
 // @internal (undocumented)
@@ -1252,26 +1164,6 @@ export const InvalidSQLCharacters: RegExp;
 //
 // @internal (undocumented)
 export function isBatchedUpdateNotification(update: BatchedUpdateNotification | UpdateNotification): update is BatchedUpdateNotification;
-
-// Warning: (ae-internal-missing-underscore) The name "isDBAdapter" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal
-export const isDBAdapter: (test: any) => test is DBAdapter;
-
-// Warning: (ae-internal-missing-underscore) The name "isPowerSyncDatabaseOptionsWithSettings" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal
-export const isPowerSyncDatabaseOptionsWithSettings: (test: any) => test is PowerSyncDatabaseOptionsWithSettings;
-
-// Warning: (ae-internal-missing-underscore) The name "isSQLOpenFactory" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal
-export const isSQLOpenFactory: (test: any) => test is SQLOpenFactory;
-
-// Warning: (ae-internal-missing-underscore) The name "isSQLOpenOptions" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal
-export const isSQLOpenOptions: (test: any) => test is SQLOpenOptions;
 
 // Warning: (ae-internal-missing-underscore) The name "LinkQueryOptions" should be prefixed with an underscore because the declaration is marked as @internal
 //
@@ -1394,6 +1286,11 @@ export interface OnChangeQueryProcessorOptions<Data> extends AbstractQueryProces
     comparator?: WatchedQueryComparator<Data>;
 }
 
+// Warning: (ae-internal-missing-underscore) The name "openDatabase" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal
+export function openDatabase<T extends SQLOpenOptions>(source: DatabaseSource<T>, defaultFactory: (options: T) => DBAdapter): DBAdapter;
+
 // @public
 export type OpId = string;
 
@@ -1434,11 +1331,6 @@ export interface PowerSyncCloseOptions {
     disconnect?: boolean;
 }
 
-// Warning: (ae-incompatible-release-tags) The symbol "PowerSyncConnectionOptions" is marked as @public, but its signature references "InternalConnectionOptions" which is marked as @internal
-//
-// @public
-export type PowerSyncConnectionOptions = Omit<InternalConnectionOptions, 'serializedSchema'>;
-
 // Warning: (ae-internal-missing-underscore) The name "PowerSyncControlCommand" should be prefixed with an underscore because the declaration is marked as @internal
 //
 // @internal (undocumented)
@@ -1471,27 +1363,7 @@ export interface PowerSyncCredentials {
 }
 
 // @public (undocumented)
-export interface PowerSyncDatabaseOptions extends BasePowerSyncDatabaseOptions {
-    database: DBAdapter | SQLOpenFactory | SQLOpenOptions;
-}
-
-// @public (undocumented)
-export interface PowerSyncDatabaseOptionsWithDBAdapter extends BasePowerSyncDatabaseOptions {
-    // (undocumented)
-    database: DBAdapter;
-}
-
-// @public (undocumented)
-export interface PowerSyncDatabaseOptionsWithOpenFactory extends BasePowerSyncDatabaseOptions {
-    // (undocumented)
-    database: SQLOpenFactory;
-}
-
-// @public (undocumented)
-export interface PowerSyncDatabaseOptionsWithSettings extends BasePowerSyncDatabaseOptions {
-    // (undocumented)
-    database: SQLOpenOptions;
-}
+export type PowerSyncDatabaseOptions = BasePowerSyncDatabaseOptions & DatabaseSource;
 
 // Warning: (ae-incompatible-release-tags) The symbol "PowerSyncDBListener" is marked as @public, but its signature references "StreamingSyncImplementationListener" which is marked as @internal
 //
@@ -1511,13 +1383,6 @@ export interface PowerSyncDBListener extends StreamingSyncImplementationListener
 export interface PowerSyncLogger {
     // (undocumented)
     log(record: LogRecord): void;
-}
-
-// Warning: (ae-internal-missing-underscore) The name "PowerSyncOpenFactoryOptions" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export interface PowerSyncOpenFactoryOptions extends Partial<PowerSyncDatabaseOptions>, SQLOpenOptions {
-    schema: Schema;
 }
 
 // @public
@@ -1584,18 +1449,15 @@ export interface RemoteStorageAdapter {
     uploadFile(fileData: ArrayBuffer, attachment: AttachmentRecord): Promise<void>;
 }
 
-// Warning: (ae-internal-missing-underscore) The name "RequiredAdditionalConnectionOptions" should be prefixed with an underscore because the declaration is marked as @internal
+// Warning: (ae-internal-missing-underscore) The name "ResolvedSyncOptions" should be prefixed with an underscore because the declaration is marked as @internal
 //
 // @internal (undocumented)
-export interface RequiredAdditionalConnectionOptions extends Required<AdditionalConnectionOptions> {
-    // (undocumented)
-    subscriptions: SubscribedStream[];
-}
+export type ResolvedSyncOptions = Required<SyncOptions>;
 
-// Warning: (ae-internal-missing-underscore) The name "RequiredPowerSyncConnectionOptions" should be prefixed with an underscore because the declaration is marked as @internal
+// Warning: (ae-internal-missing-underscore) The name "resolveSyncOptions" should be prefixed with an underscore because the declaration is marked as @internal
 //
 // @internal (undocumented)
-export type RequiredPowerSyncConnectionOptions = Required<BaseConnectionOptions>;
+export function resolveSyncOptions(options: SyncOptions): ResolvedSyncOptions;
 
 // @public (undocumented)
 export type RowType<T extends TableV2<any>> = {
@@ -1640,31 +1502,7 @@ export class Schema<S extends SchemaType = SchemaType> {
     // (undocumented)
     readonly tables: Table[];
     // (undocumented)
-    toJSON(): {
-        tables: {
-            local_only: boolean | undefined;
-            insert_only: boolean | undefined;
-            include_old: any;
-            include_old_only_when_changed: boolean;
-            include_metadata: boolean | undefined;
-            ignore_empty_update: boolean | undefined;
-            name: string;
-            view_name: string;
-            columns: {
-                name: string;
-                type: ColumnType | undefined;
-            }[];
-            indexes: {
-                name: string;
-                columns: {
-                    name: string;
-                    ascending: boolean | undefined;
-                    type: ColumnType;
-                }[];
-            }[];
-        }[];
-        raw_tables: unknown[];
-    };
+    toJSON(): unknown;
     // (undocumented)
     readonly types: SchemaTableType<S>;
     // (undocumented)
@@ -1702,9 +1540,16 @@ export type SimpleAsyncIterator<T> = Pick<AsyncIterator<T>, 'next'>;
 // Warning: (ae-internal-missing-underscore) The name "SocketSyncStreamOptions" should be prefixed with an underscore because the declaration is marked as @internal
 //
 // @internal (undocumented)
-export type SocketSyncStreamOptions = SyncStreamOptions & {
+export interface SocketSyncStreamOptions {
+    // (undocumented)
+    abortSignal: AbortSignal;
+    // (undocumented)
+    data: unknown;
+    // (undocumented)
     fetchStrategy: FetchStrategy;
-};
+    // (undocumented)
+    path: string;
+}
 
 // @public (undocumented)
 export interface SqlExecutor {
@@ -1794,7 +1639,7 @@ export interface StandardWatchedQueryOptions<RowType> extends WatchedQueryOption
 //
 // @internal (undocumented)
 export interface StreamingSyncImplementation extends BaseObserverInterface<StreamingSyncImplementationListener>, Disposable_2 {
-    connect(options?: InternalConnectionOptions): Promise<void>;
+    connect(options: ResolvedSyncOptions): Promise<void>;
     disconnect(): Promise<void>;
     // (undocumented)
     getWriteCheckpoint: () => Promise<string>;
@@ -1837,11 +1682,6 @@ export type SubscribedStream = {
     params: Record<string, any> | null;
 };
 
-// @public @deprecated (undocumented)
-export enum SyncClientImplementation {
-    RUST = "rust"
-}
-
 // @public (undocumented)
 export type SyncDataFlowStatus = Partial<{
     downloading: boolean;
@@ -1862,6 +1702,18 @@ export class SyncingService {
     downloadAttachment(attachment: AttachmentRecord): Promise<AttachmentRecord>;
     processAttachments(attachments: AttachmentRecord[], context: AttachmentContext): Promise<void>;
     uploadAttachment(attachment: AttachmentRecord): Promise<AttachmentRecord>;
+}
+
+// @public
+export interface SyncOptions {
+    appMetadata?: Record<string, string>;
+    connectionMethod?: SyncStreamConnectionMethod;
+    crudUploadThrottleMs?: number;
+    // (undocumented)
+    fetchStrategy?: FetchStrategy;
+    includeDefaultStreams?: boolean;
+    params?: Record<string, StreamingSyncRequestParameterType>;
+    retryDelayMs?: number;
 }
 
 // @public (undocumented)
@@ -1892,8 +1744,6 @@ export class SyncProgress implements ProgressWithOperations {
 export class SyncStatus {
     // Warning: (ae-incompatible-release-tags) The symbol "__constructor" is marked as @public, but its signature references "SyncStatusOptions" which is marked as @internal
     constructor(options: SyncStatusOptions);
-    // @deprecated
-    get clientImplementation(): SyncClientImplementation | undefined;
     get connected(): boolean;
     get connecting(): boolean;
     get dataFlowStatus(): SyncDataFlowStatus;
@@ -1929,7 +1779,6 @@ export type SyncStatusOptions = {
     lastSyncedAt?: Date;
     hasSynced?: boolean;
     priorityStatusEntries?: SyncPriorityStatus[];
-    clientImplementation?: SyncClientImplementation;
 };
 
 // @public
@@ -2205,7 +2054,7 @@ export class TriggerManagerImpl implements TriggerManager {
     // (undocumented)
     createDiffTrigger(options: CreateDiffTriggerOptions): Promise<(options?: TriggerRemoveCallbackOptions) => Promise<void>>;
     // (undocumented)
-    protected get db(): AbstractPowerSyncDatabase;
+    protected get db(): AbstractPowerSyncDatabase<BasePowerSyncDatabaseOptions>;
     // Warning: (ae-forgotten-export) The symbol "TriggerManagerImplConfiguration" needs to be exported by the entry point index.d.ts
     //
     // (undocumented)
@@ -2420,8 +2269,8 @@ export interface WithDiffOptions {
 
 // Warnings were encountered during analysis:
 //
-// lib/db/crud/SyncStatus.d.ts:27:5 - (ae-forgotten-export) The symbol "InternalProgressInformation" needs to be exported by the entry point index.d.ts
-// lib/db/crud/SyncStatus.d.ts:31:5 - (ae-forgotten-export) The symbol "CoreStreamSubscription" needs to be exported by the entry point index.d.ts
+// lib/db/crud/SyncStatus.d.ts:26:5 - (ae-forgotten-export) The symbol "InternalProgressInformation" needs to be exported by the entry point index.d.ts
+// lib/db/crud/SyncStatus.d.ts:30:5 - (ae-forgotten-export) The symbol "CoreStreamSubscription" needs to be exported by the entry point index.d.ts
 
 // (No @packageDocumentation comment for this package)
 

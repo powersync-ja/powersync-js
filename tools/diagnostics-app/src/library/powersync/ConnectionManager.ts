@@ -1,10 +1,10 @@
 import {
   BaseListener,
   createConsoleLogger,
-  DEFAULT_STREAMING_SYNC_OPTIONS,
   LogLevels,
   PowerSyncDatabase,
-  SyncClientImplementation,
+  resolveSyncOptions,
+  Schema,
   SyncStreamSubscription,
   TemporaryStorageOption,
   WASQLiteOpenFactory,
@@ -64,7 +64,7 @@ const openFactory = new WASQLiteOpenFactory({
 });
 
 export const db = new PowerSyncDatabase({
-  database: openFactory,
+  factory: openFactory,
   schema: schemaManager.buildSchema()
 });
 
@@ -123,7 +123,6 @@ export function useSchemaReady(): boolean {
 export async function connect() {
   activeSubscriptions.length = 0;
   lastConnectionError = undefined;
-  const client = SyncClientImplementation.RUST;
 
   await schemaManager.loadFromDb();
   const params = await getParams();
@@ -138,13 +137,13 @@ export async function connect() {
       // No-op
     },
     identifier: 'diagnostics',
-    ...DEFAULT_STREAMING_SYNC_OPTIONS,
     subscriptions: [],
-    logger: baseLogger
+    logger: baseLogger,
+    serializedSchema: new Schema({}).toJSON()
   };
   sync = new WebStreamingSyncImplementation(syncOptions);
   notifySyncChange();
-  await sync.connect({ params, clientImplementation: client });
+  await sync.connect(resolveSyncOptions({ params }));
   await schemaManager.refreshSchemaNow(db);
 }
 

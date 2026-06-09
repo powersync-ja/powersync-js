@@ -107,6 +107,9 @@ export interface SocketSyncStreamOptions {
   data: unknown;
 }
 
+/**
+ * @internal
+ */
 export const DEFAULT_REMOTE_OPTIONS: AbstractRemoteOptions = {
   socketUrlTransformer: (url) =>
     url.replace(/^https?:\/\//, function (match) {
