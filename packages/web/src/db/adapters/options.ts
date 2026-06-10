@@ -10,15 +10,24 @@ export interface WebSpecificOpenOptions {
   disableSSRWarning: boolean;
 
   /**
-   * Enables multi tab support
+   * Enables multi tab support.
+   *
+   * Enabling multi-tab support will transparently make PowerSync manage the sync process in a shared worker collecting
+   * Sync Streams across tabs. Additionally, it enables a shared worker for IndexedDB databases.
+   *
+   * It is still valid to open multiple tabs when this option is disabled, but the experience may be degrated as only
+   * one tab can sync at the time.
+   *
+   * This is enabled by default on Desktop browsers if shared workers are enabled, except for Safari.
    */
   enableMultiTabs: boolean;
 
   /**
-   * The SQLite connection is often executed through a web worker
-   * in order to offload computation. This can be used to manually
-   * disable the use of web workers in environments where web workers
-   * might be unstable.
+   * The SQLite connection is often executed through a web worker in order to offload computation and because some file
+   * system implementations (notably those based on web filesystem APIs like OPFS) are only available in workers.
+   *
+   * Manually disabling the use of web workers is not recommended, but can be useful for testing or for environments
+   * or toolchains where web workers are not supported.
    */
   useWebWorker: boolean;
 
