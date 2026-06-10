@@ -15,6 +15,10 @@ async function installTauriInTestFrameHack() {
 
   current.__TAURI_INTERNALS__ = root.__TAURI_INTERNALS__;
   current.__TAURI_EVENT_PLUGIN_INTERNALS__ = root.__TAURI_EVENT_PLUGIN_INTERNALS__;
+
+  // Fix cross-realm instanceof ArrayBuffer for tauri-plugin-fs binary responses.
+  current.ArrayBuffer = root.ArrayBuffer;
+
 }
 
 const schema = new Schema({
