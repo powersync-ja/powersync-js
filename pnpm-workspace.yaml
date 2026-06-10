@@ -8,6 +8,8 @@ overrides:
   'fast-xml-parser': '>=5.3.5'
   # To avoid https://github.com/advisories/GHSA-2w6w-674q-4c4q
   'handlebars': ^4.7.9
+  # To avoid https://github.com/advisories/GHSA-w7jw-789q-3m8p
+  'shell-quote': ^1.8.4
 
 catalog:
   '@journeyapps/wa-sqlite': ^1.5.0
