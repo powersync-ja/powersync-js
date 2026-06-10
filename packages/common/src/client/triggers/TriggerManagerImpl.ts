@@ -97,8 +97,8 @@ export class TriggerManagerImpl implements TriggerManager {
     return this.options.db;
   }
 
-  protected async getUUID() {
-    const { id: uuid } = await this.db.get<{ id: string }>(/* sql */ `
+  protected async getUUID(ctx?: LockContext) {
+    const { id: uuid } = await (ctx ?? this.db).get<{ id: string }>(/* sql */ `
       SELECT
         uuid () as id
     `);
@@ -237,7 +237,7 @@ export class TriggerManagerImpl implements TriggerManager {
     const internalSource = sourceDefinition.internalName;
     const triggerIds: string[] = [];
 
-    const id = await this.getUUID();
+    const id = await this.getUUID(setupContext);
 
     const releaseStorageClaim = useStorage ? await this.options.claimManager.obtainClaim(id) : null;
 

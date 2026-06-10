@@ -76,7 +76,7 @@
    *
    * DEFAULT VALUE: "crlf"
    */
-  // "newlineKind": "crlf",
+  "newlineKind": "lf",
 
   /**
    * Specifies how API Extractor sorts members of an enum when generating the .api.json file. By default, the output
