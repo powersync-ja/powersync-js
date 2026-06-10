@@ -11,7 +11,8 @@
     "preserveConstEnums": true,
     "esModuleInterop": true,
     "skipLibCheck": false,
-    "strictNullChecks": true
+    "strictNullChecks": true,
+    "declarationMap": true
   },
   "include": ["src/**/*"],
   "references": [

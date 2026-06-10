@@ -1,9 +1,7 @@
 import * as Comlink from 'comlink';
 import OS from 'node:os';
-import * as path from 'node:path';
 import url from 'node:url';
 import { parentPort } from 'node:worker_threads';
-import { dynamicImport, isBundledToCommonJs } from '../utils/modules.js';
 import { AsyncDatabase, AsyncDatabaseOpenOptions, AsyncDatabaseOpener } from './AsyncDatabase.js';
 import { openDatabase as openBetterSqliteDatabase } from './BetterSqliteWorker.js';
 import { openDatabase as openNodeDatabase } from './NodeSqliteWorker.js';
@@ -71,21 +69,13 @@ export function getPowerSyncExtensionFilename() {
 export function startPowerSyncWorker(options?: Partial<PowerSyncWorkerOptions>) {
   const resolvedOptions: PowerSyncWorkerOptions = {
     extensionPath() {
-      const isCommonJsModule = isBundledToCommonJs;
       const extensionFilename = getPowerSyncExtensionFilename();
-      let resolved: string;
-      if (isCommonJsModule) {
-        resolved = path.resolve(__dirname, '../lib/', extensionFilename);
-      } else {
-        resolved = url.fileURLToPath(new URL(`../${extensionFilename}`, import.meta.url));
-      }
-
+      const resolved = url.fileURLToPath(new URL(`../${extensionFilename}`, import.meta.url));
       return resolved;
     },
     async loadBetterSqlite3() {
-      const module = await dynamicImport('better-sqlite3');
-      // require() gives us the default directly, for an ESM import() we need to use the default export.
-      return isBundledToCommonJs ? module : module.default;
+      const module = await import('better-sqlite3');
+      return module.default;
     },
     ...options
   };

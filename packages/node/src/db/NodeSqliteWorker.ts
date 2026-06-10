@@ -1,7 +1,6 @@
 import type { DatabaseSync } from 'node:sqlite';
 import { threadId } from 'node:worker_threads';
 
-import { dynamicImport } from '../utils/modules.js';
 import { AsyncDatabase, AsyncDatabaseOpenOptions } from './AsyncDatabase.js';
 import { PowerSyncWorkerOptions } from './SqliteWorker.js';
 
@@ -54,9 +53,10 @@ class BlockingNodeDatabase implements AsyncDatabase {
 export async function openDatabase(worker: PowerSyncWorkerOptions, options: AsyncDatabaseOpenOptions) {
   // NOTE: We want to import node:sqlite dynamically, to avoid bundlers unconditionally requiring node:sqlite in the
   // end, since that would make us incompatible with older Node.JS versions.
-  const { DatabaseSync } = await dynamicImport('node:sqlite');
+  const { DatabaseSync } = await import('node:sqlite');
 
   const baseDB = new DatabaseSync(options.path, { allowExtension: true, readOnly: !options.isWriter });
+  // @ts-expect-error (type definition is wrong)
   baseDB.loadExtension(worker.extensionPath(), 'sqlite3_powersync_init');
 
   return new BlockingNodeDatabase(baseDB, options.isWriter);

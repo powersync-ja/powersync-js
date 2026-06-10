@@ -570,12 +570,6 @@ importers:
       js-logger:
         specifier: 'catalog:'
         version: 1.6.1
-      rollup:
-        specifier: 'catalog:'
-        version: 4.59.0
-      rollup-plugin-dts:
-        specifier: 'catalog:'
-        version: 6.3.0(rollup@4.59.0)(typescript@6.0.3)
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
