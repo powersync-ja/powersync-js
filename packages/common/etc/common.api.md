@@ -2228,7 +2228,7 @@ export class TriggerManagerImpl implements TriggerManager {
     // (undocumented)
     protected generateTriggerName(operation: DiffTriggerOperation, destinationTable: string, triggerId: string): string;
     // (undocumented)
-    protected getUUID(): Promise<string>;
+    protected getUUID(ctx?: LockContext): Promise<string>;
     // (undocumented)
     protected isDisposed: boolean;
     // Warning: (ae-forgotten-export) The symbol "TriggerManagerImplOptions" needs to be exported by the entry point index.d.ts
