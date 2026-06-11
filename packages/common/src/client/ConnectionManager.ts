@@ -94,6 +94,8 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
    */
   protected pendingConnectionOptions: StoredConnectionOptions | null;
 
+  private currentOptions: ResolvedSyncOptions | null;
+
   syncStreamImplementation: StreamingSyncImplementation | null;
 
   /**
@@ -116,6 +118,7 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
     this.disconnectingPromise = null;
     this.pendingConnectionOptions = null;
     this.syncStreamImplementation = null;
+    this.currentOptions = null;
     this.syncDisposer = null;
   }
 
@@ -124,7 +127,7 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
   }
 
   get connectionOptions() {
-    return this.pendingConnectionOptions?.options ?? null;
+    return this.currentOptions ?? this.pendingConnectionOptions?.options ?? null;
   }
 
   get logger() {
@@ -212,6 +215,7 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
 
         const { connector, options, schema } = this.pendingConnectionOptions;
         appliedOptions = options;
+        this.currentOptions = options;
 
         this.pendingConnectionOptions = null;
 
@@ -253,6 +257,7 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
   async disconnect() {
     // This will help abort pending connects
     this.pendingConnectionOptions = null;
+    this.currentOptions = null;
     await this.disconnectInternal();
   }
 
