@@ -23,3 +23,5 @@ Refactor open and sync options:
   Also on the web, all database open options are represented via `WebSQLOpenOptions`. Additional
   options related to the sync process have moved to the `WebSpecificOptions` type to separate those
   concerns better.
+- Aligning the implementation with the public documentation, the default connection method has changed
+  from WebSockets to HTTP.
