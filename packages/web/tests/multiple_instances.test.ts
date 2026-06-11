@@ -299,7 +299,7 @@ describe('Multiple Instances', { sequential: true }, () => {
 
   sharedMockSyncServiceTest(
     'should trigger uploads from last connected clients',
-    async ({ context: { database, openDatabase, connect, connector, mockService } }) => {
+    async ({ context: { database, openDatabase, connect, connector, mockService, defaultSyncOptions } }) => {
       const secondDatabase = openDatabase();
 
       expect(database.currentStatus.connected).false;
@@ -328,7 +328,7 @@ describe('Multiple Instances', { sequential: true }, () => {
       });
 
       // Connect the second database and wait for a pending request to appear
-      const secondConnectPromise = secondDatabase.connect(secondConnector);
+      const secondConnectPromise = secondDatabase.connect(secondConnector, defaultSyncOptions);
       let _pendingRequestId: string;
       await vi.waitFor(async () => {
         const requests = await mockService.getPendingRequests();

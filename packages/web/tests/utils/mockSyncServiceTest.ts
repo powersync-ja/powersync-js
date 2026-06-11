@@ -3,6 +3,7 @@ import {
   PowerSyncBackendConnector,
   PowerSyncCredentials,
   Schema,
+  SyncOptions,
   SyncStreamConnectionMethod,
   Table,
   column,
@@ -64,6 +65,7 @@ export const sharedMockSyncServiceTest = test.extend<{
     databaseName: string;
     openDatabase: (options?: Omit<GenerateConnectedDatabaseOptions, 'database'>) => PowerSyncDatabase;
     mockService: MockSyncService;
+    defaultSyncOptions: SyncOptions;
   };
 }>({
   context: async ({}, use) => {
@@ -76,6 +78,7 @@ export const sharedMockSyncServiceTest = test.extend<{
           schema: AppSchema,
           logger,
           database: {
+            dbFilename,
             enableMultiTabs: true
           },
           ...options
@@ -102,16 +105,17 @@ export const sharedMockSyncServiceTest = test.extend<{
     }
 
     const connector = createTestConnector();
+    const defaultSyncOptions: SyncOptions = {
+      retryDelayMs: 1000,
+      crudUploadThrottleMs: 1000,
+      connectionMethod: SyncStreamConnectionMethod.HTTP
+    };
 
     const connectFn = async (customConnector?: PowerSyncBackendConnector): Promise<ConnectResult> => {
       const connectorToUse = customConnector ?? connector;
 
       // Call powersync.connect() to start the sync worker
-      const connectionPromise = database.connect(connectorToUse, {
-        retryDelayMs: 1000,
-        crudUploadThrottleMs: 1000,
-        connectionMethod: SyncStreamConnectionMethod.HTTP
-      });
+      const connectionPromise = database.connect(connectorToUse, defaultSyncOptions);
 
       // Wait for the database to report connecting: true before using the sync service
       await vi.waitFor(
@@ -150,7 +154,8 @@ export const sharedMockSyncServiceTest = test.extend<{
       database,
       databaseName: dbFilename,
       openDatabase,
-      mockService
+      mockService,
+      defaultSyncOptions
     });
   }
 });
