@@ -12,6 +12,12 @@ import { ATTACHMENT_TABLE, AttachmentRecord, AttachmentState } from './Schema.js
 import { SyncingService } from './SyncingService.js';
 import { WatchedAttachmentItem } from './WatchedAttachmentItem.js';
 
+/**
+ * Configuration options for {@link AttachmentQueue}.
+ *
+ * @experimental
+ * @alpha This is currently experimental and may change without a major version bump.
+ */
 export interface AttachmentQueueOptions {
   /**
    * PowerSync database instance
