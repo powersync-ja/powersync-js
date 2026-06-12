@@ -25,3 +25,63 @@ Refactor open and sync options:
   concerns better.
 - Aligning the implementation with the public documentation, the default connection method has changed
   from WebSockets to HTTP.
+
+As a small guide on how to upgrade, consider these examples:
+
+```TypeScript
+// Before: Sync options set on database constructor
+new PowerSyncDatabase({database: { dbFilename: 'test.db' }, retryDelayMs: 1000});
+
+// After: Sync options can only be set when connecting
+const db = new PowerSyncDatabase({database: { dbFilename: 'test.db' }});
+await db.connect(yourConnector, { retryDelayMs: 1000 });
+```
+
+```TypeScript
+// Before: Using a custom factory
+new PowerSyncDatabase({database: new OPSqliteOpenFactory({ dbFilename: 'test.db' })});
+
+// After: Option renamed to factory
+new PowerSyncDatabase({factory: new OPSqliteOpenFactory({ dbFilename: 'test.db' })});
+```
+
+```TypeScript
+// Before (web specific): Using WASQLiteOpenFactory to specify a custom VFS
+new PowerSyncDatabase({
+  schema: AppSchema,
+  database: new WASQLiteOpenFactory({
+    dbFilename: 'exampleVFS.db',
+    vfs: WASQLiteVFS.OPFSWriteAheadVFS,
+    additionalReaders: 2
+  })
+});
+
+// After: Options are available on database variant, factory no longer necessary
+new PowerSyncDatabase({
+  schema: AppSchema,
+  database: {
+    dbFilename: 'exampleVFS.db',
+    vfs: WASQLiteVFS.OPFSWriteAheadVFS,
+    additionalReaders: 2
+  }
+});
+```
+
+```TypeScript
+// Before (web specific): Misc options in flags field
+new PowerSyncDatabase({
+  schema: AppSchema,
+  database: { dbFilename: 'test.db' },
+  flags: { broadcastLogs: true, disableSSRWarning: true }
+});
+
+// After: Flags moved to more specific keys.
+new PowerSyncDatabase({
+  schema: AppSchema,
+  database: {
+    dbFilename: 'test.db',
+    disableSSRWarning: true,
+  },
+  broadcastLogs: true,
+});
+```
