@@ -39,29 +39,67 @@ export interface SQLOpenFactory {
 }
 
 /**
- * Tests if the input is a {@link SQLOpenOptions}
+ * A source describing how to open databases.
  *
- * @internal
+ * - A {@link DBAdapter} providing access to an opened SQLite connection pool.
+ * - A {@link SQLOpenFactory} which will be used to open a SQLite connection pool lazily.
+ * - A {@link SQLOpenOptions} for opening a SQLite connection with a default {@link SQLOpenFactory} for the current
+ *   platform.
+ *
+ * For most apps, using the `database` key with {@link SQLOpenOptions} is the easiest and recommended option.
+ *
+ * @public
  */
-export const isSQLOpenOptions = (test: any): test is SQLOpenOptions => {
-  // typeof null is `object`, but you cannot use the `in` operator on `null.
-  return test && typeof test == 'object' && 'dbFilename' in test;
-};
+export type DatabaseSource<OpenOptions extends SQLOpenOptions = SQLOpenOptions> =
+  | {
+      /**
+       * Wrap an opened {@link DBAdapter} as a PowerSync database instance.
+       *
+       * This is primarily useful for testing. On most platforms, PowerSync would open a pool of SQLite connections by
+       * default. This option allows using a single in-memory instance instead. It can also be used to customize the
+       * database used by default, e.g. to install additional logging on SQL statements by intercepting methods.
+       */
+      opened: DBAdapter;
+    }
+  | {
+      /**
+       * Construct a PowerSync database that will call {@link SQLOpenFactory.openDB} when opened.
+       *
+       * On most SDKs, passing {@link SQLOpenOptions} is a better option. An exception is React Native, where using an
+       * [OP-SQLite factory](https://docs.powersync.com/client-sdks/reference/react-native-and-expo#op-sqlite) is
+       * recommended.
+       */
+      factory: SQLOpenFactory;
+    }
+  | {
+      /**
+       * Construct a PowerSync database opening a connection pool from the {@link SQLOpenOptions}.
+       *
+       * At the very least, options include the {@link SQLOpenOptions.dbFilename} to open. Depending on the PowerSync
+       * SDK used, additional options are available. For example, the web SDK allows configuring the virtual file system
+       * implementation used to persist files on the web too.
+       */
+      database: OpenOptions;
+    };
 
 /**
- * Tests if input is a {@link SQLOpenFactory}
+ * Internal helper to turn a {@link DatabaseSource} into an opened {@link DBAdapter}.
  *
  * @internal
  */
-export const isSQLOpenFactory = (test: any): test is SQLOpenFactory => {
-  return typeof test?.openDB == 'function';
-};
-
-/**
- * Tests if input is a {@link DBAdapter}
- *
- * @internal
- */
-export const isDBAdapter = (test: any): test is DBAdapter => {
-  return typeof test?.writeTransaction == 'function';
-};
+export function openDatabase<T extends SQLOpenOptions>(
+  source: DatabaseSource<T>,
+  defaultFactory: (options: T) => DBAdapter
+): DBAdapter {
+  if ('opened' in source) {
+    return source.opened;
+  } else if ('factory' in source) {
+    return source.factory.openDB();
+  } else if ('database' in source && source.database?.dbFilename) {
+    return defaultFactory(source.database);
+  } else {
+    // This is dead code for well-typed programs, but JavaScript users might have forgotten to pass an option
+    // when creating a PowerSync database instance.
+    throw new Error('The provided `database` option is invalid.');
+  }
+}

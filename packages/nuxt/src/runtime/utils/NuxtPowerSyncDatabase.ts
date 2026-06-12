@@ -6,12 +6,12 @@ import {
   WebStreamingSyncImplementation,
   type DisconnectAndClearOptions,
   type PowerSyncBackendConnector,
-  type PowerSyncConnectionOptions,
-  type RequiredAdditionalConnectionOptions,
   type StreamingSyncImplementation,
   type WebPowerSyncDatabaseOptions,
   type WebDBAdapter,
-  LogLevels
+  LogLevels,
+  type CreateSyncImplementationOptions,
+  type SyncOptions
 } from '@powersync/web';
 import type { DynamicSchemaManager } from './DynamicSchemaManager';
 import { usePowerSyncInspector } from '../composables/usePowerSyncInspector';
@@ -49,7 +49,6 @@ import { RustClientInterceptor } from './RustClientInterceptor';
 export class NuxtPowerSyncDatabase extends PowerSyncDatabase {
   private schemaManager!: DynamicSchemaManager;
   private _connector: PowerSyncBackendConnector | null = null;
-  private _connectionOptions: PowerSyncConnectionOptions | null = null;
   private useDiagnostics: boolean = false;
 
   get dbOptions(): WebPowerSyncDatabaseOptions {
@@ -58,10 +57,6 @@ export class NuxtPowerSyncDatabase extends PowerSyncDatabase {
 
   override get connector() {
     return this._connector ?? super.connector;
-  }
-
-  override get connectionOptions() {
-    return this._connectionOptions ?? super.connectionOptions;
   }
 
   constructor(options: WebPowerSyncDatabaseOptions) {
@@ -73,11 +68,10 @@ export class NuxtPowerSyncDatabase extends PowerSyncDatabase {
       const currentSchemaManager = getCurrentSchemaManager();
 
       // we need to force multitabe as the devtools is basically another tab running in the same browser context
-      options.flags = {
-        ...options.flags,
-        enableMultiTabs: true,
-        broadcastLogs: true
-      };
+      if ('database' in options) {
+        options.database.enableMultiTabs = true;
+        options.broadcastLogs = true;
+      }
 
       // override logger to use the logger from the utils/Logger.ts file
       options.logger = logger;
@@ -96,7 +90,7 @@ export class NuxtPowerSyncDatabase extends PowerSyncDatabase {
 
   protected override generateSyncStreamImplementation(
     connector: PowerSyncBackendConnector,
-    options: RequiredAdditionalConnectionOptions
+    options: CreateSyncImplementationOptions
   ): StreamingSyncImplementation {
     if (this.useDiagnostics) {
       const { logger } = useDiagnosticsLogger();
@@ -110,8 +104,8 @@ export class NuxtPowerSyncDatabase extends PowerSyncDatabase {
         shallowRef(schemaManager) as ShallowRef<DynamicSchemaManager>
       );
 
-      if (this.options.flags?.enableMultiTabs) {
-        if (!this.resolvedFlags.broadcastLogs) {
+      if (this.resolvedOpenOptions.enableMultiTabs) {
+        if (!this.enableBroadcastLogs) {
           const warning = `
             Multiple tabs are enabled, but broadcasting of logs is disabled.
             Logs for shared sync worker will only be available in the shared worker context
@@ -128,7 +122,8 @@ export class NuxtPowerSyncDatabase extends PowerSyncDatabase {
           },
           logger,
           db: this.database as WebDBAdapter,
-          logLevel: this.options.flags.databaseWorkerLogLevel ?? LogLevels.info
+          logLevel: this.resolvedOpenOptions.databaseWorkerLogLevel ?? LogLevels.info,
+          enableBroadcastLogs: this.enableBroadcastLogs
         });
       } else {
         return new WebStreamingSyncImplementation({
@@ -139,7 +134,7 @@ export class NuxtPowerSyncDatabase extends PowerSyncDatabase {
             await this.waitForReady();
             await connector.uploadData(this);
           },
-          identifier: 'dbFilename' in this.options.database ? this.options.database.dbFilename : 'diagnostics-sync',
+          identifier: 'database' in this.options ? this.options.database.dbFilename : 'diagnostics-sync',
           logger
         });
       }
@@ -148,22 +143,19 @@ export class NuxtPowerSyncDatabase extends PowerSyncDatabase {
     }
   }
 
-  override async connect(connector: PowerSyncBackendConnector, options?: PowerSyncConnectionOptions) {
+  override async connect(connector: PowerSyncBackendConnector, options?: SyncOptions) {
     // Override client implementation when in diagnostics
     this._connector = connector;
-    this._connectionOptions = options ?? null;
     await super.connect(connector, options);
   }
 
   override async disconnect() {
     this._connector = null;
-    this._connectionOptions = null;
     await super.disconnect();
   }
 
   override async disconnectAndClear(options?: DisconnectAndClearOptions) {
     this._connector = null;
-    this._connectionOptions = null;
     await super.disconnectAndClear(options);
   }
 }

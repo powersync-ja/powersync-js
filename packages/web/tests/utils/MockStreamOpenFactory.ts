@@ -2,7 +2,7 @@ import {
   AbstractPowerSyncDatabase,
   AbstractRemote,
   AbstractStreamingSyncImplementation,
-  DEFAULT_CRUD_UPLOAD_THROTTLE_MS,
+  CreateSyncImplementationOptions,
   PowerSyncBackendConnector,
   PowerSyncCredentials,
   PowerSyncDatabaseOptions,
@@ -12,13 +12,7 @@ import {
   SyncStreamOptions
 } from '@powersync/common';
 import { StreamingSyncLine } from '@powersync/common/internal/sync_protocol';
-import {
-  PowerSyncDatabase,
-  WASQLitePowerSyncDatabaseOpenFactory,
-  WebPowerSyncDatabaseOptions,
-  WebPowerSyncOpenFactoryOptions,
-  WebStreamingSyncImplementation
-} from '@powersync/web';
+import { PowerSyncDatabase, WebPowerSyncDatabaseOptions, WebStreamingSyncImplementation } from '@powersync/web';
 import { MockedFunction, vi } from 'vitest';
 
 export class TestConnector implements PowerSyncBackendConnector {
@@ -135,7 +129,8 @@ export class MockedStreamPowerSync extends PowerSyncDatabase {
   }
 
   protected generateSyncStreamImplementation(
-    connector: PowerSyncBackendConnector
+    connector: PowerSyncBackendConnector,
+    options: CreateSyncImplementationOptions
   ): AbstractStreamingSyncImplementation {
     return new WebStreamingSyncImplementation({
       logger: this.logger,
@@ -146,26 +141,8 @@ export class MockedStreamPowerSync extends PowerSyncDatabase {
         await connector.uploadData(this);
       },
       identifier: this.database.name,
-      retryDelayMs: this.options.crudUploadThrottleMs ?? 0, // The zero here makes tests faster
-      crudUploadThrottleMs: DEFAULT_CRUD_UPLOAD_THROTTLE_MS,
-      subscriptions: []
+      subscriptions: [],
+      serializedSchema: options.serializedSchema
     });
-  }
-}
-
-export class MockStreamOpenFactory extends WASQLitePowerSyncDatabaseOpenFactory {
-  constructor(
-    options: WebPowerSyncOpenFactoryOptions,
-    protected remote: AbstractRemote
-  ) {
-    super(options);
-  }
-  generateInstance(options: PowerSyncDatabaseOptions): AbstractPowerSyncDatabase {
-    return new MockedStreamPowerSync(
-      {
-        ...options
-      },
-      this.remote
-    );
   }
 }

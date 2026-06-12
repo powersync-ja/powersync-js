@@ -1,17 +1,23 @@
-import { AbstractPowerSyncDatabase, createConsoleLogger, DBAdapterDefaultMixin, Schema } from '@powersync/common';
+import {
+  AbstractPowerSyncDatabase,
+  createConsoleLogger,
+  DBAdapterDefaultMixin,
+  LogLevels,
+  Schema
+} from '@powersync/common';
 import {
   PowerSyncDatabase,
-  ResolvedWASQLiteOpenFactoryOptions,
+  ResolvedWebSQLOpenOptions,
   TemporaryStorageOption,
   WASQLiteOpenFactory,
-  WASQLitePowerSyncDatabaseOpenFactory,
   WASQLiteVFS
 } from '@powersync/web';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TEST_SCHEMA } from './utils/test-schema.js';
 import { MultiDatabaseServer } from '../src/worker/db/MultiDatabaseServer.js';
 import { DatabaseClient } from '../src/db/adapters/wa-sqlite/DatabaseClient.js';
-import { defaultLoggerConfig } from './utils/logger.js';
+import { RawWaSqliteDatabaseOptions } from '../src/db/adapters/wa-sqlite/RawSqliteConnection.js';
+import { defaultLogLevel, defaultTestLogger } from './utils/logger.js';
 
 const testId = '2290de4f-0488-4e50-abed-f8e8eb1d0b42';
 
@@ -69,31 +75,16 @@ describe('Open Methods', { sequential: true }, () => {
 
   afterEach(() => mocks?.dispose());
 
-  it('Should open PowerSync clients from old factory methods', async () => {
-    const db = new WASQLitePowerSyncDatabaseOpenFactory({
-      dbFilename: `test-legacy.db`,
-      schema: TEST_SCHEMA
-    }).getInstance();
-
-    await basicTest(db);
-  });
-
   it('Should open with an existing DBAdapter', async () => {
     const logger = createConsoleLogger({ prefix: 'adapter-test' });
     const server = new MultiDatabaseServer(logger);
-    const options: ResolvedWASQLiteOpenFactoryOptions = {
+    const options: RawWaSqliteDatabaseOptions = {
       vfs: WASQLiteVFS.IDBBatchAtomicVFS,
-      flags: {
-        broadcastLogs: false,
-        disableSSRWarning: false,
-        enableMultiTabs: false,
-        useWebWorker: false,
-        ssrMode: false
-      },
       temporaryStorage: TemporaryStorageOption.MEMORY,
       cacheSizeKb: 0,
-      dbFilename: '',
-      isReadOnly: false
+      encryptionKey: undefined,
+      filename: '',
+      readonly: false
     };
     const connection = await server.openConnectionLocally(logger, options);
     const Adapter = DBAdapterDefaultMixin(DatabaseClient);
@@ -103,16 +94,19 @@ describe('Open Methods', { sequential: true }, () => {
         remoteCanCloseUnexpectedly: false,
         source: null
       },
-      options
+      { dbFilename: '' }
     );
 
-    const db = new PowerSyncDatabase({ database: client, schema: TEST_SCHEMA });
+    const db = new PowerSyncDatabase({ opened: client, schema: TEST_SCHEMA, broadcastLogs: false });
     await basicTest(db);
   });
 
   it('Should open with provided factory', async () => {
-    const factory = new WASQLiteOpenFactory({ ...defaultLoggerConfig, dbFilename: 'factory-test.db' });
-    const db = new PowerSyncDatabase({ database: factory, schema: TEST_SCHEMA });
+    const factory = new WASQLiteOpenFactory({
+      logger: defaultTestLogger,
+      open: { databaseWorkerLogLevel: defaultLogLevel, dbFilename: 'factory-test.db' }
+    });
+    const db = new PowerSyncDatabase({ factory, schema: TEST_SCHEMA });
 
     await basicTest(db);
   });
@@ -138,9 +132,8 @@ describe('Open Methods', { sequential: true }, () => {
     const dedicatedSpy = vi.spyOn(mocks.proxies.workerProxyHandler, 'construct');
 
     const db = new PowerSyncDatabase({
-      database: { dbFilename: 'options-test.db' },
-      schema: TEST_SCHEMA,
-      flags: { enableMultiTabs: false }
+      database: { dbFilename: 'options-test.db', enableMultiTabs: false },
+      schema: TEST_SCHEMA
     });
 
     await basicTest(db);
@@ -154,9 +147,8 @@ describe('Open Methods', { sequential: true }, () => {
     const dedicatedSpy = vi.spyOn(mocks.proxies.workerProxyHandler, 'construct');
 
     const db = new PowerSyncDatabase({
-      database: { dbFilename: 'options-test.db' },
-      schema: TEST_SCHEMA,
-      flags: { useWebWorker: false }
+      database: { dbFilename: 'options-test.db', useWebWorker: false },
+      schema: TEST_SCHEMA
     });
 
     await basicTest(db);

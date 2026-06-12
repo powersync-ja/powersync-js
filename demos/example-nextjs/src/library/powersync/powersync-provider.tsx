@@ -14,14 +14,16 @@ function getDB(): PowerSyncDatabase {
   if (dbInstance) return dbInstance;
 
   dbInstance = new PowerSyncDatabase({
-    database: new WASQLiteOpenFactory({
-      dbFilename: 'powersync-nextjs.db',
-      worker: '/@powersync/worker/WASQLiteDB.umd.js',
+    factory: new WASQLiteOpenFactory({
       logger,
-      logLevel: LogLevels.debug
+      open: {
+        dbFilename: 'powersync-nextjs.db',
+        worker: '/@powersync/worker/WASQLiteDB.umd.js',
+        databaseWorkerLogLevel: LogLevels.debug,
+        disableSSRWarning: true
+      }
     }),
     schema: AppSchema,
-    flags: { disableSSRWarning: true },
     sync: { worker: '/@powersync/worker/SharedSyncImplementation.umd.js' },
     logger
   });

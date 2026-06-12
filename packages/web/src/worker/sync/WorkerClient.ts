@@ -1,4 +1,4 @@
-import { PowerSyncConnectionOptions, SubscribedStream } from '@powersync/common';
+import { ResolvedSyncOptions, SubscribedStream } from '@powersync/common';
 import * as Comlink from 'comlink';
 import { getNavigatorLocks } from '../../shared/navigator.js';
 import {
@@ -82,8 +82,8 @@ export class WorkerClient {
     return this.sync.getWriteCheckpoint();
   }
 
-  connect(options?: PowerSyncConnectionOptions) {
-    return this.sync.connect(options);
+  connect(options: ResolvedSyncOptions, schema: any) {
+    return this.sync.connect(options, schema);
   }
 
   updateSubscriptions(subscriptions: SubscribedStream[]) {

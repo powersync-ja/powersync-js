@@ -1,9 +1,9 @@
 import {
   AbstractPowerSyncDatabase,
+  BasePowerSyncDatabaseOptions,
   BucketStorageAdapter,
   DBAdapter,
   PowerSyncCloseOptions,
-  PowerSyncDatabaseOptions,
   SQLOpenOptions,
   StreamingSyncImplementation,
   SyncStatus,
@@ -17,9 +17,9 @@ import { CreatedDatabase, powersyncCommand } from './command';
 import { listen, UnlistenFn } from '@tauri-apps/api/event';
 import { join } from '@tauri-apps/api/path';
 
-export type TauriPowerSyncOpenOptions = PowerSyncDatabaseOptions & {
+export interface TauriPowerSyncOpenOptions extends BasePowerSyncDatabaseOptions {
   database: TauriSQLOpenOptions;
-};
+}
 
 export interface TauriSQLOpenOptions extends SQLOpenOptions {
   /**
@@ -36,7 +36,7 @@ export interface TauriSQLOpenOptions extends SQLOpenOptions {
 /**
  * A PowerSync database backed by a Rust-owned structure for Tauri apps.
  */
-export class PowerSyncTauriDatabase extends AbstractPowerSyncDatabase {
+export class PowerSyncTauriDatabase extends AbstractPowerSyncDatabase<TauriPowerSyncOpenOptions> {
   declare private handle: LateHandle;
   private didInitializeSchema = false;
   private tableUpdateListener?: UnlistenFn;
@@ -65,7 +65,7 @@ export class PowerSyncTauriDatabase extends AbstractPowerSyncDatabase {
     return this.handle.handle;
   }
 
-  protected openDBAdapter(): DBAdapter {
+  protected override openDBAdapter(): DBAdapter {
     this.handle = { handle: -1 };
     return new RustDatabaseAdapter('uninitialized', this.handle);
   }

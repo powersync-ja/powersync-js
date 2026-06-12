@@ -1,6 +1,5 @@
-import { SharedWebStreamingSyncImplementation, WebStreamingSyncImplementation } from '@powersync/web';
+import { SharedWebStreamingSyncImplementation, type SyncOptions, type WebSQLOpenOptions } from '@powersync/web';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { NuxtPowerSyncDatabase } from '../../src/runtime/utils/NuxtPowerSyncDatabase';
 import { openPowerSync, createMockConnector } from '../utils';
 import { setUseDiagnostics } from '../mocks/nuxt-app';
 
@@ -76,9 +75,10 @@ describe('NuxtPowerSyncDatabase', () => {
     const db = openPowerSync(true);
 
     // Verify flags are set
-    const flags = db.dbOptions.flags;
-    expect(flags?.enableMultiTabs).toBe(true);
-    expect(flags?.broadcastLogs).toBe(true);
+    const resolvedOptions = db.dbOptions;
+
+    expect(((resolvedOptions as any).database as WebSQLOpenOptions).enableMultiTabs).toBe(true);
+    expect(resolvedOptions.broadcastLogs).toBe(true);
   });
 
   it('should use diagnostics logger when diagnostics is enabled', () => {
@@ -93,14 +93,14 @@ describe('NuxtPowerSyncDatabase', () => {
   it('should store connector and connectionOptions internally', async () => {
     const db = openPowerSync(false);
     const connector = createMockConnector();
-    const connectionOptions = { clientImplementation: undefined };
+    const connectionOptions: SyncOptions = { retryDelayMs: 1000 };
 
     await db.init();
     await db.connect(connector, connectionOptions);
 
     // Verify connector is stored
     expect(db.connector).toBe(connector);
-    expect(db.connectionOptions).toBe(connectionOptions);
+    expect(db.connectionOptions).toMatchObject(connectionOptions);
 
     await db.disconnect();
 
