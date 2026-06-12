@@ -408,20 +408,8 @@ export interface AttachmentErrorHandler {
 export function attachmentFromSql(row: any): AttachmentRecord;
 
 // @alpha
-export class AttachmentQueue implements AttachmentQueue {
-    constructor(input: {
-        db: AbstractPowerSyncDatabase;
-        remoteStorage: RemoteStorageAdapter;
-        localStorage: LocalStorageAdapter;
-        watchAttachments: (onUpdate: (attachment: WatchedAttachmentItem[]) => Promise<void>, signal: AbortSignal) => void;
-        tableName?: string;
-        logger?: ILogger;
-        syncIntervalMs?: number;
-        syncThrottleDuration?: number;
-        downloadAttachments?: boolean;
-        archivedCacheLimit?: number;
-        errorHandler?: AttachmentErrorHandler;
-    });
+export class AttachmentQueue {
+    constructor(input: AttachmentQueueOptions);
     readonly archivedCacheLimit: number;
     // (undocumented)
     clearQueue(): Promise<void>;
@@ -453,6 +441,25 @@ export class AttachmentQueue implements AttachmentQueue {
     readonly tableName: string;
     verifyAttachments(): Promise<void>;
     withAttachmentContext<T>(callback: (context: AttachmentContext) => Promise<T>): Promise<T>;
+}
+
+// @public (undocumented)
+export interface AttachmentQueueOptions {
+    archivedCacheLimit?: number;
+    db: AbstractPowerSyncDatabase;
+    downloadAttachments?: boolean;
+    // Warning: (ae-incompatible-release-tags) The symbol "errorHandler" is marked as @public, but its signature references "AttachmentErrorHandler" which is marked as @alpha
+    errorHandler?: AttachmentErrorHandler;
+    // Warning: (ae-incompatible-release-tags) The symbol "localStorage" is marked as @public, but its signature references "LocalStorageAdapter" which is marked as @alpha
+    localStorage: LocalStorageAdapter;
+    logger?: ILogger;
+    // Warning: (ae-incompatible-release-tags) The symbol "remoteStorage" is marked as @public, but its signature references "RemoteStorageAdapter" which is marked as @alpha
+    remoteStorage: RemoteStorageAdapter;
+    syncIntervalMs?: number;
+    syncThrottleDuration?: number;
+    tableName?: string;
+    // Warning: (ae-incompatible-release-tags) The symbol "watchAttachments" is marked as @public, but its signature references "WatchedAttachmentItem" which is marked as @alpha
+    watchAttachments: (onUpdate: (attachment: WatchedAttachmentItem[]) => Promise<void>, signal: AbortSignal) => void;
 }
 
 // @alpha

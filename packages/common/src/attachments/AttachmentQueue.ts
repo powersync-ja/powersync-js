@@ -12,6 +12,52 @@ import { ATTACHMENT_TABLE, AttachmentRecord, AttachmentState } from './Schema.js
 import { SyncingService } from './SyncingService.js';
 import { WatchedAttachmentItem } from './WatchedAttachmentItem.js';
 
+export interface AttachmentQueueOptions {
+  /**
+   * PowerSync database instance
+   */
+  db: AbstractPowerSyncDatabase;
+  /**
+   * Remote storage adapter for upload/download operations
+   */
+  remoteStorage: RemoteStorageAdapter;
+  /**
+   * Local storage adapter for file persistence
+   */
+  localStorage: LocalStorageAdapter;
+  /**
+   * Callback for monitoring attachment changes in your data model
+   */
+  watchAttachments: (onUpdate: (attachment: WatchedAttachmentItem[]) => Promise<void>, signal: AbortSignal) => void;
+  /**
+   * Name of the table to store attachment records. Default: 'ps_attachment_queue'
+   */
+  tableName?: string;
+  /**
+   * Logger instance. Defaults to db.logger
+   */
+  logger?: ILogger;
+  /**
+   * Periodic polling interval in milliseconds for retrying failed uploads/downloads. Default: 30000
+   */
+  syncIntervalMs?: number;
+  /**
+   * Throttle duration in milliseconds for the reactive watch query that detects attachment changes. Prevents rapid-fire syncs during bulk changes. Default: 30
+   */
+  syncThrottleDuration?: number;
+  /**
+   * Whether to automatically download remote attachments. Default: true
+   */
+  downloadAttachments?: boolean;
+  /**
+   * Maximum archived attachments before cleanup. Default: 100
+   */
+  archivedCacheLimit?: number;
+
+  /** Handler for upload, download and delete errors */
+  errorHandler?: AttachmentErrorHandler;
+}
+
 /**
  * AttachmentQueue manages the lifecycle and synchronization of attachments
  * between local and remote storage.
@@ -21,7 +67,7 @@ import { WatchedAttachmentItem } from './WatchedAttachmentItem.js';
  * @experimental
  * @alpha This is currently experimental and may change without a major version bump.
  */
-export class AttachmentQueue implements AttachmentQueue {
+export class AttachmentQueue {
   /** Timer for periodic synchronization operations */
   private periodicSyncTimer?: ReturnType<typeof setInterval>;
 
@@ -100,49 +146,7 @@ export class AttachmentQueue implements AttachmentQueue {
     downloadAttachments = true,
     archivedCacheLimit = 100,
     errorHandler
-  }: {
-    /**
-     * PowerSync database instance
-     */
-    db: AbstractPowerSyncDatabase;
-    /**
-     * Remote storage adapter for upload/download operations
-     */
-    remoteStorage: RemoteStorageAdapter;
-    /**
-     * Local storage adapter for file persistence
-     */
-    localStorage: LocalStorageAdapter;
-    /**
-     * Callback for monitoring attachment changes in your data model
-     */
-    watchAttachments: (onUpdate: (attachment: WatchedAttachmentItem[]) => Promise<void>, signal: AbortSignal) => void;
-    /**
-     * Name of the table to store attachment records. Default: 'ps_attachment_queue'
-     */
-    tableName?: string;
-    /**
-     * Logger instance. Defaults to db.logger
-     */
-    logger?: ILogger;
-    /**
-     * Periodic polling interval in milliseconds for retrying failed uploads/downloads. Default: 30000
-     */
-    syncIntervalMs?: number;
-    /**
-     * Throttle duration in milliseconds for the reactive watch query that detects attachment changes. Prevents rapid-fire syncs during bulk changes. Default: 30
-     */
-    syncThrottleDuration?: number;
-    /**
-     * Whether to automatically download remote attachments. Default: true
-     */
-    downloadAttachments?: boolean;
-    /**
-     * Maximum archived attachments before cleanup. Default: 100
-     */
-    archivedCacheLimit?: number;
-    errorHandler?: AttachmentErrorHandler;
-  }) {
+  }: AttachmentQueueOptions) {
     this.db = db;
     this.remoteStorage = remoteStorage;
     this.localStorage = localStorage;
