@@ -1,20 +1,18 @@
 import {
   createConsoleLogger,
   LogLevels,
-  PowerSyncConnectionOptions,
   Schema,
-  SyncClientImplementation,
+  SyncOptions,
   SyncStreamConnectionMethod,
   SyncStreamOptions,
   WASQLiteOpenFactory,
-  WASQLiteVFS,
-  WebPowerSyncOpenFactoryOptions
+  WASQLiteVFS
 } from '@powersync/web';
 import { describe, expect, it, onTestFinished, vi } from 'vitest';
 import { TestConnector } from './utils/MockStreamOpenFactory.js';
 import { ConnectedDatabaseUtils, generateConnectedDatabase } from './utils/generateConnectedDatabase.js';
 import { BucketChecksum } from '@powersync/common/internal/sync_protocol';
-import { defaultLoggerConfig } from './utils/logger.js';
+import { defaultLogLevel, defaultTestLogger } from './utils/logger.js';
 
 const UPLOAD_TIMEOUT_MS = 3000;
 
@@ -26,13 +24,13 @@ describe('Streaming', { sequential: true }, () => {
     {
       sequential: true
     },
-    describeStreamingTests((options) =>
-      generateConnectedDatabase({
-        powerSyncOptions: {
-          logger,
-          ...options
-        }
-      })
+    describeStreamingTests((syncOptions) =>
+      generateConnectedDatabase(
+        {
+          logger
+        },
+        syncOptions
+      )
     )
   );
 
@@ -41,15 +39,14 @@ describe('Streaming', { sequential: true }, () => {
     {
       sequential: true
     },
-    describeStreamingTests(() =>
-      generateConnectedDatabase({
-        powerSyncOptions: {
-          flags: {
-            useWebWorker: false
-          },
-          logger
-        }
-      })
+    describeStreamingTests((syncOptions) =>
+      generateConnectedDatabase(
+        {
+          logger,
+          database: { useWebWorker: false }
+        },
+        syncOptions
+      )
     )
   );
 
@@ -58,17 +55,21 @@ describe('Streaming', { sequential: true }, () => {
     {
       sequential: true
     },
-    describeStreamingTests(() =>
-      generateConnectedDatabase({
-        powerSyncOptions: {
-          database: new WASQLiteOpenFactory({
-            ...defaultLoggerConfig,
-            dbFilename: 'streaming-opfs.sqlite',
-            vfs: WASQLiteVFS.OPFSCoopSyncVFS
-          }),
-          logger
-        }
-      })
+    describeStreamingTests((syncOptions) =>
+      generateConnectedDatabase(
+        {
+          logger,
+          factory: new WASQLiteOpenFactory({
+            logger: defaultTestLogger,
+            open: {
+              databaseWorkerLogLevel: defaultLogLevel,
+              dbFilename: 'streaming-opfs.sqlite',
+              vfs: WASQLiteVFS.OPFSCoopSyncVFS
+            }
+          })
+        },
+        syncOptions
+      )
     )
   );
 
@@ -194,7 +195,8 @@ describe('Streaming', { sequential: true }, () => {
     }
 
     const { powersync, waitForStream, remote } = await generateConnectedDatabase({
-      powerSyncOptions: { schema: customSchema, flags: { enableMultiTabs: true } }
+      schema: customSchema,
+      database: { enableMultiTabs: true }
     });
     await powersync.execute('CREATE TABLE lists (id TEXT NOT NULL PRIMARY KEY, name TEXT);');
     onTestFinished(async () => {
@@ -205,8 +207,7 @@ describe('Streaming', { sequential: true }, () => {
     expect((await query.next()).value.rows._array).toStrictEqual([]);
 
     powersync.connect(new TestConnector(), {
-      connectionMethod: SyncStreamConnectionMethod.HTTP,
-      clientImplementation: SyncClientImplementation.RUST
+      connectionMethod: SyncStreamConnectionMethod.HTTP
     });
     await waitForStream();
 
@@ -267,7 +268,7 @@ describe('Streaming', { sequential: true }, () => {
 });
 
 function describeStreamingTests(
-  createConnectedDatabase: (options?: Partial<WebPowerSyncOpenFactoryOptions>) => Promise<ConnectedDatabaseUtils>
+  createConnectedDatabase: (syncOptions?: SyncOptions) => Promise<ConnectedDatabaseUtils>
 ) {
   return () => {
     it('PowerSync reconnect on closed stream', async () => {
@@ -286,7 +287,7 @@ function describeStreamingTests(
     it('PowerSync reconnect multiple connect calls', async () => {
       // This initially performs a connect call
       const { powersync, remote } = await createConnectedDatabase();
-      const connectionOptions: PowerSyncConnectionOptions = { connectionMethod: SyncStreamConnectionMethod.HTTP };
+      const connectionOptions: SyncOptions = { connectionMethod: SyncStreamConnectionMethod.HTTP };
       expect(powersync.connected).toBe(true);
 
       const spy = vi.spyOn(powersync as any, 'generateSyncStreamImplementation');
@@ -312,8 +313,8 @@ function describeStreamingTests(
 
       await vi.waitFor(
         () => {
-          const call = spy.mock.lastCall![1] as PowerSyncConnectionOptions;
-          expect(call.params!['count']).eq(connectionAttempts);
+          const call = postSpy.mock.lastCall![0];
+          expect((call.data as any).parameters).toStrictEqual({ count: connectionAttempts });
         },
         { timeout: 2000, interval: 100 }
       );
@@ -330,8 +331,8 @@ function describeStreamingTests(
 
       await vi.waitFor(
         () => {
-          const call = spy.mock.lastCall![1] as PowerSyncConnectionOptions;
-          expect(call.params!['count']).eq(0);
+          const call = postSpy.mock.lastCall![0];
+          expect((call.data as any).parameters).toStrictEqual({ count: 0 });
         },
         { timeout: 8000, interval: 100 }
       );
@@ -381,7 +382,7 @@ function describeStreamingTests(
     });
 
     it('Should retry failed uploads when connected', async () => {
-      const { powersync, uploadSpy } = await createConnectedDatabase();
+      const { powersync, uploadSpy } = await createConnectedDatabase({ retryDelayMs: 100 });
       expect(powersync.connected).toBe(true);
 
       let uploadCounter = 0;

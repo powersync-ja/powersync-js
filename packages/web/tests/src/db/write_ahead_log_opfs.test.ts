@@ -2,15 +2,18 @@ import { expect, test } from 'vitest';
 import { generateTestDb } from '../../utils/testDb.js';
 import { Schema, WASQLiteOpenFactory, WASQLiteVFS } from '@powersync/web';
 import { TEST_SCHEMA } from '../../utils/test-schema.js';
-import { defaultLoggerConfig } from '../../utils/logger.js';
+import { defaultLogLevel, defaultTestLogger } from '../../utils/logger.js';
 
 test('supports concurrent reads', async () => {
   const db = generateTestDb({
-    database: new WASQLiteOpenFactory({
-      dbFilename: 'basic-opfs.sqlite',
-      vfs: WASQLiteVFS.OPFSWriteAheadVFS,
-      additionalReaders: 1,
-      ...defaultLoggerConfig
+    factory: new WASQLiteOpenFactory({
+      open: {
+        dbFilename: 'basic-opfs.sqlite',
+        vfs: WASQLiteVFS.OPFSWriteAheadVFS,
+        additionalReaders: 1,
+        databaseWorkerLogLevel: defaultLogLevel
+      },
+      logger: defaultTestLogger
     }),
     schema: TEST_SCHEMA
   });

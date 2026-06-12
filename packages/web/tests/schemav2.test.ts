@@ -66,11 +66,8 @@ describe('Schema Tests', { sequential: true }, () => {
        * Use a new DB for each run to keep CRUD counters
        * consistent
        */
-      database: { dbFilename: 'test.db' },
-      schema,
-      flags: {
-        enableMultiTabs: false
-      }
+      database: { dbFilename: 'test.db', enableMultiTabs: false },
+      schema
     });
   });
 

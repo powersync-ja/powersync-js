@@ -12,15 +12,12 @@ import {
   SqliteBucketStorage,
   SubscribedStream,
   SyncStatus,
-  createConsoleLogger,
   Mutex,
-  type PowerSyncConnectionOptions,
   type StreamingSyncImplementation,
   type StreamingSyncImplementationListener,
   type SyncStatusOptions,
-  CreateLoggerOptions,
-  PowerSyncLogger,
-  LogLevels
+  LogLevels,
+  ResolvedSyncOptions
 } from '@powersync/common';
 import * as Comlink from 'comlink';
 import { WebRemote } from '../../db/sync/WebRemote.js';
@@ -29,11 +26,11 @@ import {
   WebStreamingSyncImplementationOptions
 } from '../../db/sync/WebStreamingSyncImplementation.js';
 
-import { ResolvedWebSQLOpenOptions } from '../../db/adapters/web-sql-flags.js';
 import { AbstractSharedSyncClientProvider } from './AbstractSharedSyncClientProvider.js';
 import { BroadcastLogger } from './BroadcastLogger.js';
 import { DatabaseClient, OpenWorkerConnection } from '../../db/adapters/wa-sqlite/DatabaseClient.js';
 import { generateTabCloseSignal } from '../../shared/tab_close_signal.js';
+import { ResolvedWebSQLOpenOptions } from '../../db/adapters/options.js';
 
 /**
  * @internal
@@ -66,6 +63,7 @@ export type SharedSyncInitOptions = {
     'adapter' | 'uploadCrud' | 'remote' | 'subscriptions' | 'logger'
   >;
   dbParams: ResolvedWebSQLOpenOptions;
+  enableBroadcastLogs: boolean;
 };
 
 /**
@@ -116,7 +114,7 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
   protected uploadDataController?: RemoteOperationAbortController;
 
   protected syncParams: SharedSyncInitOptions | null;
-  protected lastConnectOptions: PowerSyncConnectionOptions | undefined;
+  protected lastConnectOptions: ResolvedSyncOptions | undefined;
   protected portMutex: Mutex;
   private subscriptions: SubscribedStream[] = [];
 
@@ -251,7 +249,7 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
 
     // First time setting params
     this.syncParams = params;
-    this.logger.sendBroadcasts = params.streamOptions?.flags?.broadcastLogs ?? true;
+    this.logger.sendBroadcasts = params.enableBroadcastLogs;
 
     // Ensure we have a usable database connection, the reconnectable database will connect lazily on first use.
     await this.database.readLock(async () => {});
@@ -280,9 +278,9 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
    * The connection will simply be reconnected whenever a new tab
    * connects.
    */
-  async connect(options?: PowerSyncConnectionOptions) {
+  async connect(options: ResolvedSyncOptions, serializedSchema: any) {
     this.lastConnectOptions = options;
-    return this.connectionManager.connect(CONNECTOR_PLACEHOLDER, options ?? {});
+    return this.connectionManager.connect(CONNECTOR_PLACEHOLDER, options ?? {}, serializedSchema);
   }
 
   async disconnect() {

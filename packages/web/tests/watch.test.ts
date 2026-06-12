@@ -27,11 +27,11 @@ describe('Watch Tests', { sequential: true }, () => {
 
   beforeEach(async () => {
     powersync = new PowerSyncDatabase({
-      database: { dbFilename: 'test-watch.db' },
-      schema: TEST_SCHEMA,
-      flags: {
+      database: {
+        dbFilename: 'test-watch.db',
         enableMultiTabs: false
-      }
+      },
+      schema: TEST_SCHEMA
     });
     await powersync.init();
   });

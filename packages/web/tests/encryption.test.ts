@@ -1,32 +1,28 @@
-import {
-  PowerSyncDatabase,
-  WASQLiteOpenFactory,
-  WASQLiteVFS,
-  WebPowerSyncDatabaseOptionsWithOpenFactory,
-  WebPowerSyncDatabaseOptionsWithSettings
-} from '@powersync/web';
+import { PowerSyncDatabase, WASQLiteOpenFactory, WASQLiteVFS, WebPowerSyncDatabaseOptions } from '@powersync/web';
 import { v4 as uuid } from 'uuid';
 import { describe, expect, it } from 'vitest';
 import { TEST_SCHEMA } from './utils/test-schema.js';
-import { defaultLoggerConfig } from './utils/logger.js';
+import { defaultLogLevel, defaultTestLogger } from './utils/logger.js';
 
 describe('Encryption Tests', { sequential: true }, () => {
   it('IDBBatchAtomicVFS encryption', async () => {
     await testEncryption({
       schema: TEST_SCHEMA,
-      database: { dbFilename: 'iddb-file.db' },
-      encryptionKey: 'iddb-key'
+      database: { dbFilename: 'iddb-file.db', encryptionKey: 'iddb-key' }
     });
   });
 
   it('OPFSCoopSyncVFS encryption', async () => {
     await testEncryption({
       schema: TEST_SCHEMA,
-      database: new WASQLiteOpenFactory({
-        ...defaultLoggerConfig,
-        dbFilename: 'opfs-file.db',
-        vfs: WASQLiteVFS.OPFSCoopSyncVFS,
-        encryptionKey: 'opfs-key'
+      factory: new WASQLiteOpenFactory({
+        logger: defaultTestLogger,
+        open: {
+          dbFilename: 'opfs-file.db',
+          vfs: WASQLiteVFS.OPFSCoopSyncVFS,
+          encryptionKey: 'opfs-key',
+          databaseWorkerLogLevel: defaultLogLevel
+        }
       })
     });
   });
@@ -34,11 +30,14 @@ describe('Encryption Tests', { sequential: true }, () => {
   it('AccessHandlePoolVFS encryption', async () => {
     await testEncryption({
       schema: TEST_SCHEMA,
-      database: new WASQLiteOpenFactory({
-        ...defaultLoggerConfig,
-        dbFilename: 'ahp-file.db',
-        vfs: WASQLiteVFS.AccessHandlePoolVFS,
-        encryptionKey: 'ahp-key'
+      factory: new WASQLiteOpenFactory({
+        logger: defaultTestLogger,
+        open: {
+          dbFilename: 'ahp-file.db',
+          vfs: WASQLiteVFS.AccessHandlePoolVFS,
+          encryptionKey: 'ahp-key',
+          databaseWorkerLogLevel: defaultLogLevel
+        }
       })
     });
   });
@@ -47,15 +46,13 @@ describe('Encryption Tests', { sequential: true }, () => {
 /**
  * The open/close and open again flow is an easy way to verify that encryption is working.
  */
-const testEncryption = async (
-  options: WebPowerSyncDatabaseOptionsWithSettings | WebPowerSyncDatabaseOptionsWithOpenFactory
-) => {
-  let powersync = new PowerSyncDatabase(options as any);
+const testEncryption = async (options: WebPowerSyncDatabaseOptions) => {
+  let powersync = new PowerSyncDatabase(options);
 
   await powersync.init();
   await powersync.close();
 
-  powersync = new PowerSyncDatabase(options as any);
+  powersync = new PowerSyncDatabase(options);
 
   await powersync.init();
   await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['test', uuid()]);

@@ -1,6 +1,5 @@
 import { Mutex, UnlockFn } from '@powersync/common';
-import { RawSqliteConnection } from './RawSqliteConnection.js';
-import { ResolvedWASQLiteOpenFactoryOptions } from './WASQLiteOpenFactory.js';
+import { RawSqliteConnection, RawWaSqliteDatabaseOptions } from './RawSqliteConnection.js';
 
 /**
  * A wrapper around a {@link RawSqliteConnection} allowing multiple tabs to access it.
@@ -33,7 +32,7 @@ export class ConcurrentSqliteConnection {
     this.leaseMutex = needsNavigatorLocks ? null : new Mutex();
   }
 
-  get options(): ResolvedWASQLiteOpenFactoryOptions {
+  get options(): RawWaSqliteDatabaseOptions {
     return this.inner.options;
   }
 
@@ -46,7 +45,7 @@ export class ConcurrentSqliteConnection {
       const options: LockOptions = { signal: abort };
 
       navigator.locks
-        .request(`db-lock-${this.options.dbFilename}`, options, (_) => {
+        .request(`db-lock-${this.options.filename}`, options, (_) => {
           return new Promise<void>((returnLock) => {
             return resolve(() => {
               returnLock();

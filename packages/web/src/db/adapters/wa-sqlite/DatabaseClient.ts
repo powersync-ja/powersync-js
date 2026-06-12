@@ -15,10 +15,10 @@ import { SharedConnectionWorker, WebDBAdapterConfiguration } from '../WebDBAdapt
 import { ClientConnectionView } from './DatabaseServer.js';
 import { RawQueryResult } from './RawSqliteConnection.js';
 import * as Comlink from 'comlink';
-import { WorkerDBOpenerOptions } from './WASQLiteOpenFactory.js';
+import type { ConnectToMultiDatabaseServerOptions } from '../../../worker/db/MultiDatabaseServer.js';
 
 export interface OpenWorkerConnection {
-  connect(config: WorkerDBOpenerOptions): Promise<ClientConnectionView>;
+  connect(config: ConnectToMultiDatabaseServerOptions): Promise<ClientConnectionView>;
   connectToExisting(options: { identifier: string; lockName: string }): Promise<ClientConnectionView>;
 }
 

@@ -1,4 +1,4 @@
-import { AbstractPowerSyncDatabase, column, PowerSyncDatabase, Schema, Table } from '@powersync/web';
+import { column, PowerSyncDatabase, Schema, Table } from '@powersync/web';
 import { SQLJSOpenFactory } from '../../src/SQLJSAdapter';
 
 const AppSchema = new Schema({
@@ -16,7 +16,7 @@ const AppSchema = new Schema({
 
 export const getPowerSyncDb = () => {
   const database = new PowerSyncDatabase({
-    database: new SQLJSOpenFactory({
+    factory: new SQLJSOpenFactory({
       dbFilename: 'powersync-test.db',
       persister: {
         // in-memory db
