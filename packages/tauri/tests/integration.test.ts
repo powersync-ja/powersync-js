@@ -15,6 +15,13 @@ async function installTauriInTestFrameHack() {
 
   current.__TAURI_INTERNALS__ = root.__TAURI_INTERNALS__;
   current.__TAURI_EVENT_PLUGIN_INTERNALS__ = root.__TAURI_EVENT_PLUGIN_INTERNALS__;
+
+  // When binary responses are used, Tauri injects top-level code matching against
+  // ArrayBuffers. Ensure this iframe realm uses the same class for compatibility. We
+  // don't currently use binary responses in the PowerSync plugin, but it serves as an
+  // example for general integration tests with Tauri.
+  current.ArrayBuffer = root.ArrayBuffer;
+
 }
 
 const schema = new Schema({
