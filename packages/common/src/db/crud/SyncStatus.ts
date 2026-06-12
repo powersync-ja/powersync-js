@@ -1,4 +1,3 @@
-import { SyncClientImplementation } from '../../client/sync/stream/AbstractStreamingSyncImplementation.js';
 import { CoreStreamSubscription } from '../../client/sync/stream/core-instruction.js';
 import { SyncStreamDescription, SyncSubscriptionDescription } from '../../client/sync/sync-streams.js';
 import { InternalProgressInformation, ProgressWithOperations, SyncProgress } from './SyncProgress.js';
@@ -51,10 +50,6 @@ export type SyncStatusOptions = {
   lastSyncedAt?: Date;
   hasSynced?: boolean;
   priorityStatusEntries?: SyncPriorityStatus[];
-  /**
-   * @deprecated This field is no longer set, since {@link SyncClientImplementation.RUST} is the only option.
-   */
-  clientImplementation?: SyncClientImplementation;
 };
 
 /**
@@ -62,18 +57,6 @@ export type SyncStatusOptions = {
  */
 export class SyncStatus {
   constructor(protected options: SyncStatusOptions) {}
-
-  /**
-   * Returns the used sync client implementation (either the one implemented in JavaScript or the newer Rust-based
-   * implementation).
-   *
-   * This information is only available after a connection has been requested.
-   *
-   * @deprecated This always returns the Rust client (the only option).
-   */
-  get clientImplementation() {
-    return this.options.clientImplementation;
-  }
 
   /**
    * Indicates if the client is currently connected to the PowerSync service.

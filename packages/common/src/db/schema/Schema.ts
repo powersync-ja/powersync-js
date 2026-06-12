@@ -71,7 +71,7 @@ export class Schema<S extends SchemaType = SchemaType> {
     }
   }
 
-  toJSON() {
+  toJSON(): unknown {
     return {
       tables: this.tables.map((t) => t.toJSON()),
       raw_tables: this.rawTables.map(Schema.rawTableToJson)

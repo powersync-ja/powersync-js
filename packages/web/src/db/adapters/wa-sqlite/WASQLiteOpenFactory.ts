@@ -1,77 +1,31 @@
-import { createConsoleLogger, DBAdapter, LogLevels, PowerSyncLogger, SQLOpenFactory } from '@powersync/common';
+import { DBAdapter, LogLevels, PowerSyncLogger, SQLOpenFactory } from '@powersync/common';
 import * as Comlink from 'comlink';
 import { openWorkerDatabasePort, resolveWorkerDatabasePortFactory } from '../../../worker/db/open-worker-database.js';
-import {
-  DEFAULT_CACHE_SIZE_KB,
-  isServerSide,
-  ResolvedWebSQLFlags,
-  ResolvedWebSQLOpenOptions,
-  resolveWebSQLFlags,
-  TemporaryStorageOption,
-  WebSQLOpenFactoryOptions
-} from '../web-sql-flags.js';
+import { ResolvedWebSQLOpenOptions, WebSQLOpenOptions } from '../options.js';
 import { SSRDBAdapter } from '../SSRDBAdapter.js';
 import { vfsRequiresDedicatedWorkers, WASQLiteVFS } from './vfs.js';
 import { MultiDatabaseServer } from '../../../worker/db/MultiDatabaseServer.js';
 import { DatabaseClient, OpenWorkerConnection } from './DatabaseClient.js';
 import { generateTabCloseSignal } from '../../../shared/tab_close_signal.js';
 import { AsyncDbAdapter, PoolConnection } from '../AsyncWebAdapter.js';
+import { RawWaSqliteDatabaseOptions } from './RawSqliteConnection.js';
+import { resolveAndValidateOptions } from '../resolveAndValidateOptions.js';
 
-export interface WASQLiteOpenFactoryOptions extends WebSQLOpenFactoryOptions {
-  vfs?: WASQLiteVFS;
-  /**
-   * If the {@link vfs} supports it, an additional amount of read-only connections to open. Using additional read
-   * connections can speed up queries by dispatching them to multiple workers running them concurrently.
-   *
-   * {@link WASQLiteVFS.OPFSWriteAheadVFS} is the only VFS with support for multiple connections, so this option is
-   * ignored for other VFS implementations.
-   *
-   * Defaults to 1.
-   */
-  additionalReaders?: number;
-
-  /**
-   * The {@link LogLevels} value to use for logs in the worker.
-   */
-  logLevel: number;
-
+export interface WASQLiteOpenFactoryOptions {
+  open: WebSQLOpenOptions;
   logger: PowerSyncLogger;
-}
-
-export interface ResolvedWASQLiteOpenFactoryOptions extends ResolvedWebSQLOpenOptions {
-  vfs: WASQLiteVFS;
-
-  /**
-   * Whether this is a read-only connection opened for the `OPFSWriteAheadVFS` file system.
-   */
-  isReadOnly: boolean;
-}
-
-export interface WorkerDBOpenerOptions extends ResolvedWASQLiteOpenFactoryOptions {
-  logLevel: number;
-  /**
-   * A lock that is currently held by the client. When the lock is returned, we know the client is gone and that we need
-   * to clean up resources.
-   */
-  lockName: string;
 }
 
 /**
  * Opens a SQLite connection using WA-SQLite.
  */
 export class WASQLiteOpenFactory implements SQLOpenFactory {
-  private resolvedFlags: ResolvedWebSQLFlags;
+  private options: ResolvedWebSQLOpenOptions;
   private logger: PowerSyncLogger;
 
-  constructor(private options: WASQLiteOpenFactoryOptions) {
-    assertValidWASQLiteOpenFactoryOptions(options);
-    this.resolvedFlags = resolveWebSQLFlags(options.flags);
+  constructor(options: WASQLiteOpenFactoryOptions) {
+    this.options = resolveAndValidateOptions(options.open);
     this.logger = options.logger;
-  }
-
-  get waOptions(): WASQLiteOpenFactoryOptions {
-    // Cast to extended type
-    return this.options;
   }
 
   protected openAdapter(): DBAdapter {
@@ -79,9 +33,8 @@ export class WASQLiteOpenFactory implements SQLOpenFactory {
   }
 
   openDB(): DBAdapter {
-    const {
-      resolvedFlags: { disableSSRWarning, enableMultiTabs, ssrMode = isServerSide() }
-    } = this;
+    const { disableSSRWarning, enableMultiTabs, ssrMode } = this.options;
+
     if (ssrMode) {
       if (!disableSSRWarning) {
         this.logger.log({
@@ -107,58 +60,42 @@ export class WASQLiteOpenFactory implements SQLOpenFactory {
   }
 
   async openConnection(): Promise<PoolConnection> {
-    const { enableMultiTabs, useWebWorker } = this.resolvedFlags;
-    const {
-      vfs = WASQLiteVFS.IDBBatchAtomicVFS,
-      temporaryStorage = TemporaryStorageOption.MEMORY,
-      cacheSizeKb = DEFAULT_CACHE_SIZE_KB,
-      encryptionKey
-    } = this.waOptions;
+    const { enableMultiTabs, useWebWorker, vfs, dbFilename, encryptionKey, temporaryStorage, cacheSizeKb } =
+      this.options;
 
     if (!enableMultiTabs) {
       this.logger.log({ level: LogLevels.warn, message: 'Multiple tabs are not enabled in this browser' });
     }
 
-    const resolveOptions = (isReadOnly: boolean): ResolvedWASQLiteOpenFactoryOptions => ({
-      dbFilename: this.options.dbFilename,
-      dbLocation: this.options.dbLocation,
-      debugMode: this.options.debugMode,
-      vfs,
-      temporaryStorage,
-      cacheSizeKb,
-      flags: this.resolvedFlags,
-      encryptionKey: encryptionKey,
-      isReadOnly
-    });
-
     let client: DatabaseClient;
     let additionalReaders: DatabaseClient[] = [];
     let requiresPersistentTriggers = vfsRequiresDedicatedWorkers(vfs);
 
+    function resolveRawWaSqliteDatabaseOptions(readonly: boolean): RawWaSqliteDatabaseOptions {
+      return {
+        filename: dbFilename,
+        readonly,
+        vfs,
+        encryptionKey,
+        temporaryStorage,
+        cacheSizeKb
+      };
+    }
+
     if (useWebWorker) {
       const optionsDbWorker = this.options.worker;
 
-      const openDatabaseWorker = async (
-        resolvedOptions: ResolvedWASQLiteOpenFactoryOptions
-      ): Promise<DatabaseClient> => {
+      const openDatabaseWorker = async (readonly: boolean): Promise<DatabaseClient> => {
         const workerPort =
           typeof optionsDbWorker == 'function'
-            ? resolveWorkerDatabasePortFactory(() =>
-                optionsDbWorker({
-                  ...this.options,
-                  temporaryStorage,
-                  cacheSizeKb,
-                  flags: this.resolvedFlags,
-                  encryptionKey
-                })
-              )
-            : openWorkerDatabasePort(this.options.dbFilename, enableMultiTabs, optionsDbWorker, this.waOptions.vfs);
+            ? resolveWorkerDatabasePortFactory(() => optionsDbWorker(this.options))
+            : openWorkerDatabasePort(this.options.dbFilename, enableMultiTabs, optionsDbWorker, vfs);
 
         const source = Comlink.wrap<OpenWorkerConnection>(workerPort);
         const closeSignal = new AbortController();
         const connection = await source.connect({
-          ...resolvedOptions,
-          logLevel: this.options.logLevel,
+          database: resolveRawWaSqliteDatabaseOptions(readonly),
+          logLevel: this.options.databaseWorkerLogLevel,
           lockName: await generateTabCloseSignal(closeSignal.signal)
         });
         const clientOptions = {
@@ -177,19 +114,19 @@ export class WASQLiteOpenFactory implements SQLOpenFactory {
         };
 
         return new DatabaseClient(clientOptions, {
-          ...resolvedOptions,
+          ...this.options,
           requiresPersistentTriggers
         });
       };
 
-      client = await openDatabaseWorker(resolveOptions(false));
+      client = await openDatabaseWorker(false);
 
       if (vfs == WASQLiteVFS.OPFSWriteAheadVFS) {
         // This VFS supports concurrent reads, so we can open additional workers to host read-only connections for
         // concurrent reads / writes.
         const additionalReadersCount = this.options.additionalReaders ?? 1;
         for (let i = 0; i < additionalReadersCount; i++) {
-          const reader = await openDatabaseWorker(resolveOptions(true));
+          const reader = await openDatabaseWorker(true);
           additionalReaders.push(reader);
         }
       }
@@ -198,12 +135,11 @@ export class WASQLiteOpenFactory implements SQLOpenFactory {
       const localServer = new MultiDatabaseServer(this.logger);
       requiresPersistentTriggers = true;
 
-      const resolvedOptions = resolveOptions(false);
-      const connection = await localServer.openConnectionLocally(this.logger, resolvedOptions);
+      const connection = await localServer.openConnectionLocally(this.logger, resolveRawWaSqliteDatabaseOptions(false));
       client = new DatabaseClient(
         { connection, source: null, remoteCanCloseUnexpectedly: false },
         {
-          ...resolvedOptions,
+          ...this.options,
           requiresPersistentTriggers
         }
       );
@@ -213,20 +149,5 @@ export class WASQLiteOpenFactory implements SQLOpenFactory {
       writer: client,
       additionalReaders
     };
-  }
-}
-
-/**
- * Asserts that the factory options are valid.
- */
-function assertValidWASQLiteOpenFactoryOptions(options: WASQLiteOpenFactoryOptions): void {
-  // The OPFS VFS only works in dedicated web workers.
-  if ('vfs' in options && 'flags' in options) {
-    const { vfs, flags = {} } = options;
-    if (vfs && vfsRequiresDedicatedWorkers(vfs) && 'useWebWorker' in flags && !flags.useWebWorker) {
-      throw new Error(
-        `Invalid configuration: The 'useWebWorker' flag must be true when using an OPFS-based VFS (${vfs}).`
-      );
-    }
   }
 }

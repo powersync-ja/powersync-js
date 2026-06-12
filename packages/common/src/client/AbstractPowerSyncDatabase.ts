@@ -20,21 +20,14 @@ import {
 } from './ConnectionManager.js';
 import { CustomQuery } from './CustomQuery.js';
 import { ArrayQueryDefinition, Query } from './Query.js';
-import { SQLOpenFactory, SQLOpenOptions, isDBAdapter, isSQLOpenFactory, isSQLOpenOptions } from './SQLOpenFactory.js';
 import { PowerSyncBackendConnector } from './connection/PowerSyncBackendConnector.js';
 import { BucketStorageAdapter, PSInternalTable } from './sync/bucket/BucketStorageAdapter.js';
 import { CrudBatch } from './sync/bucket/CrudBatch.js';
 import { CrudEntry, CrudEntryJSON } from './sync/bucket/CrudEntry.js';
 import { CrudTransaction } from './sync/bucket/CrudTransaction.js';
 import {
-  DEFAULT_CRUD_UPLOAD_THROTTLE_MS,
-  DEFAULT_RETRY_DELAY_MS,
-  InternalConnectionOptions,
   StreamingSyncImplementation,
-  StreamingSyncImplementationListener,
-  type AdditionalConnectionOptions,
-  type PowerSyncConnectionOptions,
-  type RequiredAdditionalConnectionOptions
+  StreamingSyncImplementationListener
 } from './sync/stream/AbstractStreamingSyncImplementation.js';
 import { CoreSyncStatus, coreStatusToJs } from './sync/stream/core-instruction.js';
 import { SyncStream } from './sync/sync-streams.js';
@@ -47,6 +40,8 @@ import { WatchedQueryComparator } from './watched/processors/comparators.js';
 import { Mutex } from '../utils/mutex.js';
 import { symbolAsyncIterator } from '../utils/compatibility.js';
 import { createConsoleLogger, LogLevels, PowerSyncLogger } from '../utils/Logger.js';
+import { SyncOptions } from './sync/options.js';
+import { DatabaseSource, openDatabase, SQLOpenOptions } from './SQLOpenFactory.js';
 
 /**
  * @public
@@ -57,53 +52,20 @@ export interface DisconnectAndClearOptions {
 }
 
 /**
+ * Options required regardless of how a PowerSync database is opened.
+ *
  * @public
  */
-export interface BasePowerSyncDatabaseOptions extends AdditionalConnectionOptions {
+export interface BasePowerSyncDatabaseOptions {
   /** Schema used for the local database. */
   schema: Schema;
-  /**
-   * @deprecated Use {@link AdditionalConnectionOptions.retryDelayMs} instead as this will be removed in future
-   * releases.
-   */
-  retryDelay?: number;
   logger?: PowerSyncLogger;
 }
 
 /**
  * @public
  */
-export interface PowerSyncDatabaseOptions extends BasePowerSyncDatabaseOptions {
-  /**
-   * Source for a SQLite database connection.
-   * This can be either:
-   *  - A {@link DBAdapter} if providing an instantiated SQLite connection
-   *  - A {@link SQLOpenFactory} which will be used to open a SQLite connection
-   *  - {@link SQLOpenOptions} for opening a SQLite connection with a default {@link SQLOpenFactory}
-   */
-  database: DBAdapter | SQLOpenFactory | SQLOpenOptions;
-}
-
-/**
- * @public
- */
-export interface PowerSyncDatabaseOptionsWithDBAdapter extends BasePowerSyncDatabaseOptions {
-  database: DBAdapter;
-}
-
-/**
- * @public
- */
-export interface PowerSyncDatabaseOptionsWithOpenFactory extends BasePowerSyncDatabaseOptions {
-  database: SQLOpenFactory;
-}
-
-/**
- * @public
- */
-export interface PowerSyncDatabaseOptionsWithSettings extends BasePowerSyncDatabaseOptions {
-  database: SQLOpenOptions;
-}
+export type PowerSyncDatabaseOptions = BasePowerSyncDatabaseOptions & DatabaseSource;
 
 /**
  * @public
@@ -196,18 +158,7 @@ export const DEFAULT_POWERSYNC_CLOSE_OPTIONS: PowerSyncCloseOptions = {
   disconnect: true
 };
 
-/**
- * @internal
- */
-export const DEFAULT_POWERSYNC_DB_OPTIONS = {
-  retryDelayMs: 5000,
-  crudUploadThrottleMs: DEFAULT_CRUD_UPLOAD_THROTTLE_MS
-};
-
-/**
- * @internal
- */
-export const DEFAULT_CRUD_BATCH_LIMIT = 100;
+const DEFAULT_CRUD_BATCH_LIMIT = 100;
 
 /**
  * Requesting nested or recursive locks can block the application in some circumstances.
@@ -219,17 +170,11 @@ export const DEFAULT_CRUD_BATCH_LIMIT = 100;
 export const DEFAULT_LOCK_TIMEOUT_MS = 120_000; // 2 mins
 
 /**
- * Tests if the input is a {@link PowerSyncDatabaseOptionsWithSettings}
- * @internal
- */
-export const isPowerSyncDatabaseOptionsWithSettings = (test: any): test is PowerSyncDatabaseOptionsWithSettings => {
-  return typeof test == 'object' && isSQLOpenOptions(test.database);
-};
-
-/**
  * @public
  */
-export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDBListener> {
+export abstract class AbstractPowerSyncDatabase<
+  Options extends BasePowerSyncDatabaseOptions = BasePowerSyncDatabaseOptions
+> extends BaseObserver<PowerSyncDBListener> {
   /**
    * Returns true if the connection is closed.
    */
@@ -271,7 +216,6 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   }
 
   protected _schema: Schema;
-
   private _database: DBAdapter;
 
   protected runExclusiveMutex: Mutex;
@@ -285,34 +229,21 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
   logger: PowerSyncLogger;
 
-  constructor(options: PowerSyncDatabaseOptionsWithDBAdapter);
-  constructor(options: PowerSyncDatabaseOptionsWithOpenFactory);
-  constructor(options: PowerSyncDatabaseOptionsWithSettings);
-  constructor(options: PowerSyncDatabaseOptions); // Note this is important for extending this class and maintaining API compatibility
-  constructor(protected options: PowerSyncDatabaseOptions) {
+  constructor(protected options: Options) {
     super();
     this.logger = options.logger ?? createConsoleLogger();
 
-    const { database, schema } = options;
+    const { schema } = options;
 
     if (typeof schema?.toJSON != 'function') {
       throw new Error('The `schema` option should be provided and should be an instance of `Schema`.');
     }
 
-    if (isDBAdapter(database)) {
-      this._database = database;
-    } else if (isSQLOpenFactory(database)) {
-      this._database = database.openDB();
-    } else if (isPowerSyncDatabaseOptionsWithSettings(options)) {
-      this._database = this.openDBAdapter(options);
-    } else {
-      throw new Error('The provided `database` option is invalid.');
-    }
-
+    this._database = this.openDBAdapter();
     this.bucketStorageAdapter = this.generateBucketStorageAdapter();
     this.closed = false;
     this.currentStatus = new SyncStatus({});
-    this.options = { ...DEFAULT_POWERSYNC_DB_OPTIONS, ...options };
+    this.options = { ...options };
     this._schema = schema;
     this.ready = false;
     this.sdkVersion = '';
@@ -332,7 +263,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       createSyncImplementation: async (connector, options) => {
         await this.waitForReady();
         return this.runExclusive(async () => {
-          const sync = this.generateSyncStreamImplementation(connector, this.resolvedConnectionOptions(options));
+          const sync = this.generateSyncStreamImplementation(connector, options);
           const onDispose = sync.registerListener({
             statusChanged: (status) => {
               this.currentStatus = new SyncStatus({
@@ -392,7 +323,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   /**
    * Opens the DBAdapter given open options using a default open factory
    */
-  protected abstract openDBAdapter(options: PowerSyncDatabaseOptionsWithSettings): DBAdapter;
+  protected abstract openDBAdapter(): DBAdapter;
 
   /**
    * Generates a base configuration for {@link TriggerManagerImpl}.
@@ -406,7 +337,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
   protected abstract generateSyncStreamImplementation(
     connector: PowerSyncBackendConnector,
-    options: CreateSyncImplementationOptions & RequiredAdditionalConnectionOptions
+    options: CreateSyncImplementationOptions
   ): StreamingSyncImplementation;
 
   protected abstract generateBucketStorageAdapter(): BucketStorageAdapter;
@@ -575,19 +506,6 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     return this.waitForReady();
   }
 
-  // Use the options passed in during connect, or fallback to the options set during database creation or fallback to the default options
-  protected resolvedConnectionOptions(
-    options: CreateSyncImplementationOptions
-  ): CreateSyncImplementationOptions & RequiredAdditionalConnectionOptions {
-    return {
-      ...options,
-      retryDelayMs:
-        options?.retryDelayMs ?? this.options.retryDelayMs ?? this.options.retryDelay ?? DEFAULT_RETRY_DELAY_MS,
-      crudUploadThrottleMs:
-        options?.crudUploadThrottleMs ?? this.options.crudUploadThrottleMs ?? DEFAULT_CRUD_UPLOAD_THROTTLE_MS
-    };
-  }
-
   /**
    * @deprecated Use {@link AbstractPowerSyncDatabase#close} instead.
    * Clears all listeners registered by {@link AbstractPowerSyncDatabase#registerListener}.
@@ -607,11 +525,8 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   /**
    * Connects to stream of events from the PowerSync instance.
    */
-  async connect(connector: PowerSyncBackendConnector, options?: PowerSyncConnectionOptions) {
-    const resolvedOptions: InternalConnectionOptions = options ?? {};
-    resolvedOptions.serializedSchema = this.schema.toJSON();
-
-    return this.connectionManager.connect(connector, resolvedOptions);
+  async connect(connector: PowerSyncBackendConnector, options?: SyncOptions) {
+    return this.connectionManager.connect(connector, options ?? {}, this.schema.toJSON());
   }
 
   /**

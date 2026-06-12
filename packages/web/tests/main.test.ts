@@ -3,7 +3,7 @@ import { v4 as uuid } from 'uuid';
 import { describe, expect, it } from 'vitest';
 import { TEST_SCHEMA, TestDatabase } from './utils/test-schema.js';
 import { generateTestDb } from './utils/testDb.js';
-import { defaultLoggerConfig } from './utils/logger.js';
+import { defaultLogLevel, defaultTestLogger } from './utils/logger.js';
 // TODO import tests from a common package
 
 describe(
@@ -18,11 +18,10 @@ describe(
   describeBasicTests(() =>
     generateTestDb({
       database: {
-        dbFilename: 'basic-no-worker.sqlite'
-      },
-      flags: {
+        dbFilename: 'basic-no-worker.sqlite',
         useWebWorker: false
       },
+
       schema: TEST_SCHEMA
     })
   )
@@ -33,10 +32,13 @@ describe(
   { sequential: true },
   describeBasicTests(() =>
     generateTestDb({
-      database: new WASQLiteOpenFactory({
-        ...defaultLoggerConfig,
-        dbFilename: 'basic-opfs.sqlite',
-        vfs: WASQLiteVFS.OPFSCoopSyncVFS
+      factory: new WASQLiteOpenFactory({
+        logger: defaultTestLogger,
+        open: {
+          dbFilename: 'basic-opfs.sqlite',
+          vfs: WASQLiteVFS.OPFSCoopSyncVFS,
+          databaseWorkerLogLevel: defaultLogLevel
+        }
       }),
       schema: TEST_SCHEMA
     })

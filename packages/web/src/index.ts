@@ -1,10 +1,8 @@
 export * from '@powersync/common';
 export * from './attachments/IndexDBFileSystemAdapter.js';
-export * from './db/adapters/AbstractWebPowerSyncDatabaseOpenFactory.js';
 export { WASQLiteVFS } from './db/adapters/wa-sqlite/vfs.js';
 export * from './db/adapters/wa-sqlite/WASQLiteOpenFactory.js';
-export * from './db/adapters/wa-sqlite/WASQLitePowerSyncDatabaseOpenFactory.js';
-export * from './db/adapters/web-sql-flags.js';
+export * from './db/adapters/options.js';
 export * from './db/PowerSyncDatabase.js';
 export * from './db/sync/SharedWebStreamingSyncImplementation.js';
 export * from './db/sync/WebRemote.js';

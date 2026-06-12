@@ -68,17 +68,19 @@ export class PowerSyncService {
 
   constructor() {
     const factory = new WASQLiteOpenFactory({
-      dbFilename: 'test.db',
-      vfs: WASQLiteVFS.OPFSCoopSyncVFS,
-      // Specify the path to the worker script
-      worker: 'assets/@powersync/worker/WASQLiteDB.umd.js',
-      logLevel: LogLevels.debug,
-      logger: createConsoleLogger({ prefix: 'powersync' })
+      logger: createConsoleLogger({ prefix: 'powersync' }),
+      open: {
+        dbFilename: 'test.db',
+        vfs: WASQLiteVFS.OPFSCoopSyncVFS,
+        // Specify the path to the worker script
+        worker: 'assets/@powersync/worker/WASQLiteDB.umd.js',
+        databaseWorkerLogLevel: LogLevels.debug
+      }
     });
 
     this.db = new PowerSyncDatabase({
       schema: AppSchema,
-      database: factory,
+      factory,
 
       sync: {
         // Specify the path to the worker script

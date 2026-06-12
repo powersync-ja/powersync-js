@@ -1,5 +1,8 @@
 {
   "extends": "../../../tsconfig.tests.json",
+  "compilerOptions": {
+    "types": ["node"],
+  },
   "references": [
     {
       "path": "../../common"

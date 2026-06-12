@@ -47,7 +47,7 @@ const AppSchema = new Schema({
 
 const createDatabase = () => {
   return new PowerSyncDatabase({
-    database: new OPSqliteOpenFactory({
+    factory: new OPSqliteOpenFactory({
       dbFilename: 'sqlitetest.db'
     }),
     schema: AppSchema
