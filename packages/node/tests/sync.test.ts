@@ -2,11 +2,10 @@ import { beforeEach, describe, expect, vi } from 'vitest';
 
 import {
   AbstractPowerSyncDatabase,
-  PowerSyncConnectionOptions,
   PowerSyncLogger,
   ProgressWithOperations,
   Schema,
-  SyncClientImplementation,
+  SyncOptions,
   SyncStreamConnectionMethod
 } from '@powersync/common';
 import {
@@ -18,6 +17,11 @@ import {
   waitForSyncStatus
 } from './utils.js';
 import { BucketChecksum, OplogEntryJSON } from '@powersync/common/internal/sync_protocol';
+
+const defaultConnectOptions: SyncOptions = {
+  // This might help with test stability/timeouts if a retry is needed.
+  retryDelayMs: 100
+};
 
 describe('Sync', () => {
   describe('json', () => defineSyncTests(false));
@@ -70,6 +74,7 @@ describe('Sync', () => {
 
     // Connecting with the new client should fix the format.
     database.connect(new TestConnector(), {
+      ...defaultConnectOptions,
       connectionMethod: SyncStreamConnectionMethod.HTTP
     });
     await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
@@ -89,7 +94,7 @@ describe('Sync', () => {
   mockSyncServiceTest('reconnects immediately after changed connection', async ({ syncService }) => {
     let database = await syncService.createDatabase();
     database.connect(new TestConnector(), {
-      clientImplementation: SyncClientImplementation.RUST,
+      ...defaultConnectOptions,
       connectionMethod: SyncStreamConnectionMethod.HTTP,
       // This large retry delay is to provoke test timeouts if the don't immediately reconnect.
       retryDelayMs: 60_000
@@ -106,7 +111,8 @@ describe('Sync', () => {
 });
 
 function defineSyncTests(bson: boolean) {
-  const options: PowerSyncConnectionOptions = {
+  const options: SyncOptions = {
+    ...defaultConnectOptions,
     connectionMethod: SyncStreamConnectionMethod.HTTP
   };
 

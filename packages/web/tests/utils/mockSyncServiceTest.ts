@@ -3,6 +3,7 @@ import {
   PowerSyncBackendConnector,
   PowerSyncCredentials,
   Schema,
+  SyncOptions,
   SyncStreamConnectionMethod,
   Table,
   column,
@@ -11,6 +12,7 @@ import {
 import { PowerSyncDatabase, WebPowerSyncDatabaseOptions } from '@powersync/web';
 import { MockedFunction, expect, onTestFinished, test, vi } from 'vitest';
 import { MockSyncService, getMockSyncServiceFromWorker } from './MockSyncServiceClient.js';
+import { GenerateConnectedDatabaseOptions, generateDefaultOptions } from './generateConnectedDatabase.js';
 
 // Define schema similar to node tests
 const lists = new Table({
@@ -61,30 +63,27 @@ export const sharedMockSyncServiceTest = test.extend<{
     connect: (customConnector?: PowerSyncBackendConnector) => Promise<ConnectResult>;
     database: PowerSyncDatabase;
     databaseName: string;
-    openDatabase: (customConfig?: Partial<WebPowerSyncDatabaseOptions>) => PowerSyncDatabase;
+    openDatabase: (options?: Omit<GenerateConnectedDatabaseOptions, 'database'>) => PowerSyncDatabase;
     mockService: MockSyncService;
+    defaultSyncOptions: SyncOptions;
   };
 }>({
   context: async ({}, use) => {
     const dbFilename = `test-${crypto.randomUUID()}.db`;
     const logger = createConsoleLogger({ prefix: 'mocked sync', minLevel: LogLevels.debug });
 
-    const openDatabase = (customConfig: Partial<WebPowerSyncDatabaseOptions> = {}) => {
-      const db = new PowerSyncDatabase({
-        database: {
-          dbFilename,
-          ...(customConfig.database ?? {})
-        },
-        flags: {
-          enableMultiTabs: true,
-          ...(customConfig.flags ?? {})
-        },
-        retryDelayMs: 1000,
-        crudUploadThrottleMs: 1000,
-        schema: AppSchema,
-        logger,
-        ...customConfig
-      });
+    const openDatabase = (options?: Omit<GenerateConnectedDatabaseOptions, 'database'>) => {
+      const db = new PowerSyncDatabase(
+        generateDefaultOptions({
+          schema: AppSchema,
+          logger,
+          database: {
+            dbFilename,
+            enableMultiTabs: true
+          },
+          ...options
+        })
+      );
       onTestFinished(async () => {
         if (!db.closed) {
           await db.disconnect();
@@ -106,14 +105,17 @@ export const sharedMockSyncServiceTest = test.extend<{
     }
 
     const connector = createTestConnector();
+    const defaultSyncOptions: SyncOptions = {
+      retryDelayMs: 1000,
+      crudUploadThrottleMs: 1000,
+      connectionMethod: SyncStreamConnectionMethod.HTTP
+    };
 
     const connectFn = async (customConnector?: PowerSyncBackendConnector): Promise<ConnectResult> => {
       const connectorToUse = customConnector ?? connector;
 
       // Call powersync.connect() to start the sync worker
-      const connectionPromise = database.connect(connectorToUse, {
-        connectionMethod: SyncStreamConnectionMethod.HTTP
-      });
+      const connectionPromise = database.connect(connectorToUse, defaultSyncOptions);
 
       // Wait for the database to report connecting: true before using the sync service
       await vi.waitFor(
@@ -152,7 +154,8 @@ export const sharedMockSyncServiceTest = test.extend<{
       database,
       databaseName: dbFilename,
       openDatabase,
-      mockService
+      mockService,
+      defaultSyncOptions
     });
   }
 });

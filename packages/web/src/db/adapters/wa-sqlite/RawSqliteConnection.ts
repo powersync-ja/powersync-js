@@ -1,7 +1,7 @@
 import { Factory as WaSqliteFactory, SQLITE_ROW } from '@journeyapps/wa-sqlite';
 
-import { DEFAULT_MODULE_FACTORIES, WASQLiteModuleFactory } from './vfs.js';
-import { ResolvedWASQLiteOpenFactoryOptions } from './WASQLiteOpenFactory.js';
+import { DEFAULT_MODULE_FACTORIES, WASQLiteModuleFactory, WASQLiteVFS } from './vfs.js';
+import { TemporaryStorageOption } from '../options.js';
 
 export interface RawResultSet {
   columns: string[];
@@ -13,6 +13,18 @@ export interface RawQueryResult {
   lastInsertRowId: number;
   autocommit: boolean;
   resultSet: RawResultSet | undefined;
+}
+
+/**
+ * @internal
+ */
+export interface RawWaSqliteDatabaseOptions {
+  filename: string;
+  readonly: boolean;
+  vfs: WASQLiteVFS;
+  encryptionKey: string | undefined;
+  temporaryStorage: TemporaryStorageOption;
+  cacheSizeKb: number;
 }
 
 /**
@@ -29,7 +41,7 @@ export class RawSqliteConnection {
   private db: number = 0;
   private _moduleFactory: WASQLiteModuleFactory;
 
-  constructor(readonly options: ResolvedWASQLiteOpenFactoryOptions) {
+  constructor(readonly options: RawWaSqliteDatabaseOptions) {
     this._moduleFactory = DEFAULT_MODULE_FACTORIES[this.options.vfs];
   }
 
@@ -40,8 +52,8 @@ export class RawSqliteConnection {
   async init() {
     const api = (this._sqliteAPI = await this.openSQLiteAPI());
     this.db = await api.open_v2(
-      this.options.dbFilename,
-      this.options.isReadOnly ? 1 /* SQLITE_OPEN_READONLY */ : 6 /* SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE */
+      this.options.filename,
+      this.options.readonly ? 1 /* SQLITE_OPEN_READONLY */ : 6 /* SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE */
     );
     await this.executeRaw(`PRAGMA temp_store = ${this.options.temporaryStorage};`);
     if (this.options.encryptionKey) {
@@ -55,7 +67,7 @@ export class RawSqliteConnection {
 
   private async openSQLiteAPI(): Promise<SQLiteAPI> {
     const { module, vfs } = await this._moduleFactory({
-      dbFileName: this.options.dbFilename,
+      dbFileName: this.options.filename,
       encryptionKey: this.options.encryptionKey
     });
     const sqlite3 = WaSqliteFactory(module);
@@ -69,7 +81,7 @@ export class RawSqliteConnection {
      * Create the multiple cipher vfs if an encryption key is provided
      */
     if (this.options.encryptionKey) {
-      const createResult = module.ccall('sqlite3mc_vfs_create', 'int', ['string', 'int'], [this.options.dbFilename, 1]);
+      const createResult = module.ccall('sqlite3mc_vfs_create', 'int', ['string', 'int'], [this.options.filename, 1]);
       if (createResult !== 0) {
         throw new Error('Failed to create multiple cipher vfs, Database encryption will not work');
       }

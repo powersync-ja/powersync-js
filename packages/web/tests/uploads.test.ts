@@ -1,8 +1,8 @@
-import { PowerSyncLogger, WebPowerSyncDatabaseOptions } from '@powersync/web';
+import { PowerSyncLogger } from '@powersync/web';
 import p from 'p-defer';
 import { v4 } from 'uuid';
-import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { DEFAULT_CONNECTED_POWERSYNC_OPTIONS, generateConnectedDatabase } from './utils/generateConnectedDatabase.js';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { generateConnectedDatabase, GenerateConnectedDatabaseOptions } from './utils/generateConnectedDatabase.js';
 
 // Don't want to actually export the warning string from the package
 const PARTIAL_WARNING = 'Potentially previously uploaded CRUD entries are still present';
@@ -10,34 +10,33 @@ const PARTIAL_WARNING = 'Potentially previously uploaded CRUD entries are still 
 describe(
   'CRUD Uploads - With Web Workers',
   { sequential: true },
-  describeCrudUploadTests(() => ({
-    database: {
-      dbFilename: `${v4()}.db`
-    },
-    schema: DEFAULT_CONNECTED_POWERSYNC_OPTIONS.powerSyncOptions.schema,
-    crudUploadThrottleMs: 1_000,
-    flags: {
-      enableMultiTabs: false
-    }
-  }))
+  describeCrudUploadTests(
+    (logger) =>
+      ({
+        logger,
+        database: {
+          dbFilename: `${v4()}.db`,
+          enableMultiTabs: false
+        }
+      }) satisfies GenerateConnectedDatabaseOptions
+  )
 );
 
 describe(
   'CRUD Uploads - Without Web Workers',
   { sequential: true },
-  describeCrudUploadTests(() => ({
-    database: {
-      dbFilename: `crud-uploads-test-${v4()}.db`
-    },
-    schema: DEFAULT_CONNECTED_POWERSYNC_OPTIONS.powerSyncOptions.schema,
-    crudUploadThrottleMs: 1_000,
-    flags: {
-      useWebWorker: false
-    }
-  }))
+  describeCrudUploadTests(
+    (logger) =>
+      ({
+        logger,
+        database: {
+          useWebWorker: false
+        }
+      }) satisfies GenerateConnectedDatabaseOptions
+  )
 );
 
-function describeCrudUploadTests(getDatabaseOptions: () => WebPowerSyncDatabaseOptions) {
+function describeCrudUploadTests(getDatabaseOptions: (logger: PowerSyncLogger) => GenerateConnectedDatabaseOptions) {
   return () => {
     let logLines: string[] = [];
     let logger: PowerSyncLogger;
@@ -53,14 +52,9 @@ function describeCrudUploadTests(getDatabaseOptions: () => WebPowerSyncDatabaseO
     });
 
     it('should warn for missing upload operations in uploadData', async () => {
-      const options = getDatabaseOptions();
+      const options = getDatabaseOptions(logger);
 
-      const { powersync, uploadSpy } = await generateConnectedDatabase({
-        powerSyncOptions: {
-          ...options,
-          logger
-        }
-      });
+      const { powersync, uploadSpy } = await generateConnectedDatabase(options, { crudUploadThrottleMs: 1_000 });
 
       const deferred = p();
 
@@ -89,14 +83,9 @@ function describeCrudUploadTests(getDatabaseOptions: () => WebPowerSyncDatabaseO
     });
 
     it('should immediately upload sequential transactions', async () => {
-      const options = getDatabaseOptions();
+      const options = getDatabaseOptions(logger);
 
-      const { powersync, uploadSpy } = await generateConnectedDatabase({
-        powerSyncOptions: {
-          ...options,
-          logger
-        }
-      });
+      const { powersync, uploadSpy } = await generateConnectedDatabase(options, { crudUploadThrottleMs: 1_000 });
 
       const deferred = p();
 

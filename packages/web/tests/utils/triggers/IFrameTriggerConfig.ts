@@ -7,13 +7,12 @@
 
 import { DiffTriggerOperation, PowerSyncDatabase, WASQLiteOpenFactory, WASQLiteVFS } from '@powersync/web';
 import { TEST_SCHEMA } from '../test-schema.js';
-import { defaultLoggerConfig } from '../logger.js';
+import { defaultLogLevel, defaultTestLogger } from '../logger.js';
 
 const db = new PowerSyncDatabase({
-  database: new WASQLiteOpenFactory({
-    ...defaultLoggerConfig,
-    dbFilename: 'triggers.sqlite',
-    vfs: WASQLiteVFS.OPFSCoopSyncVFS
+  factory: new WASQLiteOpenFactory({
+    logger: defaultTestLogger,
+    open: { dbFilename: 'triggers.sqlite', databaseWorkerLogLevel: defaultLogLevel, vfs: WASQLiteVFS.OPFSCoopSyncVFS }
   }),
   schema: TEST_SCHEMA
 });

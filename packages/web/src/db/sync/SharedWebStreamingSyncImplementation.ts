@@ -1,7 +1,7 @@
 import {
   LogRecord,
-  PowerSyncConnectionOptions,
   PowerSyncCredentials,
+  ResolvedSyncOptions,
   SubscribedStream,
   SyncStatusOptions
 } from '@powersync/common';
@@ -10,7 +10,6 @@ import { AbstractSharedSyncClientProvider } from '../../worker/sync/AbstractShar
 import { ManualSharedSyncPayload, SharedSyncClientEvent } from '../../worker/sync/SharedSyncImplementation.js';
 import { WorkerClient } from '../../worker/sync/WorkerClient.js';
 import { WebDBAdapter } from '../adapters/WebDBAdapter.js';
-import { DEFAULT_CACHE_SIZE_KB, TemporaryStorageOption, resolveWebSQLFlags } from '../adapters/web-sql-flags.js';
 import {
   WebStreamingSyncImplementation,
   WebStreamingSyncImplementationOptions
@@ -76,6 +75,7 @@ class SharedSyncClientProvider extends AbstractSharedSyncClientProvider {
 export interface SharedWebStreamingSyncImplementationOptions extends WebStreamingSyncImplementationOptions {
   logLevel: number;
   db: WebDBAdapter;
+  enableBroadcastLogs: boolean;
 }
 
 /**
@@ -90,27 +90,18 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
   protected dbAdapter: WebDBAdapter;
   private abortOnClose = new AbortController();
   private logLevel: number;
+  private enableBroadcastLogs: boolean;
 
   constructor(options: SharedWebStreamingSyncImplementationOptions) {
     super(options);
     this.dbAdapter = options.db;
     this.logLevel = options.logLevel;
-    /**
-     * Configure or connect to the shared sync worker.
-     * This worker will manage all syncing operations remotely.
-     */
-    const resolvedWorkerOptions = {
-      dbFilename: this.options.identifier!,
-      temporaryStorage: TemporaryStorageOption.MEMORY,
-      cacheSizeKb: DEFAULT_CACHE_SIZE_KB,
-      ...options,
-      flags: resolveWebSQLFlags(options.flags)
-    };
+    this.enableBroadcastLogs = options.enableBroadcastLogs;
 
     const syncWorker = options.sync?.worker;
     if (syncWorker) {
       if (typeof syncWorker === 'function') {
-        this.messagePort = syncWorker(resolvedWorkerOptions).port;
+        this.messagePort = syncWorker().port;
       } else {
         this.messagePort = new SharedWorker(`${syncWorker}`, {
           /* @vite-ignore */
@@ -179,18 +170,16 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
     // Awaiting here ensures the worker is waiting for the lock
     await this.syncManager.addLockBasedCloseSignal(closeSignal);
 
-    const { crudUploadThrottleMs, identifier, retryDelayMs } = this.options;
-    const flags = { ...this.webOptions.flags, workers: undefined };
+    const { identifier } = this.options;
 
     await this.syncManager.setParams(
       {
         dbParams: this.dbAdapter.getConfiguration(),
         streamOptions: {
-          crudUploadThrottleMs,
           identifier,
-          retryDelayMs,
-          flags: flags
-        }
+          serializedSchema: this.options.serializedSchema
+        },
+        enableBroadcastLogs: this.enableBroadcastLogs
       },
       this.options.subscriptions
     );
@@ -200,9 +189,9 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
    * Starts the sync process, this effectively acts as a call to
    * `connect` if not yet connected.
    */
-  async connect(options?: PowerSyncConnectionOptions): Promise<void> {
+  async connect(options: ResolvedSyncOptions): Promise<void> {
     await this.waitForReady();
-    return this.syncManager.connect(options);
+    return this.syncManager.connect(options, this.options.serializedSchema);
   }
 
   async disconnect(): Promise<void> {

@@ -3,7 +3,7 @@ import { WASQLiteOpenFactory, WASQLiteVFS } from '@powersync/web';
 import { describe, expect, it, onTestFinished, vi } from 'vitest';
 import { TEST_SCHEMA } from './utils/test-schema.js';
 import { generateTestDb } from './utils/testDb.js';
-import { defaultLoggerConfig } from './utils/logger.js';
+import { defaultLogLevel, defaultTestLogger } from './utils/logger.js';
 
 // Shared helper to spin up an iframe that creates a persisted trigger table
 const createTriggerInIframe = () => {
@@ -37,9 +37,12 @@ const createTriggerInIframe = () => {
 describe('Triggers', () => {
   it('should use temporary triggers by default with IndexedDB VFS', async () => {
     const db = generateTestDb({
-      database: new WASQLiteOpenFactory({
-        ...defaultLoggerConfig,
-        dbFilename: 'temp-triggers.sqlite'
+      factory: new WASQLiteOpenFactory({
+        logger: defaultTestLogger,
+        open: {
+          dbFilename: 'temp-triggers.sqlite',
+          databaseWorkerLogLevel: defaultLogLevel
+        }
         // default VFS (IndexedDB) - no vfs specified
       }),
       schema: TEST_SCHEMA
@@ -86,10 +89,13 @@ describe('Triggers', () => {
 
   it('should automatically configure persistence for OPFS triggers', async () => {
     const db = generateTestDb({
-      database: new WASQLiteOpenFactory({
-        ...defaultLoggerConfig,
-        dbFilename: 'triggers.sqlite',
-        vfs: WASQLiteVFS.OPFSCoopSyncVFS
+      factory: new WASQLiteOpenFactory({
+        logger: defaultTestLogger,
+        open: {
+          databaseWorkerLogLevel: defaultLogLevel,
+          dbFilename: 'triggers.sqlite',
+          vfs: WASQLiteVFS.OPFSCoopSyncVFS
+        }
       }),
       schema: TEST_SCHEMA
     });
@@ -128,10 +134,13 @@ describe('Triggers', () => {
   it('should cleanup persisted trigger tables when opening a new client', async () => {
     const openDB = () =>
       generateTestDb({
-        database: new WASQLiteOpenFactory({
-          ...defaultLoggerConfig,
-          dbFilename: 'triggers.sqlite',
-          vfs: WASQLiteVFS.OPFSCoopSyncVFS
+        factory: new WASQLiteOpenFactory({
+          logger: defaultTestLogger,
+          open: {
+            databaseWorkerLogLevel: defaultLogLevel,
+            dbFilename: 'triggers.sqlite',
+            vfs: WASQLiteVFS.OPFSCoopSyncVFS
+          }
         }),
         schema: TEST_SCHEMA
       });
@@ -241,10 +250,13 @@ describe('Triggers', () => {
   it('should report diff operations across clients (insert from client B observed by client A)', async () => {
     const openDB = (filename: string) =>
       generateTestDb({
-        database: new WASQLiteOpenFactory({
-          ...defaultLoggerConfig,
-          dbFilename: filename,
-          vfs: WASQLiteVFS.OPFSCoopSyncVFS
+        factory: new WASQLiteOpenFactory({
+          logger: defaultTestLogger,
+          open: {
+            databaseWorkerLogLevel: defaultLogLevel,
+            dbFilename: filename,
+            vfs: WASQLiteVFS.OPFSCoopSyncVFS
+          }
         }),
         schema: TEST_SCHEMA
       });

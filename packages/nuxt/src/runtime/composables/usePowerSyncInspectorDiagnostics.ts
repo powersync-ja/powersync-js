@@ -2,7 +2,7 @@ import { usePowerSync, useStatus } from '@powersync/vue';
 import type {
   AbstractPowerSyncDatabase,
   PowerSyncBackendConnector,
-  PowerSyncConnectionOptions,
+  SyncOptions,
   SyncStatus,
   UploadQueueStats
 } from '@powersync/common';
@@ -107,7 +107,7 @@ type ReadonlyRef<T> = Readonly<Ref<T>>;
 export interface UsePowerSyncInspectorDiagnosticsReturn {
   db: Ref<AbstractPowerSyncDatabase> | undefined;
   connector: ComputedRef<PowerSyncBackendConnector | null>;
-  connectionOptions: ComputedRef<PowerSyncConnectionOptions | null>;
+  connectionOptions: ComputedRef<SyncOptions | null>;
   isDiagnosticSchemaSetup: ReadonlyRef<boolean>;
   /** Current sync status. Typed as SyncStatus for a concise doc signature; at runtime it may be a readonly proxy. */
   syncStatus: ReadonlyRef<SyncStatus>;
@@ -297,7 +297,7 @@ export function usePowerSyncInspectorDiagnostics(): UsePowerSyncInspectorDiagnos
   const clearData = async () => {
     await db.value?.syncStreamImplementation?.disconnect();
     const connector = db.value.connector;
-    const connectionOptions = db.value.connectionOptions as PowerSyncConnectionOptions;
+    const connectionOptions = db.value.connectionOptions as SyncOptions;
     await db.value?.disconnectAndClear();
     const schemaManager = getCurrentSchemaManager();
     await schemaManager.clear();

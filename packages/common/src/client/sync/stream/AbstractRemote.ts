@@ -13,6 +13,7 @@ import {
 } from '../../../utils/stream_transform.js';
 import { EventIterator } from 'event-iterator';
 import type { Queue } from 'event-iterator/lib/event-iterator.js';
+import { FetchStrategy } from '../options.js';
 
 /**
  * @internal
@@ -48,30 +49,6 @@ export type SyncStreamOptions = {
   headers?: Record<string, string>;
   abortSignal: AbortSignal;
   fetchOptions?: Request;
-};
-
-/**
- * @public
- */
-export enum FetchStrategy {
-  /**
-   * Queues multiple sync events before processing, reducing round-trips.
-   * This comes at the cost of more processing overhead, which may cause ACK timeouts on older/weaker devices for big enough datasets.
-   */
-  Buffered = 'buffered',
-
-  /**
-   * Processes each sync event immediately before requesting the next.
-   * This reduces processing overhead and improves real-time responsiveness.
-   */
-  Sequential = 'sequential'
-}
-
-/**
- * @internal
- */
-export type SocketSyncStreamOptions = SyncStreamOptions & {
-  fetchStrategy: FetchStrategy;
 };
 
 /**
@@ -119,6 +96,16 @@ export type AbstractRemoteOptions = {
    */
   fetchOptions?: {};
 };
+
+/**
+ * @internal
+ */
+export interface SocketSyncStreamOptions {
+  path: string;
+  fetchStrategy: FetchStrategy;
+  abortSignal: AbortSignal;
+  data: unknown;
+}
 
 /**
  * @internal
