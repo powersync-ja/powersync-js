@@ -1,0 +1,68 @@
+{
+    "files": [],
+    "references": [
+        {
+            "path": "./packages/adapter-sql-js"
+        },
+        {
+            "path": "./packages/attachments"
+        },
+        {
+            "path": "./packages/attachments-storage-react-native"
+        },
+        {
+            "path": "./packages/capacitor"
+        },
+        {
+            "path": "./packages/common"
+        },
+        {
+            "path": "./packages/drizzle-driver"
+        },
+        {
+            "path": "./packages/kysely-driver"
+        },
+        {
+            "path": "./packages/node"
+        },
+        {
+            "path": "./packages/nuxt"
+        },
+        {
+            "path": "./packages/powersync-op-sqlite"
+        },
+        {
+            "path": "./packages/react"
+        },
+        {
+            "path": "./packages/react-native"
+        },
+        {
+            "path": "./packages/tanstack-react-query"
+        },
+        {
+            "path": "./packages/tauri"
+        },
+        {
+            "path": "./packages/vue"
+        },
+        {
+            "path": "./packages/web"
+        },
+        {
+            "path": "./tools/diagnostics-app"
+        },
+        {
+            "path": "./tools/local-linking"
+        },
+        {
+            "path": "./tools/powersynctests"
+        },
+        {
+            "path": "./packages/common/tests"
+        },
+        {
+            "path": "./packages/node/tests"
+        }
+    ]
+}

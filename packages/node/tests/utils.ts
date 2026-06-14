@@ -4,22 +4,20 @@ import path from 'node:path';
 import { ReadableStream, TransformStream } from 'node:stream/web';
 
 import { createLogger } from '@powersync/common';
+import { BucketChecksum, StreamingSyncCheckpoint, StreamingSyncLine } from '@powersync/common/internal/sync_protocol';
 import Logger from 'js-logger';
 import { onTestFinished, test } from 'vitest';
 import {
   AbstractPowerSyncDatabase,
-  BucketChecksum,
   NodePowerSyncDatabaseOptions,
   PowerSyncBackendConnector,
   PowerSyncCredentials,
   PowerSyncDatabase,
   Schema,
-  StreamingSyncCheckpoint,
-  StreamingSyncLine,
   SyncStatus,
   Table,
   column
-} from '../lib';
+} from '../lib/index.js';
 import { BSON } from 'bson';
 
 export async function createTempDir() {
@@ -59,8 +57,8 @@ export async function createDatabase(
   tmpdir: string,
   options: Partial<NodePowerSyncDatabaseOptions> = {}
 ): Promise<PowerSyncDatabase> {
-  const defaultLogger = createLogger('PowerSyncTest', { logLevel: Logger.TRACE });
-  (defaultLogger as any).invoke = (_, args) => {
+  const defaultLogger = createLogger('PowerSyncTest', { logLevel: (Logger as any).TRACE });
+  (defaultLogger as any).invoke = (_: any, args: any) => {
     console.log(...args);
   };
 
@@ -108,9 +106,12 @@ export function createMockSyncServiceTest(bson: boolean) {
       const databaseName = `test-${crypto.randomUUID()}.db`;
 
       const listeners: Listener[] = [];
+      let requestInterceptor: (request: Request) => Promise<void> = async () => {};
 
       const inMemoryFetch: typeof fetch = async (info, init?) => {
         const request = new Request(info, init);
+        await requestInterceptor(request);
+
         if (request.url.endsWith('/sync/stream')) {
           const body = await request.json();
           let listener: Listener | null = null;
@@ -176,6 +177,9 @@ export function createMockSyncServiceTest(bson: boolean) {
       };
 
       await use({
+        installRequestInterceptor: (interceptor) => {
+          requestInterceptor = interceptor;
+        },
         get connectedListeners() {
           return listeners.map((e) => e.request);
         },
@@ -193,12 +197,15 @@ export function createMockSyncServiceTest(bson: boolean) {
 export const mockSyncServiceTest = createMockSyncServiceTest(false);
 
 export interface MockSyncService {
+  installRequestInterceptor(interceptor: (request: Request) => Promise<void>): void;
   pushLine: (line: StreamingSyncLine) => void;
   connectedListeners: any[];
   createDatabase: (options?: Partial<NodePowerSyncDatabaseOptions>) => Promise<PowerSyncDatabase>;
 }
 
 export class TestConnector implements PowerSyncBackendConnector {
+  uploadDataInvocations = 0;
+
   async fetchCredentials(): Promise<PowerSyncCredentials> {
     return {
       endpoint: 'https://powersync.example.org',
@@ -208,6 +215,7 @@ export class TestConnector implements PowerSyncBackendConnector {
   async uploadData(database: AbstractPowerSyncDatabase): Promise<void> {
     const tx = await database.getNextCrudTransaction();
     await tx?.complete();
+    this.uploadDataInvocations++;
   }
 }
 
@@ -241,7 +249,6 @@ export function checkpoint(options: { last_op_id: number; buckets?: any[]; strea
     checkpoint: {
       last_op_id: `${options.last_op_id}`,
       buckets: options.buckets ?? [],
-      write_checkpoint: null,
       streams: options.streams ?? []
     }
   };
@@ -267,7 +274,7 @@ export function stream(name: string, isDefault: boolean, errors = []) {
 
 export function nextStatus(db: PowerSyncDatabase): Promise<SyncStatus> {
   return new Promise((resolve) => {
-    let l;
+    let l: () => void;
 
     l = db.registerListener({
       statusChanged(status) {

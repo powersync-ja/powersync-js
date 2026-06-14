@@ -83,5 +83,14 @@ function describeBasicTests(generateDB: () => PowerSyncDatabase) {
       expect(result[1].name).equals('Steven');
       expect(result[2].name).equals('Chris');
     });
+
+    it('can use readTransaction', async () => {
+      const db = generateDB();
+      await db.execute('INSERT INTO customers (id, name) VALUES (uuid(), ?)', ['name']);
+      const names = await db.readTransaction(async (tx) => {
+        return await tx.getAll<{ name: string }>('SELECT name FROM customers');
+      });
+      expect(names).deep.equal([{ name: 'name' }]);
+    });
   };
 }

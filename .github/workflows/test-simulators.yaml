@@ -3,12 +3,16 @@ name: Test Simulators/Emulators
 on:
   pull_request: # triggered for any PR updates (including new pushes to PR branch)
 
+permissions:
+  contents: read
+
 jobs:
   check-changes:
     name: Check for relevant changes
     runs-on: ubuntu-latest
     outputs:
-      should_run: ${{ steps.check.outputs.should_run }}
+      react_native_simulator_should_run: ${{ steps.check.outputs.react_native_simulator_should_run }}
+      capacitor_should_run: ${{ steps.check.outputs.capacitor_should_run }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -18,15 +22,21 @@ jobs:
         run: |
           git fetch origin ${{ github.base_ref }}
           if git diff --quiet origin/${{ github.base_ref }} -- packages/common packages/powersync-op-sqlite tools/powersynctests; then
-            echo "should_run=false" >> $GITHUB_OUTPUT
+            echo "react_native_simulator_should_run=false" >> $GITHUB_OUTPUT
           else
-            echo "should_run=true" >> $GITHUB_OUTPUT
+            echo "react_native_simulator_should_run=true" >> $GITHUB_OUTPUT
+          fi
+
+          if git diff --quiet origin/${{ github.base_ref }} -- packages/capacitor pnpm-lock.yaml .github/workflows/test-simulators.yaml; then
+            echo "capacitor_should_run=false" >> $GITHUB_OUTPUT
+          else
+            echo "capacitor_should_run=true" >> $GITHUB_OUTPUT
           fi
 
   test-android:
     name: Test Android
     needs: check-changes
-    if: ${{ needs.check-changes.outputs.should_run == 'true' }}
+    if: ${{ needs.check-changes.outputs.react_native_simulator_should_run == 'true' }}
     runs-on: ubuntu-xl
     timeout-minutes: 30
     env:
@@ -36,30 +46,11 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Enable KVM group perms
-        run: |
-          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
-          sudo udevadm control --reload-rules
-          sudo udevadm trigger --name-match=kvm
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
-
-      - name: AVD Cache
-        uses: actions/cache@v3
-        id: avd-cache
+      - name: Setup Android emulator
+        uses: ./.github/actions/setup-android-emulator
         with:
-          path: |
-            ~/.android/avd/*
-            ~/.android/adb*
-          key: avd-31
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@v3
-        with:
-          java-version: 17
-          distribution: 'adopt'
-          cache: 'gradle'
+          avd-name: ${{ env.AVD_NAME }}
+          cache-key: avd-31
 
       - name: Enable Corepack
         run: corepack enable
@@ -80,22 +71,6 @@ jobs:
         run: |
           pnpx detox clean-framework-cache && pnpx detox build-framework-cache
 
-      - name: Initialize Android Folder
-        run: mkdir -p ~/.android/avd
-
-      - name: create AVD and generate snapshot for caching
-        if: steps.avd-cache.outputs.cache-hit != 'true'
-        uses: reactivecircus/android-emulator-runner@v2.28.0
-        with:
-          api-level: 31
-          force-avd-creation: false
-          target: google_apis
-          arch: x86_64
-          disable-animations: false
-          avd-name: $AVD_NAME
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-          script: echo "Generated AVD snapshot for caching."
-
       - name: Android Emulator Build
         working-directory: ./tools/powersynctests
         run: pnpx detox build --configuration android.emu.release
@@ -106,8 +81,74 @@ jobs:
           api-level: 31
           target: google_apis
           arch: x86_64
-          avd-name: $AVD_NAME
+          avd-name: ${{ env.AVD_NAME }}
           script: cd tools/powersynctests && pnpx detox test --configuration android.emu.release --headless
+          force-avd-creation: false
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+
+  test-capacitor-android:
+    name: Test Capacitor Android
+    needs: check-changes
+    if: ${{ needs.check-changes.outputs.capacitor_should_run == 'true' }}
+    runs-on: ubuntu-xl
+    timeout-minutes: 30
+    env:
+      AVD_NAME: capacitor-avd-x86_64-35
+      TEST_PLATFORM: android
+      TEST_TARGET: emulator-5554
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Setup Android emulator
+        uses: ./.github/actions/setup-android-emulator
+        with:
+          avd-name: ${{ env.AVD_NAME }}
+          cache-key: capacitor-avd-35
+          api-level: '35'
+          java-version: '21'
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: '.nvmrc'
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build
+        run: pnpm run -r --filter "@powersync/capacitor..." build
+
+      - name: Install Capacitor example dependencies
+        working-directory: ./packages/capacitor/example-app
+        run: pnpm install
+
+      - name: Sync and build Capacitor Android app
+        working-directory: ./packages/capacitor/example-app
+        # Prebuild the native app so the later browser-test action can start quickly.
+        # This dummy Vitest server URL is only used for the prebuild; the test run
+        # updates Capacitor with the actual Vitest URL before launching the app.
+        env:
+          CAPACITOR_VITEST_SERVER_URL: http://10.0.2.2
+        run: |
+          pnpm exec cap sync android
+          cd android
+          ./gradlew assembleDebug
+
+      - name: Run Capacitor Android browser tests
+        uses: reactivecircus/android-emulator-runner@v2.28.0
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          avd-name: ${{ env.AVD_NAME }}
+          script: pnpm --dir packages/capacitor exec vitest run --config vitest.config.ts
           force-avd-creation: false
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
@@ -117,7 +158,7 @@ jobs:
     needs: check-changes
     # TODO: Re-enable iOS tests. They have been disabled because they are failing extremely frequently without
     # any apparent cause. In particular, it seems like even starting the simulator times out most of the time.
-    if: ${{ false && needs.check-changes.outputs.should_run == 'true' }}
+    if: ${{ false && needs.check-changes.outputs.react_native_simulator_should_run == 'true' }}
     runs-on: macOS-15
     timeout-minutes: 30
 

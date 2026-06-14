@@ -1,7 +1,7 @@
-import '@vitest/browser/providers/playwright';
-import { defineConfig, UserConfigExport } from 'vitest/config';
+import { defineConfig, ViteUserConfig } from 'vitest/config';
+import { playwright } from '@vitest/browser-playwright';
 
-const config: UserConfigExport = {
+const config: ViteUserConfig = {
   worker: {
     format: 'es'
   },
@@ -31,13 +31,14 @@ const config: UserConfigExport = {
     browser: {
       enabled: true,
       headless: true,
-      provider: 'playwright',
+      provider: playwright(
+        process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
+          ? { launchOptions: { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH } }
+          : {}
+      ),
       instances: [
         {
-          browser: 'chromium',
-          ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
-            ? { launch: { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH } }
-            : {})
+          browser: 'chromium'
         }
       ]
     }

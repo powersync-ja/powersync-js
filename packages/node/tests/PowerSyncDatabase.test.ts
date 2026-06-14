@@ -4,9 +4,9 @@ import { Worker } from 'node:worker_threads';
 import { LockContext, Schema } from '@powersync/common';
 import { randomUUID } from 'node:crypto';
 import { expect, test, vi } from 'vitest';
-import { CrudEntry, CrudTransaction, PowerSyncDatabase } from '../lib';
-import { WorkerOpener } from '../lib/db/options';
-import { AppSchema, databaseTest, tempDirectoryTest } from './utils';
+import { CrudEntry, CrudTransaction, PowerSyncDatabase } from '../lib/index.js';
+import { WorkerOpener } from '../src/db/options.js';
+import { AppSchema, databaseTest, tempDirectoryTest } from './utils.js';
 
 test('validates options', async () => {
   await expect(async () => {
@@ -233,7 +233,9 @@ databaseTest('clear raw tables', async ({ database }) => {
   const schema = new Schema({});
   schema.withRawTables({
     users: {
-      table_name: 'lists',
+      schema: {
+        tableName: 'lists'
+      },
       clear: 'DELETE FROM lists'
     }
   });
@@ -251,4 +253,26 @@ databaseTest('execute batch', async ({ database }) => {
 
   await database.executeBatch('INSERT INTO users (id, name) VALUES (uuid(), ?)', [['a'], ['b'], ['c']]);
   expect(await database.getAll('SELECT * FROM users')).toHaveLength(3);
+});
+
+databaseTest('read transaction', async ({ database }) => {
+  await database.execute('INSERT INTO lists (id, name) VALUES (uuid(), ?)', ['before tx']);
+
+  let completeHasRead: () => void, completeDidWrite: () => void;
+  const hasReadTx = new Promise<void>((resolve) => (completeHasRead = resolve));
+  const didWrite = new Promise<void>((resolve) => (completeDidWrite = resolve));
+
+  const listsInReadTx = database.readTransaction(async (tx) => {
+    completeHasRead();
+    await didWrite;
+
+    // Because this transaction was started before the write, we shouldn't see it in here.
+    return await tx.getAll<{ name: string }>('SELECT name FROM lists');
+  });
+
+  await hasReadTx;
+  await database.execute('INSERT INTO lists (id, name) VALUES (uuid(), ?)', ['after tx']);
+  completeDidWrite!();
+
+  expect(await listsInReadTx).toEqual([{ name: 'before tx' }]);
 });

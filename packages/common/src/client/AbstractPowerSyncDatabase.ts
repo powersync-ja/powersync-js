@@ -3,6 +3,7 @@ import Logger, { ILogger } from 'js-logger';
 import {
   BatchedUpdateNotification,
   DBAdapter,
+  LockContext,
   QueryResult,
   Transaction,
   UpdateNotification,
@@ -47,21 +48,31 @@ import { OnChangeQueryProcessor } from './watched/processors/OnChangeQueryProces
 import { WatchedQueryComparator } from './watched/processors/comparators.js';
 import { Mutex } from '../utils/mutex.js';
 
+/**
+ * @public
+ */
 export interface DisconnectAndClearOptions {
   /** When set to false, data in local-only tables is preserved. */
   clearLocal?: boolean;
 }
 
+/**
+ * @public
+ */
 export interface BasePowerSyncDatabaseOptions extends AdditionalConnectionOptions {
   /** Schema used for the local database. */
   schema: Schema;
   /**
-   * @deprecated Use {@link retryDelayMs} instead as this will be removed in future releases.
+   * @deprecated Use {@link AdditionalConnectionOptions.retryDelayMs} instead as this will be removed in future
+   * releases.
    */
   retryDelay?: number;
   logger?: ILogger;
 }
 
+/**
+ * @public
+ */
 export interface PowerSyncDatabaseOptions extends BasePowerSyncDatabaseOptions {
   /**
    * Source for a SQLite database connection.
@@ -73,23 +84,38 @@ export interface PowerSyncDatabaseOptions extends BasePowerSyncDatabaseOptions {
   database: DBAdapter | SQLOpenFactory | SQLOpenOptions;
 }
 
+/**
+ * @public
+ */
 export interface PowerSyncDatabaseOptionsWithDBAdapter extends BasePowerSyncDatabaseOptions {
   database: DBAdapter;
 }
+
+/**
+ * @public
+ */
 export interface PowerSyncDatabaseOptionsWithOpenFactory extends BasePowerSyncDatabaseOptions {
   database: SQLOpenFactory;
 }
+
+/**
+ * @public
+ */
 export interface PowerSyncDatabaseOptionsWithSettings extends BasePowerSyncDatabaseOptions {
   database: SQLOpenOptions;
 }
 
+/**
+ * @public
+ */
 export interface SQLOnChangeOptions {
   signal?: AbortSignal;
   tables?: string[];
   /** The minimum interval between queries. */
   throttleMs?: number;
   /**
-   * @deprecated All tables specified in {@link tables} will be watched, including PowerSync tables with prefixes.
+   * @deprecated All tables specified in {@link SQLOnChangeOptions.tables} will be watched, including PowerSync tables
+   * with prefixes.
    *
    * Allows for watching any SQL table
    * by not removing PowerSync table name prefixes
@@ -101,6 +127,9 @@ export interface SQLOnChangeOptions {
   triggerImmediate?: boolean;
 }
 
+/**
+ * @public
+ */
 export interface SQLWatchOptions extends SQLOnChangeOptions {
   /**
    * Optional comparator which will be used to compare the results of the query.
@@ -109,20 +138,32 @@ export interface SQLWatchOptions extends SQLOnChangeOptions {
   comparator?: WatchedQueryComparator<QueryResult>;
 }
 
+/**
+ * @public
+ */
 export interface WatchOnChangeEvent {
   changedTables: string[];
 }
 
+/**
+ * @public
+ */
 export interface WatchHandler {
   onResult: (results: QueryResult) => void;
   onError?: (error: Error) => void;
 }
 
+/**
+ * @public
+ */
 export interface WatchOnChangeHandler {
   onChange: (event: WatchOnChangeEvent) => Promise<void> | void;
   onError?: (error: Error) => void;
 }
 
+/**
+ * @public
+ */
 export interface PowerSyncDBListener extends StreamingSyncImplementationListener {
   initialized: () => void;
   schemaChanged: (schema: Schema) => void;
@@ -130,6 +171,9 @@ export interface PowerSyncDBListener extends StreamingSyncImplementationListener
   closed: () => Promise<void> | void;
 }
 
+/**
+ * @public
+ */
 export interface PowerSyncCloseOptions {
   /**
    * Disconnect the sync stream client if connected.
@@ -145,21 +189,32 @@ const DEFAULT_DISCONNECT_CLEAR_OPTIONS: DisconnectAndClearOptions = {
   clearLocal: true
 };
 
+/**
+ * @internal
+ */
 export const DEFAULT_POWERSYNC_CLOSE_OPTIONS: PowerSyncCloseOptions = {
   disconnect: true
 };
 
+/**
+ * @internal
+ */
 export const DEFAULT_POWERSYNC_DB_OPTIONS = {
   retryDelayMs: 5000,
   crudUploadThrottleMs: DEFAULT_CRUD_UPLOAD_THROTTLE_MS
 };
 
+/**
+ * @internal
+ */
 export const DEFAULT_CRUD_BATCH_LIMIT = 100;
 
 /**
  * Requesting nested or recursive locks can block the application in some circumstances.
  * This default lock timeout will act as a failsafe to throw an error if a lock cannot
  * be obtained.
+ *
+ * @internal
  */
 export const DEFAULT_LOCK_TIMEOUT_MS = 120_000; // 2 mins
 
@@ -171,6 +226,9 @@ export const isPowerSyncDatabaseOptionsWithSettings = (test: any): test is Power
   return typeof test == 'object' && isSQLOpenOptions(test.database);
 };
 
+/**
+ * @public
+ */
 export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDBListener> {
   /**
    * Returns true if the connection is closed.
@@ -368,7 +426,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   /**
    * Wait for the first sync operation to complete.
    *
-   * @param request Either an abort signal (after which the promise will complete regardless of
+   * @param request - Either an abort signal (after which the promise will complete regardless of
    * whether a full sync was completed) or an object providing an abort signal and a priority target.
    * When a priority target is set, the promise may complete when all buckets with the given (or higher)
    * priorities have been synchronized. This can be earlier than a complete sync.
@@ -442,7 +500,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     try {
       const { version } = await this.database.get<{ version: string }>('SELECT powersync_rs_version() as version');
       this.sdkVersion = version;
-    } catch (e) {
+    } catch (e: any) {
       throw new Error(`The powersync extension is not loaded correctly. Details: ${e.message}`);
     }
     let versionInts: number[];
@@ -450,7 +508,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       versionInts = this.sdkVersion!.split(/[.\/]/)
         .slice(0, 3)
         .map((n) => parseInt(n));
-    } catch (e) {
+    } catch (e: any) {
       throw new Error(
         `Unsupported powersync extension version. Need >=0.4.10 <1.0.0, got: ${this.sdkVersion}. Details: ${e.message}`
       );
@@ -554,7 +612,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   /**
    * Close the sync connection.
    *
-   * Use {@link connect} to connect again.
+   * Use {@link AbstractPowerSyncDatabase.connect} to connect again.
    */
   async disconnect() {
     return this.connectionManager.disconnect();
@@ -586,8 +644,8 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   /**
    * Create a sync stream to query its status or to subscribe to it.
    *
-   * @param name The name of the stream to subscribe to.
-   * @param params Optional parameters for the stream subscription.
+   * @param name - The name of the stream to subscribe to.
+   * @param params - Optional parameters for the stream subscription.
    * @returns A {@link SyncStream} instance that can be subscribed to.
    * @experimental Sync streams are currently in alpha.
    */
@@ -655,14 +713,14 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * Once the data have been successfully uploaded, call {@link CrudBatch.complete} before
    * requesting the next batch.
    *
-   * Use {@link limit} to specify the maximum number of updates to return in a single
+   * Use the `limit` parameter to specify the maximum number of updates to return in a single
    * batch.
    *
    * This method does include transaction ids in the result, but does not group
    * data by transaction. One batch may contain data from multiple transactions,
    * and a single transaction may be split over multiple batches.
    *
-   * @param limit Maximum number of CRUD entries to include in the batch
+   * @param limit - Maximum number of CRUD entries to include in the batch
    * @returns A batch of CRUD operations to upload, or null if there are none
    */
   async getCrudBatch(limit: number = DEFAULT_CRUD_BATCH_LIMIT): Promise<CrudBatch | null> {
@@ -698,7 +756,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * Once the data have been successfully uploaded, call {@link CrudTransaction.complete} before
    * requesting the next transaction.
    *
-   * Unlike {@link getCrudBatch}, this only returns data from a single transaction at a time.
+   * Unlike {@link AbstractPowerSyncDatabase.getCrudBatch}, this only returns data from a single transaction at a time.
    * All data for the transaction is loaded into memory.
    *
    * @returns A transaction of CRUD operations to upload, or null if there are none
@@ -714,7 +772,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * This is typically used from the {@link PowerSyncBackendConnector.uploadData} callback. Each entry emitted by the
    * returned iterator is a full transaction containing all local writes made while that transaction was active.
    *
-   * Unlike {@link getNextCrudTransaction}, which always returns the oldest transaction that hasn't been
+   * Unlike {@link AbstractPowerSyncDatabase.getNextCrudTransaction}, which always returns the oldest transaction that hasn't been
    * {@link CrudTransaction.complete}d yet, this iterator can be used to receive multiple transactions. Calling
    * {@link CrudTransaction.complete} will mark that and all prior transactions emitted by the iterator as completed.
    *
@@ -817,8 +875,8 @@ SELECT * FROM crud_entries;
    * the returned result's `rowsAffected` may be `0` for successful `UPDATE` and `DELETE` statements.
    * Use a `RETURNING` clause and inspect `result.rows` when you need to confirm which rows changed.
    *
-   * @param sql The SQL query to execute
-   * @param parameters Optional array of parameters to bind to the query
+   * @param sql - The SQL query to execute
+   * @param parameters - Optional array of parameters to bind to the query
    * @returns The query result as an object with structured key-value pairs
    */
   async execute(sql: string, parameters?: any[]) {
@@ -829,8 +887,8 @@ SELECT * FROM crud_entries;
    * Execute a SQL write (INSERT/UPDATE/DELETE) query directly on the database without any PowerSync processing.
    * This bypasses certain PowerSync abstractions and is useful for accessing the raw database results.
    *
-   * @param sql The SQL query to execute
-   * @param parameters Optional array of parameters to bind to the query
+   * @param sql - The SQL query to execute
+   * @param parameters - Optional array of parameters to bind to the query
    * @returns The raw query result from the underlying database as a nested array of raw values, where each row is
    * represented as an array of column values without field names.
    */
@@ -844,8 +902,8 @@ SELECT * FROM crud_entries;
    * and optionally return results.
    * This is faster than executing separately with each parameter set.
    *
-   * @param sql The SQL query to execute
-   * @param parameters Optional 2D array of parameter sets, where each inner array is a set of parameters for one execution
+   * @param sql - The SQL query to execute
+   * @param parameters - Optional 2D array of parameter sets, where each inner array is a set of parameters for one execution
    * @returns The query result
    */
   async executeBatch(sql: string, parameters?: any[][]) {
@@ -856,8 +914,8 @@ SELECT * FROM crud_entries;
   /**
    *  Execute a read-only query and return results.
    *
-   * @param sql The SQL query to execute
-   * @param parameters Optional array of parameters to bind to the query
+   * @param sql - The SQL query to execute
+   * @param parameters - Optional array of parameters to bind to the query
    * @returns An array of results
    */
   async getAll<T>(sql: string, parameters?: any[]): Promise<T[]> {
@@ -868,8 +926,8 @@ SELECT * FROM crud_entries;
   /**
    * Execute a read-only query and return the first result, or null if the ResultSet is empty.
    *
-   * @param sql The SQL query to execute
-   * @param parameters Optional array of parameters to bind to the query
+   * @param sql - The SQL query to execute
+   * @param parameters - Optional array of parameters to bind to the query
    * @returns The first result if found, or null if no results are returned
    */
   async getOptional<T>(sql: string, parameters?: any[]): Promise<T | null> {
@@ -880,8 +938,8 @@ SELECT * FROM crud_entries;
   /**
    * Execute a read-only query and return the first result, error if the ResultSet is empty.
    *
-   * @param sql The SQL query to execute
-   * @param parameters Optional array of parameters to bind to the query
+   * @param sql - The SQL query to execute
+   * @param parameters - Optional array of parameters to bind to the query
    * @returns The first result matching the query
    * @throws Error if no rows are returned
    */
@@ -892,18 +950,18 @@ SELECT * FROM crud_entries;
 
   /**
    * Takes a read lock, without starting a transaction.
-   * In most cases, {@link readTransaction} should be used instead.
+   * In most cases, {@link AbstractPowerSyncDatabase.readTransaction} should be used instead.
    */
-  async readLock<T>(callback: (db: DBAdapter) => Promise<T>) {
+  async readLock<T>(callback: (db: LockContext) => Promise<T>) {
     await this.waitForReady();
     return this.database.readLock(callback);
   }
 
   /**
    * Takes a global lock, without starting a transaction.
-   * In most cases, {@link writeTransaction} should be used instead.
+   * In most cases, {@link AbstractPowerSyncDatabase.writeTransaction} should be used instead.
    */
-  async writeLock<T>(callback: (db: DBAdapter) => Promise<T>) {
+  async writeLock<T>(callback: (db: LockContext) => Promise<T>) {
     await this.waitForReady();
     return this.database.writeLock(callback);
   }
@@ -913,8 +971,8 @@ SELECT * FROM crud_entries;
    * Read transactions can run concurrently to a write transaction.
    * Changes from any write transaction are not visible to read transactions started before it.
    *
-   * @param callback Function to execute within the transaction
-   * @param lockTimeout Time in milliseconds to wait for a lock before throwing an error
+   * @param callback - Function to execute within the transaction
+   * @param lockTimeout - Time in milliseconds to wait for a lock before throwing an error
    * @returns The result of the callback
    * @throws Error if the lock cannot be obtained within the timeout period
    */
@@ -938,8 +996,8 @@ SELECT * FROM crud_entries;
    * This takes a global lock - only one write transaction can execute against the database at a time.
    * Statements within the transaction must be done on the provided {@link Transaction} interface.
    *
-   * @param callback Function to execute within the transaction
-   * @param lockTimeout Time in milliseconds to wait for a lock before throwing an error
+   * @param callback - Function to execute within the transaction
+   * @param lockTimeout - Time in milliseconds to wait for a lock before throwing an error
    * @returns The result of the callback
    * @throws Error if the lock cannot be obtained within the timeout period
    */
@@ -959,8 +1017,8 @@ SELECT * FROM crud_entries;
   }
 
   /**
-   * This version of `watch` uses {@link AsyncGenerator}, for documentation see {@link watchWithAsyncGenerator}.
-   * Can be overloaded to use a callback handler instead, for documentation see {@link watchWithCallback}.
+   * This version of `watch` uses `AsyncGenerator`, for documentation see {@link AbstractPowerSyncDatabase.watchWithAsyncGenerator}.
+   * Can be overloaded to use a callback handler instead, for documentation see {@link AbstractPowerSyncDatabase.watchWithCallback}.
    *
    * @example
    * ```javascript
@@ -976,7 +1034,7 @@ SELECT * FROM crud_entries;
    */
   watch(sql: string, parameters?: any[], options?: SQLWatchOptions): AsyncIterable<QueryResult>;
   /**
-   * See {@link watchWithCallback}.
+   * See {@link AbstractPowerSyncDatabase.watchWithCallback}.
    *
    * @example
    * ```javascript
@@ -1037,7 +1095,7 @@ SELECT * FROM crud_entries;
         parameters
       }),
       execute: async ({ sql, parameters }) => {
-        const result = await this.getAll(sql, parameters);
+        const result = await this.getAll<Record<string, any>>(sql, parameters);
         return mapper ? result.map(mapper) : (result as RowType[]);
       }
     };
@@ -1068,15 +1126,15 @@ SELECT * FROM crud_entries;
 
   /**
    * Execute a read query every time the source tables are modified.
-   * Use {@link SQLWatchOptions.throttleMs} to specify the minimum interval between queries.
+   * Use {@link SQLOnChangeOptions.throttleMs} to specify the minimum interval between queries.
    * Source tables are automatically detected using `EXPLAIN QUERY PLAN`.
    *
    * Note that the `onChange` callback member of the handler is required.
    *
-   * @param sql The SQL query to execute
-   * @param parameters Optional array of parameters to bind to the query
-   * @param handler Callbacks for handling results and errors
-   * @param options Options for configuring watch behavior
+   * @param sql - The SQL query to execute
+   * @param parameters - Optional array of parameters to bind to the query
+   * @param handler - Callbacks for handling results and errors
+   * @param options - Options for configuring watch behavior
    */
   watchWithCallback(sql: string, parameters?: any[], handler?: WatchHandler, options?: SQLWatchOptions): void {
     const { onResult, onError = (e: Error) => this.logger.error(e) } = handler ?? {};
@@ -1090,7 +1148,7 @@ SELECT * FROM crud_entries;
     const watchedQuery = new OnChangeQueryProcessor({
       db: this,
       comparator,
-      placeholderData: null,
+      placeholderData: null as unknown as QueryResult, // FIXME
       watchOptions: {
         query: {
           compile: () => ({
@@ -1126,12 +1184,12 @@ SELECT * FROM crud_entries;
 
   /**
    * Execute a read query every time the source tables are modified.
-   * Use {@link SQLWatchOptions.throttleMs} to specify the minimum interval between queries.
+   * Use {@link SQLOnChangeOptions.throttleMs} to specify the minimum interval between queries.
    * Source tables are automatically detected using `EXPLAIN QUERY PLAN`.
    *
-   * @param sql The SQL query to execute
-   * @param parameters Optional array of parameters to bind to the query
-   * @param options Options for configuring watch behavior
+   * @param sql - The SQL query to execute
+   * @param parameters - Optional array of parameters to bind to the query
+   * @param options - Options for configuring watch behavior
    * @returns An AsyncIterable that yields QueryResults whenever the data changes
    */
   watchWithAsyncGenerator(sql: string, parameters?: any[], options?: SQLWatchOptions): AsyncIterable<QueryResult> {
@@ -1158,9 +1216,9 @@ SELECT * FROM crud_entries;
    * If tables are specified in the options, those are used directly.
    * Otherwise, analyzes the query using EXPLAIN to determine which tables are accessed.
    *
-   * @param sql The SQL query to analyze
-   * @param parameters Optional parameters for the SQL query
-   * @param options Optional watch options that may contain explicit table list
+   * @param sql - The SQL query to analyze
+   * @param parameters - Optional parameters for the SQL query
+   * @param options - Optional watch options that may contain explicit table list
    * @returns Array of table names that the query depends on
    */
   async resolveTables(sql: string, parameters?: any[], options?: SQLWatchOptions): Promise<string[]> {
@@ -1183,8 +1241,8 @@ SELECT * FROM crud_entries;
   }
 
   /**
-   * This version of `onChange` uses {@link AsyncGenerator}, for documentation see {@link onChangeWithAsyncGenerator}.
-   * Can be overloaded to use a callback handler instead, for documentation see {@link onChangeWithCallback}.
+   * This version of `onChange` uses `AsyncGenerator`, for documentation see {@link AbstractPowerSyncDatabase.onChangeWithAsyncGenerator}.
+   * Can be overloaded to use a callback handler instead, for documentation see {@link AbstractPowerSyncDatabase.onChangeWithCallback}.
    *
    * @example
    * ```javascript
@@ -1197,7 +1255,7 @@ SELECT * FROM crud_entries;
    */
   onChange(options?: SQLOnChangeOptions): AsyncIterable<WatchOnChangeEvent>;
   /**
-   * See {@link onChangeWithCallback}.
+   * See {@link AbstractPowerSyncDatabase.onChangeWithCallback}.
    *
    * @example
    * ```javascript
@@ -1230,13 +1288,13 @@ SELECT * FROM crud_entries;
   /**
    * Invoke the provided callback on any changes to any of the specified tables.
    *
-   * This is preferred over {@link watchWithCallback} when multiple queries need to be performed
+   * This is preferred over {@link AbstractPowerSyncDatabase.watchWithCallback} when multiple queries need to be performed
    * together when data is changed.
    *
    * Note that the `onChange` callback member of the handler is required.
    *
-   * @param handler Callbacks for handling change events and errors
-   * @param options Options for configuring watch behavior
+   * @param handler - Callbacks for handling change events and errors
+   * @param options - Options for configuring watch behavior
    * @returns A dispose function to stop watching for changes
    */
   onChangeWithCallback(handler?: WatchOnChangeHandler, options?: SQLOnChangeOptions): () => void {
@@ -1275,7 +1333,7 @@ SELECT * FROM crud_entries;
         try {
           this.processTableUpdates(update, changedTables);
           flushTableUpdates();
-        } catch (error) {
+        } catch (error: any) {
           onError?.(error);
         }
       }
@@ -1292,12 +1350,12 @@ SELECT * FROM crud_entries;
   /**
    * Create a Stream of changes to any of the specified tables.
    *
-   * This is preferred over {@link watchWithAsyncGenerator} when multiple queries need to be performed
-   * together when data is changed.
+   * This is preferred over {@link AbstractPowerSyncDatabase.watchWithAsyncGenerator} when multiple queries need to be
+   * performed together when data is changed.
    *
    * Note: do not declare this as `async *onChange` as it will not work in React Native.
    *
-   * @param options Options for configuring watch behavior
+   * @param options - Options for configuring watch behavior
    * @returns An AsyncIterable that yields change events whenever the specified tables change
    */
   onChangeWithAsyncGenerator(options?: SQLWatchOptions): AsyncIterable<WatchOnChangeEvent> {
@@ -1352,9 +1410,6 @@ SELECT * FROM crud_entries;
     }
   }
 
-  /**
-   * @ignore
-   */
   private async executeReadOnly(sql: string, params?: any[]) {
     await this.waitForReady();
     return this.database.readLock((tx) => tx.execute(sql, params));

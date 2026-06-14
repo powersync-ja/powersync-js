@@ -9,43 +9,63 @@ use tokio_stream::StreamExt;
 
 pub struct TauriDatabaseState {
     pub database: PowerSyncDatabase,
+    pub event_key: i32,
     forward_updates: JoinHandle<()>,
     forward_sync_status: JoinHandle<()>,
 }
 
 impl TauriDatabaseState {
-    pub fn new<R: Runtime>(handle: AppHandle<R>, name: &str, source: PowerSyncDatabase) -> Self {
+    pub fn new<R: Runtime>(
+        handle: AppHandle<R>,
+        event_key: i32,
+        source: PowerSyncDatabase,
+    ) -> Self {
         let forward_updates = {
             let handle = handle.clone();
             let db = source.clone();
-            let event_key = format!("table-updates:{}", name);
+            let event_key = Arc::new(format!("table-updates:{}", event_key));
 
             tokio::spawn(async move {
                 let mut stream = db.watch_all_updates();
 
                 while let Some(update) = stream.next().await {
+                    let cloned_handle = handle.clone();
+                    let event_key = event_key.clone();
+
                     handle
-                        .emit(&event_key, &update)
-                        .expect("should emit table update");
+                        .run_on_main_thread(move || {
+                            cloned_handle
+                                .emit(&event_key, &update)
+                                .expect("should emit table update")
+                        })
+                        .expect("should run on main thread");
                 }
             })
         };
         let forward_sync_status = {
             let db = source.clone();
-            let event_key = format!("sync-status:{}", name);
+            let event_key = format!("sync-status:{}", event_key);
 
             tokio::spawn(async move {
                 let mut stream = db.watch_status();
                 while let Some(status) = stream.next().await {
+                    let cloned_handle = handle.clone();
+                    let event_key = event_key.clone();
+
                     handle
-                        .emit(&event_key, SerializableSyncStatus(status))
-                        .expect("should emit sync status change");
+                        .run_on_main_thread(move || {
+                            cloned_handle
+                                .emit(&event_key, SerializableSyncStatus(status))
+                                .expect("should emit sync status change")
+                        })
+                        .expect("should run on main thread");
                 }
             })
         };
 
         Self {
             database: source,
+            event_key,
             forward_updates,
             forward_sync_status,
         }

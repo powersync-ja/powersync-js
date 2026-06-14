@@ -1,5 +1,8 @@
 import { Queue } from './queue.js';
 
+/**
+ * @internal
+ */
 export type UnlockFn = () => void;
 
 /**
@@ -178,10 +181,19 @@ export class Mutex {
 
 /**
  * Creates a signal aborting after the set timeout.
+ *
+ * @internal
  */
 export function timeoutSignal(timeout: number): AbortSignal;
+
+/**
+ * @internal
+ */
 export function timeoutSignal(timeout?: number): AbortSignal | undefined;
 
+/**
+ * @internal
+ */
 export function timeoutSignal(timeout?: number): AbortSignal | undefined {
   if (timeout == null) return;
   if ('timeout' in AbortSignal) return AbortSignal.timeout(timeout);

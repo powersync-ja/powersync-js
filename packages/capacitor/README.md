@@ -8,9 +8,9 @@ _[PowerSync](https://www.powersync.com) is a sync engine for building local-firs
 
 This package (`@powersync/capacitor`) is the PowerSync SDK for Capacitor apps. It wraps the [PowerSync Web SDK](https://www.npmjs.com/package/@powersync/web) for Capacitor PWAs and uses [Capacitor Community SQLite](https://github.com/capacitor-community/sqlite) as the database driver for Android and iOS.
 
-## Note: Alpha Release
+## Note: Beta Release
 
-This package is currently in an alpha release.
+This package is currently in a beta release.
 
 ## Installation
 
@@ -60,6 +60,8 @@ const db = new PowerSyncDatabase({
 
 - On Android and iOS, this SDK uses [Capacitor Community SQLite](https://github.com/capacitor-community/sqlite) for native database access.
 - On web, it falls back to the [PowerSync Web SDK](https://www.npmjs.com/package/@powersync/web).
+
+When using the native Capacitor Community SQLite driver, `PowerSyncDatabase.connect()` defaults to HTTP with NDJSON streaming. This avoids slow binary payload processing in the native SQLite bridge. Web targets keep the default Web SDK connection behavior.
 
 When using custom database factories, be sure to specify the `CapacitorSQLiteOpenFactory` for Capacitor platforms.
 

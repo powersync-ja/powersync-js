@@ -1,4 +1,3 @@
-import type { BSON } from 'bson';
 import { type fetch } from 'cross-fetch';
 import Logger, { ILogger } from 'js-logger';
 import { Requestable, RSocket, RSocketConnector } from 'rsocket-core';
@@ -6,7 +5,6 @@ import PACKAGE from '../../../../package.json' with { type: 'json' };
 import { AbortOperation } from '../../../utils/AbortOperation.js';
 import { PowerSyncCredentials } from '../../connection/PowerSyncCredentials.js';
 import { WebsocketClientTransport } from './WebsocketClientTransport.js';
-import { StreamingSyncRequest } from './streaming-sync-types.js';
 import {
   doneResult,
   extractBsonObjects,
@@ -16,8 +14,9 @@ import {
 import { EventIterator } from 'event-iterator';
 import type { Queue } from 'event-iterator/lib/event-iterator.js';
 
-export type BSONImplementation = typeof BSON;
-
+/**
+ * @internal
+ */
 export type RemoteConnector = {
   fetchCredentials: () => Promise<PowerSyncCredentials | null>;
   invalidateCredentials?: () => void;
@@ -40,16 +39,25 @@ const SOCKET_TIMEOUT_MS = 30_000;
 // significantly. Therefore this is longer than the socket timeout.
 const KEEP_ALIVE_LIFETIME_MS = 90_000;
 
+/**
+ * @internal
+ */
 export const DEFAULT_REMOTE_LOGGER = Logger.get('PowerSyncRemote');
 
+/**
+ * @internal
+ */
 export type SyncStreamOptions = {
   path: string;
-  data: StreamingSyncRequest;
+  data: unknown;
   headers?: Record<string, string>;
   abortSignal: AbortSignal;
   fetchOptions?: Request;
 };
 
+/**
+ * @public
+ */
 export enum FetchStrategy {
   /**
    * Queues multiple sync events before processing, reducing round-trips.
@@ -64,10 +72,16 @@ export enum FetchStrategy {
   Sequential = 'sequential'
 }
 
+/**
+ * @internal
+ */
 export type SocketSyncStreamOptions = SyncStreamOptions & {
   fetchStrategy: FetchStrategy;
 };
 
+/**
+ * @internal
+ */
 export type FetchImplementation = typeof fetch;
 
 /**
@@ -75,6 +89,8 @@ export type FetchImplementation = typeof fetch;
  * The class wrapper is used to distinguish the fetchImplementation
  * option in [AbstractRemoteOptions] from the general fetch method
  * which is typeof "function"
+ *
+ * @internal
  */
 export class FetchImplementationProvider {
   getFetch(): FetchImplementation {
@@ -82,6 +98,9 @@ export class FetchImplementationProvider {
   }
 }
 
+/**
+ * @internal
+ */
 export type AbstractRemoteOptions = {
   /**
    * Transforms the PowerSync base URL which might contain
@@ -106,6 +125,9 @@ export type AbstractRemoteOptions = {
   fetchOptions?: {};
 };
 
+/**
+ * @internal
+ */
 export const DEFAULT_REMOTE_OPTIONS: AbstractRemoteOptions = {
   socketUrlTransformer: (url) =>
     url.replace(/^https?:\/\//, function (match) {
@@ -115,6 +137,9 @@ export const DEFAULT_REMOTE_OPTIONS: AbstractRemoteOptions = {
   fetchOptions: {}
 };
 
+/**
+ * @internal
+ */
 export abstract class AbstractRemote {
   protected credentials: PowerSyncCredentials | null = null;
   protected options: AbstractRemoteOptions;
@@ -266,11 +291,6 @@ export abstract class AbstractRemote {
   }
 
   /**
-   * Provides a BSON implementation. The import nature of this varies depending on the platform
-   */
-  abstract getBSON(): Promise<BSONImplementation>;
-
-  /**
    * @returns A text decoder decoding UTF-8. This is a method to allow patching it for Hermes which doesn't support the
    * builtin, without forcing us to bundle a polyfill with `@powersync/common`.
    */
@@ -286,26 +306,13 @@ export abstract class AbstractRemote {
    * Returns a data stream of sync line data, fetched via RSocket-over-WebSocket.
    *
    * The only mechanism to abort the returned stream is to use the abort signal in {@link SocketSyncStreamOptions}.
-   *
-   * @param bson A BSON encoder and decoder. When set, the data stream will be requested with a BSON payload
-   * (required for compatibility with older sync services).
    */
-  async socketStreamRaw(
-    options: SocketSyncStreamOptions,
-    bson?: typeof BSON
-  ): Promise<SimpleAsyncIterator<Uint8Array>> {
+  async socketStreamRaw(options: SocketSyncStreamOptions): Promise<SimpleAsyncIterator<Uint8Array>> {
     const { path, fetchStrategy = FetchStrategy.Buffered } = options;
-    const mimeType = bson == null ? 'application/json' : 'application/bson';
+    const mimeType = 'application/json';
 
     function toBuffer(js: any): Buffer {
-      let contents: any;
-      if (bson != null) {
-        contents = bson.serialize(js);
-      } else {
-        contents = JSON.stringify(js);
-      }
-
-      return Buffer.from(contents);
+      return Buffer.from(JSON.stringify(js));
     }
 
     const syncQueueRequestSize = fetchStrategy == FetchStrategy.Buffered ? 10 : 1;
@@ -575,7 +582,7 @@ export abstract class AbstractRemote {
 
       const contentType = res.headers.get('content-type');
       responseIsBson = contentType == bson;
-    } catch (ex) {
+    } catch (ex: any) {
       if (ex.name == 'AbortError') {
         throw new AbortOperation(`Pending fetch request to ${request.url} has been aborted.`);
       }
@@ -611,7 +618,7 @@ export abstract class AbstractRemote {
    * Posts a `/sync/stream` request.
    *
    * Depending on the `Content-Type` of the response, this returns strings for sync lines or encoded BSON documents as
-   * {@link Uint8Array}s.
+   * `Uint8Array`s.
    */
   async fetchStream(options: SyncStreamOptions): Promise<SimpleAsyncIterator<Uint8Array | string>> {
     const { isBson, stream } = await this.fetchStreamRaw(options);

@@ -1,6 +1,9 @@
 import { CrudBatch } from './CrudBatch.js';
 import { CrudEntry } from './CrudEntry.js';
 
+/**
+ * @public
+ */
 export class CrudTransaction extends CrudBatch {
   constructor(
     /**

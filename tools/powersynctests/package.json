@@ -48,7 +48,7 @@
     "@types/chance": "^1.1.7",
     "@types/jest": "^29.5.14",
     "@types/mocha": "^10.0.10",
-    "@types/node": "^22.19.15",
+    "@types/node": "catalog:",
     "@types/react": "^19.2.14",
     "@types/react-test-renderer": "^19.1.0",
     "@types/uuid": "^10.0.0",
@@ -62,7 +62,7 @@
     "prettier": "2.8.8",
     "react-test-renderer": "19.0.0",
     "ts-jest": "^29.4.6",
-    "typescript": "5.0.4",
+    "typescript": "catalog:",
     "util": "^0.12.5"
   },
   "engines": {

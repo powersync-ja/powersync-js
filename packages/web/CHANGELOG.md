@@ -1,5 +1,50 @@
 # @powersync/web
 
+## 1.38.3
+
+### Patch Changes
+
+- Updated dependencies [0ee8051]
+- Updated dependencies [17869e7]
+- Updated dependencies [93199a7]
+  - @powersync/common@1.54.0
+
+## 1.38.2
+
+### Patch Changes
+
+- Updated dependencies [ac183c2]
+  - @powersync/common@1.53.2
+
+## 1.38.1
+
+### Patch Changes
+
+- Updated dependencies [8704578]
+  - @powersync/common@1.53.1
+
+## 1.38.0
+
+### Minor Changes
+
+- c2d0f9e: Update PowerSync SQLite core extension to 0.4.12
+- 739e21a: Remove support for the JavaScript sync client. The default Rust client is the only option starting from this version.
+- 756a0cf: Add `WASQLiteVFS.OPFSWriteAheadVFS`, which also supports concurrent reads.
+
+### Patch Changes
+
+- 1506543: Update `@journeyapps/wa-sqlite` dependency.
+- c730604: Remove deprecated `unload` listener.
+- 838479e: Using the Rust sync client on the web, immediately reconnect when the underlying SQLite connection is changed.
+- Updated dependencies [a0f527c]
+- Updated dependencies [94c7c9f]
+- Updated dependencies [f39badb]
+- Updated dependencies [947ca21]
+- Updated dependencies [838479e]
+- Updated dependencies [5513fad]
+- Updated dependencies [739e21a]
+  - @powersync/common@1.53.0
+
 ## 1.37.2
 
 ### Patch Changes

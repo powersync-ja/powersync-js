@@ -6,7 +6,7 @@ import {
   injectable,
   SimpleAsyncIterator,
   valueResult
-} from '../../src/utils/stream_transform';
+} from '../../src/utils/stream_transform.js';
 
 describe('extractJsonLines', () => {
   function testWith(...chunks: string[]): SimpleAsyncIterator<string> {
@@ -91,6 +91,32 @@ describe('injectable', () => {
 
       expect(await next).toStrictEqual(doneResult);
     }
+  });
+
+  test('does not start a second source fetch while one is already in flight', async () => {
+    const outstandingEvents: Array<(value: IteratorResult<number>) => void> = [];
+
+    const stream = injectable<number>({
+      next() {
+        expect(outstandingEvents).toHaveLength(0);
+        return new Promise((r) => outstandingEvents.push(r));
+      }
+    });
+
+    // First downstream call starts an event
+    const p1 = stream.next();
+    expect(outstandingEvents).toHaveLength(1);
+
+    // inject() steals the waiter; event remains in flight
+    stream.inject(-1);
+    expect(await p1).toStrictEqual(valueResult(-1));
+
+    // Second downstream call while event is still pending. Should wait for it instead of starting another one.
+    const p2 = stream.next();
+
+    // Clean up
+    outstandingEvents[0](valueResult(10));
+    expect(await p2).toStrictEqual(valueResult(10));
   });
 });
 

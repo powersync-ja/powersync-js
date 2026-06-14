@@ -1,6 +1,6 @@
 {
   "name": "@powersync/capacitor",
-  "version": "0.5.2",
+  "version": "0.7.0",
   "description": "Adds PowerSync Capacitor support for iOS/Android",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
@@ -50,7 +50,7 @@
   ],
   "scripts": {
     "verify": "pnpm verify:ios && pnpm verify:android && pnpm verify:web",
-    "verify:ios": "cd example-app && npm install && cd ios/App && pod install && xcodebuild -workspace App.xcworkspace -scheme App -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest'",
+    "verify:ios": "cd example-app && pnpm install && cd ios/App && xcodebuild -project App.xcodeproj -scheme App -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest'",
     "verify:android": "cd android && ./gradlew clean build test && cd ..",
     "verify:web": "pnpm build",
     "lint": "pnpm eslint && pnpm prettier -- --check && pnpm swiftlint -- lint",
@@ -66,25 +66,28 @@
     "test:exports": "attw --pack --profile=esm-only ."
   },
   "devDependencies": {
-    "@capacitor-community/sqlite": "^7.0.2",
-    "@capacitor/android": "^7.0.0",
-    "@capacitor/core": "^7.0.0",
-    "@capacitor/docgen": "^0.3.0",
-    "@capacitor/ios": "^7.0.0",
+    "@capacitor-community/sqlite": "^8.1.0",
+    "@capacitor/android": "^8.0.0",
+    "@capacitor/core": "^8.0.0",
+    "@capacitor/docgen": "^0.3.1",
+    "@capacitor/ios": "^8.0.0",
     "@ionic/eslint-config": "^0.4.0",
     "@ionic/prettier-config": "^4.0.0",
     "@ionic/swiftlint-config": "^2.0.0",
-    "eslint": "^8.57.0",
-    "prettier": "catalog:",
-    "prettier-plugin-java": "^2.6.6",
-    "rimraf": "^6.0.1",
-    "rollup": "catalog:",
+    "eslint": "^8.57.1",
+    "prettier": "^3.6.2",
+    "prettier-plugin-java": "^2.7.7",
+    "rimraf": "^6.1.0",
+    "rollup": "^4.53.2",
     "rollup-plugin-dts": "catalog:",
-    "swiftlint": "^2.0.0"
+    "swiftlint": "^2.0.0",
+    "vitest": "catalog:",
+    "@vitest/browser-preview": "catalog:"
   },
   "peerDependencies": {
-    "@capacitor-community/sqlite": "^7.0.2",
-    "@powersync/web": "workspace:^1.37.0"
+    "@capacitor/core": ">=8.0.0",
+    "@capacitor-community/sqlite": "^8.1.0",
+    "@powersync/web": "workspace:^1.38.3"
   },
   "swiftlint": "@ionic/swiftlint-config",
   "capacitor": {

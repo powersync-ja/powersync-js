@@ -46,7 +46,7 @@ export const useWatchedQuery = <T = any>(
     const queryValue = toValue(query);
     try {
       parsedQuery = parseQuery(queryValue, toValue(sqlParameters).map(toValue));
-    } catch (e) {
+    } catch (e: any) {
       logger.error('Failed to parse query:', e);
       handleError(e);
       return;

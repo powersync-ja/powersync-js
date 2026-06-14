@@ -4,19 +4,24 @@ import { RowType, Table } from './Table.js';
 
 type SchemaType = Record<string, Table<any>>;
 
+/**
+ * @public
+ */
 export type SchemaTableType<S extends SchemaType> = {
   [K in keyof S]: RowType<S[K]>;
 };
 
 /**
  * A schema is a collection of tables. It is used to define the structure of a database.
+ *
+ * @public
  */
 export class Schema<S extends SchemaType = SchemaType> {
   /*
     Only available when constructing with mapped typed definition columns
   */
-  readonly types: SchemaTableType<S>;
-  readonly props: S;
+  readonly types!: SchemaTableType<S>;
+  readonly props!: S;
   readonly tables: Table[];
   readonly rawTables: RawTable[];
 
@@ -51,10 +56,8 @@ export class Schema<S extends SchemaType = SchemaType> {
    * developer instead of automatically by PowerSync.
    * Since raw tables are not backed by JSON, running complex queries on them may be more efficient. Further, they allow
    * using client-side table and column constraints.
-   * Note that raw tables are only supported when using the new `SyncClientImplementation.rust` sync client.
    *
-   * @param tables An object of (table name, raw table definition) entries.
-   * @experimental Note that the raw tables API is still experimental and may change in the future.
+   * @param tables - An object of (table name, raw table definition) entries.
    */
   withRawTables(tables: Record<string, RawTableType>) {
     for (const [name, rawTableDefinition] of Object.entries(tables)) {

@@ -13,7 +13,7 @@ import {
 const LOCKS = new Map<string, Map<LockType, Mutex>>();
 
 export class ReactNativeStreamingSyncImplementation extends AbstractStreamingSyncImplementation {
-  locks: Map<LockType, Mutex>;
+  locks!: Map<LockType, Mutex>;
 
   constructor(options: AbstractStreamingSyncImplementationOptions) {
     super(options);

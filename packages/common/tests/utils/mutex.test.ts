@@ -1,5 +1,5 @@
 import { describe, it, expect, test } from 'vitest';
-import { Mutex, Semaphore, timeoutSignal, UnlockFn } from '../../src/utils/mutex';
+import { Mutex, Semaphore, timeoutSignal, UnlockFn } from '../../src/utils/mutex.js';
 
 describe('Mutex', () => {
   it('runs blocks in sequence', async () => {

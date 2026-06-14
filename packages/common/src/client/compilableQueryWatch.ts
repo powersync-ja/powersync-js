@@ -2,11 +2,17 @@ import { CompilableQuery } from './../types/types.js';
 import { AbstractPowerSyncDatabase, SQLWatchOptions } from './AbstractPowerSyncDatabase.js';
 import { runOnSchemaChange } from './runOnSchemaChange.js';
 
+/**
+ * @public
+ */
 export interface CompilableQueryWatchHandler<T> {
   onResult: (results: T[]) => void;
   onError?: (error: Error) => void;
 }
 
+/**
+ * @public
+ */
 export function compilableQueryWatch<T>(
   db: AbstractPowerSyncDatabase,
   query: CompilableQuery<T>,

@@ -1,7 +1,7 @@
-import '@vitest/browser/providers/playwright';
-import { defineConfig, UserConfigExport } from 'vitest/config';
+import { defineConfig, ViteUserConfig } from 'vitest/config';
+import { playwright } from '@vitest/browser-playwright';
 
-const config: UserConfigExport = {
+const config: ViteUserConfig = {
   // This is only needed for local tests to resolve the package name correctly
   worker: {
     format: 'es'
@@ -19,20 +19,21 @@ const config: UserConfigExport = {
       shuffle: false, // Disable shuffling of test files
       concurrent: false // Run test files sequentially
     },
+    /**
+     * Starts each test in a new iFrame
+     */
+    isolate: true,
     browser: {
       enabled: true,
-      /**
-       * Starts each test in a new iFrame
-       */
-      isolate: true,
-      provider: 'playwright',
+      provider: playwright(
+        process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
+          ? { launchOptions: { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH } }
+          : {}
+      ),
       headless: true,
       instances: [
         {
-          browser: 'chromium',
-          ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
-            ? { launch: { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH } }
-            : {})
+          browser: 'chromium'
         }
       ]
     }

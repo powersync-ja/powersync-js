@@ -8,12 +8,16 @@ import { WatchedQueryOptions } from './watched/WatchedQuery.js';
 
 /**
  * Query parameters for {@link ArrayQueryDefinition#parameters}
+ *
+ * @public
  */
 export type QueryParam = string | number | boolean | null | undefined | bigint | Uint8Array;
 
 /**
  * Options for building a query with {@link AbstractPowerSyncDatabase#query}.
  * This query will be executed with {@link AbstractPowerSyncDatabase#getAll}.
+ *
+ * @public
  */
 export interface ArrayQueryDefinition<RowType = unknown> {
   sql: string;
@@ -33,6 +37,8 @@ export interface ArrayQueryDefinition<RowType = unknown> {
 
 /**
  * Options for {@link Query#watch}.
+ *
+ * @public
  */
 export interface StandardWatchedQueryOptions<RowType> extends WatchedQueryOptions {
   /**
@@ -59,6 +65,9 @@ export interface StandardWatchedQueryOptions<RowType> extends WatchedQueryOption
   placeholderData?: RowType[];
 }
 
+/**
+ * @public
+ */
 export interface Query<RowType> {
   /**
    * Creates a {@link WatchedQuery} which watches and emits results of the linked query.

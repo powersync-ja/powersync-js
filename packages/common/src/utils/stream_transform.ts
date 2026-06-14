@@ -2,9 +2,11 @@
  * An async iterator that can't be cancelled.
  *
  * To keep data flow simple, we always pass an explicit cancellation token when subscribing to async streams. Once the
- * {@link AbortSignal} aborts, iterators are supposed to clean up and then emit a final `{done: true}` event. This means
+ * `AbortSignal` aborts, iterators are supposed to clean up and then emit a final `{done: true}` event. This means
  * that there's no way to distinguish between streams that have completed normally and streams that have been cancelled,
  * but that is acceptable for our uses of this.
+ *
+ * @internal
  */
 export type SimpleAsyncIterator<T> = Pick<AsyncIterator<T>, 'next'>;
 
@@ -50,6 +52,7 @@ export function injectable<T>(source: SimpleAsyncIterator<T>): InjectableIterato
   let waiter: Waiter | undefined = undefined; // An active, waiting next() call.
   // A pending upstream event that couldn't be dispatched because inject() has been called before it was resolved.
   let pendingSourceEvent: ((w: Waiter) => void) | null = null;
+  let sourceFetchInFlight = false;
 
   let pendingInjectedEvents: T[] = [];
 
@@ -61,6 +64,8 @@ export function injectable<T>(source: SimpleAsyncIterator<T>): InjectableIterato
 
   const fetchFromSource = () => {
     const resolveWaiter = (propagate: (w: Waiter) => void) => {
+      sourceFetchInFlight = false;
+
       const active = consumeWaiter();
       if (active) {
         propagate(active);
@@ -69,6 +74,7 @@ export function injectable<T>(source: SimpleAsyncIterator<T>): InjectableIterato
       }
     };
 
+    sourceFetchInFlight = true;
     const nextFromSource = source.next();
     nextFromSource.then(
       (value) => {
@@ -101,7 +107,9 @@ export function injectable<T>(source: SimpleAsyncIterator<T>): InjectableIterato
 
         // Nothing pending? Fetch from source
         waiter = { resolve, reject };
-        return fetchFromSource();
+        if (!sourceFetchInFlight) {
+          fetchFromSource();
+        }
       });
     },
     inject: (event) => {

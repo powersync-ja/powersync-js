@@ -12,14 +12,14 @@
     "test:build": "pnpm build && vitest run"
   },
   "dependencies": {
-    "@journeyapps/wa-sqlite": "^1.6.0",
-    "@powersync/web": "^1.37.2"
+    "@journeyapps/wa-sqlite": "^1.7.0",
+    "@powersync/web": "^1.38.3"
   },
   "devDependencies": {
     "@swc/core": "~1.6.0",
-    "@vitest/browser": "^3.2.4",
-    "playwright": "^1.51.0",
-    "vite": "^7.0.12",
-    "vitest": "^3.2.4"
+    "@vitest/browser-playwright": "^4.1.8",
+    "playwright": "^1.60.0",
+    "vite": "^8.0.16",
+    "vitest": "^4.1.8"
   }
 }

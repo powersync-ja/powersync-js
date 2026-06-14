@@ -1,5 +1,8 @@
 import { AbstractPowerSyncDatabase, SQLWatchOptions } from './AbstractPowerSyncDatabase.js';
 
+/**
+ * @internal
+ */
 export function runOnSchemaChange(
   callback: (signal: AbortSignal) => void,
   db: AbstractPowerSyncDatabase,

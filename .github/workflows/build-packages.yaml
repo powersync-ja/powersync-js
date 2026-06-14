@@ -30,3 +30,10 @@ jobs:
 
       - name: Build (prod)
         run: pnpm build:packages:prod
+
+      - name: Build typescript
+        run: pnpm exec tsc -b
+
+      - name: Verify @powersync/common API
+        working-directory: packages/common
+        run: pnpm exec api-extractor run --verbose

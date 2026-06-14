@@ -4,11 +4,17 @@ import { Schema } from '../db/schema/Schema.js';
 import { AbstractPowerSyncDatabase, PowerSyncDatabaseOptions } from './AbstractPowerSyncDatabase.js';
 import { SQLOpenOptions } from './SQLOpenFactory.js';
 
+/**
+ * @internal
+ */
 export interface PowerSyncOpenFactoryOptions extends Partial<PowerSyncDatabaseOptions>, SQLOpenOptions {
   /** Schema used for the local database. */
   schema: Schema;
 }
 
+/**
+ * @internal
+ */
 export abstract class AbstractPowerSyncDatabaseOpenFactory {
   constructor(protected options: PowerSyncOpenFactoryOptions) {
     options.logger = options.logger ?? Logger.get(`PowerSync ${this.options.dbFilename}`);

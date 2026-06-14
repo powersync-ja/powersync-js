@@ -9,6 +9,8 @@ import { WatchedQueryComparator } from './comparators.js';
 
 /**
  * Settings for {@link WatchedQuery} instances created via {@link Query#watch}.
+ *
+ * @public
  */
 export interface WatchedQuerySettings<DataType> extends WatchedQueryOptions {
   query: WatchCompatibleQuery<DataType>;
@@ -16,14 +18,18 @@ export interface WatchedQuerySettings<DataType> extends WatchedQueryOptions {
 
 /**
  * {@link WatchedQuery} returned from {@link Query#watch}.
+ *
+ * @public
  */
 export type StandardWatchedQuery<DataType> = WatchedQuery<DataType, WatchedQuerySettings<DataType>>;
 
 /**
  * @internal
  */
-export interface OnChangeQueryProcessorOptions<Data>
-  extends AbstractQueryProcessorOptions<Data, WatchedQuerySettings<Data>> {
+export interface OnChangeQueryProcessorOptions<Data> extends AbstractQueryProcessorOptions<
+  Data,
+  WatchedQuerySettings<Data>
+> {
   comparator?: WatchedQueryComparator<Data>;
 }
 
@@ -103,7 +109,7 @@ export class OnChangeQueryProcessor<Data> extends AbstractQueryProcessor<Data, W
             if (Object.keys(partialStateUpdate).length > 0) {
               await this.updateState(partialStateUpdate);
             }
-          } catch (error) {
+          } catch (error: any) {
             await this.updateState({ error });
           }
         },

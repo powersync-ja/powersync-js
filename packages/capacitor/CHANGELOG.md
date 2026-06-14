@@ -1,5 +1,45 @@
 # @powersync/capacitor
 
+## 0.7.0
+
+### Minor Changes
+
+- befa2ae: Promote the Capacitor SDK from alpha to beta.
+
+### Patch Changes
+
+- @powersync/web@1.38.3
+
+## 0.6.1
+
+### Patch Changes
+
+- 7b38faa: Fix Capacitor batch operations so they do not start a nested native transaction when executed inside PowerSync's write transaction wrapper.
+  - @powersync/web@1.38.2
+
+## 0.6.0
+
+### Minor Changes
+
+- 4fc12f9: Add Swift Package Manager support for iOS projects.
+
+  This raises the minimum supported Capacitor version to Capacitor 8.
+
+## 0.5.3
+
+### Patch Changes
+
+- c2d0f9e: Update PowerSync SQLite core extension to 0.4.12
+- a656afa: The `PowerSyncDatabase.connect` method now defaults to using NDJSON-HTTP as the connection method when using the Capacitor Community SQLite driver. This avoids slow binary processing present in Capacitor Community SQLite and should significantly increase sync performance on native platforms.
+- 26c2c24: Fixed "Error in reading buffer" error on iOS when connecting via WebSocket.
+- Updated dependencies [1506543]
+- Updated dependencies [c2d0f9e]
+- Updated dependencies [c730604]
+- Updated dependencies [838479e]
+- Updated dependencies [739e21a]
+- Updated dependencies [756a0cf]
+  - @powersync/web@1.38.0
+
 ## 0.5.2
 
 ### Patch Changes

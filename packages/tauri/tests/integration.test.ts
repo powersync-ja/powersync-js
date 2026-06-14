@@ -15,6 +15,13 @@ async function installTauriInTestFrameHack() {
 
   current.__TAURI_INTERNALS__ = root.__TAURI_INTERNALS__;
   current.__TAURI_EVENT_PLUGIN_INTERNALS__ = root.__TAURI_EVENT_PLUGIN_INTERNALS__;
+
+  // When binary responses are used, Tauri injects top-level code matching against
+  // ArrayBuffers. Ensure this iframe realm uses the same class for compatibility. We
+  // don't currently use binary responses in the PowerSync plugin, but it serves as an
+  // example for general integration tests with Tauri.
+  current.ArrayBuffer = root.ArrayBuffer;
+
 }
 
 const schema = new Schema({
@@ -91,4 +98,18 @@ test('can close instances', async () => {
   // database.
   const second = openDatabase({ schema });
   expect(await second.getAll('SELECT * FROM users')).toHaveLength(0);
+});
+
+test('can bind integers', async () => {
+  const db = openDatabase({ schema });
+  await db.init();
+
+  await db.execute('INSERT INTO users (id, name) VALUES (uuid(), ?)', ['first']);
+  await db.execute('INSERT INTO users (id, name) VALUES (uuid(), ?)', ['second']);
+
+  const { name } = await db.get<{ name: string }>('SELECT name FROM users ORDER BY name LIMIT ?', [1]);
+  expect(name).toStrictEqual('first');
+
+  const row = await db.get<{ a: string; b: string }>('SELECT typeof(?) as a, typeof(?) as b', [123, 1.23]);
+  expect(row).toStrictEqual({ a: 'integer', b: 'real' });
 });

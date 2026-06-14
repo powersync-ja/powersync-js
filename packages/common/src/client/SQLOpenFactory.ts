@@ -1,5 +1,8 @@
 import { DBAdapter } from '../db/DBAdapter.js';
 
+/**
+ * @public
+ */
 export interface SQLOpenOptions {
   /**
    * Filename for the database.
@@ -25,6 +28,9 @@ export interface SQLOpenOptions {
   debugMode?: boolean;
 }
 
+/**
+ * @public
+ */
 export interface SQLOpenFactory {
   /**
    * Opens a connection adapter to a SQLite DB
@@ -34,6 +40,8 @@ export interface SQLOpenFactory {
 
 /**
  * Tests if the input is a {@link SQLOpenOptions}
+ *
+ * @internal
  */
 export const isSQLOpenOptions = (test: any): test is SQLOpenOptions => {
   // typeof null is `object`, but you cannot use the `in` operator on `null.
@@ -42,6 +50,8 @@ export const isSQLOpenOptions = (test: any): test is SQLOpenOptions => {
 
 /**
  * Tests if input is a {@link SQLOpenFactory}
+ *
+ * @internal
  */
 export const isSQLOpenFactory = (test: any): test is SQLOpenFactory => {
   return typeof test?.openDB == 'function';
@@ -49,6 +59,8 @@ export const isSQLOpenFactory = (test: any): test is SQLOpenFactory => {
 
 /**
  * Tests if input is a {@link DBAdapter}
+ *
+ * @internal
  */
 export const isDBAdapter = (test: any): test is DBAdapter => {
   return typeof test?.writeTransaction == 'function';

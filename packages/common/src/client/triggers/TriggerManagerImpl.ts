@@ -97,8 +97,8 @@ export class TriggerManagerImpl implements TriggerManager {
     return this.options.db;
   }
 
-  protected async getUUID() {
-    const { id: uuid } = await this.db.get<{ id: string }>(/* sql */ `
+  protected async getUUID(ctx?: LockContext) {
+    const { id: uuid } = await (ctx ?? this.db).get<{ id: string }>(/* sql */ `
       SELECT
         uuid () as id
     `);
@@ -237,7 +237,7 @@ export class TriggerManagerImpl implements TriggerManager {
     const internalSource = sourceDefinition.internalName;
     const triggerIds: string[] = [];
 
-    const id = await this.getUUID();
+    const id = await this.getUUID(setupContext);
 
     const releaseStorageClaim = useStorage ? await this.options.claimManager.obtainClaim(id) : null;
 
@@ -421,7 +421,7 @@ export class TriggerManagerImpl implements TriggerManager {
             const callbackResult = await options.onChange({
               ...tx,
               destinationTable: destination,
-              withDiff: async <T>(query, params, options?: WithDiffOptions) => {
+              withDiff: async <T>(query: string, params: any, options?: WithDiffOptions) => {
                 // Wrap the query to expose the destination table
                 const operationIdSelect = options?.castOperationIdAsText
                   ? 'id, operation, CAST(operation_id AS TEXT) as operation_id, timestamp, value, previous_value'
@@ -439,7 +439,7 @@ export class TriggerManagerImpl implements TriggerManager {
                 `;
                 return tx.getAll<T>(wrappedQuery, params);
               },
-              withExtractedDiff: async <T>(query, params) => {
+              withExtractedDiff: async <T>(query: string, params: any) => {
                 // Wrap the query to expose the destination table
                 const wrappedQuery = /* sql */ `
                   WITH

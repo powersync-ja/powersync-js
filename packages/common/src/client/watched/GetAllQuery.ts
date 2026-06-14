@@ -4,6 +4,8 @@ import { WatchCompatibleQuery } from './WatchedQuery.js';
 
 /**
  * Options for {@link GetAllQuery}.
+ *
+ * @public
  */
 export type GetAllQueryOptions<RowType = unknown> = {
   sql: string;
@@ -23,6 +25,8 @@ export type GetAllQueryOptions<RowType = unknown> = {
 
 /**
  * Performs a {@link AbstractPowerSyncDatabase.getAll} operation for a watched query.
+ *
+ * @public
  */
 export class GetAllQuery<RowType = unknown> implements WatchCompatibleQuery<RowType[]> {
   constructor(protected options: GetAllQueryOptions<RowType>) {}
@@ -37,7 +41,7 @@ export class GetAllQuery<RowType = unknown> implements WatchCompatibleQuery<RowT
   async execute(options: { db: AbstractPowerSyncDatabase }): Promise<RowType[]> {
     const { db } = options;
     const { sql, parameters = [] } = this.compile();
-    const rawResult = await db.getAll<unknown>(sql, [...parameters]);
+    const rawResult = await db.getAll<Record<string, unknown>>(sql, [...parameters]);
     if (this.options.mapper) {
       return rawResult.map(this.options.mapper);
     }

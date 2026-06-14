@@ -1,15 +1,24 @@
 import { ColumnType } from './Column.js';
 import { Table } from './Table.js';
 
+/**
+ * @public
+ */
 export interface IndexColumnOptions {
   name: string;
   ascending?: boolean;
 }
 
+/**
+ * @internal
+ */
 export const DEFAULT_INDEX_COLUMN_OPTIONS: Partial<IndexColumnOptions> = {
   ascending: true
 };
 
+/**
+ * @public
+ */
 export class IndexedColumn {
   protected options: IndexColumnOptions;
 

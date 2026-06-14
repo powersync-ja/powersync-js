@@ -1,2 +1,6 @@
 packages:
   - .
+allowBuilds:
+  '@journeyapps/wa-sqlite': true
+  sharp: false
+  unrs-resolver: false

@@ -1,4 +1,3 @@
-import { StreamingSyncRequest } from './streaming-sync-types.js';
 import * as sync_status from '../../../db/crud/SyncStatus.js';
 import { FULL_SYNC_PRIORITY } from '../../../db/crud/SyncProgress.js';
 
@@ -6,12 +5,19 @@ import { FULL_SYNC_PRIORITY } from '../../../db/crud/SyncProgress.js';
  * An internal instruction emitted by the sync client in the core extension in response to the JS
  * SDK passing sync data into the extension.
  */
-export type Instruction =
+export type Instruction = InterruptingInstruction | NonInterruptingInstruction;
+
+export type InterruptingInstruction =
+  | { EstablishSyncStream: EstablishSyncStream }
+  | { CloseSyncStream: { hide_disconnect: boolean } };
+
+/**
+ * An {@link Instruction} that doesn't start or stop a sync iteration.
+ */
+export type NonInterruptingInstruction =
   | { LogLine: LogLine }
   | { UpdateSyncStatus: UpdateSyncStatus }
-  | { EstablishSyncStream: EstablishSyncStream }
   | { FetchCredentials: FetchCredentials }
-  | { CloseSyncStream: { hide_disconnect: boolean } }
   | { FlushFileSystem: any }
   | { DidCompleteSync: any };
 
@@ -21,7 +27,7 @@ export interface LogLine {
 }
 
 export interface EstablishSyncStream {
-  request: StreamingSyncRequest;
+  request: unknown;
 }
 
 export interface UpdateSyncStatus {
@@ -96,4 +102,8 @@ export function coreStatusToJs(status: CoreSyncStatus): sync_status.SyncStatusOp
     hasSynced: completeSync?.hasSynced,
     priorityStatusEntries: status.priority_status.map(priorityToJs)
   };
+}
+
+export function isInterruptingInstruction(instruction: Instruction): instruction is InterruptingInstruction {
+  return 'EstablishSyncStream' in instruction || 'CloseSyncStream' in instruction;
 }

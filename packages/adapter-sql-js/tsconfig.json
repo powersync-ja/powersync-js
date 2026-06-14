@@ -1,7 +1,6 @@
 {
   "extends": "../../tsconfig.base",
   "compilerOptions": {
-    "baseUrl": "./",
     "jsx": "react",
     "types": ["node"],
     "rootDir": "src",
@@ -11,9 +10,13 @@
     "module": "NodeNext",
     "moduleResolution": "nodenext",
     "preserveConstEnums": true,
-    "esModuleInterop": false,
     "skipLibCheck": false,
     "strictNullChecks": true
   },
+  "references": [
+    {
+      "path": "../common"
+    }
+  ],
   "include": ["src/**/*"]
 }

@@ -1,6 +1,6 @@
 {
   "name": "@powersync/tauri-plugin",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
@@ -40,7 +40,7 @@
   "devDependencies": {
     "typescript": "catalog:",
     "tslib": "^2.6.2",
-    "vitest": "^4.1.1",
-    "@vitest/browser-preview": "^4.1.1"
+    "vitest": "catalog:",
+    "@vitest/browser-preview": "catalog:"
   }
 }

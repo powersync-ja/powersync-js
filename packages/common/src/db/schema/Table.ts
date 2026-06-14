@@ -13,6 +13,8 @@ import { TableV2 } from './TableV2.js';
 
 /**
  * Options that apply both to JSON-based tables and raw tables.
+ *
+ * @public
  */
 export interface TableOrRawTableOptions {
   localOnly?: boolean;
@@ -30,6 +32,8 @@ interface SharedTableOptions extends TableOrRawTableOptions {
  *
  * Including old values may be helpful for some backend connector implementations, which is
  * why it can be enabled on per-table or per-columm basis.
+ *
+ * @public
  */
 export interface TrackPreviousOptions {
   /** When defined, a list of column names for which old values should be tracked. */
@@ -38,6 +42,9 @@ export interface TrackPreviousOptions {
   onlyWhenChanged?: boolean;
 }
 
+/**
+ * @public
+ */
 export interface TableOptions extends SharedTableOptions {
   /**
    * The synced table name, matching sync rules
@@ -47,18 +54,31 @@ export interface TableOptions extends SharedTableOptions {
   indexes?: Index[];
 }
 
+/**
+ * @public
+ */
 export type RowType<T extends TableV2<any>> = {
   [K in keyof T['columnMap']]: ExtractColumnValueType<T['columnMap'][K]>;
 } & {
   id: string;
 };
 
+/**
+ * @public
+ */
 export type IndexShorthand = Record<string, string[]>;
+
+/**
+ * @public
+ */
 
 export interface TableV2Options extends SharedTableOptions {
   indexes?: IndexShorthand;
 }
 
+/**
+ * @internal
+ */
 export const DEFAULT_TABLE_OPTIONS = {
   indexes: [],
   insertOnly: false,
@@ -68,12 +88,18 @@ export const DEFAULT_TABLE_OPTIONS = {
   ignoreEmptyUpdates: false
 };
 
+/**
+ * @internal
+ */
 export const InvalidSQLCharacters = /["'%,.#\s[\]]/;
 
+/**
+ * @public
+ */
 export class Table<Columns extends ColumnsType = ColumnsType> {
-  protected options: TableOptions;
+  protected options!: TableOptions;
 
-  protected _mappedColumns: Columns;
+  protected _mappedColumns!: Columns;
 
   static createLocalOnly(options: TableOptions) {
     return new Table({ ...options, localOnly: true, insertOnly: false });
@@ -108,9 +134,8 @@ export class Table<Columns extends ColumnsType = ColumnsType> {
    * 1. New constructor: Using a Columns object and an optional TableV2Options object
    * 2. Deprecated constructor: Using a TableOptions object (will be removed in the next major release)
    *
-   * @constructor
-   * @param {Columns | TableOptions} optionsOrColumns - Either a Columns object (for V2 syntax) or a TableOptions object (for V1 syntax)
-   * @param {TableV2Options} [v2Options] - Optional configuration options for V2 syntax
+   * @param columns - Either a Columns object (for V2 syntax) or a TableOptions object (for V1 syntax)
+   * @param options - Optional configuration options for V2 syntax
    *
    * @example
    * ```javascript

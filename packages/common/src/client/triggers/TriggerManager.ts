@@ -2,7 +2,8 @@ import { LockContext } from '../../db/DBAdapter.js';
 
 /**
  * SQLite operations to track changes for with {@link TriggerManager}
- * @experimental
+ *
+ * @experimental @alpha
  */
 export enum DiffTriggerOperation {
   INSERT = 'INSERT',
@@ -11,7 +12,7 @@ export enum DiffTriggerOperation {
 }
 
 /**
- * @experimental
+ * @experimental @alpha
  * Diffs created by {@link TriggerManager#createDiffTrigger} are stored in a temporary table.
  * This is the base record structure for all diff records.
  *
@@ -42,7 +43,7 @@ export interface BaseTriggerDiffRecord<TOperationId extends string | number = nu
 }
 
 /**
- * @experimental
+ * @experimental @alpha
  * Represents a diff record for a SQLite UPDATE operation.
  * This record contains the new value and optionally the previous value.
  * Values are stored as JSON strings.
@@ -62,7 +63,7 @@ export interface TriggerDiffUpdateRecord<
 }
 
 /**
- * @experimental
+ * @experimental @alpha
  * Represents a diff record for a SQLite INSERT operation.
  * This record contains the new value represented as a JSON string.
  */
@@ -77,7 +78,7 @@ export interface TriggerDiffInsertRecord<
 }
 
 /**
- * @experimental
+ * @experimental @alpha
  * Represents a diff record for a SQLite DELETE operation.
  * This record contains the new value represented as a JSON string.
  */
@@ -92,7 +93,7 @@ export interface TriggerDiffDeleteRecord<
 }
 
 /**
- * @experimental
+ * @experimental @alpha
  * Diffs created by {@link TriggerManager#createDiffTrigger} are stored in a temporary table.
  * This is the record structure for all diff records.
  *
@@ -121,7 +122,7 @@ export type TriggerDiffRecord<TOperationId extends string | number = number> =
   | TriggerDiffDeleteRecord<TOperationId>;
 
 /**
- * @experimental
+ * @experimental @alpha
  * Querying the DIFF table directly with {@link TriggerDiffHandlerContext#withExtractedDiff} will return records
  * with the tracked columns extracted from the JSON value.
  * This type represents the structure of such records.
@@ -150,7 +151,7 @@ export type ExtractedTriggerDiffRecord<T, TOperationId extends string | number =
 };
 
 /**
- * @experimental
+ * @experimental @alpha
  * Hooks used in the creation of a table diff trigger.
  */
 export interface TriggerCreationHooks {
@@ -213,7 +214,7 @@ interface BaseCreateDiffTriggerOptions {
 }
 
 /**
- * @experimental
+ * @experimental @alpha
  * Options for {@link TriggerManager#createDiffTrigger}.
  */
 export interface CreateDiffTriggerOptions extends BaseCreateDiffTriggerOptions {
@@ -232,7 +233,7 @@ export interface CreateDiffTriggerOptions extends BaseCreateDiffTriggerOptions {
 }
 
 /**
- * @experimental
+ * @experimental @alpha
  * Options for {@link TriggerRemoveCallback}.
  */
 export interface TriggerRemoveCallbackOptions {
@@ -240,12 +241,12 @@ export interface TriggerRemoveCallbackOptions {
 }
 
 /**
- * @experimental
+ * @experimental @alpha
  * Callback to drop a trigger after it has been created.
  */
 export type TriggerRemoveCallback = (options?: TriggerRemoveCallbackOptions) => Promise<void>;
 /**
- * @experimental
+ * @experimental @alpha
  * Options for {@link TriggerDiffHandlerContext#withDiff}.
  */
 export interface WithDiffOptions {
@@ -260,7 +261,7 @@ export interface WithDiffOptions {
 }
 
 /**
- * @experimental
+ * @experimental @alpha
  * Context for the `onChange` handler provided to {@link TriggerManager#trackTableDiff}.
  */
 export interface TriggerDiffHandlerContext extends LockContext {
@@ -317,7 +318,7 @@ export interface TriggerDiffHandlerContext extends LockContext {
    * Allows querying the database with access to the table containing diff records.
    * The diff table is accessible via the `DIFF` accessor.
    *
-   * This is similar to {@link withDiff} but extracts the row columns from the tracked JSON value. The diff operation
+   * This is similar to {@link TriggerDiffHandlerContext#withDiff} but extracts the row columns from the tracked JSON value. The diff operation
    * data is aliased as `__` columns to avoid column conflicts.
    *
    * For {@link DiffTriggerOperation#DELETE} operations the previous_value columns are extracted for convenience.
@@ -349,7 +350,7 @@ export interface TriggerDiffHandlerContext extends LockContext {
 }
 
 /**
- * @experimental
+ * @experimental @alpha
  * Options for tracking changes to a table with {@link TriggerManager#trackTableDiff}.
  */
 export interface TrackDiffOptions extends BaseCreateDiffTriggerOptions {
@@ -361,14 +362,14 @@ export interface TrackDiffOptions extends BaseCreateDiffTriggerOptions {
   onChange: (context: TriggerDiffHandlerContext) => Promise<void>;
 
   /**
-   * The minimum interval, in milliseconds, between {@link onChange} invocations.
+   * The minimum interval, in milliseconds, between {@link TrackDiffOptions.onChange} invocations.
    *  @default {@link DEFAULT_WATCH_THROTTLE_MS}
    */
   throttleMs?: number;
 }
 
 /**
- * @experimental
+ * @experimental @alpha
  */
 export interface TriggerManager {
   /**
@@ -417,7 +418,7 @@ export interface TriggerManager {
   /**
    * @experimental
    * Tracks changes for a table. Triggering a provided handler on changes.
-   * Uses {@link createDiffTrigger} internally to create a temporary destination table.
+   * Uses {@link TriggerManager.createDiffTrigger} internally to create a temporary destination table.
    *
    * @returns A callback to cleanup the trigger and stop tracking changes.
    *

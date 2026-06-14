@@ -1,5 +1,56 @@
 # @powersync/react-native
 
+## 1.35.4
+
+### Patch Changes
+
+- Updated dependencies [0ee8051]
+- Updated dependencies [17869e7]
+- Updated dependencies [93199a7]
+  - @powersync/common@1.54.0
+  - @powersync/react@1.10.0
+
+## 1.35.3
+
+### Patch Changes
+
+- Updated dependencies [ac183c2]
+  - @powersync/common@1.53.2
+  - @powersync/react@1.10.0
+
+## 1.35.2
+
+### Patch Changes
+
+- 6830f4a: Force React Native remote HTTP requests onto the text response path so RN 0.85 does not drop non-streaming response bodies.
+
+## 1.35.1
+
+### Patch Changes
+
+- Updated dependencies [8704578]
+  - @powersync/common@1.53.1
+  - @powersync/react@1.10.0
+
+## 1.35.0
+
+### Minor Changes
+
+- 739e21a: Remove support for the JavaScript sync client. The default Rust client is the only option starting from this version.
+
+### Patch Changes
+
+- c2d0f9e: Update PowerSync SQLite core extension to 0.4.12
+- Updated dependencies [a0f527c]
+- Updated dependencies [94c7c9f]
+- Updated dependencies [f39badb]
+- Updated dependencies [947ca21]
+- Updated dependencies [838479e]
+- Updated dependencies [5513fad]
+- Updated dependencies [739e21a]
+  - @powersync/common@1.53.0
+  - @powersync/react@1.10.0
+
 ## 1.34.0
 
 ### Minor Changes

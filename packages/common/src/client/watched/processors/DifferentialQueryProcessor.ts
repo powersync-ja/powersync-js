@@ -9,6 +9,8 @@ import {
 /**
  * Represents an updated row in a differential watched query.
  * It contains both the current and previous state of the row.
+ *
+ * @public
  */
 export interface WatchedQueryRowDifferential<RowType> {
   readonly current: RowType;
@@ -18,6 +20,8 @@ export interface WatchedQueryRowDifferential<RowType> {
 /**
  * Represents the result of a watched query that has been diffed.
  * {@link DifferentialWatchedQueryState#diff} is of the {@link WatchedQueryDifferential} form.
+ *
+ * @public
  */
 export interface WatchedQueryDifferential<RowType> {
   readonly added: ReadonlyArray<Readonly<RowType>>;
@@ -43,6 +47,8 @@ export interface WatchedQueryDifferential<RowType> {
 
 /**
  * Row comparator for differentially watched queries which keys and compares items in the result set.
+ *
+ * @public
  */
 export interface DifferentialWatchedQueryComparator<RowType> {
   /**
@@ -57,6 +63,8 @@ export interface DifferentialWatchedQueryComparator<RowType> {
 
 /**
  * Options for building a differential watched query with the {@link Query} builder.
+ *
+ * @public
  */
 export interface DifferentialWatchedQueryOptions<RowType> extends WatchedQueryOptions {
   /**
@@ -75,6 +83,8 @@ export interface DifferentialWatchedQueryOptions<RowType> extends WatchedQueryOp
 
 /**
  * Settings for differential incremental watched queries using.
+ *
+ * @public
  */
 export interface DifferentialWatchedQuerySettings<RowType> extends DifferentialWatchedQueryOptions<RowType> {
   /**
@@ -83,11 +93,18 @@ export interface DifferentialWatchedQuerySettings<RowType> extends DifferentialW
   query: WatchCompatibleQuery<RowType[]>;
 }
 
-export interface DifferentialWatchedQueryListener<RowType>
-  extends WatchedQueryListener<ReadonlyArray<Readonly<RowType>>> {
+/**
+ * @public
+ */
+export interface DifferentialWatchedQueryListener<RowType> extends WatchedQueryListener<
+  ReadonlyArray<Readonly<RowType>>
+> {
   onDiff?: (diff: WatchedQueryDifferential<RowType>) => void | Promise<void>;
 }
 
+/**
+ * @public
+ */
 export type DifferentialWatchedQuery<RowType> = WatchedQuery<
   ReadonlyArray<Readonly<RowType>>,
   DifferentialWatchedQuerySettings<RowType>,
@@ -97,8 +114,10 @@ export type DifferentialWatchedQuery<RowType> = WatchedQuery<
 /**
  * @internal
  */
-export interface DifferentialQueryProcessorOptions<RowType>
-  extends AbstractQueryProcessorOptions<RowType[], DifferentialWatchedQuerySettings<RowType>> {
+export interface DifferentialQueryProcessorOptions<RowType> extends AbstractQueryProcessorOptions<
+  RowType[],
+  DifferentialWatchedQuerySettings<RowType>
+> {
   rowComparator?: DifferentialWatchedQueryComparator<RowType>;
 }
 
@@ -107,6 +126,8 @@ type DataHashMap<RowType> = Map<string, { hash: string; item: RowType }>;
 /**
  * An empty differential result set.
  * This is used as the initial state for differential incrementally watched queries.
+ *
+ * @internal
  */
 export const EMPTY_DIFFERENTIAL = {
   added: [],
@@ -120,6 +141,8 @@ export const EMPTY_DIFFERENTIAL = {
  * Default implementation of the {@link DifferentialWatchedQueryComparator} for watched queries.
  * It keys items by their `id` property if available, alternatively it uses JSON stringification
  * of the entire item for the key and comparison.
+ *
+ * @internal
  */
 export const DEFAULT_ROW_COMPARATOR: DifferentialWatchedQueryComparator<any> = {
   keyBy: (item) => {
@@ -286,7 +309,7 @@ export class DifferentialQueryProcessor<RowType>
             if (Object.keys(partialStateUpdate).length > 0) {
               await this.updateState(partialStateUpdate);
             }
-          } catch (error) {
+          } catch (error: any) {
             await this.updateState({ error });
           }
         },

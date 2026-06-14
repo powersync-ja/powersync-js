@@ -1,5 +1,14 @@
 packages:
   - .
-onlyBuiltDependencies:
-  - better-sqlite3
-  - electron
+
+overrides:
+  # @electron-forge depends on an older version of this using git dependency, which pnpm blocks.
+  # The only breaking change is that this requires node 22 or later.
+  "@electron/rebuild": ^4.0.4
+
+allowBuilds:
+  better-sqlite3: true
+  electron: true
+  electron-winstaller: false
+  esbuild: false
+  lzma-native: false

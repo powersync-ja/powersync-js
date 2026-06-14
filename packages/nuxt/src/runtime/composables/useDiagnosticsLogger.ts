@@ -1,4 +1,4 @@
-import { createBaseLogger, LogLevel, type ILogHandler } from '@powersync/web';
+import { createBaseLogger, LogLevel, type ILogHandler } from '@powersync/common';
 import { createStorage } from 'unstorage';
 import localStorageDriver from 'unstorage/drivers/session-storage';
 import mitt from 'mitt';

@@ -1,6 +1,6 @@
 {
   "name": "@powersync/common",
-  "version": "1.52.0",
+  "version": "1.54.0",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
@@ -30,6 +30,9 @@
         "types": "./dist/index.d.cts",
         "require": "./dist/bundle.cjs"
       }
+    },
+    "./internal/sync_protocol": {
+      "types": "./legacy/sync_protocol.d.ts"
     }
   },
   "author": "PowerSync",
@@ -37,7 +40,8 @@
   "files": [
     "lib",
     "dist",
-    "src"
+    "src",
+    "legacy"
   ],
   "repository": {
     "type": "git",
@@ -52,10 +56,11 @@
     "build:prod": "tsc -b && rollup -c rollup.config.mjs",
     "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
     "test": "vitest",
-    "test:exports": "attw --pack ."
+    "test:exports": "attw --pack . --exclude-entrypoints internal/sync_protocol"
   },
   "dependencies": {
-    "event-iterator": "^2.0.0"
+    "event-iterator": "^2.0.0",
+    "js-logger": "catalog:"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "catalog:",
@@ -64,15 +69,14 @@
     "@rollup/plugin-node-resolve": "catalog:",
     "@types/node": "catalog:",
     "@types/uuid": "catalog:",
-    "bson": "catalog:",
     "buffer": "^6.0.3",
     "cross-fetch": "^4.1.0",
     "estree-walker": "^3.0.3",
-    "js-logger": "catalog:",
     "magic-string": "^0.30.21",
     "rollup": "catalog:",
     "rollup-plugin-dts": "catalog:",
     "rsocket-core": "1.0.0-alpha.3",
-    "rsocket-websocket-client": "1.0.0-alpha.3"
+    "rsocket-websocket-client": "1.0.0-alpha.3",
+    "@microsoft/api-extractor": "catalog:"
   }
 }

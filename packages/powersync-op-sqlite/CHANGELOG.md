@@ -1,5 +1,43 @@
 # @powersync/op-sqlite
 
+## 0.9.10
+
+### Patch Changes
+
+- Updated dependencies [0ee8051]
+- Updated dependencies [17869e7]
+- Updated dependencies [93199a7]
+  - @powersync/common@1.54.0
+
+## 0.9.9
+
+### Patch Changes
+
+- Updated dependencies [ac183c2]
+  - @powersync/common@1.53.2
+
+## 0.9.8
+
+### Patch Changes
+
+- Updated dependencies [8704578]
+  - @powersync/common@1.53.1
+
+## 0.9.7
+
+### Patch Changes
+
+- c2d0f9e: Update PowerSync SQLite core extension to 0.4.12
+- 947ca21: Fix `attempt to write a readonly database` error in `readTransaction`.
+- Updated dependencies [a0f527c]
+- Updated dependencies [94c7c9f]
+- Updated dependencies [f39badb]
+- Updated dependencies [947ca21]
+- Updated dependencies [838479e]
+- Updated dependencies [5513fad]
+- Updated dependencies [739e21a]
+  - @powersync/common@1.53.0
+
 ## 0.9.6
 
 ### Patch Changes

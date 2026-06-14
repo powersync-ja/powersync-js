@@ -3,8 +3,6 @@ import {
   PowerSyncDatabase,
   Schema,
   SharedWebStreamingSyncImplementation,
-  SyncClientImplementation,
-  WASQLiteVFS,
   WebRemote,
   WebStreamingSyncImplementation,
   type DisconnectAndClearOptions,
@@ -15,11 +13,11 @@ import {
   type WebPowerSyncDatabaseOptions,
   type WebDBAdapter
 } from '@powersync/web';
-import { RecordingStorageAdapter } from './RecordingStorageAdapter';
 import type { DynamicSchemaManager } from './DynamicSchemaManager';
 import { usePowerSyncInspector } from '../composables/usePowerSyncInspector';
 import { useDiagnosticsLogger } from '../composables/useDiagnosticsLogger';
 import { shallowRef, type ShallowRef } from 'vue';
+// @ts-ignore
 import { useRuntimeConfig } from '#app';
 import { RustClientInterceptor } from './RustClientInterceptor';
 
@@ -107,18 +105,10 @@ export class NuxtPowerSyncDatabase extends PowerSyncDatabase {
       const currentSchemaManager = getCurrentSchemaManager();
       const schemaManager = currentSchemaManager || this.schemaManager;
 
-      const clientImplementation = this.connectionOptions?.clientImplementation ?? DEFAULT_SYNC_CLIENT_IMPLEMENTATION;
-      const adapter =
-        clientImplementation === SyncClientImplementation.RUST
-          ? new RustClientInterceptor(
-              shallowRef(this) as ShallowRef<PowerSyncDatabase>,
-              new WebRemote(connector, logger),
-              shallowRef(schemaManager) as ShallowRef<DynamicSchemaManager>
-            )
-          : new RecordingStorageAdapter(
-              shallowRef(this) as ShallowRef<PowerSyncDatabase>,
-              shallowRef(schemaManager) as ShallowRef<DynamicSchemaManager>
-            );
+      const adapter = new RustClientInterceptor(
+        shallowRef(this) as ShallowRef<PowerSyncDatabase>,
+        shallowRef(schemaManager) as ShallowRef<DynamicSchemaManager>
+      );
 
       if (this.options.flags?.enableMultiTabs) {
         if (!this.resolvedFlags.broadcastLogs) {

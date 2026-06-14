@@ -1,5 +1,5 @@
 import * as Comlink from 'comlink';
-import { WASQLiteVFS } from '../../db/adapters/wa-sqlite/vfs.js';
+import { vfsRequiresDedicatedWorkers, WASQLiteVFS } from '../../db/adapters/wa-sqlite/vfs.js';
 import { OpenWorkerConnection } from '../../db/adapters/wa-sqlite/DatabaseClient.js';
 
 /**
@@ -11,7 +11,7 @@ export function openWorkerDatabasePort(
   worker: string | URL = '',
   vfs?: WASQLiteVFS
 ) {
-  const needsDedicated = vfs == WASQLiteVFS.AccessHandlePoolVFS || vfs == WASQLiteVFS.OPFSCoopSyncVFS;
+  const needsDedicated = vfs && vfsRequiresDedicatedWorkers(vfs);
 
   if (worker) {
     return !needsDedicated && multipleTabs

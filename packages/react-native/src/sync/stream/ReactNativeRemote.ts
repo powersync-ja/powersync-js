@@ -1,7 +1,6 @@
 import {
   AbstractRemote,
   AbstractRemoteOptions,
-  BSONImplementation,
   DEFAULT_REMOTE_LOGGER,
   FetchImplementation,
   FetchImplementationProvider,
@@ -10,13 +9,17 @@ import {
   SyncStreamOptions
 } from '@powersync/common';
 import { Platform } from 'react-native';
-// Note docs for React Native https://github.com/mongodb/js-bson?tab=readme-ov-file#react-native
-import { BSON } from 'bson';
+// @ts-expect-error
 import { TextDecoder } from 'text-encoding';
 
+// @ts-expect-error
 import { fetch } from 'react-native-fetch-api';
 
 export const STREAMING_POST_TIMEOUT_MS = 30_000;
+
+type ReactNativeFetchOptions = RequestInit & {
+  reactNative?: Record<string, unknown>;
+};
 
 /**
  * Directly imports fetch implementation from react-native-fetch-api.
@@ -41,6 +44,21 @@ export class ReactNativeRemote extends AbstractRemote {
     });
   }
 
+  get fetch(): FetchImplementation {
+    const fetchImplementation = super.fetch;
+    return ((input, init) => {
+      const options = (init ?? {}) as ReactNativeFetchOptions;
+
+      return fetchImplementation(input, {
+        ...options,
+        reactNative: {
+          ...(options.reactNative ?? {}),
+          textStreaming: true
+        }
+      } as RequestInit);
+    }) as FetchImplementation;
+  }
+
   getUserAgent(): string {
     return [
       super.getUserAgent(),
@@ -48,10 +66,6 @@ export class ReactNativeRemote extends AbstractRemote {
       `react-native/${Platform.constants.reactNativeVersion.major}.${Platform.constants.reactNativeVersion.minor}`,
       `${Platform.OS}/${Platform.Version}`
     ].join(' ');
-  }
-
-  async getBSON(): Promise<BSONImplementation> {
-    return BSON;
   }
 
   createTextDecoder(): TextDecoder {

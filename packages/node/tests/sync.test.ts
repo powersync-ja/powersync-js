@@ -3,9 +3,7 @@ import { beforeEach, describe, expect, vi } from 'vitest';
 
 import {
   AbstractPowerSyncDatabase,
-  BucketChecksum,
   createLogger,
-  OplogEntryJSON,
   PowerSyncConnectionOptions,
   ProgressWithOperations,
   Schema,
@@ -20,23 +18,33 @@ import {
   mockSyncServiceTest,
   TestConnector,
   waitForSyncStatus
-} from './utils';
+} from './utils.js';
+import { BucketChecksum, OplogEntryJSON } from '@powersync/common/internal/sync_protocol';
 
 describe('Sync', () => {
-  function configureLegacyAndRustClient(bson: boolean) {
-    describe('js client', () => {
-      defineSyncTests(SyncClientImplementation.JAVASCRIPT, bson);
-    });
-
-    describe('rust client', () => {
-      defineSyncTests(SyncClientImplementation.RUST, bson);
-    });
-  }
-
-  describe('json', () => configureLegacyAndRustClient(false));
-  describe('bson', () => configureLegacyAndRustClient(true));
+  describe('json', () => defineSyncTests(false));
+  describe('bson', () => defineSyncTests(true));
 
   mockSyncServiceTest('can migrate between sync implementations', async ({ syncService }) => {
+    let database = await syncService.createDatabase();
+    // Create a bucket with a broken oplog key format.
+    const { id: bucketId } = await database.writeLock(async (adapter) => {
+      return await adapter.get<{ id: number }>('INSERT INTO ps_buckets(name) VALUES (?) RETURNING id', ['a']);
+    });
+    await database.execute(
+      'INSERT INTO ps_oplog(bucket, op_id, key, row_type, row_id, data, hash) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [
+        bucketId,
+        '1',
+        // The JavaScript client used to subkeys to JSON when it shouldn't...
+        'lists/1/"subkey_1"',
+        'lists',
+        '1',
+        '{}',
+        0
+      ]
+    );
+
     function addData(id: string) {
       syncService.pushLine({
         data: {
@@ -62,27 +70,8 @@ describe('Sync', () => {
       }
     };
 
-    let database = await syncService.createDatabase();
+    // Connecting with the new client should fix the format.
     database.connect(new TestConnector(), {
-      clientImplementation: SyncClientImplementation.JAVASCRIPT,
-      connectionMethod: SyncStreamConnectionMethod.HTTP
-    });
-    await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
-    syncService.pushLine(checkpoint);
-    addData('1');
-
-    await vi.waitFor(async () => {
-      expect(await database.getAll('SELECT * FROM ps_oplog')).toHaveLength(1);
-    });
-    await database.disconnect();
-    // The JavaScript client encodes subkeys to JSON when it shouldn't...
-    expect(await database.getAll('SELECT * FROM ps_oplog')).toEqual([
-      expect.objectContaining({ key: 'lists/1/"subkey_1"' })
-    ]);
-
-    // Connecting again with the new client should fix the format
-    database.connect(new TestConnector(), {
-      clientImplementation: SyncClientImplementation.RUST,
       connectionMethod: SyncStreamConnectionMethod.HTTP
     });
     await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
@@ -97,31 +86,29 @@ describe('Sync', () => {
       expect.objectContaining({ key: 'lists/1/subkey_1' }),
       expect.objectContaining({ key: 'lists/2/subkey_2' })
     ]);
+  });
 
-    // Finally, connecting with JS again should keep the fixed subkey format.
+  mockSyncServiceTest('reconnects immediately after changed connection', async ({ syncService }) => {
+    let database = await syncService.createDatabase();
     database.connect(new TestConnector(), {
       clientImplementation: SyncClientImplementation.RUST,
-      connectionMethod: SyncStreamConnectionMethod.HTTP
+      connectionMethod: SyncStreamConnectionMethod.HTTP,
+      // This large retry delay is to provoke test timeouts if the don't immediately reconnect.
+      retryDelayMs: 60_000
     });
     await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
-    syncService.pushLine(checkpoint);
-    addData('3');
-    await vi.waitFor(async () => {
-      expect(await database.getAll('SELECT * FROM ps_oplog')).toHaveLength(3);
-    });
-    await database.disconnect();
-    expect(await database.getAll('SELECT * FROM ps_oplog')).toEqual([
-      // Existing entry should be fixed too!
-      expect.objectContaining({ key: 'lists/1/subkey_1' }),
-      expect.objectContaining({ key: 'lists/2/subkey_2' }),
-      expect.objectContaining({ key: 'lists/3/subkey_3' })
-    ]);
+
+    // Replicate what we'd see on the web when switching connections in the shared sync worker: The sync client would
+    // suddenly see a database without an active sync iteration.
+    await database.execute('SELECT powersync_control(?, null)', ['stop']);
+    database.syncStreamImplementation!.markConnectionMayHaveChanged();
+    await database.waitForStatus((s) => !s.connected);
+    await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
   });
 });
 
-function defineSyncTests(impl: SyncClientImplementation, bson: boolean) {
+function defineSyncTests(bson: boolean) {
   const options: PowerSyncConnectionOptions = {
-    clientImplementation: impl,
     connectionMethod: SyncStreamConnectionMethod.HTTP
   };
 
@@ -238,45 +225,41 @@ function defineSyncTests(impl: SyncClientImplementation, bson: boolean) {
       }
     }
 
-    mockSyncServiceTest(
-      'without priorities',
-      async ({ syncService }) => {
-        const database = await syncService.createDatabase();
-        database.connect(new TestConnector(), options);
-        await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
+    mockSyncServiceTest('without priorities', async ({ syncService }) => {
+      const database = await syncService.createDatabase();
+      database.connect(new TestConnector(), options);
+      await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
 
-        syncService.pushLine({
-          checkpoint: {
-            last_op_id: '10',
-            buckets: [bucket('a', 10)]
-          }
-        });
+      syncService.pushLine({
+        checkpoint: {
+          last_op_id: '10',
+          buckets: [bucket('a', 10)]
+        }
+      });
 
-        await waitForProgress(database, [0, 10]);
+      await waitForProgress(database, [0, 10]);
 
-        pushDataLine(syncService, 'a', 10);
-        await waitForProgress(database, [10, 10]);
+      pushDataLine(syncService, 'a', 10);
+      await waitForProgress(database, [10, 10]);
 
-        pushCheckpointComplete(syncService);
-        await waitForSyncStatus(database, (s) => s.downloadProgress == null);
+      pushCheckpointComplete(syncService);
+      await waitForSyncStatus(database, (s) => s.downloadProgress == null);
 
-        // Emit new data, progress should be 0/2 instead of 10/12
-        syncService.pushLine({
-          checkpoint_diff: {
-            last_op_id: '12',
-            updated_buckets: [bucket('a', 12)],
-            removed_buckets: []
-          }
-        });
-        await waitForProgress(database, [0, 2]);
-        pushDataLine(syncService, 'a', 2);
-        await waitForProgress(database, [2, 2]);
+      // Emit new data, progress should be 0/2 instead of 10/12
+      syncService.pushLine({
+        checkpoint_diff: {
+          last_op_id: '12',
+          updated_buckets: [bucket('a', 12)],
+          removed_buckets: []
+        }
+      });
+      await waitForProgress(database, [0, 2]);
+      pushDataLine(syncService, 'a', 2);
+      await waitForProgress(database, [2, 2]);
 
-        pushCheckpointComplete(syncService);
-        await waitForSyncStatus(database, (s) => s.downloadProgress == null);
-      },
-      { timeout: 10000 }
-    );
+      pushCheckpointComplete(syncService);
+      await waitForSyncStatus(database, (s) => s.downloadProgress == null);
+    });
 
     mockSyncServiceTest('interrupted sync', async ({ syncService }) => {
       let database = await syncService.createDatabase();
@@ -557,8 +540,69 @@ function defineSyncTests(impl: SyncClientImplementation, bson: boolean) {
     expect(rows).toStrictEqual([{ name: 'from server' }]);
   });
 
+  mockSyncServiceTest('should upload on start of iteration', async ({ syncService }) => {
+    let database = await syncService.createDatabase();
+    await database.execute('INSERT INTO lists (id, name) values (uuid(), ?)', ['local write']);
+
+    syncService.installRequestInterceptor(async (request) => {
+      if (request.url.includes('/sync/stream')) {
+        throw new Error('Pretend that the service is unavailable');
+      }
+    });
+
+    const connector = new TestConnector();
+    database.connect(connector, { ...options, retryDelayMs: 10_000, crudUploadThrottleMs: 100 });
+    await database.waitForStatus((s) => s.dataFlowStatus.downloadError != null);
+
+    // We'll never connect due to the error, but we should still try to upload once.
+    expect(connector.uploadDataInvocations).toStrictEqual(1);
+
+    // And even though we're still not connected, we should attempt uploads on crud changes.
+    await database.execute('INSERT INTO lists (id, name) values (uuid(), ?)', ['second local write']);
+    await vi.waitFor(() => expect(connector.uploadDataInvocations).toStrictEqual(2));
+  });
+
+  mockSyncServiceTest('should restart uploads on write even if not connected', async ({ syncService }) => {
+    let database = await syncService.createDatabase();
+    let attemptedUploads = 0;
+    await database.execute('INSERT INTO lists (id, name) values (uuid(), ?)', ['local write']);
+
+    syncService.installRequestInterceptor(async (request) => {
+      if (request.url.includes('/sync/stream')) {
+        throw new Error('Pretend that the service is unavailable');
+      }
+    });
+
+    database.connect(
+      {
+        fetchCredentials: async () => {
+          return {
+            endpoint: 'https://powersync.example.org',
+            token: 'test'
+          };
+        },
+        uploadData: async () => {
+          attemptedUploads++;
+          throw new Error('deliberate failure');
+        }
+      },
+      { ...options, retryDelayMs: 100, crudUploadThrottleMs: 100 }
+    );
+    await database.waitForStatus((s) => s.dataFlowStatus.downloadError != null);
+
+    // Because we start a crud upload on connect, there should have been a call.
+    expect(attemptedUploads).toStrictEqual(1);
+    expect(database.currentStatus.dataFlowStatus.uploadError).toMatchObject({ name: 'Error' });
+
+    // Currently, we don't retry crud uploads if we're not connected. We might revisit that in the future, but either
+    // way we definitely want to retry if there's a new CRUD entry.
+    console.log('second write');
+    await database.execute('INSERT INTO lists (id, name) values (uuid(), ?)', ['second local write']);
+    await vi.waitFor(() => expect(attemptedUploads).toStrictEqual(2));
+  });
+
   mockSyncServiceTest('handles uploads across checkpoints', async ({ syncService }) => {
-    const logger = createLogger('test', { logLevel: Logger.TRACE });
+    const logger = createLogger('test', { logLevel: (Logger as any).TRACE });
     const logMessages: string[] = [];
     (logger as any).invoke = (level, args) => {
       console.log(...args);
@@ -738,212 +782,158 @@ function defineSyncTests(impl: SyncClientImplementation, bson: boolean) {
     await another.waitForFirstSync({ priority: 0 });
   });
 
-  if (impl == SyncClientImplementation.RUST) {
-    mockSyncServiceTest('raw tables with inferred statements', async ({ syncService }) => {
-      const customSchema = new Schema({});
-      customSchema.withRawTables({
-        lists: {
-          schema: {}
-        }
-      });
-
-      const powersync = await syncService.createDatabase({ schema: customSchema });
-      await powersync.execute('CREATE TABLE lists (id TEXT NOT NULL PRIMARY KEY, name TEXT);');
-
-      const query = powersync.watchWithAsyncGenerator('SELECT * FROM lists')[Symbol.asyncIterator]();
-      expect((await query.next()).value.rows._array).toStrictEqual([]);
-
-      powersync.connect(new TestConnector(), options);
-      await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
-
-      syncService.pushLine({
-        checkpoint: {
-          last_op_id: '1',
-          buckets: [bucket('a', 1)]
-        }
-      });
-      syncService.pushLine({
-        data: {
-          bucket: 'a',
-          data: [
-            {
-              checksum: 0,
-              op_id: '1',
-              op: 'PUT',
-              object_id: 'my_list',
-              object_type: 'lists',
-              data: '{"name": "custom list"}'
-            }
-          ]
-        }
-      });
-      syncService.pushLine({ checkpoint_complete: { last_op_id: '1' } });
-      await powersync.waitForFirstSync();
-
-      expect((await query.next()).value.rows._array).toStrictEqual([{ id: 'my_list', name: 'custom list' }]);
-
-      syncService.pushLine({
-        checkpoint: {
-          last_op_id: '2',
-          buckets: [bucket('a', 2)]
-        }
-      });
-      await vi.waitFor(() => powersync.currentStatus.dataFlowStatus.downloading == true);
-      syncService.pushLine({
-        data: {
-          bucket: 'a',
-          data: [
-            {
-              checksum: 0,
-              op_id: '2',
-              op: 'REMOVE',
-              object_id: 'my_list',
-              object_type: 'lists'
-            }
-          ]
-        }
-      });
-      syncService.pushLine({ checkpoint_complete: { last_op_id: '2' } });
-      await vi.waitFor(() => powersync.currentStatus.dataFlowStatus.downloading == false);
-
-      expect((await query.next()).value.rows._array).toStrictEqual([]);
+  mockSyncServiceTest('raw tables with inferred statements', async ({ syncService }) => {
+    const customSchema = new Schema({});
+    customSchema.withRawTables({
+      lists: {
+        schema: {}
+      }
     });
 
-    mockSyncServiceTest('raw tables with explicit statements', async ({ syncService }) => {
-      const customSchema = new Schema({});
-      customSchema.withRawTables({
-        lists: {
-          put: {
-            sql: 'INSERT OR REPLACE INTO lists (id, name, _rest) VALUES (?, ?, ?)',
-            params: ['Id', { Column: 'name' }, 'Rest']
-          },
-          delete: {
-            sql: 'DELETE FROM lists WHERE id = ?',
-            params: ['Id']
+    const powersync = await syncService.createDatabase({ schema: customSchema });
+    await powersync.execute('CREATE TABLE lists (id TEXT NOT NULL PRIMARY KEY, name TEXT);');
+
+    const query = powersync.watchWithAsyncGenerator('SELECT * FROM lists')[Symbol.asyncIterator]();
+    expect((await query.next()).value.rows._array).toStrictEqual([]);
+
+    powersync.connect(new TestConnector(), options);
+    await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
+
+    syncService.pushLine({
+      checkpoint: {
+        last_op_id: '1',
+        buckets: [bucket('a', 1)]
+      }
+    });
+    syncService.pushLine({
+      data: {
+        bucket: 'a',
+        data: [
+          {
+            checksum: 0,
+            op_id: '1',
+            op: 'PUT',
+            object_id: 'my_list',
+            object_type: 'lists',
+            data: '{"name": "custom list"}'
           }
-        }
-      });
-
-      const powersync = await syncService.createDatabase({ schema: customSchema });
-      await powersync.execute('CREATE TABLE lists (id TEXT NOT NULL PRIMARY KEY, name TEXT, _rest TEXT);');
-
-      const query = powersync.watchWithAsyncGenerator('SELECT * FROM lists')[Symbol.asyncIterator]();
-      expect((await query.next()).value.rows._array).toStrictEqual([]);
-
-      powersync.connect(new TestConnector(), options);
-      await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
-
-      syncService.pushLine({
-        checkpoint: {
-          last_op_id: '1',
-          buckets: [bucket('a', 1)]
-        }
-      });
-      syncService.pushLine({
-        data: {
-          bucket: 'a',
-          data: [
-            {
-              checksum: 0,
-              op_id: '1',
-              op: 'PUT',
-              object_id: 'my_list',
-              object_type: 'lists',
-              data: '{"name": "custom list", "additional": "foo"}'
-            }
-          ]
-        }
-      });
-      syncService.pushLine({ checkpoint_complete: { last_op_id: '1' } });
-      await powersync.waitForFirstSync();
-
-      expect((await query.next()).value.rows._array).toStrictEqual([
-        { id: 'my_list', name: 'custom list', _rest: '{"additional":"foo"}' }
-      ]);
-
-      syncService.pushLine({
-        checkpoint: {
-          last_op_id: '2',
-          buckets: [bucket('a', 2)]
-        }
-      });
-      await vi.waitFor(() => powersync.currentStatus.dataFlowStatus.downloading == true);
-      syncService.pushLine({
-        data: {
-          bucket: 'a',
-          data: [
-            {
-              checksum: 0,
-              op_id: '2',
-              op: 'REMOVE',
-              object_id: 'my_list',
-              object_type: 'lists'
-            }
-          ]
-        }
-      });
-      syncService.pushLine({ checkpoint_complete: { last_op_id: '2' } });
-      await vi.waitFor(() => powersync.currentStatus.dataFlowStatus.downloading == false);
-
-      expect((await query.next()).value.rows._array).toStrictEqual([]);
+        ]
+      }
     });
-  } else {
-    mockSyncServiceTest('warns about raw tables', async ({ syncService }) => {
-      const customSchema = new Schema({});
-      customSchema.withRawTables({
-        lists: {
-          put: {
-            sql: 'INSERT OR REPLACE INTO lists (id, name) VALUES (?, ?)',
-            params: ['Id', { Column: 'name' }]
-          },
-          delete: {
-            sql: 'DELETE FROM lists WHERE id = ?',
-            params: ['Id']
+    syncService.pushLine({ checkpoint_complete: { last_op_id: '1' } });
+    await powersync.waitForFirstSync();
+
+    expect((await query.next()).value.rows._array).toStrictEqual([{ id: 'my_list', name: 'custom list' }]);
+
+    syncService.pushLine({
+      checkpoint: {
+        last_op_id: '2',
+        buckets: [bucket('a', 2)]
+      }
+    });
+    await vi.waitFor(() => powersync.currentStatus.dataFlowStatus.downloading == true);
+    syncService.pushLine({
+      data: {
+        bucket: 'a',
+        data: [
+          {
+            checksum: 0,
+            op_id: '2',
+            op: 'REMOVE',
+            object_id: 'my_list',
+            object_type: 'lists'
           }
+        ]
+      }
+    });
+    syncService.pushLine({ checkpoint_complete: { last_op_id: '2' } });
+    await vi.waitFor(() => powersync.currentStatus.dataFlowStatus.downloading == false);
+
+    expect((await query.next()).value.rows._array).toStrictEqual([]);
+  });
+
+  mockSyncServiceTest('raw tables with explicit statements', async ({ syncService }) => {
+    const customSchema = new Schema({});
+    customSchema.withRawTables({
+      lists: {
+        put: {
+          sql: 'INSERT OR REPLACE INTO lists (id, name, _rest) VALUES (?, ?, ?)',
+          params: ['Id', { Column: 'name' }, 'Rest']
+        },
+        delete: {
+          sql: 'DELETE FROM lists WHERE id = ?',
+          params: ['Id']
         }
-      });
-
-      const logger = createLogger('test', { logLevel: Logger.TRACE });
-      const logMessages: string[] = [];
-      (logger as any).invoke = (level, args) => {
-        console.log(...args);
-        logMessages.push(util.format(...args));
-      };
-
-      const powersync = await syncService.createDatabase({ schema: customSchema, logger });
-      powersync.connect(new TestConnector(), options);
-
-      await vi.waitFor(() => {
-        expect(logMessages).toEqual(
-          expect.arrayContaining([expect.stringContaining('Raw tables require the Rust-based sync client')])
-        );
-      });
+      }
     });
 
-    mockSyncServiceTest(`does not warn about raw tables if they're not used`, async ({ syncService }) => {
-      // Regression test for https://github.com/powersync-ja/powersync-js/issues/672
-      const customSchema = new Schema({});
+    const powersync = await syncService.createDatabase({ schema: customSchema });
+    await powersync.execute('CREATE TABLE lists (id TEXT NOT NULL PRIMARY KEY, name TEXT, _rest TEXT);');
 
-      const logger = createLogger('test', { logLevel: Logger.TRACE });
-      const logMessages: string[] = [];
-      (logger as any).invoke = (level, args) => {
-        console.log(...args);
-        logMessages.push(util.format(...args));
-      };
+    const query = powersync.watchWithAsyncGenerator('SELECT * FROM lists')[Symbol.asyncIterator]();
+    expect((await query.next()).value.rows._array).toStrictEqual([]);
 
-      const powersync = await syncService.createDatabase({ schema: customSchema, logger });
-      powersync.connect(new TestConnector(), options);
+    powersync.connect(new TestConnector(), options);
+    await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
 
-      await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
-      expect(logMessages).not.toEqual(
-        expect.arrayContaining([expect.stringContaining('Raw tables require the Rust-based sync client')])
-      );
+    syncService.pushLine({
+      checkpoint: {
+        last_op_id: '1',
+        buckets: [bucket('a', 1)]
+      }
     });
-  }
+    syncService.pushLine({
+      data: {
+        bucket: 'a',
+        data: [
+          {
+            checksum: 0,
+            op_id: '1',
+            op: 'PUT',
+            object_id: 'my_list',
+            object_type: 'lists',
+            data: '{"name": "custom list", "additional": "foo"}'
+          }
+        ]
+      }
+    });
+    syncService.pushLine({ checkpoint_complete: { last_op_id: '1' } });
+    await powersync.waitForFirstSync();
+
+    expect((await query.next()).value.rows._array).toStrictEqual([
+      { id: 'my_list', name: 'custom list', _rest: '{"additional":"foo"}' }
+    ]);
+
+    syncService.pushLine({
+      checkpoint: {
+        last_op_id: '2',
+        buckets: [bucket('a', 2)]
+      }
+    });
+    await vi.waitFor(() => powersync.currentStatus.dataFlowStatus.downloading == true);
+    syncService.pushLine({
+      data: {
+        bucket: 'a',
+        data: [
+          {
+            checksum: 0,
+            op_id: '2',
+            op: 'REMOVE',
+            object_id: 'my_list',
+            object_type: 'lists'
+          }
+        ]
+      }
+    });
+    syncService.pushLine({ checkpoint_complete: { last_op_id: '2' } });
+    await vi.waitFor(() => powersync.currentStatus.dataFlowStatus.downloading == false);
+
+    expect((await query.next()).value.rows._array).toStrictEqual([]);
+  });
 
   mockSyncServiceTest('can reconnect based on query changes', async ({ syncService }) => {
     // Test for https://discord.com/channels/1138230179878154300/1399340612435710034/1399340612435710034
-    const logger = createLogger('test', { logLevel: Logger.TRACE });
+    const logger = createLogger('test', { logLevel: (Logger as any).TRACE });
     const logMessages: string[] = [];
     (logger as any).invoke = (level, args) => {
       console.log(...args);

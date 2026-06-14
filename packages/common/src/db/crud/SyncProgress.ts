@@ -15,6 +15,8 @@ export const FULL_SYNC_PRIORITY = 2147483647;
  *
  * To obtain these values, use {@link SyncProgress}, available through
  * {@link SyncStatus#downloadProgress}.
+ *
+ * @public
  */
 export interface ProgressWithOperations {
   /**
@@ -28,7 +30,8 @@ export interface ProgressWithOperations {
   downloadedOperations: number;
 
   /**
-   * Relative progress, as {@link downloadedOperations} of {@link totalOperations}.
+   * Relative progress, as {@link ProgressWithOperations.downloadedOperations} of
+   * {@link ProgressWithOperations.totalOperations}.
    *
    * This will be a number between `0.0` and `1.0` (inclusive).
    *
@@ -58,6 +61,8 @@ export interface ProgressWithOperations {
  *
  * Also note that data is downloaded in bulk, which means that individual counters are unlikely
  * to be updated one-by-one.
+ *
+ * @public
  */
 export class SyncProgress implements ProgressWithOperations {
   totalOperations: number;

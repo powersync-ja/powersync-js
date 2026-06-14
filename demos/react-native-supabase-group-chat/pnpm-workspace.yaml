@@ -1,4 +1,8 @@
 packages:
   - .
 
+allowBuilds:
+  esbuild: true
+  unrs-resolver: false
+
 nodeLinker: hoisted

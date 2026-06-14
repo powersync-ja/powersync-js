@@ -1,6 +1,6 @@
 {
   "name": "@powersync/diagnostics-app",
-  "version": "0.13.6",
+  "version": "0.13.10",
   "private": true,
   "type": "module",
   "scripts": {
@@ -10,7 +10,7 @@
     "start": "pnpm build && pnpm preview"
   },
   "dependencies": {
-    "@journeyapps/wa-sqlite": "^1.6.0",
+    "@journeyapps/wa-sqlite": "^1.7.0",
     "@monaco-editor/react": "^4.7.0",
     "@powersync/react": "workspace:*",
     "@powersync/web": "workspace:*",
@@ -25,6 +25,7 @@
     "@tanstack/react-query": "^5.64.1",
     "@tanstack/react-router": "^1.153.2",
     "@tanstack/react-table": "^8.21.3",
+    "bson": "catalog:",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "formik": "^2.4.9",
@@ -40,15 +41,16 @@
     "@swc/core": "~1.6.0",
     "@tailwindcss/vite": "^4.1.17",
     "@tanstack/router-plugin": "^1.153.2",
-    "@types/node": "^22.18.1",
+    "@types/node": "catalog:",
     "@types/react": "^18.3.1",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.2.1",
     "tailwindcss": "^4.1.17",
-    "typescript": "^5.5.3",
+    "typescript": "catalog:",
     "vite": "^5.1.5",
     "vite-plugin-pwa": "^0.19.2",
     "vite-plugin-top-level-await": "^1.4.1",
-    "vite-plugin-wasm": "^3.3.0"
+    "vite-plugin-wasm": "^3.3.0",
+    "@powersync/common": "workspace:*"
   }
 }

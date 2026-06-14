@@ -162,10 +162,6 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
     });
   }
 
-  get lastSyncedAt(): Date | undefined {
-    return this.connectionManager.syncStreamImplementation?.lastSyncedAt;
-  }
-
   get isConnected(): boolean {
     return this.connectionManager.syncStreamImplementation?.isConnected ?? false;
   }
@@ -359,12 +355,6 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
   triggerCrudUpload() {
     this.withSyncImplementation(async (sync) => {
       sync.triggerCrudUpload();
-    });
-  }
-
-  async hasCompletedSync(): Promise<boolean> {
-    return this.withSyncImplementation(async (sync) => {
-      return sync.hasCompletedSync();
     });
   }
 
@@ -618,14 +608,10 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
           const impl = sharedSync.connectionManager.syncStreamImplementation! as WebStreamingSyncImplementation;
           impl?.triggerCrudUpload();
 
-          /**
-           * FIXME or IMPROVE ME
-           * The Rust client implementation stores sync state on the connection level.
-           * Reopening the database causes a state machine error which should cause the
-           * StreamingSyncImplementation to reconnect. It would be nicer if we could trigger
-           * this reconnect earlier.
-           * This reconnect is not required for IndexedDB.
-           */
+          // The Rust client implementation stores sync state on the connection level. Reopening the database causes a
+          // disruption of the connection state and forces us to reconnect. We want to do that as soon as possible to
+          // minimize downtime.
+          impl?.markConnectionMayHaveChanged();
         }
       }
 
