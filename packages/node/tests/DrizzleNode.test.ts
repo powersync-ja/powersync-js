@@ -202,10 +202,8 @@ customDatabaseTest({ database: { readWorkerCount: 2 } as any })(
     expect(result2[0].lists).toEqual({ id: '1', name: 'list 1' });
     expect(result2[0].todos).toEqual({ id: '33', content: 'Post content', list_id: '1' });
 
-    // Note: This case is not supported yet (drizzle 0.44.7), since it doesn't set
-    // queryMetadata for these queries
-    // const result3 = await db.query.lists.findMany();
-    // expect(result3).toEqual([{ id: '1', name: 'list 1' }]);
+    const result3 = await db.query.lists.findMany();
+    expect(result3).toEqual([{ id: '1', name: 'list 1' }]);
 
     completedRead.resolve();
 

@@ -1,9 +1,10 @@
+import '@vitest/browser/providers/playwright';
 import { defineConfig, UserConfigExport } from 'vitest/config';
 
 const config: UserConfigExport = {
   // This is only needed for local tests to resolve the package name correctly
   worker: {
-    format: 'es',
+    format: 'es'
   },
   optimizeDeps: {
     exclude: ['@journeyapps/wa-sqlite']
@@ -28,7 +29,10 @@ const config: UserConfigExport = {
       headless: true,
       instances: [
         {
-          browser: 'chromium'
+          browser: 'chromium',
+          ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
+            ? { launch: { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH } }
+            : {})
         }
       ]
     }

@@ -1,5 +1,4 @@
 import { column, Schema, Table } from '@powersync/common';
-import { CasingCache } from 'drizzle-orm/casing';
 import { customType, index, integer, real, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 import { describe, expect, it } from 'vitest';
 import { DrizzleAppSchema, DrizzleTableWithPowerSyncOptions, toPowerSyncTable } from '../../src/utils/schema.js';
@@ -93,15 +92,17 @@ describe('toPowerSyncTable', () => {
       })
     );
 
-    const convertedList = toPowerSyncTable(lists, { casingCache: new CasingCache('snake_case') });
+    const convertedList = new DrizzleAppSchema({ lists }, { casing: 'snake_case' }).props.lists;
 
-    const expectedLists = new Table(
-      {
-        my_name: column.text,
-        yourName: column.text
-      },
-      { indexes: { names: ['my_name', 'yourName'] } }
-    );
+    const expectedLists = new Schema({
+      lists: new Table(
+        {
+          my_name: column.text,
+          yourName: column.text
+        },
+        { indexes: { names: ['my_name', 'yourName'] } }
+      )
+    }).props.lists;
 
     expect(convertedList).toEqual(expectedLists);
   });

@@ -34,7 +34,7 @@ export class PowerSyncSQLiteDatabase<TRelations extends AnyRelations = EmptyRela
   private db: AbstractPowerSyncDatabase;
 
   constructor(db: AbstractPowerSyncDatabase, config: PowerSyncDrizzleConfig<TRelations>) {
-    const dialect = new SQLiteAsyncDialect({ casing: config.casing });
+    const dialect = new SQLiteAsyncDialect();
     let logger;
     if (config.logger === true) {
       logger = new DefaultLogger();

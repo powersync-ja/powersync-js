@@ -75,7 +75,7 @@
     "@powersync/drizzle-driver": "workspace:*",
     "@types/node": "catalog:",
     "better-sqlite3": "^12.2.0",
-    "drizzle-orm": "1.0.0-beta.19",
+    "drizzle-orm": "1.0.0-rc.3",
     "js-logger": "catalog:",
     "rollup": "catalog:",
     "rollup-plugin-dts": "catalog:",

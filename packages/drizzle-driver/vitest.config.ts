@@ -1,3 +1,4 @@
+import '@vitest/browser/providers/playwright';
 import { defineConfig, UserConfigExport } from 'vitest/config';
 
 const config: UserConfigExport = {
@@ -33,7 +34,10 @@ const config: UserConfigExport = {
       provider: 'playwright',
       instances: [
         {
-          browser: 'chromium'
+          browser: 'chromium',
+          ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
+            ? { launch: { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH } }
+            : {})
         }
       ]
     }

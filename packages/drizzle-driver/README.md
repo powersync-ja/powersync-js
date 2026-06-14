@@ -4,7 +4,7 @@ This package (`@powersync/drizzle-driver`) brings the benefits of an ORM through
 
 ## Beta Release
 
-This release line targets `drizzle-orm@1.0.0-beta` and the beta `relations` + `db.query` API.
+This release line targets the Drizzle v1 RC line (`drizzle-orm@1.0.0-rc.3` and newer pre-1.0 RCs) and the `relations` + `db.query` API.
 
 ## Getting Started
 

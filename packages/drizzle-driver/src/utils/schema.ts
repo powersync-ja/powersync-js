@@ -7,8 +7,8 @@ import {
   type BaseColumnType,
   type TableV2Options
 } from '@powersync/common';
-import { entityKind, isTable, type Casing } from 'drizzle-orm';
-import { CasingCache } from 'drizzle-orm/casing';
+import { entityKind, isTable } from 'drizzle-orm';
+import { getCasingFn, type Casing } from 'drizzle-orm/casing';
 import {
   getTableConfig,
   SQLiteBoolean,
@@ -23,15 +23,30 @@ import {
   type TableConfig
 } from 'drizzle-orm/sqlite-core';
 
-type PowerSyncColumnValue<T> = null extends T ? PowerSyncNonNullColumnValue<Exclude<T, null>> | null : PowerSyncNonNullColumnValue<T>;
+type PowerSyncColumnValue<T> = null extends T
+  ? PowerSyncNonNullColumnValue<Exclude<T, null>> | null
+  : PowerSyncNonNullColumnValue<T>;
 
 type PowerSyncNonNullColumnValue<T> = T extends number | string ? T : T extends boolean | Date ? number : string;
 
-type DrizzleTableColumns<T extends SQLiteTableWithColumns<any>> = T extends SQLiteTableWithColumns<infer TConfig>
-  ? TConfig['columns']
-  : never;
+type DrizzleTableColumns<T extends SQLiteTableWithColumns<any>> =
+  T extends SQLiteTableWithColumns<infer TConfig> ? TConfig['columns'] : never;
 
 type DrizzleColumnData<T> = T extends { _: { data: infer TData } } ? TData : never;
+
+type ColumnCasingCache = {
+  getColumnCasing(column: SQLiteColumn): string;
+};
+
+function createColumnCasingCache(casing: Casing): ColumnCasingCache {
+  const casingFn = getCasingFn(casing);
+
+  return {
+    getColumnCasing(column: SQLiteColumn): string {
+      return column.keyAsName ? casingFn(column.name) : column.name;
+    }
+  };
+}
 
 export type ExtractPowerSyncColumns<T extends SQLiteTableWithColumns<any>> = {
   [K in keyof DrizzleTableColumns<T> as K extends 'id' ? never : K]: BaseColumnType<
@@ -43,7 +58,7 @@ export type Expand<T> = T extends infer O ? { [K in keyof O]: O[K] } : never;
 
 export function toPowerSyncTable<T extends SQLiteTableWithColumns<any>>(
   table: T,
-  options?: Omit<TableV2Options, 'indexes'> & { casingCache?: CasingCache }
+  options?: Omit<TableV2Options, 'indexes'> & { casingCache?: ColumnCasingCache }
 ): Table<Expand<ExtractPowerSyncColumns<T>>> {
   const { columns: drizzleColumns, indexes: drizzleIndexes } = getTableConfig(
     table as SQLiteTableWithColumns<TableConfig>
@@ -133,8 +148,11 @@ export type TablesFromSchemaEntries<T> = {
       : never;
 };
 
-function toPowerSyncTables<T extends Record<string, DrizzleSchemaEntry>>(schemaEntries: T, options?: DrizzleAppSchemaOptions) {
-  const casingCache = options?.casing ? new CasingCache(options?.casing) : undefined;
+function toPowerSyncTables<T extends Record<string, DrizzleSchemaEntry>>(
+  schemaEntries: T,
+  options?: DrizzleAppSchemaOptions
+) {
+  const casingCache = options?.casing ? createColumnCasingCache(options.casing) : undefined;
 
   const tables: Record<string, Table> = {};
   for (const schemaEntry of Object.values(schemaEntries)) {

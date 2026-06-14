@@ -22,4 +22,18 @@ export const drizzleSchema = {
   paragraphs
 };
 
-export const drizzleRelations = defineRelations(drizzleSchema);
+export const drizzleRelations = defineRelations(drizzleSchema, (r) => ({
+  notes: {
+    paragraphs: r.many.paragraphs({
+      from: r.notes.id,
+      to: r.paragraphs.note_id
+    })
+  },
+  paragraphs: {
+    note: r.one.notes({
+      from: r.paragraphs.note_id,
+      to: r.notes.id,
+      optional: false
+    })
+  }
+}));

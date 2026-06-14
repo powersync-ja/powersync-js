@@ -3,7 +3,7 @@ import type { WithCacheConfig } from 'drizzle-orm/cache/core/types';
 import { entityKind } from 'drizzle-orm/entity';
 import type { Logger } from 'drizzle-orm/logger';
 import { NoopLogger } from 'drizzle-orm/logger';
-import type { AnyRelations, EmptyRelations } from 'drizzle-orm/relations';
+import type { AnyRelations, EmptyRelations, RelationalQueryMapperConfig } from 'drizzle-orm/relations';
 import { type Query } from 'drizzle-orm/sql/sql';
 import type { SQLiteAsyncDialect } from 'drizzle-orm/sqlite-core/dialect';
 import type { SelectedFieldsOrdered } from 'drizzle-orm/sqlite-core/query-builders/select.types';
@@ -64,7 +64,6 @@ export class PowerSyncSQLiteBaseSession<TRelations extends AnyRelations = EmptyR
     query: Query,
     fields: SelectedFieldsOrdered | undefined,
     executeMethod: SQLiteExecuteMethod,
-    isResponseInArrayMode: boolean,
     customResultMapper?: ResultMapper,
     queryMetadata?: {
       type: 'select' | 'update' | 'delete' | 'insert';
@@ -78,7 +77,7 @@ export class PowerSyncSQLiteBaseSession<TRelations extends AnyRelations = EmptyR
       this.logger,
       fields,
       executeMethod,
-      isResponseInArrayMode,
+      false,
       customResultMapper,
       undefined,
       queryMetadata,
@@ -90,7 +89,8 @@ export class PowerSyncSQLiteBaseSession<TRelations extends AnyRelations = EmptyR
     query: Query,
     fields: SelectedFieldsOrdered | undefined,
     executeMethod: SQLiteExecuteMethod,
-    customResultMapper: RelationalResultMapper
+    customResultMapper: RelationalResultMapper,
+    _config: RelationalQueryMapperConfig
   ): PowerSyncSQLitePreparedQuery<T> {
     return new PowerSyncSQLitePreparedQuery(
       this.contextProvider,
