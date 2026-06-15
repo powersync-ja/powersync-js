@@ -1,4 +1,5 @@
 import * as commonSdk from '@powersync/common';
+import * as internals from '@powersync/shared-internals';
 import { PowerSyncDatabase } from '@powersync/web';
 import { beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 import { computed, ref } from 'vue';
@@ -28,14 +29,18 @@ function openPowerSync() {
   return db;
 }
 
-function currentStreams(db: commonSdk.AbstractPowerSyncDatabase) {
-  const connections = (db as any).connectionManager as commonSdk.ConnectionManager;
+function currentStreams(db: commonSdk.CommonPowerSyncDatabase) {
+  const connections = (db as any).connectionManager as internals.ConnectionManager;
   return connections.activeStreams;
 }
 
-const _testStatus = new commonSdk.SyncStatus({
-  dataFlow: {
-    internalStreamSubscriptions: [
+const _testStatus = new internals.SyncStatusSnapshot(
+  {
+    connected: true,
+    connecting: false,
+    downloading: { buckets: {} },
+    priority_status: [],
+    streams: [
       {
         name: 'a',
         parameters: null,
@@ -48,11 +53,12 @@ const _testStatus = new commonSdk.SyncStatus({
         priority: 1
       }
     ]
-  }
-});
+  },
+  {}
+);
 
 describe('stream composables', () => {
-  let db: commonSdk.AbstractPowerSyncDatabase;
+  let db: commonSdk.CommonPowerSyncDatabase;
 
   beforeEach(() => {
     db = openPowerSync();
@@ -96,7 +102,7 @@ describe('stream composables', () => {
     expect(result.isLoading.value).toBe(true);
 
     (db as any).currentStatus = _testStatus;
-    db.iterateListeners((l: any) => l.statusChanged?.(_testStatus));
+    (db as unknown as internals.BasePowerSyncDatabase).iterateListeners((l: any) => l.statusChanged?.(_testStatus));
 
     await vi.waitFor(() => expect(result.data.value).toHaveLength(1), { timeout: 1000, interval: 100 });
   });

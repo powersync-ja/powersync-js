@@ -17,7 +17,7 @@ import {
   waitForSyncStatus
 } from './utils.js';
 import { BucketChecksum, OplogEntryJSON } from '@powersync/shared-internals/internal/sync_protocol';
-import { AbstractPowerSyncDatabase } from '@powersync/shared-internals';
+import { BasePowerSyncDatabase } from '@powersync/shared-internals';
 
 const defaultConnectOptions: SyncOptions = {
   // This might help with test stability/timeouts if a retry is needed.
@@ -105,7 +105,7 @@ describe('Sync', () => {
     // Replicate what we'd see on the web when switching connections in the shared sync worker: The sync client would
     // suddenly see a database without an active sync iteration.
     await database.execute('SELECT powersync_control(?, null)', ['stop']);
-    (database as AbstractPowerSyncDatabase).syncStreamImplementation!.markConnectionMayHaveChanged();
+    (database as BasePowerSyncDatabase).syncStreamImplementation!.markConnectionMayHaveChanged();
     await database.waitForStatus((s) => !s.connected);
     await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
   });

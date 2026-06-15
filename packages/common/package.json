@@ -35,9 +35,6 @@
     "test": "vitest",
     "test:exports": "attw --pack . --ignore-rules no-resolution cjs-resolves-to-esm"
   },
-  "dependencies": {
-    "event-iterator": "^2.0.0"
-  },
   "devDependencies": {
     "@types/node": "catalog:",
     "@types/uuid": "catalog:",

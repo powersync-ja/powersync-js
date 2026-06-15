@@ -1,6 +1,6 @@
 import { ColumnType, CommonPowerSyncDatabase } from '@powersync/web';
 import {
-  AbstractPowerSyncDatabase,
+  BasePowerSyncDatabase,
   AbstractRemote,
   PowerSyncControlCommand,
   SqliteBucketStorage
@@ -28,7 +28,7 @@ export class RustClientInterceptor extends SqliteBucketStorage {
     private remote: AbstractRemote,
     private schemaManager: DynamicSchemaManager
   ) {
-    super(db.database, (AbstractPowerSyncDatabase as any).transactionMutex);
+    super(db.database, (BasePowerSyncDatabase as any).transactionMutex);
     this.rdb = db;
   }
 

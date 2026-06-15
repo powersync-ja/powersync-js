@@ -9,7 +9,7 @@ import {
   CommonPowerSyncDatabase
 } from '@powersync/common';
 import {
-  AbstractPowerSyncDatabase,
+  BasePowerSyncDatabase,
   BucketStorageAdapter,
   CreateSyncImplementationOptions,
   Mutex,
@@ -67,7 +67,7 @@ export interface WebSyncOptions {
 /**
  * @internal Use {@link PowerSyncDatabase} instead, this class is only used by other SDKs also needing web support.
  */
-export class WebPowerSyncDatabase extends AbstractPowerSyncDatabase<WebPowerSyncDatabaseOptions> {
+export class WebPowerSyncDatabase extends BasePowerSyncDatabase<WebPowerSyncDatabaseOptions> {
   static SHARED_MUTEX = new Mutex();
 
   protected resolvedOpenOptions: WebSpecificOpenOptions;

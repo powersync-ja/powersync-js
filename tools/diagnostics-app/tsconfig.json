@@ -19,10 +19,5 @@
       "@types/react": ["./node_modules/@types/react"]
     }
   },
-  "exclude": ["node_modules"],
-  "references": [
-    {"path": "../../packages/common" },
-    {"path": "../../packages/shared-internals" },
-    {"path": "../../packages/web" }
-  ]
+  "exclude": ["node_modules"]
 }

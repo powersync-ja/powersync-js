@@ -7,13 +7,13 @@ import {
   WatchedQueryState
 } from '@powersync/common';
 import { MetaBaseObserver } from '../../utils/MetaBaseObserver.js';
-import { AbstractPowerSyncDatabase } from '../AbstractPowerSyncDatabase.js';
+import { BasePowerSyncDatabase } from '../BasePowerSyncDatabase.js';
 
 /**
  * @internal
  */
 export interface AbstractQueryProcessorOptions<Data, Settings extends WatchedQueryOptions = WatchedQueryOptions> {
-  db: AbstractPowerSyncDatabase;
+  db: BasePowerSyncDatabase;
   watchOptions: Settings;
   placeholderData: Data;
 }

@@ -7,7 +7,7 @@ import {
   DifferentialWatchedQueryOptions
 } from '@powersync/common';
 
-import { AbstractPowerSyncDatabase } from './AbstractPowerSyncDatabase.js';
+import { BasePowerSyncDatabase } from './BasePowerSyncDatabase.js';
 import { DifferentialQueryProcessor } from './watched/DifferentialQueryProcessor.js';
 import { OnChangeQueryProcessor } from './watched/OnChangeQueryProcessor.js';
 import { DEFAULT_WATCH_QUERY_OPTIONS } from './watched/WatchedQuery.js';
@@ -16,7 +16,7 @@ import { DEFAULT_WATCH_QUERY_OPTIONS } from './watched/WatchedQuery.js';
  * @internal
  */
 export interface CustomQueryOptions<RowType> {
-  db: AbstractPowerSyncDatabase;
+  db: BasePowerSyncDatabase;
   query: WatchCompatibleQuery<RowType[]>;
 }
 

@@ -7,7 +7,7 @@ import {
   PowerSyncDatabaseConstructor
 } from '@powersync/common';
 import {
-  AbstractPowerSyncDatabase,
+  BasePowerSyncDatabase,
   AbstractStreamingSyncImplementation,
   BucketStorageAdapter,
   CreateSyncImplementationOptions,
@@ -29,7 +29,7 @@ export type NodePowerSyncDatabaseOptions = BasePowerSyncDatabaseOptions &
     remoteOptions?: Partial<NodeRemoteOptions>;
   };
 
-class NodePowerSyncDatabase extends AbstractPowerSyncDatabase<NodePowerSyncDatabaseOptions> {
+class NodePowerSyncDatabase extends BasePowerSyncDatabase<NodePowerSyncDatabaseOptions> {
   constructor(options: NodePowerSyncDatabaseOptions) {
     super(options);
   }

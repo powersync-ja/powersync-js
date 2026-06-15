@@ -78,9 +78,7 @@ const DEFAULT_CRUD_BATCH_LIMIT = 100;
  */
 export const DEFAULT_LOCK_TIMEOUT_MS = 120_000; // 2 mins
 
-export abstract class AbstractPowerSyncDatabase<
-  Options extends BasePowerSyncDatabaseOptions = BasePowerSyncDatabaseOptions
->
+export abstract class BasePowerSyncDatabase<Options extends BasePowerSyncDatabaseOptions = BasePowerSyncDatabaseOptions>
   extends BaseObserver<PowerSyncDBListener>
   implements CommonPowerSyncDatabase
 {

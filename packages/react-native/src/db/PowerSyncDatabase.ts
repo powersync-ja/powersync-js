@@ -6,7 +6,7 @@ import {
   PowerSyncDatabaseOptions
 } from '@powersync/common';
 import {
-  AbstractPowerSyncDatabase,
+  BasePowerSyncDatabase,
   AbstractStreamingSyncImplementation,
   BucketStorageAdapter,
   CreateSyncImplementationOptions,
@@ -17,7 +17,7 @@ import { ReactNativeStreamingSyncImplementation } from '../sync/stream/ReactNati
 import { ReactNativeBucketStorageAdapter } from './../sync/bucket/ReactNativeBucketStorageAdapter';
 import { ReactNativeQuickSqliteOpenFactory } from './adapters/react-native-quick-sqlite/ReactNativeQuickSQLiteOpenFactory';
 
-class ReactNativePowerSyncDatabase extends AbstractPowerSyncDatabase<PowerSyncDatabaseOptions> {
+class ReactNativePowerSyncDatabase extends BasePowerSyncDatabase<PowerSyncDatabaseOptions> {
   constructor(options: PowerSyncDatabaseOptions) {
     super(options);
   }

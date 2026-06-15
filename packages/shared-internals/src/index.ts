@@ -1,4 +1,4 @@
-export * from './client/AbstractPowerSyncDatabase.js';
+export * from './client/BasePowerSyncDatabase.js';
 export * from './client/sync/bucket/BucketStorageAdapter.js';
 export * from './client/sync/bucket/CrudEntry.js';
 export * from './client/sync/bucket/SqliteBucketStorage.js';

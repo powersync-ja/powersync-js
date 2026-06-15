@@ -1,6 +1,6 @@
 import type { ColumnType, PowerSyncDatabase, DBAdapter } from '@powersync/web';
 import { type BSON } from 'bson';
-import { AbstractPowerSyncDatabase, PowerSyncControlCommand, SqliteBucketStorage } from '@powersync/shared-internals';
+import { BasePowerSyncDatabase, PowerSyncControlCommand, SqliteBucketStorage } from '@powersync/shared-internals';
 import type { DynamicSchemaManager } from './DynamicSchemaManager';
 import type { ShallowRef } from 'vue';
 import type { BucketChecksum, Checkpoint, StreamingSyncLine } from '@powersync/shared-internals/internal/sync_protocol';
@@ -23,7 +23,7 @@ export class RustClientInterceptor extends SqliteBucketStorage {
     db: ShallowRef<PowerSyncDatabase>,
     private schemaManager: ShallowRef<DynamicSchemaManager>
   ) {
-    super(db.value.database, (AbstractPowerSyncDatabase as any).transactionMutex);
+    super(db.value.database, (BasePowerSyncDatabase as any).transactionMutex);
     this.rdb = db.value.database;
   }
 

@@ -1,4 +1,4 @@
-import type { AbstractPowerSyncDatabase } from '../AbstractPowerSyncDatabase.js';
+import type { BasePowerSyncDatabase } from '../BasePowerSyncDatabase.js';
 import { DEFAULT_WATCH_THROTTLE_MS } from '../watched/WatchedQuery.js';
 import {
   CreateDiffTriggerOptions,
@@ -48,7 +48,7 @@ export interface TriggerClaimManager {
 }
 
 export type TriggerManagerImplOptions = TriggerManagerConfig & {
-  db: AbstractPowerSyncDatabase;
+  db: BasePowerSyncDatabase;
   schema: Schema;
 };
 

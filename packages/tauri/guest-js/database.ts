@@ -12,7 +12,7 @@ import { CreatedDatabase, powersyncCommand } from './command';
 import { listen, UnlistenFn } from '@tauri-apps/api/event';
 import { join } from '@tauri-apps/api/path';
 import {
-  AbstractPowerSyncDatabase,
+  BasePowerSyncDatabase,
   BucketStorageAdapter,
   StreamingSyncImplementation,
   SyncStatusJson,
@@ -38,7 +38,7 @@ export interface TauriSQLOpenOptions extends SQLOpenOptions {
 /**
  * A PowerSync database backed by a Rust-owned structure for Tauri apps.
  */
-export class PowerSyncTauriDatabase extends AbstractPowerSyncDatabase<TauriPowerSyncOpenOptions> {
+export class PowerSyncTauriDatabase extends BasePowerSyncDatabase<TauriPowerSyncOpenOptions> {
   declare private handle: LateHandle;
   private didInitializeSchema = false;
   private tableUpdateListener?: UnlistenFn;

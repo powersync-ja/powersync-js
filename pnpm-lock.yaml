@@ -409,10 +409,6 @@ importers:
         version: 4.1.8(@types/node@25.9.1)(@vitest/browser-playwright@4.1.8)(@vitest/browser-preview@4.1.8)(jsdom@24.1.3)(vite@7.3.1(@types/node@25.9.1)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.48.0)(tsx@4.21.0)(yaml@2.9.0))
 
   packages/common:
-    dependencies:
-      event-iterator:
-        specifier: ^2.0.0
-        version: 2.0.0
     devDependencies:
       '@microsoft/api-extractor':
         specifier: 'catalog:'
@@ -976,6 +972,9 @@ importers:
       '@monaco-editor/react':
         specifier: ^4.7.0
         version: 4.7.0(monaco-editor@0.55.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@powersync/common':
+        specifier: workspace:*
+        version: link:../../packages/common
       '@powersync/react':
         specifier: workspace:*
         version: link:../../packages/react
@@ -1052,9 +1051,6 @@ importers:
         specifier: ^4.3.5
         version: 4.3.6
     devDependencies:
-      '@powersync/common':
-        specifier: workspace:*
-        version: link:../../packages/common
       '@swc/core':
         specifier: ~1.6.0
         version: 1.6.13(@swc/helpers@0.5.19)
