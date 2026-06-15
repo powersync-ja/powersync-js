@@ -1248,11 +1248,7 @@ export type WatchedAttachmentItem = {
 };
 
 // @public (undocumented)
-export interface WatchedQuery<
-Data = unknown,
-Settings extends WatchedQueryOptions = WatchedQueryOptions,
-Listener extends WatchedQueryListener<Data> = WatchedQueryListener<Data>
-> extends MetaBaseObserverInterface<Listener> {
+export interface WatchedQuery<Data = unknown, Settings extends WatchedQueryOptions = WatchedQueryOptions, Listener extends WatchedQueryListener<Data> = WatchedQueryListener<Data>> extends MetaBaseObserverInterface<Listener> {
     close(): Promise<void>;
     // (undocumented)
     readonly closed: boolean;
@@ -1297,15 +1293,15 @@ export interface WatchedQueryListener<Data> extends BaseListener {
 // @public (undocumented)
 export enum WatchedQueryListenerEvent {
     // (undocumented)
-    CLOSED = 'closed',
+    CLOSED = "closed",
     // (undocumented)
-    ON_DATA = 'onData',
+    ON_DATA = "onData",
     // (undocumented)
-    ON_ERROR = 'onError',
+    ON_ERROR = "onError",
     // (undocumented)
-    ON_STATE_CHANGE = 'onStateChange',
+    ON_STATE_CHANGE = "onStateChange",
     // (undocumented)
-    SETTINGS_WILL_UPDATE = 'settingsWillUpdate'
+    SETTINGS_WILL_UPDATE = "settingsWillUpdate"
 }
 
 // @public (undocumented)

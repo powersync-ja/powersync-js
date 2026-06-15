@@ -9,8 +9,24 @@
   "type": "module",
   "exports": {
     ".": {
+      "node": {
+        "import": {
+          "types": "./lib/index.d.ts",
+          "default": "./dist/bundle.node.mjs"
+        },
+        "require": {
+          "types": "./dist/index.d.cts",
+          "require": "./dist/bundle.node.cjs"
+        }
+      },
+      "import": {
         "types": "./lib/index.d.ts",
-        "default": "./lib/index.js"
+        "default": "./dist/bundle.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "require": "./dist/bundle.cjs"
+      }
     },
     "./internal/sync_protocol": {
       "types": "./legacy/sync_protocol.d.ts"
@@ -37,7 +53,7 @@
     "build:prod": "tsc -b && rollup -c rollup.config.mjs",
     "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
     "test": "vitest",
-    "test:exports": "attw --pack . --exclude-entrypoints internal/sync_protocol"
+    "test:exports": "attw --pack . --profile node16 --exclude-entrypoints internal/sync_protocol"
   },
   "dependencies": {
     "event-iterator": "^2.0.0"
