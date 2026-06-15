@@ -135,7 +135,7 @@ function useQueryCore<
   const { query, parameters, queryKey, streams, ...resolvedOptions } = options;
 
   const {
-    queries: [{ queryFn }],
+    queries: [{ queryFn: powerSyncQueryFn }],
     streamsHaveSynced
   } = usePowerSyncQueries(
     [
@@ -149,12 +149,15 @@ function useQueryCore<
     queryClient
   );
 
+  const isSuspense = useQueryFn === Tanstack.useSuspenseQuery;
+  const resolvedQueryFn = query ? powerSyncQueryFn : resolvedOptions.queryFn;
+  const queryFn = streamsHaveSynced || isSuspense ? resolvedQueryFn : Tanstack.skipToken;
+
   return useQueryFn(
     {
       ...(resolvedOptions as TQueryOptions),
       queryKey,
-      queryFn: query ? queryFn : resolvedOptions.queryFn,
-      enabled: streamsHaveSynced
+      ...((typeof queryFn === 'function' || queryFn === Tanstack.skipToken) && { queryFn })
     } as TQueryOptions,
     queryClient
   );

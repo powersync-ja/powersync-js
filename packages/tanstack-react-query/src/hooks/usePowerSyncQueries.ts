@@ -1,6 +1,6 @@
 import { type CompilableQuery, parseQuery } from '@powersync/common';
 import { QuerySyncStreamOptions, useAllSyncStreamsHaveSynced, usePowerSync } from '@powersync/react';
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import * as Tanstack from '@tanstack/react-query';
 
 export type UsePowerSyncQueriesInput = {
@@ -111,7 +111,17 @@ export function usePowerSyncQueries(
     }))
   );
 
+  // Tracks the []->[tables] transition to rescue data lost during pending resolveTables.
+  const tablesInitialized = useRef<boolean[]>([]);
+
+  if (tablesInitialized.current.length !== parsedQueries.length) {
+    tablesInitialized.current = parsedQueries.map(() => false);
+  }
+
   useEffect(() => {
+    // Re-arm rescue tracking when queries change.
+    tablesInitialized.current = parsedQueries.map(() => false);
+
     const listeners = parsedQueries.map((pq, idx) => {
       if (pq.parseError || !pq.query) {
         return null;
@@ -153,6 +163,12 @@ export function usePowerSyncQueries(
       }
 
       const abort = new AbortController();
+
+      // Rescue data lost while resolveTables was pending (listener watched [] tables).
+      if (tablesArr[idx]?.length > 0 && !tablesInitialized.current[idx]) {
+        tablesInitialized.current[idx] = true;
+        queryClient.invalidateQueries({ queryKey: pq.queryKey });
+      }
 
       powerSync.onChangeWithCallback(
         {
@@ -203,5 +219,5 @@ export function usePowerSyncQueries(
       }),
       streamsHaveSynced
     };
-  }, [parsedQueries, errorsArr, tablesArr, powerSync]);
+  }, [parsedQueries, errorsArr, tablesArr, powerSync, streamsHaveSynced]);
 }
