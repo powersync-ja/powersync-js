@@ -682,6 +682,9 @@ importers:
       '@powersync/drizzle-driver':
         specifier: workspace:*
         version: link:../drizzle-driver
+      '@powersync/shared-internals':
+        specifier: 'workspace:'
+        version: link:../shared-internals
       '@powersync/web':
         specifier: workspace:*
         version: link:../web
