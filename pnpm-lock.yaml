@@ -1102,6 +1102,9 @@ importers:
       '@powersync/capacitor':
         specifier: workspace:*
         version: link:../../packages/capacitor
+      '@powersync/common':
+        specifier: workspace:*
+        version: link:../../packages/common
       '@powersync/drizzle-driver':
         specifier: workspace:*
         version: link:../../packages/drizzle-driver
