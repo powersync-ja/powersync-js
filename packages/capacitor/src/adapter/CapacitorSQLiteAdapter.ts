@@ -2,7 +2,6 @@ import { CapacitorSQLite, SQLiteConnection, SQLiteDBConnection } from '@capacito
 import { Capacitor } from '@capacitor/core';
 
 import {
-  BaseObserver,
   BatchedUpdateNotification,
   ConnectionPool,
   DBAdapter,
@@ -12,7 +11,7 @@ import {
   LockContext,
   QueryResult
 } from '@powersync/web';
-import { Mutex, timeoutSignal } from '@powersync/shared-internals';
+import { BaseObserver, Mutex, timeoutSignal } from '@powersync/shared-internals';
 import { PowerSyncCore } from '../plugin/PowerSyncCore.js';
 import { messageForErrorCode } from '../plugin/PowerSyncPlugin.js';
 import { CapacitorSQLiteOpenFactoryOptions, DEFAULT_SQLITE_OPTIONS } from './CapacitorSQLiteOpenFactory.js';

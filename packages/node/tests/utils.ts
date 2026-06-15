@@ -3,10 +3,13 @@ import os from 'node:os';
 import path from 'node:path';
 import { ReadableStream, TransformStream } from 'node:stream/web';
 
-import { BucketChecksum, StreamingSyncCheckpoint, StreamingSyncLine } from '@powersync/common/internal/sync_protocol';
+import {
+  BucketChecksum,
+  StreamingSyncCheckpoint,
+  StreamingSyncLine
+} from '@powersync/shared-internals/internal/sync_protocol';
 import { onTestFinished, test } from 'vitest';
 import {
-  AbstractPowerSyncDatabase,
   NodePowerSyncDatabaseOptions,
   PowerSyncBackendConnector,
   PowerSyncCredentials,
@@ -17,7 +20,7 @@ import {
   column
 } from '../lib/index.js';
 import { BSON } from 'bson';
-import { createConsoleLogger, LogLevels } from '@powersync/common';
+import { CommonPowerSyncDatabase, createConsoleLogger, LogLevels } from '@powersync/common';
 import { NodeSQLOpenOptions } from '../src/db/options.js';
 
 export async function createTempDir() {
@@ -214,7 +217,7 @@ export class TestConnector implements PowerSyncBackendConnector {
       token: 'test'
     };
   }
-  async uploadData(database: AbstractPowerSyncDatabase): Promise<void> {
+  async uploadData(database: CommonPowerSyncDatabase): Promise<void> {
     const tx = await database.getNextCrudTransaction();
     await tx?.complete();
     this.uploadDataInvocations++;
@@ -222,7 +225,7 @@ export class TestConnector implements PowerSyncBackendConnector {
 }
 
 export function waitForSyncStatus(
-  database: AbstractPowerSyncDatabase,
+  database: CommonPowerSyncDatabase,
   matcher: (status: SyncStatus) => boolean
 ): Promise<void> {
   return new Promise((resolve, reject) => {

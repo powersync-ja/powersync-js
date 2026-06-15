@@ -1,5 +1,5 @@
 import {
-  AbstractPowerSyncDatabase,
+  CommonPowerSyncDatabase,
   createConsoleLogger,
   DBAdapterDefaultMixin,
   LogLevels,
@@ -21,7 +21,7 @@ import { defaultLogLevel, defaultTestLogger } from './utils/logger.js';
 
 const testId = '2290de4f-0488-4e50-abed-f8e8eb1d0b42';
 
-export const basicTest = async (db: AbstractPowerSyncDatabase) => {
+export const basicTest = async (db: CommonPowerSyncDatabase) => {
   await db.execute('INSERT INTO assets(id, description) VALUES(?, ?)', [testId, 'test']);
   expect(await db.getAll('SELECT * FROM assets')).length.gt(0);
   await db.disconnectAndClear();

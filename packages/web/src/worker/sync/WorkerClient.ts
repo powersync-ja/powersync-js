@@ -1,4 +1,4 @@
-import { ResolvedSyncOptions, SubscribedStream } from '@powersync/common';
+import { ResolvedSyncOptions } from '@powersync/common';
 import * as Comlink from 'comlink';
 import { getNavigatorLocks } from '../../shared/navigator.js';
 import {
@@ -8,6 +8,7 @@ import {
   SharedSyncInitOptions,
   WrappedSyncPort
 } from './SharedSyncImplementation.js';
+import { SubscribedStream } from '@powersync/shared-internals';
 
 /**
  * A client to the shared sync worker.

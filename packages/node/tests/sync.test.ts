@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, vi } from 'vitest';
 
 import {
-  AbstractPowerSyncDatabase,
+  CommonPowerSyncDatabase,
   PowerSyncLogger,
   ProgressWithOperations,
   Schema,
@@ -16,7 +16,8 @@ import {
   TestConnector,
   waitForSyncStatus
 } from './utils.js';
-import { BucketChecksum, OplogEntryJSON } from '@powersync/common/internal/sync_protocol';
+import { BucketChecksum, OplogEntryJSON } from '@powersync/shared-internals/internal/sync_protocol';
+import { AbstractPowerSyncDatabase } from '@powersync/shared-internals';
 
 const defaultConnectOptions: SyncOptions = {
   // This might help with test stability/timeouts if a retry is needed.
@@ -104,7 +105,7 @@ describe('Sync', () => {
     // Replicate what we'd see on the web when switching connections in the shared sync worker: The sync client would
     // suddenly see a database without an active sync iteration.
     await database.execute('SELECT powersync_control(?, null)', ['stop']);
-    database.syncStreamImplementation!.markConnectionMayHaveChanged();
+    (database as AbstractPowerSyncDatabase).syncStreamImplementation!.markConnectionMayHaveChanged();
     await database.waitForStatus((s) => !s.connected);
     await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
   });
@@ -152,7 +153,7 @@ function defineSyncTests(bson: boolean) {
     await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
     // We want connected: true once we have a connection
     await vi.waitFor(() => connectCompleted);
-    expect(database.currentStatus.dataFlowStatus.downloading).toBeFalsy();
+    expect(database.currentStatus.downloading).toBeFalsy();
 
     syncService.pushLine({
       checkpoint: {
@@ -161,7 +162,7 @@ function defineSyncTests(bson: boolean) {
       }
     });
 
-    await vi.waitFor(() => expect(database.currentStatus.dataFlowStatus.downloading).toBeTruthy());
+    await vi.waitFor(() => expect(database.currentStatus.downloading).toBeTruthy());
   });
 
   mockSyncServiceTest('does not set uploading status without local writes', async ({ syncService }) => {
@@ -181,7 +182,7 @@ function defineSyncTests(bson: boolean) {
         buckets: [bucket('a', 10)]
       }
     });
-    await vi.waitFor(() => expect(database.currentStatus.dataFlowStatus.downloading).toBeTruthy());
+    await vi.waitFor(() => expect(database.currentStatus.downloading).toBeTruthy());
   });
 
   describe('reports progress', () => {
@@ -738,7 +739,7 @@ function defineSyncTests(bson: boolean) {
         }
       });
 
-      await powersync.syncStreamImplementation!.waitUntilStatusMatches((status) => {
+      await powersync.waitForStatus((status) => {
         return status.statusForPriority(prio).hasSynced === true;
       });
       await new Promise((r) => setTimeout(r));
@@ -836,7 +837,7 @@ function defineSyncTests(bson: boolean) {
         buckets: [bucket('a', 2)]
       }
     });
-    await vi.waitFor(() => powersync.currentStatus.dataFlowStatus.downloading == true);
+    await vi.waitFor(() => powersync.currentStatus.downloading == true);
     syncService.pushLine({
       data: {
         bucket: 'a',
@@ -852,7 +853,7 @@ function defineSyncTests(bson: boolean) {
       }
     });
     syncService.pushLine({ checkpoint_complete: { last_op_id: '2' } });
-    await vi.waitFor(() => powersync.currentStatus.dataFlowStatus.downloading == false);
+    await vi.waitFor(() => powersync.currentStatus.downloading == false);
 
     expect((await query.next()).value.rows._array).toStrictEqual([]);
   });
@@ -915,7 +916,7 @@ function defineSyncTests(bson: boolean) {
         buckets: [bucket('a', 2)]
       }
     });
-    await vi.waitFor(() => powersync.currentStatus.dataFlowStatus.downloading == true);
+    await vi.waitFor(() => powersync.currentStatus.downloading == true);
     syncService.pushLine({
       data: {
         bucket: 'a',
@@ -931,7 +932,7 @@ function defineSyncTests(bson: boolean) {
       }
     });
     syncService.pushLine({ checkpoint_complete: { last_op_id: '2' } });
-    await vi.waitFor(() => powersync.currentStatus.dataFlowStatus.downloading == false);
+    await vi.waitFor(() => powersync.currentStatus.downloading == false);
 
     expect((await query.next()).value.rows._array).toStrictEqual([]);
   });
@@ -1042,7 +1043,7 @@ function defineSyncTests(bson: boolean) {
 }
 
 async function waitForProgress(
-  database: AbstractPowerSyncDatabase,
+  database: CommonPowerSyncDatabase,
   total: [number, number],
   forPriorities: [number, [number, number]][] = []
 ) {

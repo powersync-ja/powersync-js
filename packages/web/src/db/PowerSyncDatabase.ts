@@ -1,19 +1,23 @@
 import {
-  AbstractPowerSyncDatabase,
-  SqliteBucketStorage,
-  StreamingSyncImplementation,
-  TriggerManagerConfig,
-  type BucketStorageAdapter,
   type PowerSyncBackendConnector,
   type PowerSyncCloseOptions,
   LogLevels,
-  CreateSyncImplementationOptions,
   BasePowerSyncDatabaseOptions,
   DatabaseSource,
   openDatabase,
-  DBAdapter
+  DBAdapter,
+  PowerSyncDatabaseConstructor,
+  CommonPowerSyncDatabase
 } from '@powersync/common';
-import { Mutex } from '@powersync/shared-internals';
+import {
+  AbstractPowerSyncDatabase,
+  BucketStorageAdapter,
+  CreateSyncImplementationOptions,
+  Mutex,
+  SqliteBucketStorage,
+  StreamingSyncImplementation,
+  TriggerManagerConfig
+} from '@powersync/shared-internals';
 import { getNavigatorLocks } from '../shared/navigator.js';
 import { NAVIGATOR_TRIGGER_CLAIM_MANAGER } from './NavigatorTriggerClaimManager.js';
 import { WebDBAdapter } from './adapters/WebDBAdapter.js';
@@ -61,26 +65,15 @@ export interface WebSyncOptions {
 }
 
 /**
- * A PowerSync database which provides SQLite functionality
- * which is automatically synced.
- *
- * @example
- * ```typescript
- * export const db = new PowerSyncDatabase({
- *  schema: AppSchema,
- *  database: {
- *    dbFilename: 'example.db'
- *  }
- * });
- * ```
+ * @internal Use {@link PowerSyncDatabase} instead, this class is only used by other SDKs also needing web support.
  */
-export class PowerSyncDatabase extends AbstractPowerSyncDatabase<WebPowerSyncDatabaseOptions> {
+export class WebPowerSyncDatabase extends AbstractPowerSyncDatabase<WebPowerSyncDatabaseOptions> {
   static SHARED_MUTEX = new Mutex();
 
   protected resolvedOpenOptions: WebSpecificOpenOptions;
   protected enableBroadcastLogs: boolean;
 
-  constructor(options: WebPowerSyncDatabaseOptions, database?: () => DBAdapter) {
+  constructor(options: WebPowerSyncDatabaseOptions) {
     const resolvedOpenOptions = resolveAndValidateOptions('database' in options ? options.database : {});
 
     super(options);
@@ -158,7 +151,7 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase<WebPowerSyncDat
 
   protected async runExclusive<T>(cb: () => Promise<T>) {
     if (this.resolvedOpenOptions.ssrMode) {
-      return PowerSyncDatabase.SHARED_MUTEX.runExclusive(cb);
+      return WebPowerSyncDatabase.SHARED_MUTEX.runExclusive(cb);
     }
     return getNavigatorLocks().request(`lock-${this.database.name}`, cb);
   }
@@ -183,7 +176,7 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase<WebPowerSyncDat
 
     switch (true) {
       case this.resolvedOpenOptions.ssrMode:
-        return new SSRStreamingSyncImplementation(syncOptions);
+        return new SSRStreamingSyncImplementation();
       case this.resolvedOpenOptions.enableMultiTabs:
         if (!this.enableBroadcastLogs) {
           const warning = `
@@ -204,3 +197,20 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase<WebPowerSyncDat
     }
   }
 }
+/**
+ * A PowerSync database which provides SQLite functionality
+ * which is automatically synced.
+ *
+ * @example
+ * ```typescript
+ * export const db = new PowerSyncDatabase({
+ *  schema: AppSchema,
+ *  database: {
+ *    dbFilename: 'example.db'
+ *  }
+ * });
+ * ```
+ */
+// Typed constructor to avoid leaking AbstractPowerSyncDatabase into the public interface
+export const PowerSyncDatabase: PowerSyncDatabaseConstructor<WebPowerSyncDatabaseOptions> = WebPowerSyncDatabase;
+export interface PowerSyncDatabase extends CommonPowerSyncDatabase {}

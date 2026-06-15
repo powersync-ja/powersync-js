@@ -1,5 +1,4 @@
 import {
-  BaseObserver,
   DBAdapter,
   DBAdapterListener,
   LockContext as PowerSyncLockContext,
@@ -12,6 +11,7 @@ import {
 } from '@powersync/common';
 import type { QuickSQLiteConnection, LockContext as RNQSLockContext } from '@journeyapps/react-native-quick-sqlite';
 import { QueryResult, SqlExecutor } from '@powersync/common';
+import { BaseObserver } from '@powersync/shared-internals';
 
 class RNQSConnectionPool extends BaseObserver<DBAdapterListener> implements ConnectionPool {
   constructor(

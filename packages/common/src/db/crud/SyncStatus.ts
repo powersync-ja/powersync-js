@@ -6,11 +6,6 @@ import { ProgressWithOperations, SyncProgress } from './SyncProgress.js';
  */
 export type SyncDataFlowStatus = Partial<{
   /**
-   * true if actively downloading changes.
-   * This is only true when {@link connected} is also true.
-   */
-  downloading: boolean;
-  /**
    * true if uploading changes.
    */
   uploading: boolean;
@@ -53,6 +48,11 @@ export interface SyncStatus {
    * @returns True if connecting, false otherwise. Defaults to false if not specified.
    */
   get connecting(): boolean;
+
+  /**
+   * Whether the PowerSync SDK is currently downloading data from the connected PowerSync service.
+   */
+  get downloading(): boolean;
 
   /**
    * Time that a last sync has fully completed, if any.

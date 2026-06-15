@@ -16,7 +16,7 @@ import { usePowerSync } from './powerSync.js';
  */
 export const useStatus = (): Ref<SyncStatus> => {
   const powerSync = usePowerSync();
-  const status = ref(new SyncStatus({}));
+  const status = ref<SyncStatus>();
 
   if (!powerSync) {
     return status as any;
@@ -37,5 +37,5 @@ export const useStatus = (): Ref<SyncStatus> => {
     });
   });
 
-  return status as any;
+  return status;
 };

@@ -1,4 +1,4 @@
-import { AbstractPowerSyncDatabase, WatchOnChangeEvent } from '@powersync/common';
+import { CommonPowerSyncDatabase, WatchOnChangeEvent } from '@powersync/common';
 import { PowerSyncDatabase } from '@powersync/web';
 import { v4 as uuid } from 'uuid';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -7,7 +7,7 @@ import { TEST_SCHEMA } from './utils/test-schema.js';
 const UPLOAD_TIMEOUT_MS = 3000;
 
 describe('OnChange Tests', { sequential: true }, () => {
-  let powersync: AbstractPowerSyncDatabase;
+  let powersync: CommonPowerSyncDatabase;
 
   beforeEach(async () => {
     powersync = new PowerSyncDatabase({

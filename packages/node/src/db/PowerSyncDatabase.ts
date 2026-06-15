@@ -1,5 +1,6 @@
 import {
   BasePowerSyncDatabaseOptions,
+  CommonPowerSyncDatabase,
   DatabaseSource,
   DBAdapter,
   openDatabase,
@@ -85,3 +86,5 @@ class NodePowerSyncDatabase extends AbstractPowerSyncDatabase<NodePowerSyncDatab
  */
 // Typed constructor to avoid leaking AbstractPowerSyncDatabase into the public interface
 export const PowerSyncDatabase: PowerSyncDatabaseConstructor<NodePowerSyncDatabaseOptions> = NodePowerSyncDatabase;
+
+export interface PowerSyncDatabase extends CommonPowerSyncDatabase {}

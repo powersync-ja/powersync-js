@@ -1,12 +1,12 @@
+import { ColumnType, CommonPowerSyncDatabase } from '@powersync/web';
 import {
   AbstractPowerSyncDatabase,
   AbstractRemote,
-  ColumnType,
   PowerSyncControlCommand,
   SqliteBucketStorage
-} from '@powersync/web';
+} from '@powersync/shared-internals';
 import { type BSON } from 'bson';
-import type { BucketChecksum, Checkpoint, StreamingSyncLine } from '@powersync/common/internal/sync_protocol';
+import type { BucketChecksum, Checkpoint, StreamingSyncLine } from '@powersync/shared-internals/internal/sync_protocol';
 import { DynamicSchemaManager } from './DynamicSchemaManager';
 
 /**
@@ -18,13 +18,13 @@ import { DynamicSchemaManager } from './DynamicSchemaManager';
  */
 export class RustClientInterceptor extends SqliteBucketStorage {
   private bson?: typeof BSON;
-  private rdb: AbstractPowerSyncDatabase;
+  private rdb: CommonPowerSyncDatabase;
   private lastStartedCheckpoint: Checkpoint | null = null;
 
   public tables: Record<string, Record<string, ColumnType>> = {};
 
   constructor(
-    db: AbstractPowerSyncDatabase,
+    db: CommonPowerSyncDatabase,
     private remote: AbstractRemote,
     private schemaManager: DynamicSchemaManager
   ) {

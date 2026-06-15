@@ -1,13 +1,13 @@
+import { SyncStatus } from '@powersync/common';
 import {
   AbstractStreamingSyncImplementationOptions,
   BaseObserver,
+  Mutex,
+  StreamingSyncImplementation,
   LockOptions,
   LockType,
-  StreamingSyncImplementation,
-  SyncStatus,
-  SyncStatusOptions
-} from '@powersync/common';
-import { Mutex } from '@powersync/shared-internals';
+  SyncStatusSnapshot
+} from '@powersync/shared-internals';
 
 export class SSRStreamingSyncImplementation extends BaseObserver implements StreamingSyncImplementation {
   syncMutex: Mutex;
@@ -15,13 +15,11 @@ export class SSRStreamingSyncImplementation extends BaseObserver implements Stre
 
   isConnected: boolean;
   lastSyncedAt?: Date | undefined;
-  syncStatus: SyncStatus;
 
-  constructor(options: AbstractStreamingSyncImplementationOptions) {
+  constructor() {
     super();
     this.syncMutex = new Mutex();
     this.crudMutex = new Mutex();
-    this.syncStatus = new SyncStatus({});
     this.isConnected = false;
   }
 
@@ -46,13 +44,6 @@ export class SSRStreamingSyncImplementation extends BaseObserver implements Stre
    * This SSR Mode implementation is immediately ready.
    */
   async waitForReady() {}
-
-  /**
-   * This will never resolve in SSR Mode.
-   */
-  async waitForStatus(status: SyncStatusOptions) {
-    return this.waitUntilStatusMatches(() => false);
-  }
 
   /**
    * This will never resolve in SSR Mode.

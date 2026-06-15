@@ -1,4 +1,4 @@
-import { AbstractStreamingSyncImplementation, LockOptions, LockType } from '@powersync/web';
+import { AbstractStreamingSyncImplementation, LockOptions, LockType } from '@powersync/shared-internals';
 import { Mutex } from '@powersync/shared-internals';
 
 type MutexMap = {

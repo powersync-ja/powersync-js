@@ -96,7 +96,6 @@ export interface StreamingSyncImplementation
   disconnect(): Promise<void>;
   getWriteCheckpoint: () => Promise<string>;
   isConnected: boolean;
-  syncStatus: SyncStatus;
   triggerCrudUpload: () => void;
   waitForReady(): Promise<void>;
   waitUntilStatusMatches(predicate: (status: SyncStatus) => boolean): Promise<void>;

@@ -1,9 +1,9 @@
 import type { ColumnType, PowerSyncDatabase, DBAdapter } from '@powersync/web';
 import { type BSON } from 'bson';
-import { AbstractPowerSyncDatabase, PowerSyncControlCommand, SqliteBucketStorage } from '@powersync/web';
+import { AbstractPowerSyncDatabase, PowerSyncControlCommand, SqliteBucketStorage } from '@powersync/shared-internals';
 import type { DynamicSchemaManager } from './DynamicSchemaManager';
 import type { ShallowRef } from 'vue';
-import type { BucketChecksum, Checkpoint, StreamingSyncLine } from '@powersync/common/internal/sync_protocol';
+import type { BucketChecksum, Checkpoint, StreamingSyncLine } from '@powersync/shared-internals/internal/sync_protocol';
 
 /**
  * Tracks per-byte and per-operation progress for the Rust client.

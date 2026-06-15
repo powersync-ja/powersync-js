@@ -18,6 +18,7 @@ import { ClientParameterRow, localStateDb } from './LocalStateManager';
 import { DynamicSchemaManager } from './DynamicSchemaManager';
 import { RustClientInterceptor } from './RustClientInterceptor';
 import { TokenConnector } from './TokenConnector';
+import { SyncStatusSnapshot } from '@powersync/shared-internals';
 
 const baseLogger = createConsoleLogger({ minLevel: LogLevels.debug });
 
@@ -200,8 +201,8 @@ export function useSyncStatus() {
 
     setCurrent(sync.syncStatus);
     const l = sync.registerListener({
-      statusChanged: (status) => {
-        setCurrent(status);
+      statusChanged: (core, dataFlow) => {
+        setCurrent(new SyncStatusSnapshot(core, dataFlow));
       }
     });
     return () => l?.();

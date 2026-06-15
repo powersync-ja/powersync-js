@@ -555,6 +555,9 @@ importers:
       '@nuxt/kit':
         specifier: ^4.3.1
         version: 4.3.1(magicast@0.5.2)
+      '@powersync/shared-internals':
+        specifier: workspace:^1.0.0
+        version: link:../shared-internals
       '@tanstack/vue-table':
         specifier: ^8.21.3
         version: 8.21.3(vue@3.5.30(typescript@6.0.3))
@@ -866,6 +869,9 @@ importers:
       '@powersync/common':
         specifier: 'workspace:'
         version: link:../common
+      '@powersync/shared-internals':
+        specifier: 'workspace:'
+        version: link:../shared-internals
       '@tauri-apps/api':
         specifier: ^2.0.0
         version: 2.10.1
@@ -966,6 +972,9 @@ importers:
       '@powersync/react':
         specifier: workspace:*
         version: link:../../packages/react
+      '@powersync/shared-internals':
+        specifier: workspace:*
+        version: link:../../packages/shared-internals
       '@powersync/web':
         specifier: workspace:*
         version: link:../../packages/web

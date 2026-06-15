@@ -3,7 +3,7 @@ import {
   AbstractStreamingSyncImplementationOptions,
   LockOptions,
   LockType
-} from '@powersync/common';
+} from '@powersync/shared-internals';
 import { Mutex } from '@powersync/shared-internals';
 
 /**

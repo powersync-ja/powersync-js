@@ -25,9 +25,9 @@
         {
             "path": "./packages/node"
         },
-        // {
-        //     "path": "./packages/nuxt"
-        // },
+        {
+            "path": "./packages/nuxt"
+        },
         {
             "path": "./packages/powersync-op-sqlite"
         },

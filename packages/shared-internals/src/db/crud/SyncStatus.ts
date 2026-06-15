@@ -21,8 +21,7 @@ export class SyncStatusSnapshot implements SyncStatus {
   ) {
     this.dataFlowStatus = {
       uploading: false,
-      ...dataFlow,
-      downloading: core?.downloading != null
+      ...dataFlow
     };
   }
 
@@ -32,6 +31,10 @@ export class SyncStatusSnapshot implements SyncStatus {
 
   get connecting(): boolean {
     return this.core?.connecting ?? false;
+  }
+
+  get downloading(): boolean {
+    return this.core?.downloading != null;
   }
 
   get lastSyncedAt(): Date | undefined {
@@ -114,7 +117,7 @@ export class SyncStatusSnapshot implements SyncStatus {
 
   getMessage() {
     const dataFlow = this.dataFlowStatus;
-    return `SyncStatus<connected: ${this.connected} connecting: ${this.connecting} lastSyncedAt: ${this.lastSyncedAt} hasSynced: ${this.hasSynced}. Downloading: ${dataFlow.downloading}. Uploading: ${dataFlow.uploading}. UploadError: ${dataFlow.uploadError}, DownloadError?: ${dataFlow.downloadError}>`;
+    return `SyncStatus<connected: ${this.connected} connecting: ${this.connecting} lastSyncedAt: ${this.lastSyncedAt} hasSynced: ${this.hasSynced}. Downloading: ${this.downloading}. Uploading: ${dataFlow.uploading}. UploadError: ${dataFlow.uploadError}, DownloadError?: ${dataFlow.downloadError}>`;
   }
 
   /**
@@ -122,18 +125,14 @@ export class SyncStatusSnapshot implements SyncStatus {
    *
    * @returns A plain object representation of the sync status
    */
-  toJSON(): unknown {
+  toJSON(): SyncStatusJson {
     return {
-      connected: this.connected,
-      connecting: this.connecting,
+      core: this.core,
       dataFlow: {
         ...this.dataFlowStatus,
         uploadError: this.serializeError(this.dataFlowStatus.uploadError),
         downloadError: this.serializeError(this.dataFlowStatus.downloadError)
-      },
-      lastSyncedAt: this.lastSyncedAt,
-      hasSynced: this.hasSynced,
-      priorityStatusEntries: this.priorityStatusEntries
+      }
     };
   }
 
@@ -151,10 +150,6 @@ export class SyncStatusSnapshot implements SyncStatus {
       stack: error.stack
     };
   }
-
-  private static comparePriorities(a: SyncPriorityStatus, b: SyncPriorityStatus) {
-    return b.priority - a.priority; // Reverse because higher priorities have lower numbers
-  }
 }
 
 function coreTimestampToDate(time: number | null): Date | undefined {
@@ -167,6 +162,11 @@ function priorityToJs(status: CoreSyncPriorityStatus): SyncPriorityStatus {
     hasSynced: status.has_synced ?? undefined,
     lastSyncedAt: coreTimestampToDate(status.last_synced_at)
   };
+}
+
+export interface SyncStatusJson {
+  core: CoreSyncStatus | null;
+  dataFlow: SyncDataFlowStatus;
 }
 
 class SyncStreamStatusView implements SyncStreamStatus {

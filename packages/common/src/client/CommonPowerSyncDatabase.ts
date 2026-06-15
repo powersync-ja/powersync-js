@@ -127,6 +127,11 @@ export interface PowerSyncDatabaseConstructor<Options> {
 }
 
 /**
+ * @deprecated Use {@link CommonPowerSyncDatabase} instead.
+ */
+export type AbstractPowerSyncDatabase = CommonPowerSyncDatabase;
+
+/**
  * @public
  */
 export interface CommonPowerSyncDatabase extends BaseObserverInterface<PowerSyncDBListener> {
