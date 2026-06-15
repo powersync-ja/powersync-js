@@ -1,5 +1,4 @@
 import * as commonSdk from '@powersync/common';
-import * as internals from '@powersync/shared-internals';
 import { toCompilableQuery, wrapPowerSyncWithDrizzle } from '@powersync/drizzle-driver';
 import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
 import { eq } from 'drizzle-orm';
@@ -206,7 +205,7 @@ describe('useQuery', () => {
 
         const hookEvents: TestEvent[] = [];
 
-        const queryObserver = new internals.BaseObserver();
+        const queryObserver = new commonSdk.BaseObserver();
         const baseQuery = 'SELECT * FROM lists WHERE name = ?';
         const query = () => {
           const [query, setQuery] = React.useState({
