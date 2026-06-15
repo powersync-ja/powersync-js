@@ -3,7 +3,6 @@ import {
   CommonPowerSyncDatabase,
   DBAdapter,
   LogLevels,
-  openDatabase,
   PowerSyncBackendConnector,
   PowerSyncDatabaseConstructor,
   SyncOptions,
@@ -18,7 +17,8 @@ import {
   CreateSyncImplementationOptions,
   MEMORY_TRIGGER_CLAIM_MANAGER,
   StreamingSyncImplementation,
-  TriggerManagerConfig
+  TriggerManagerConfig,
+  openDatabase
 } from '@powersync/shared-internals';
 
 class CapacitorPowerSyncDatabase extends WebPowerSyncDatabase {

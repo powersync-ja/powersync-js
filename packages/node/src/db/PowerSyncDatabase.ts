@@ -3,17 +3,16 @@ import {
   CommonPowerSyncDatabase,
   DatabaseSource,
   DBAdapter,
-  openDatabase,
   PowerSyncBackendConnector,
   PowerSyncDatabaseConstructor
 } from '@powersync/common';
-
 import {
   AbstractPowerSyncDatabase,
   AbstractStreamingSyncImplementation,
   BucketStorageAdapter,
   CreateSyncImplementationOptions,
-  SqliteBucketStorage
+  SqliteBucketStorage,
+  openDatabase
 } from '@powersync/shared-internals';
 
 import { NodeRemote, NodeRemoteOptions } from '../sync/stream/NodeRemote.js';

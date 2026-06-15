@@ -127,6 +127,7 @@ export interface PowerSyncDatabaseConstructor<Options> {
 }
 
 /**
+ * @public
  * @deprecated Use {@link CommonPowerSyncDatabase} instead.
  */
 export type AbstractPowerSyncDatabase = CommonPowerSyncDatabase;
@@ -149,7 +150,7 @@ export interface CommonPowerSyncDatabase extends BaseObserverInterface<PowerSync
   readonly sdkVersion: string;
 
   /**
-   * @experimental
+   * @experimental @alpha
    * Allows creating SQLite triggers which can be used to track various operations on SQLite tables.
    */
   readonly triggers: TriggerManager;
@@ -287,7 +288,7 @@ export interface CommonPowerSyncDatabase extends BaseObserverInterface<PowerSync
    * Once the data have been successfully uploaded, call {@link CrudTransaction.complete} before
    * requesting the next transaction.
    *
-   * Unlike {@link AbstractPowerSyncDatabase.getCrudBatch}, this only returns data from a single transaction at a time.
+   * Unlike {@link CommonPowerSyncDatabase.getCrudBatch}, this only returns data from a single transaction at a time.
    * All data for the transaction is loaded into memory.
    *
    * @returns A transaction of CRUD operations to upload, or null if there are none
@@ -300,7 +301,7 @@ export interface CommonPowerSyncDatabase extends BaseObserverInterface<PowerSync
    * This is typically used from the {@link PowerSyncBackendConnector.uploadData} callback. Each entry emitted by the
    * returned iterator is a full transaction containing all local writes made while that transaction was active.
    *
-   * Unlike {@link AbstractPowerSyncDatabase.getNextCrudTransaction}, which always returns the oldest transaction that hasn't been
+   * Unlike {@link CommonPowerSyncDatabase.getNextCrudTransaction}, which always returns the oldest transaction that hasn't been
    * {@link CrudTransaction.complete}d yet, this iterator can be used to receive multiple transactions. Calling
    * {@link CrudTransaction.complete} will mark that and all prior transactions emitted by the iterator as completed.
    *
@@ -437,8 +438,8 @@ export interface CommonPowerSyncDatabase extends BaseObserverInterface<PowerSync
   writeTransaction<T>(callback: (tx: Transaction) => Promise<T>, lockTimeout?: number): Promise<T>;
 
   /**
-   * This version of `watch` uses `AsyncGenerator`, for documentation see {@link AbstractPowerSyncDatabase.watchWithAsyncGenerator}.
-   * Can be overloaded to use a callback handler instead, for documentation see {@link AbstractPowerSyncDatabase.watchWithCallback}.
+   * This version of `watch` uses `AsyncGenerator`, for documentation see {@link CommonPowerSyncDatabase.watchWithAsyncGenerator}.
+   * Can be overloaded to use a callback handler instead, for documentation see {@link CommonPowerSyncDatabase.watchWithCallback}.
    *
    * @example
    * ```javascript
@@ -454,7 +455,7 @@ export interface CommonPowerSyncDatabase extends BaseObserverInterface<PowerSync
    */
   watch(sql: string, parameters?: any[], options?: SQLWatchOptions): AsyncIterable<QueryResult>;
   /**
-   * See {@link AbstractPowerSyncDatabase.watchWithCallback}.
+   * See {@link CommonPowerSyncDatabase.watchWithCallback}.
    *
    * @example
    * ```javascript
@@ -473,7 +474,7 @@ export interface CommonPowerSyncDatabase extends BaseObserverInterface<PowerSync
 
   /**
    * Allows defining a query which can be used to build a {@link WatchedQuery}.
-   * The defined query will be executed with {@link AbstractPowerSyncDatabase#getAll}.
+   * The defined query will be executed with {@link CommonPowerSyncDatabase#getAll}.
    * An optional mapper function can be provided to transform the results.
    *
    * @example
@@ -548,8 +549,8 @@ export interface CommonPowerSyncDatabase extends BaseObserverInterface<PowerSync
   resolveTables(sql: string, parameters?: any[], options?: SQLWatchOptions): Promise<string[]>;
 
   /**
-   * This version of `onChange` uses `AsyncGenerator`, for documentation see {@link AbstractPowerSyncDatabase.onChangeWithAsyncGenerator}.
-   * Can be overloaded to use a callback handler instead, for documentation see {@link AbstractPowerSyncDatabase.onChangeWithCallback}.
+   * This version of `onChange` uses `AsyncGenerator`, for documentation see {@link CommonPowerSyncDatabase.onChangeWithAsyncGenerator}.
+   * Can be overloaded to use a callback handler instead, for documentation see {@link CommonPowerSyncDatabase.onChangeWithCallback}.
    *
    * @example
    * ```javascript
@@ -562,7 +563,7 @@ export interface CommonPowerSyncDatabase extends BaseObserverInterface<PowerSync
    */
   onChange(options?: SQLOnChangeOptions): AsyncIterable<WatchOnChangeEvent>;
   /**
-   * See {@link AbstractPowerSyncDatabase.onChangeWithCallback}.
+   * See {@link CommonPowerSyncDatabase.onChangeWithCallback}.
    *
    * @example
    * ```javascript
@@ -580,7 +581,7 @@ export interface CommonPowerSyncDatabase extends BaseObserverInterface<PowerSync
   /**
    * Invoke the provided callback on any changes to any of the specified tables.
    *
-   * This is preferred over {@link AbstractPowerSyncDatabase.watchWithCallback} when multiple queries need to be performed
+   * This is preferred over {@link CommonPowerSyncDatabase.watchWithCallback} when multiple queries need to be performed
    * together when data is changed.
    *
    * Note that the `onChange` callback member of the handler is required.
@@ -594,7 +595,7 @@ export interface CommonPowerSyncDatabase extends BaseObserverInterface<PowerSync
   /**
    * Create a Stream of changes to any of the specified tables.
    *
-   * This is preferred over {@link AbstractPowerSyncDatabase.watchWithAsyncGenerator} when multiple queries need to be
+   * This is preferred over {@link CommonPowerSyncDatabase.watchWithAsyncGenerator} when multiple queries need to be
    * performed together when data is changed.
    *
    * Note: do not declare this as `async *onChange` as it will not work in React Native.

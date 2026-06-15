@@ -7,7 +7,6 @@ import {
   SqlExecutor,
   DBGetUtilsDefaultMixin,
   BatchedUpdateNotification,
-  ConnectionClosedError,
   SQLOpenOptions
 } from '@powersync/common';
 import { SharedConnectionWorker, WebDBAdapterConfiguration } from '../WebDBAdapter.js';
@@ -15,7 +14,7 @@ import { ClientConnectionView } from './DatabaseServer.js';
 import { RawQueryResult } from './RawSqliteConnection.js';
 import * as Comlink from 'comlink';
 import type { ConnectToMultiDatabaseServerOptions } from '../../../worker/db/MultiDatabaseServer.js';
-import { BaseObserver } from '@powersync/shared-internals';
+import { BaseObserver, ConnectionClosedError } from '@powersync/shared-internals';
 
 export interface OpenWorkerConnection {
   connect(config: ConnectToMultiDatabaseServerOptions): Promise<ClientConnectionView>;

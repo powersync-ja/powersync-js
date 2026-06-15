@@ -3,7 +3,6 @@ import {
   createConsoleLogger,
   LogLevels,
   PowerSyncDatabase,
-  resolveSyncOptions,
   Schema,
   SyncStreamSubscription,
   TemporaryStorageOption,
@@ -13,6 +12,7 @@ import {
   WebStreamingSyncImplementation,
   WebStreamingSyncImplementationOptions
 } from '@powersync/web';
+import { resolveSyncOptions } from '@powersync/shared-internals';
 import React from 'react';
 import { ClientParameterRow, localStateDb } from './LocalStateManager';
 import { DynamicSchemaManager } from './DynamicSchemaManager';

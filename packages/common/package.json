@@ -18,8 +18,7 @@
   "files": [
     "lib",
     "dist",
-    "src",
-    "legacy"
+    "src"
   ],
   "repository": {
     "type": "git",

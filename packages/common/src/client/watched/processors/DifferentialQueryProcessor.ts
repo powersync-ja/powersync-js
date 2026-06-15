@@ -70,7 +70,6 @@ export interface DifferentialWatchedQueryOptions<RowType> extends WatchedQueryOp
    * Row comparator used to identify and compare rows in the result set.
    * If not provided, the default comparator will be used which keys items by their `id` property if available,
    * otherwise it uses JSON stringification of the entire item for keying and comparison.
-   * @defaultValue {@link DEFAULT_ROW_COMPARATOR}
    */
   rowComparator?: DifferentialWatchedQueryComparator<RowType>;
 }

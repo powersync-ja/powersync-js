@@ -6,7 +6,6 @@ import {
   LogLevels,
   PowerSyncLogger,
   SyncStreamConnectionMethod,
-  ResolvedSyncOptions,
   SyncStatus,
   SyncDataFlowStatus
 } from '@powersync/common';
@@ -30,6 +29,7 @@ import {
 } from '../../../utils/stream_transform.js';
 import { asyncNotifier } from '../../../utils/async.js';
 import { SyncStatusSnapshot } from '../../../db/crud/SyncStatus.js';
+import { ResolvedSyncOptions } from '../options.js';
 
 /**
  * @internal

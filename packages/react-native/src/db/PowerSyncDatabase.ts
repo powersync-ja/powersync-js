@@ -1,7 +1,6 @@
 import {
   CommonPowerSyncDatabase,
   DBAdapter,
-  openDatabase,
   PowerSyncBackendConnector,
   PowerSyncDatabaseConstructor,
   PowerSyncDatabaseOptions
@@ -10,7 +9,8 @@ import {
   AbstractPowerSyncDatabase,
   AbstractStreamingSyncImplementation,
   BucketStorageAdapter,
-  CreateSyncImplementationOptions
+  CreateSyncImplementationOptions,
+  openDatabase
 } from '@powersync/shared-internals';
 import { ReactNativeRemote } from '../sync/stream/ReactNativeRemote';
 import { ReactNativeStreamingSyncImplementation } from '../sync/stream/ReactNativeStreamingSyncImplementation';

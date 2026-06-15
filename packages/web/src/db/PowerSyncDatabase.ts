@@ -4,7 +4,6 @@ import {
   LogLevels,
   BasePowerSyncDatabaseOptions,
   DatabaseSource,
-  openDatabase,
   DBAdapter,
   PowerSyncDatabaseConstructor,
   CommonPowerSyncDatabase
@@ -16,7 +15,8 @@ import {
   Mutex,
   SqliteBucketStorage,
   StreamingSyncImplementation,
-  TriggerManagerConfig
+  TriggerManagerConfig,
+  openDatabase
 } from '@powersync/shared-internals';
 import { getNavigatorLocks } from '../shared/navigator.js';
 import { NAVIGATOR_TRIGGER_CLAIM_MANAGER } from './NavigatorTriggerClaimManager.js';

@@ -841,6 +841,9 @@ importers:
       '@powersync/react':
         specifier: workspace:*
         version: link:../react
+      '@powersync/shared-internals':
+        specifier: workspace:^1.0.0
+        version: link:../shared-internals
       '@tanstack/react-query':
         specifier: ^5.70.0
         version: 5.90.21(react@18.3.1)
@@ -892,6 +895,10 @@ importers:
   packages/tauri/src: {}
 
   packages/vue:
+    dependencies:
+      '@powersync/shared-internals':
+        specifier: workspace:^1.0.0
+        version: link:../shared-internals
     devDependencies:
       '@powersync/common':
         specifier: workspace:*

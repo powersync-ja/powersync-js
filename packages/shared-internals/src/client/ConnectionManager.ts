@@ -8,13 +8,12 @@ import {
   SyncStreamDescription,
   SyncStreamSubscribeOptions,
   SyncStreamSubscription,
-  ResolvedSyncOptions,
-  resolveSyncOptions,
   SyncOptions
 } from '@powersync/common';
 
 import { BaseObserver } from '../utils/BaseObserver.js';
 import { StreamingSyncImplementation, SubscribedStream } from './sync/stream/AbstractStreamingSyncImplementation.js';
+import { ResolvedSyncOptions, resolveSyncOptions } from './sync/options.js';
 
 /**
  * @internal

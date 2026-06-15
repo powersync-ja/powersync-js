@@ -1,4 +1,5 @@
-import { type CompilableQuery, parseQuery } from '@powersync/common';
+import { type CompilableQuery } from '@powersync/common';
+import { parseQuery } from '@powersync/shared-internals';
 import { QuerySyncStreamOptions, useAllSyncStreamsHaveSynced, usePowerSync } from '@powersync/react';
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import * as Tanstack from '@tanstack/react-query';

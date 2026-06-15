@@ -1,11 +1,9 @@
 export * from './attachments/AttachmentContext.js';
 export * from './attachments/AttachmentErrorHandler.js';
 export * from './attachments/AttachmentQueue.js';
-export * from './attachments/AttachmentService.js';
 export * from './attachments/LocalStorageAdapter.js';
 export * from './attachments/RemoteStorageAdapter.js';
 export * from './attachments/Schema.js';
-export * from './attachments/SyncingService.js';
 export * from './attachments/WatchedAttachmentItem.js';
 
 export * from './client/CommonPowerSyncDatabase.js';
@@ -18,16 +16,8 @@ export { CrudEntry, OpId, UpdateType } from './client/sync/bucket/CrudEntry.js';
 export * from './client/sync/bucket/CrudTransaction.js';
 export * from './client/sync/stream/JsonValue.js';
 export * from './client/sync/sync-streams.js';
-export {
-  SyncOptions,
-  SyncStreamConnectionMethod,
-  FetchStrategy,
-  // TODO: Stop exporting this, move to separate package instead
-  ResolvedSyncOptions,
-  resolveSyncOptions
-} from './client/sync/options.js';
+export { SyncOptions, SyncStreamConnectionMethod, FetchStrategy } from './client/sync/options.js';
 
-export * from './db/ConnectionClosedError.js';
 export { ProgressWithOperations, SyncProgress } from './db/crud/SyncProgress.js';
 export * from './db/crud/SyncStatus.js';
 export * from './db/crud/UploadQueueStatus.js';
@@ -49,9 +39,9 @@ export * from './client/watched/processors/DifferentialQueryProcessor.js';
 export * from './client/watched/processors/OnChangeQueryProcessor.js';
 export * from './client/watched/WatchedQuery.js';
 
+export { type Mutex } from './utils/mutex.js';
 export * from './utils/BaseObserver.js';
 export * from './utils/MetaBaseObserver.js';
 export * from './utils/Logger.js';
-export * from './utils/parseQuery.js';
 
 export * from './types/types.js';

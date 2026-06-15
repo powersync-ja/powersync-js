@@ -163,9 +163,10 @@ export interface TriggerCreationHooks {
 
 /**
  * Common interface for options used in creating a diff trigger.
+ *
+ * @alpha @experimental
  */
-
-interface BaseCreateDiffTriggerOptions {
+export interface BaseCreateDiffTriggerOptions {
   /**
    * PowerSync source table/view to trigger and track changes from.
    * This should be present in the PowerSync database's schema.
@@ -188,16 +189,18 @@ interface BaseCreateDiffTriggerOptions {
    * The row id is available in the `id` column.
    *
    * NB! The WHEN clauses here are added directly to the SQLite trigger creation SQL.
-   * Any user input strings here should be sanitized externally. The {@link when} string template function performs
-   * some basic sanitization, extra external sanitization is recommended.
+   * Any user input strings here should be sanitized externally. The {@link BaseCreateDiffTriggerOptions.when} string
+   * template function performs some basic sanitization, extra external sanitization is recommended.
    *
    * @example
+   * ```JavaScript
    * {
    *  'INSERT': sanitizeSQL`json_extract(NEW.data, '$.list_id') = ${sanitizeUUID(list.id)}`,
    *  'INSERT': `TRUE`,
    *  'UPDATE': sanitizeSQL`NEW.id = 'abcd' AND json_extract(NEW.data, '$.status') = 'active'`,
    *  'DELETE': sanitizeSQL`json_extract(OLD.data, '$.list_id') = 'abcd'`
    * }
+   * ```
    */
   when: Partial<Record<DiffTriggerOperation, string>>;
 
@@ -363,7 +366,6 @@ export interface TrackDiffOptions extends BaseCreateDiffTriggerOptions {
 
   /**
    * The minimum interval, in milliseconds, between {@link TrackDiffOptions.onChange} invocations.
-   *  @default {@link DEFAULT_WATCH_THROTTLE_MS}
    */
   throttleMs?: number;
 }

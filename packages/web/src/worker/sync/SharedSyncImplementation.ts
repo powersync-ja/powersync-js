@@ -7,9 +7,7 @@ import {
   LockContext,
   PowerSyncBackendConnector,
   SyncStatus,
-  LogLevels,
-  ResolvedSyncOptions,
-  SyncDataFlowStatus
+  LogLevels
 } from '@powersync/common';
 import {
   AbortOperation,
@@ -20,9 +18,8 @@ import {
   type StreamingSyncImplementation,
   type StreamingSyncImplementationListener,
   Mutex,
-  CoreSyncStatus,
-  SyncStatusSnapshot,
-  SyncStatusJson
+  ResolvedSyncOptions,
+  SyncStatusSnapshot
 } from '@powersync/shared-internals';
 import * as Comlink from 'comlink';
 import { WebRemote } from '../../db/sync/WebRemote.js';

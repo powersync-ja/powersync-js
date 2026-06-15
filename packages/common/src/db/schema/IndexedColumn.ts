@@ -9,10 +9,7 @@ export interface IndexColumnOptions {
   ascending?: boolean;
 }
 
-/**
- * @internal
- */
-export const DEFAULT_INDEX_COLUMN_OPTIONS: Partial<IndexColumnOptions> = {
+const DEFAULT_INDEX_COLUMN_OPTIONS: Partial<IndexColumnOptions> = {
   ascending: true
 };
 

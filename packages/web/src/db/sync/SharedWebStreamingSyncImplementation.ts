@@ -1,4 +1,4 @@
-import { LogRecord, PowerSyncCredentials, ResolvedSyncOptions } from '@powersync/common';
+import { LogRecord, PowerSyncCredentials } from '@powersync/common';
 import * as Comlink from 'comlink';
 import { AbstractSharedSyncClientProvider } from '../../worker/sync/AbstractSharedSyncClientProvider.js';
 import { ManualSharedSyncPayload, SharedSyncClientEvent } from '../../worker/sync/SharedSyncImplementation.js';
@@ -9,7 +9,7 @@ import {
   WebStreamingSyncImplementationOptions
 } from './WebStreamingSyncImplementation.js';
 import { generateTabCloseSignal } from '../../shared/tab_close_signal.js';
-import { SubscribedStream, SyncStatusJson } from '@powersync/shared-internals';
+import { SubscribedStream, SyncStatusJson, ResolvedSyncOptions } from '@powersync/shared-internals';
 
 /**
  * The shared worker will trigger methods on this side of the message port
