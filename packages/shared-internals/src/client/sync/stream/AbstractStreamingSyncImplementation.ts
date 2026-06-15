@@ -7,11 +7,11 @@ import {
   PowerSyncLogger,
   SyncStreamConnectionMethod,
   SyncStatus,
-  SyncDataFlowStatus
+  SyncDataFlowStatus,
+  BaseObserver
 } from '@powersync/common';
 
 import { AbortOperation } from '../../../utils/AbortOperation.js';
-import { BaseObserver } from '../../../utils/BaseObserver.js';
 import { BucketStorageAdapter, PowerSyncControlCommand } from '../bucket/BucketStorageAdapter.js';
 import { AbstractRemote, SyncStreamOptions } from './AbstractRemote.js';
 import {

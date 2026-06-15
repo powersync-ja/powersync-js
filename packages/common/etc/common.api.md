@@ -178,6 +178,20 @@ export interface BaseCreateDiffTriggerOptions {
 export type BaseListener = Record<string, ((...event: any) => any) | undefined>;
 
 // @public (undocumented)
+export class BaseObserver<T extends BaseListener = BaseListener> implements BaseObserverInterface<T> {
+    constructor();
+    // (undocumented)
+    dispose(): void;
+    // (undocumented)
+    iterateAsyncListeners(cb: (listener: Partial<T>) => Promise<any>): Promise<void>;
+    // (undocumented)
+    iterateListeners(cb: (listener: Partial<T>) => any): void;
+    // (undocumented)
+    protected listeners: Set<Partial<T>>;
+    registerListener(listener: Partial<T>): () => void;
+}
+
+// @public (undocumented)
 export interface BaseObserverInterface<T extends BaseListener> {
     // (undocumented)
     registerListener(listener: Partial<T>): () => void;

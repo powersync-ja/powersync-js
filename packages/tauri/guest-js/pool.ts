@@ -1,4 +1,5 @@
 import {
+  BaseObserver,
   ConnectionPool,
   DBAdapterDefaultMixin,
   DBAdapterListener,
@@ -8,7 +9,6 @@ import {
   QueryResult,
   SqlExecutor
 } from '@powersync/common';
-import { BaseObserver } from '@powersync/shared-internals';
 import { ExecuteBatchResult, ExecuteSqlResult, powersyncCommand, SqliteValue } from './command';
 
 /**

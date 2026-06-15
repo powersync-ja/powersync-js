@@ -1,5 +1,6 @@
 import { getDylibPath, open, type DB } from '@op-engineering/op-sqlite';
 import {
+  BaseObserver,
   ConnectionPool,
   DBAdapter,
   DBAdapterDefaultMixin,
@@ -8,7 +9,7 @@ import {
   QueryResult,
   Transaction
 } from '@powersync/common';
-import { timeoutSignal, Semaphore, BaseObserver } from '@powersync/shared-internals';
+import { timeoutSignal, Semaphore } from '@powersync/shared-internals';
 import { Platform } from 'react-native';
 import { OPSQLiteConnection } from './OPSQLiteConnection';
 import { SqliteOptions } from './SqliteOptions';

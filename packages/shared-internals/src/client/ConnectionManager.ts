@@ -1,4 +1,5 @@
 import {
+  BaseObserver,
   LogLevels,
   PowerSyncLogger,
   SyncStatus,
@@ -11,7 +12,6 @@ import {
   SyncOptions
 } from '@powersync/common';
 
-import { BaseObserver } from '../utils/BaseObserver.js';
 import { StreamingSyncImplementation, SubscribedStream } from './sync/stream/AbstractStreamingSyncImplementation.js';
 import { ResolvedSyncOptions, resolveSyncOptions } from './sync/options.js';
 

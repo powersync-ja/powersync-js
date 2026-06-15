@@ -1,17 +1,5 @@
-import {
-  CommonPowerSyncDatabase,
-  createConsoleLogger,
-  DBAdapterDefaultMixin,
-  LogLevels,
-  Schema
-} from '@powersync/common';
-import {
-  PowerSyncDatabase,
-  ResolvedWebSQLOpenOptions,
-  TemporaryStorageOption,
-  WASQLiteOpenFactory,
-  WASQLiteVFS
-} from '@powersync/web';
+import { CommonPowerSyncDatabase, createConsoleLogger, DBAdapterDefaultMixin, Schema } from '@powersync/common';
+import { PowerSyncDatabase, TemporaryStorageOption, WASQLiteOpenFactory, WASQLiteVFS } from '@powersync/web';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TEST_SCHEMA } from './utils/test-schema.js';
 import { MultiDatabaseServer } from '../src/worker/db/MultiDatabaseServer.js';

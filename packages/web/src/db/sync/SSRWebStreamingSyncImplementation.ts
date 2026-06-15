@@ -1,13 +1,5 @@
-import { SyncStatus } from '@powersync/common';
-import {
-  AbstractStreamingSyncImplementationOptions,
-  BaseObserver,
-  Mutex,
-  StreamingSyncImplementation,
-  LockOptions,
-  LockType,
-  SyncStatusSnapshot
-} from '@powersync/shared-internals';
+import { BaseObserver, SyncStatus } from '@powersync/common';
+import { Mutex, StreamingSyncImplementation, LockOptions, LockType } from '@powersync/shared-internals';
 
 export class SSRStreamingSyncImplementation extends BaseObserver implements StreamingSyncImplementation {
   syncMutex: Mutex;

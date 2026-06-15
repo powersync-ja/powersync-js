@@ -1,4 +1,5 @@
 import {
+  BaseObserver,
   LogLevels,
   PowerSyncLogger,
   DBAdapter,
@@ -8,7 +9,6 @@ import {
   CrudBatch
 } from '@powersync/common';
 
-import { BaseObserver } from '../../../utils/BaseObserver.js';
 import {
   BucketStorageAdapter,
   BucketStorageListener,

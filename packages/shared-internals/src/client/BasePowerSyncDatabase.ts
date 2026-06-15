@@ -31,7 +31,8 @@ import {
   WatchCompatibleQuery,
   WatchHandler,
   WatchOnChangeEvent,
-  WatchOnChangeHandler
+  WatchOnChangeHandler,
+  BaseObserver
 } from '@powersync/common';
 import { BucketStorageAdapter, PSInternalTable } from './sync/bucket/BucketStorageAdapter.js';
 import { EventIterator } from 'event-iterator';
@@ -42,7 +43,6 @@ import {
   InternalSubscriptionAdapter
 } from './ConnectionManager.js';
 import { Mutex } from '../utils/mutex.js';
-import { BaseObserver } from '../utils/BaseObserver.js';
 import { TriggerManagerConfig, TriggerManagerImpl } from './triggers/TriggerManagerImpl.js';
 import { StreamingSyncImplementation } from './sync/stream/AbstractStreamingSyncImplementation.js';
 import { CoreSyncStatus } from './sync/stream/core-instruction.js';

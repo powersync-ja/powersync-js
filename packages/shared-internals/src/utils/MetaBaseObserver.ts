@@ -1,11 +1,11 @@
 import {
+  BaseObserver,
   BaseListener,
   ListenerCounts,
   ListenerMetaManager,
   MetaBaseObserverInterface,
   MetaListener
 } from '@powersync/common';
-import { BaseObserver } from './BaseObserver.js';
 
 /**
  * A BaseObserver that tracks the counts of listeners for each event type.

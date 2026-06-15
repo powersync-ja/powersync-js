@@ -1,5 +1,6 @@
 import { DB, SQLBatchTuple, UpdateHookOperation } from '@op-engineering/op-sqlite';
 import {
+  BaseObserver,
   BatchedUpdateNotification,
   DBAdapterListener,
   DBGetUtilsDefaultMixin,
@@ -9,7 +10,6 @@ import {
   SqlExecutor,
   UpdateNotification
 } from '@powersync/common';
-import { BaseObserver } from '@powersync/shared-internals';
 
 export type OPSQLiteConnectionOptions = {
   baseDB: DB;

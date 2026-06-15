@@ -17,7 +17,6 @@ export * from './client/watched/DifferentialQueryProcessor.js';
 export * from './client/watched/OnChangeQueryProcessor.js';
 
 export * from './utils/AbortOperation.js';
-export * from './utils/BaseObserver.js';
 export * from './utils/ControlledExecutor.js';
 export * from './utils/mutex.js';
 export * from './utils/parseQuery.js';

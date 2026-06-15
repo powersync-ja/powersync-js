@@ -1,5 +1,13 @@
-import { DBAdapterListener, DBAdapter, DBLockOptions, LockContext, QueryResult, Transaction } from '@powersync/common';
-import { BaseObserver, Mutex, timeoutSignal } from '@powersync/shared-internals';
+import {
+  BaseObserver,
+  DBAdapterListener,
+  DBAdapter,
+  DBLockOptions,
+  LockContext,
+  QueryResult,
+  Transaction
+} from '@powersync/common';
+import { Mutex, timeoutSignal } from '@powersync/shared-internals';
 
 const MOCK_QUERY_RESPONSE: QueryResult = {
   rowsAffected: 0

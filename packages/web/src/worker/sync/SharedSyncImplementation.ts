@@ -1,4 +1,5 @@
 import {
+  BaseObserver,
   ConnectionPool,
   DBAdapter,
   DBAdapterDefaultMixin,
@@ -11,7 +12,6 @@ import {
 } from '@powersync/common';
 import {
   AbortOperation,
-  BaseObserver,
   ConnectionManager,
   SqliteBucketStorage,
   SubscribedStream,
