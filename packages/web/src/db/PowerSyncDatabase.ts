@@ -3,7 +3,6 @@ import {
   SqliteBucketStorage,
   StreamingSyncImplementation,
   TriggerManagerConfig,
-  Mutex,
   type BucketStorageAdapter,
   type PowerSyncBackendConnector,
   type PowerSyncCloseOptions,
@@ -14,6 +13,7 @@ import {
   openDatabase,
   DBAdapter
 } from '@powersync/common';
+import { Mutex } from '@powersync/shared-internals';
 import { getNavigatorLocks } from '../shared/navigator.js';
 import { NAVIGATOR_TRIGGER_CLAIM_MANAGER } from './NavigatorTriggerClaimManager.js';
 import { WebDBAdapter } from './adapters/WebDBAdapter.js';

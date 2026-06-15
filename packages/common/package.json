@@ -7,32 +7,10 @@
   },
   "description": "API definitions for PowerSync",
   "type": "module",
-  "main": "dist/bundle.mjs",
-  "module": "dist/bundle.mjs",
-  "types": "lib/index.d.ts",
   "exports": {
     ".": {
-      "node": {
-        "import": {
-          "types": "./lib/index.d.ts",
-          "default": "./dist/bundle.node.mjs"
-        },
-        "require": {
-          "types": "./dist/index.d.cts",
-          "require": "./dist/bundle.node.cjs"
-        }
-      },
-      "import": {
-        "types": "./lib/index.d.ts",
-        "default": "./dist/bundle.mjs"
-      },
-      "require": {
-        "types": "./dist/index.d.cts",
-        "require": "./dist/bundle.cjs"
-      }
-    },
-    "./internal/sync_protocol": {
-      "types": "./legacy/sync_protocol.d.ts"
+      "types": "./lib/index.d.ts",
+      "default": "./lib/index.js"
     }
   },
   "author": "PowerSync",
@@ -52,30 +30,18 @@
   },
   "homepage": "https://docs.powersync.com",
   "scripts": {
-    "build": "tsc -b && rollup -c rollup.config.mjs",
-    "build:prod": "tsc -b && rollup -c rollup.config.mjs",
+    "build": "tsc -b",
+    "build:prod": "tsc -b",
     "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
     "test": "vitest",
-    "test:exports": "attw --pack . --exclude-entrypoints internal/sync_protocol"
+    "test:exports": "attw --pack . --ignore-rules no-resolution cjs-resolves-to-esm"
   },
   "dependencies": {
     "event-iterator": "^2.0.0"
   },
   "devDependencies": {
-    "@rollup/plugin-commonjs": "catalog:",
-    "@rollup/plugin-inject": "catalog:",
-    "@rollup/plugin-json": "catalog:",
-    "@rollup/plugin-node-resolve": "catalog:",
     "@types/node": "catalog:",
     "@types/uuid": "catalog:",
-    "buffer": "^6.0.3",
-    "cross-fetch": "^4.1.0",
-    "estree-walker": "^3.0.3",
-    "magic-string": "^0.30.21",
-    "rollup": "catalog:",
-    "rollup-plugin-dts": "catalog:",
-    "rsocket-core": "1.0.0-alpha.3",
-    "rsocket-websocket-client": "1.0.0-alpha.3",
     "@microsoft/api-extractor": "catalog:"
   }
 }

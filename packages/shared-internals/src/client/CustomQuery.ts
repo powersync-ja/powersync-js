@@ -1,12 +1,16 @@
-import { AbstractPowerSyncDatabase } from './AbstractPowerSyncDatabase.js';
-import { Query, StandardWatchedQueryOptions } from './Query.js';
-import { FalsyComparator } from './watched/processors/comparators.js';
 import {
-  DifferentialQueryProcessor,
+  Query,
+  StandardWatchedQueryOptions,
+  FalsyComparator,
+  WatchCompatibleQuery,
+  WatchedQueryOptions,
   DifferentialWatchedQueryOptions
-} from './watched/processors/DifferentialQueryProcessor.js';
-import { OnChangeQueryProcessor } from './watched/processors/OnChangeQueryProcessor.js';
-import { DEFAULT_WATCH_QUERY_OPTIONS, WatchCompatibleQuery, WatchedQueryOptions } from './watched/WatchedQuery.js';
+} from '@powersync/common';
+
+import { AbstractPowerSyncDatabase } from './AbstractPowerSyncDatabase.js';
+import { DifferentialQueryProcessor } from './watched/DifferentialQueryProcessor.js';
+import { OnChangeQueryProcessor } from './watched/OnChangeQueryProcessor.js';
+import { DEFAULT_WATCH_QUERY_OPTIONS } from './watched/WatchedQuery.js';
 
 /**
  * @internal

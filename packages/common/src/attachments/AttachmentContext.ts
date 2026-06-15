@@ -1,7 +1,7 @@
-import { AbstractPowerSyncDatabase } from '../client/AbstractPowerSyncDatabase.js';
 import { LogLevels, PowerSyncLogger } from '../utils/Logger.js';
 import { Transaction } from '../db/DBAdapter.js';
 import { AttachmentRecord, AttachmentState, attachmentFromSql } from './Schema.js';
+import { CommonPowerSyncDatabase } from '../client/CommonPowerSyncDatabase.js';
 
 /**
  * AttachmentContext provides database operations for managing attachment records.
@@ -14,7 +14,7 @@ import { AttachmentRecord, AttachmentState, attachmentFromSql } from './Schema.j
  */
 export class AttachmentContext {
   /** PowerSync database instance for executing queries */
-  readonly db: AbstractPowerSyncDatabase;
+  readonly db: CommonPowerSyncDatabase;
 
   /** Name of the database table storing attachment records */
   readonly tableName: string;
@@ -33,7 +33,7 @@ export class AttachmentContext {
    * @param logger - Logger instance for diagnostic output
    */
   constructor(
-    db: AbstractPowerSyncDatabase,
+    db: CommonPowerSyncDatabase,
     tableName: string = 'attachments',
     logger: PowerSyncLogger,
     archivedCacheLimit: number

@@ -12,13 +12,13 @@ import {
   SqliteBucketStorage,
   SubscribedStream,
   SyncStatus,
-  Mutex,
   type StreamingSyncImplementation,
   type StreamingSyncImplementationListener,
   type SyncStatusOptions,
   LogLevels,
   ResolvedSyncOptions
 } from '@powersync/common';
+import { Mutex } from '@powersync/shared-internals';
 import * as Comlink from 'comlink';
 import { WebRemote } from '../../db/sync/WebRemote.js';
 import {

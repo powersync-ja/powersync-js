@@ -1,6 +1,3 @@
-import * as sync_status from '../../../db/crud/SyncStatus.js';
-import { FULL_SYNC_PRIORITY } from '../../../db/crud/SyncProgress.js';
-
 /**
  * An internal instruction emitted by the sync client in the core extension in response to the JS
  * SDK passing sync data into the extension.
@@ -74,34 +71,6 @@ export interface BucketProgress {
 
 export interface FetchCredentials {
   did_expire: boolean;
-}
-
-function priorityToJs(status: SyncPriorityStatus): sync_status.SyncPriorityStatus {
-  return {
-    priority: status.priority,
-    hasSynced: status.has_synced ?? undefined,
-    lastSyncedAt: status.last_synced_at != null ? new Date(status.last_synced_at * 1000) : undefined
-  };
-}
-
-export function coreStatusToJs(status: CoreSyncStatus): sync_status.SyncStatusOptions {
-  const coreCompleteSync = status.priority_status.find((s) => s.priority == FULL_SYNC_PRIORITY);
-  const completeSync = coreCompleteSync != null ? priorityToJs(coreCompleteSync) : null;
-
-  return {
-    connected: status.connected,
-    connecting: status.connecting,
-    dataFlow: {
-      // We expose downloading as a boolean field, the core extension reports download information as a nullable
-      // download status. When that status is non-null, a download is in progress.
-      downloading: status.downloading != null,
-      downloadProgress: status.downloading?.buckets,
-      internalStreamSubscriptions: status.streams
-    },
-    lastSyncedAt: completeSync?.lastSyncedAt,
-    hasSynced: completeSync?.hasSynced,
-    priorityStatusEntries: status.priority_status.map(priorityToJs)
-  };
 }
 
 export function isInterruptingInstruction(instruction: Instruction): instruction is InterruptingInstruction {

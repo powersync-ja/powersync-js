@@ -4,7 +4,6 @@ import * as path from 'node:path';
 import { Worker } from 'node:worker_threads';
 
 import {
-  BaseObserver,
   BatchedUpdateNotification,
   ConnectionPool,
   DBAdapterDefaultMixin,
@@ -12,10 +11,9 @@ import {
   DBLockOptions,
   LockContext,
   QueryResult,
-  Semaphore,
-  timeoutSignal,
   Transaction
 } from '@powersync/common';
+import { BaseObserver, Semaphore, timeoutSignal } from '@powersync/shared-internals';
 import { Remote } from 'comlink';
 import { AsyncDatabase, AsyncDatabaseOpener } from './AsyncDatabase.js';
 import { RemoteConnection } from './RemoteConnection.js';

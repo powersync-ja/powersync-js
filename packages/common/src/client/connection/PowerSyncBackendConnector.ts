@@ -1,5 +1,5 @@
 import { PowerSyncCredentials } from './PowerSyncCredentials.js';
-import type { AbstractPowerSyncDatabase } from '../AbstractPowerSyncDatabase.js';
+import { CommonPowerSyncDatabase } from '../CommonPowerSyncDatabase.js';
 
 /**
  * @public
@@ -24,5 +24,5 @@ export interface PowerSyncBackendConnector {
    *
    * Any thrown errors will result in a retry after the configured wait period (default: 5 seconds).
    */
-  uploadData: (database: AbstractPowerSyncDatabase) => Promise<void>;
+  uploadData: (database: CommonPowerSyncDatabase) => Promise<void>;
 }

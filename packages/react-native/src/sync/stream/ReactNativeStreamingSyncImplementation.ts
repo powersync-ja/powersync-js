@@ -2,9 +2,9 @@ import {
   AbstractStreamingSyncImplementation,
   AbstractStreamingSyncImplementationOptions,
   LockOptions,
-  LockType,
-  Mutex
+  LockType
 } from '@powersync/common';
+import { Mutex } from '@powersync/shared-internals';
 
 /**
  * Global locks which prevent multiple instances from syncing

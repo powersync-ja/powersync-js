@@ -1,4 +1,4 @@
-import { Mutex, UnlockFn } from '@powersync/common';
+import { Mutex, UnlockFn } from '@powersync/shared-internals';
 import { RawSqliteConnection, RawWaSqliteDatabaseOptions } from './RawSqliteConnection.js';
 
 /**

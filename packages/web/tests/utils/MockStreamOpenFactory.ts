@@ -8,9 +8,9 @@ import {
   PowerSyncDatabaseOptions,
   PowerSyncLogger,
   RemoteConnector,
-  SimpleAsyncIterator,
   SyncStreamOptions
 } from '@powersync/common';
+import { SimpleAsyncIterator } from '@powersync/shared-internals';
 import { StreamingSyncLine } from '@powersync/common/internal/sync_protocol';
 import { PowerSyncDatabase, WebPowerSyncDatabaseOptions, WebStreamingSyncImplementation } from '@powersync/web';
 import { MockedFunction, vi } from 'vitest';

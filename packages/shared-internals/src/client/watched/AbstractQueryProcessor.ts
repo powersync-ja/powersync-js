@@ -1,13 +1,13 @@
-import { LogLevels } from '../../../utils/Logger.js';
-import { AbstractPowerSyncDatabase } from '../../../client/AbstractPowerSyncDatabase.js';
-import { MetaBaseObserver } from '../../../utils/MetaBaseObserver.js';
 import {
+  LogLevels,
   WatchedQuery,
   WatchedQueryListener,
   WatchedQueryListenerEvent,
   WatchedQueryOptions,
   WatchedQueryState
-} from '../WatchedQuery.js';
+} from '@powersync/common';
+import { MetaBaseObserver } from '../../utils/MetaBaseObserver.js';
+import { AbstractPowerSyncDatabase } from '../AbstractPowerSyncDatabase.js';
 
 /**
  * @internal

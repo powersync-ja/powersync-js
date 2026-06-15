@@ -1,12 +1,18 @@
-import { CoreStreamSubscription } from '../../client/sync/stream/core-instruction.js';
 import { SyncStreamDescription, SyncSubscriptionDescription } from '../../client/sync/sync-streams.js';
-import { InternalProgressInformation, ProgressWithOperations, SyncProgress } from './SyncProgress.js';
+import { ProgressWithOperations, SyncProgress } from './SyncProgress.js';
 
 /**
  * @public
  */
 export type SyncDataFlowStatus = Partial<{
+  /**
+   * true if actively downloading changes.
+   * This is only true when {@link connected} is also true.
+   */
   downloading: boolean;
+  /**
+   * true if uploading changes.
+   */
   uploading: boolean;
   /**
    * Error during downloading (including connecting).
@@ -19,16 +25,6 @@ export type SyncDataFlowStatus = Partial<{
    * Cleared on the next successful upload.
    */
   uploadError?: Error;
-  /**
-   * Internal information about how far we are downloading operations in buckets.
-   *
-   * @internal Please use the {@link SyncStatus#downloadProgress} property to track sync progress.
-   */
-  downloadProgress: InternalProgressInformation | null;
-  /**
-   * @internal
-   */
-  internalStreamSubscriptions: CoreStreamSubscription[] | null;
 }>;
 
 /**
@@ -41,40 +37,22 @@ export interface SyncPriorityStatus {
 }
 
 /**
- * @internal
- */
-export type SyncStatusOptions = {
-  connected?: boolean;
-  connecting?: boolean;
-  dataFlow?: SyncDataFlowStatus;
-  lastSyncedAt?: Date;
-  hasSynced?: boolean;
-  priorityStatusEntries?: SyncPriorityStatus[];
-};
-
-/**
  * @public
  */
-export class SyncStatus {
-  constructor(protected options: SyncStatusOptions) {}
-
+export interface SyncStatus {
   /**
    * Indicates if the client is currently connected to the PowerSync service.
    *
    * @returns True if connected, false otherwise. Defaults to false if not specified.
    */
-  get connected(): boolean {
-    return this.options.connected ?? false;
-  }
+  get connected(): boolean;
 
   /**
    * Indicates if the client is in the process of establishing a connection to the PowerSync service.
    *
    * @returns True if connecting, false otherwise. Defaults to false if not specified.
    */
-  get connecting(): boolean {
-    return this.options.connecting ?? false;
-  }
+  get connecting(): boolean;
 
   /**
    * Time that a last sync has fully completed, if any.
@@ -82,9 +60,7 @@ export class SyncStatus {
    *
    * @returns The timestamp of the last successful sync, or undefined if no sync has completed.
    */
-  get lastSyncedAt(): Date | undefined {
-    return this.options.lastSyncedAt;
-  }
+  get lastSyncedAt(): Date | undefined;
 
   /**
    * Indicates whether there has been at least one full sync completed since initialization.
@@ -92,9 +68,7 @@ export class SyncStatus {
    * @returns True if at least one sync has completed, false if no sync has completed,
    * or undefined when the state is still being loaded from the database.
    */
-  get hasSynced(): boolean | undefined {
-    return this.options.hasSynced;
-  }
+  get hasSynced(): boolean | undefined;
 
   /**
    * Provides the current data flow status regarding uploads and downloads.
@@ -104,21 +78,7 @@ export class SyncStatus {
    * - uploading: True if actively uploading changes
    * Defaults to `{downloading: false, uploading: false}` if not specified.
    */
-  get dataFlowStatus(): SyncDataFlowStatus {
-    return (
-      this.options.dataFlow ?? {
-        /**
-         * true if actively downloading changes.
-         * This is only true when {@link connected} is also true.
-         */
-        downloading: false,
-        /**
-         * true if uploading changes.
-         */
-        uploading: false
-      }
-    );
-  }
+  get dataFlowStatus(): SyncDataFlowStatus;
 
   /**
    * All sync streams currently being tracked in teh database.
@@ -126,21 +86,12 @@ export class SyncStatus {
    * This returns null when the database is currently being opened and we don't have reliable information about all
    * included streams yet.
    */
-  get syncStreams(): SyncStreamStatus[] | undefined {
-    return this.options.dataFlow?.internalStreamSubscriptions?.map((core) => new SyncStreamStatusView(this, core));
-  }
+  get syncStreams(): SyncStreamStatus[] | undefined;
 
   /**
    * If the `stream` appears in {@link SyncStatus.syncStreams}, returns the current status for that stream.
    */
-  forStream(stream: SyncStreamDescription): SyncStreamStatus | undefined {
-    const asJson = JSON.stringify(stream.parameters);
-    const raw = this.options.dataFlow?.internalStreamSubscriptions?.find(
-      (r) => r.name == stream.name && asJson == JSON.stringify(r.parameters)
-    );
-
-    return raw && new SyncStreamStatusView(this, raw);
-  }
+  forStream(stream: SyncStreamDescription): SyncStreamStatus | undefined;
 
   /**
    * Provides sync status information for all bucket priorities, sorted by priority (highest first).
@@ -148,9 +99,7 @@ export class SyncStatus {
    * @returns An array of status entries for different sync priority levels,
    * sorted with highest priorities (lower numbers) first.
    */
-  get priorityStatusEntries(): SyncPriorityStatus[] {
-    return (this.options.priorityStatusEntries ?? []).slice().sort(SyncStatus.comparePriorities);
-  }
+  get priorityStatusEntries(): SyncPriorityStatus[] | undefined;
 
   /**
    * A realtime progress report on how many operations have been downloaded and
@@ -158,14 +107,7 @@ export class SyncStatus {
    *
    * This field is only set when {@link SyncDataFlowStatus#downloading} is also true.
    */
-  get downloadProgress(): SyncProgress | null {
-    const internalProgress = this.options.dataFlow?.downloadProgress;
-    if (internalProgress == null) {
-      return null;
-    }
-
-    return new SyncProgress(internalProgress);
-  }
+  get downloadProgress(): SyncProgress | null;
 
   /**
    * Reports the sync status (a pair of {@link SyncStatus#hasSynced} and {@link SyncStatus#lastSyncedAt} fields)
@@ -186,22 +128,7 @@ export class SyncStatus {
    * @param priority - The bucket priority for which the status should be reported
    * @returns Status information for the requested priority level or the next higher level with available status
    */
-  statusForPriority(priority: number): SyncPriorityStatus {
-    // priorityStatusEntries are sorted by ascending priorities (so higher numbers to lower numbers).
-    for (const known of this.priorityStatusEntries) {
-      // We look for the first entry that doesn't have a higher priority.
-      if (known.priority >= priority) {
-        return known;
-      }
-    }
-
-    // If we have a complete sync, that necessarily includes all priorities.
-    return {
-      priority,
-      lastSyncedAt: this.lastSyncedAt,
-      hasSynced: this.hasSynced
-    };
-  }
+  statusForPriority(priority: number): SyncPriorityStatus | undefined;
 
   /**
    * Compares this SyncStatus instance with another to determine if they are equal.
@@ -210,24 +137,7 @@ export class SyncStatus {
    * @param status - The SyncStatus instance to compare against
    * @returns True if the instances are considered equal, false otherwise
    */
-  isEqual(status: SyncStatus) {
-    /**
-     * By default Error object are serialized to an empty object.
-     * This replaces Errors with more useful information before serialization.
-     */
-    const replacer = (_: string, value: any) => {
-      if (value instanceof Error) {
-        return {
-          name: value.name,
-          message: value.message,
-          stack: value.stack
-        };
-      }
-      return value;
-    };
-
-    return JSON.stringify(this.options, replacer) == JSON.stringify(status.options, replacer);
-  }
+  isEqual(status: SyncStatus): boolean;
 
   /**
    * Creates a human-readable string representation of the current sync status.
@@ -235,49 +145,7 @@ export class SyncStatus {
    *
    * @returns A string representation of the sync status
    */
-  getMessage() {
-    const dataFlow = this.dataFlowStatus;
-    return `SyncStatus<connected: ${this.connected} connecting: ${this.connecting} lastSyncedAt: ${this.lastSyncedAt} hasSynced: ${this.hasSynced}. Downloading: ${dataFlow.downloading}. Uploading: ${dataFlow.uploading}. UploadError: ${dataFlow.uploadError}, DownloadError?: ${dataFlow.downloadError}>`;
-  }
-
-  /**
-   * Serializes the SyncStatus instance to a plain object.
-   *
-   * @returns A plain object representation of the sync status
-   */
-  toJSON(): SyncStatusOptions {
-    return {
-      connected: this.connected,
-      connecting: this.connecting,
-      dataFlow: {
-        ...this.dataFlowStatus,
-        uploadError: this.serializeError(this.dataFlowStatus.uploadError),
-        downloadError: this.serializeError(this.dataFlowStatus.downloadError)
-      },
-      lastSyncedAt: this.lastSyncedAt,
-      hasSynced: this.hasSynced,
-      priorityStatusEntries: this.priorityStatusEntries
-    };
-  }
-
-  /**
-   * Not all errors are serializable over a MessagePort. E.g. some `DomExceptions` fail to be passed across workers.
-   * This explicitly serializes errors in the SyncStatus.
-   */
-  protected serializeError(error?: Error) {
-    if (typeof error == 'undefined') {
-      return undefined;
-    }
-    return {
-      name: error.name,
-      message: error.message,
-      stack: error.stack
-    };
-  }
-
-  private static comparePriorities(a: SyncPriorityStatus, b: SyncPriorityStatus) {
-    return b.priority - a.priority; // Reverse because higher priorities have lower numbers
-  }
+  getMessage(): string;
 }
 
 /**
@@ -289,40 +157,4 @@ export interface SyncStreamStatus {
   progress: ProgressWithOperations | null;
   subscription: SyncSubscriptionDescription;
   priority: number | null;
-}
-
-class SyncStreamStatusView implements SyncStreamStatus {
-  subscription: SyncSubscriptionDescription;
-
-  constructor(
-    private status: SyncStatus,
-    private core: CoreStreamSubscription
-  ) {
-    this.subscription = {
-      name: core.name,
-      parameters: core.parameters,
-      active: core.active,
-      isDefault: core.is_default,
-      hasExplicitSubscription: core.has_explicit_subscription,
-      expiresAt: core.expires_at != null ? new Date(core.expires_at * 1000) : null,
-      hasSynced: core.last_synced_at != null,
-      lastSyncedAt: core.last_synced_at != null ? new Date(core.last_synced_at * 1000) : null
-    };
-  }
-
-  get progress() {
-    if (this.status.dataFlowStatus.downloadProgress == null) {
-      // Don't make download progress public if we're not currently downloading.
-      return null;
-    }
-
-    const { total, downloaded } = this.core.progress;
-    const progress = total == 0 ? 0.0 : downloaded / total;
-
-    return { totalOperations: total, downloadedOperations: downloaded, downloadedFraction: progress };
-  }
-
-  get priority() {
-    return this.core.priority;
-  }
 }

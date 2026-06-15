@@ -1,11 +1,11 @@
-import { AbstractPowerSyncDatabase, SQLWatchOptions } from './AbstractPowerSyncDatabase.js';
+import { CommonPowerSyncDatabase, SQLWatchOptions } from './CommonPowerSyncDatabase.js';
 
 /**
  * @internal
  */
 export function runOnSchemaChange(
   callback: (signal: AbortSignal) => void,
-  db: AbstractPowerSyncDatabase,
+  db: CommonPowerSyncDatabase,
   options?: SQLWatchOptions
 ): void {
   const triggerWatchedQuery = () => {

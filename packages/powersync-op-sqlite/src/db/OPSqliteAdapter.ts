@@ -7,10 +7,9 @@ import {
   DBAdapterListener,
   DBLockOptions,
   QueryResult,
-  Transaction,
-  timeoutSignal,
-  Semaphore
+  Transaction
 } from '@powersync/common';
+import { timeoutSignal, Semaphore } from '@powersync/shared-internals';
 import { Platform } from 'react-native';
 import { OPSQLiteConnection } from './OPSQLiteConnection';
 import { SqliteOptions } from './SqliteOptions';

@@ -472,38 +472,3 @@ export interface TriggerManager {
    */
   trackTableDiff(options: TrackDiffOptions): Promise<TriggerRemoveCallback>;
 }
-
-/**
- * @experimental
- * @internal
- * Manages claims on persisted SQLite triggers and destination tables to enable proper cleanup
- * when they are no longer actively in use.
- *
- * When using persisted triggers (especially for OPFS multi-tab scenarios), we need a reliable way to determine which resources are still actively in use across different connections/tabs so stale resources can be safely cleaned up without interfering with active triggers.
- *
- * A cleanup process runs
- * on database creation (and every 2 minutes) that:
- * 1. Queries for existing managed persisted resources
- * 2. Checks with the claim manager if any consumer is actively using those resources
- * 3. Deletes unused resources
- */
-
-export interface TriggerClaimManager {
-  /**
-   * Obtains or marks a claim on a certain identifier.
-   * @returns a callback to release the claim.
-   */
-  obtainClaim: (identifier: string) => Promise<() => Promise<void>>;
-  /**
-   * Checks if a claim is present for an identifier.
-   */
-  checkClaim: (identifier: string) => Promise<boolean>;
-}
-
-/**
- * @experimental
- * @internal
- */
-export interface TriggerManagerConfig {
-  claimManager: TriggerClaimManager;
-}

@@ -1,16 +1,19 @@
 import {
-  AbstractPowerSyncDatabase,
-  AbstractRemoteOptions,
-  AbstractStreamingSyncImplementation,
   BasePowerSyncDatabaseOptions,
-  BucketStorageAdapter,
-  CreateSyncImplementationOptions,
   DatabaseSource,
   DBAdapter,
   openDatabase,
   PowerSyncBackendConnector,
-  SqliteBucketStorage
+  PowerSyncDatabaseConstructor
 } from '@powersync/common';
+
+import {
+  AbstractPowerSyncDatabase,
+  AbstractStreamingSyncImplementation,
+  BucketStorageAdapter,
+  CreateSyncImplementationOptions,
+  SqliteBucketStorage
+} from '@powersync/shared-internals';
 
 import { NodeRemote, NodeRemoteOptions } from '../sync/stream/NodeRemote.js';
 import { NodeStreamingSyncImplementation } from '../sync/stream/NodeStreamingSyncImplementation.js';
@@ -26,21 +29,7 @@ export type NodePowerSyncDatabaseOptions = BasePowerSyncDatabaseOptions &
     remoteOptions?: Partial<NodeRemoteOptions>;
   };
 
-/**
- * A PowerSync database which provides SQLite functionality
- * which is automatically synced.
- *
- * @example
- * ```typescript
- * export const db = new PowerSyncDatabase({
- *  schema: AppSchema,
- *  database: {
- *    dbFilename: 'example.db'
- *  }
- * });
- * ```
- */
-export class PowerSyncDatabase extends AbstractPowerSyncDatabase<NodePowerSyncDatabaseOptions> {
+class NodePowerSyncDatabase extends AbstractPowerSyncDatabase<NodePowerSyncDatabaseOptions> {
   constructor(options: NodePowerSyncDatabaseOptions) {
     super(options);
   }
@@ -79,3 +68,20 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase<NodePowerSyncDa
     });
   }
 }
+
+/**
+ * A PowerSync database which provides SQLite functionality
+ * which is automatically synced.
+ *
+ * @example
+ * ```typescript
+ * export const db = new PowerSyncDatabase({
+ *  schema: AppSchema,
+ *  database: {
+ *    dbFilename: 'example.db'
+ *  }
+ * });
+ * ```
+ */
+// Typed constructor to avoid leaking AbstractPowerSyncDatabase into the public interface
+export const PowerSyncDatabase: PowerSyncDatabaseConstructor<NodePowerSyncDatabaseOptions> = NodePowerSyncDatabase;
