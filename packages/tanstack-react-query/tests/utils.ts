@@ -1,5 +1,6 @@
 import * as commonSdk from '@powersync/common';
 
+import { cleanup } from '@testing-library/react';
 import { PowerSyncDatabase } from '@powersync/web';
 import { onTestFinished } from 'vitest';
 
@@ -14,6 +15,8 @@ export const openPowerSync = () => {
   });
 
   onTestFinished(async () => {
+    cleanup();
+    await new Promise((resolve) => setTimeout(resolve, 100));
     await db.disconnectAndClear();
     await db.close();
   });
