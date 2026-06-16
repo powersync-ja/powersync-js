@@ -9,7 +9,6 @@ import {
   CrudTransaction,
   DBAdapter,
   DisconnectAndClearOptions,
-  isBatchedUpdateNotification,
   LockContext,
   LogLevels,
   PowerSyncBackendConnector,
@@ -26,7 +25,6 @@ import {
   SyncStream,
   Transaction,
   TriggerManager,
-  UpdateNotification,
   UploadQueueStats,
   WatchCompatibleQuery,
   WatchHandler,
@@ -848,14 +846,7 @@ SELECT * FROM crud_entries;
     changedTables.clear();
   }
 
-  private processTableUpdates(
-    updateNotification: BatchedUpdateNotification | UpdateNotification,
-    changedTables: Set<string>
-  ): void {
-    const tables = isBatchedUpdateNotification(updateNotification)
-      ? updateNotification.tables
-      : [updateNotification.table];
-
+  private processTableUpdates({ tables }: BatchedUpdateNotification, changedTables: Set<string>): void {
     for (const table of tables) {
       changedTables.add(table);
     }

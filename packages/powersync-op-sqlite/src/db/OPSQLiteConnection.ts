@@ -5,9 +5,7 @@ import {
   LockContext,
   QueryResult,
   RawResultSet,
-  RowUpdateType,
-  SqliteValue,
-  UpdateNotification
+  SqliteValue
 } from '@powersync/common';
 
 export type OPSQLiteConnectionOptions = {
@@ -24,16 +22,16 @@ export type OPSQLiteUpdateNotification = {
 
 export class OPSQLiteConnection extends LockContext {
   protected DB: DB;
-  private updateBuffer: UpdateNotification[];
+  private updateBuffer: Set<string>;
   readonly tableUpdateDispatcher = new BaseObserver();
 
   constructor(protected options: OPSQLiteConnectionOptions) {
     super();
     this.DB = options.baseDB;
-    this.updateBuffer = [];
+    this.updateBuffer = new Set();
 
     this.DB.rollbackHook(() => {
-      this.updateBuffer = [];
+      this.updateBuffer = new Set();
     });
 
     this.DB.updateHook((update) => {
@@ -46,45 +44,19 @@ export class OPSQLiteConnection extends LockContext {
   }
 
   addTableUpdate(update: OPSQLiteUpdateNotification) {
-    let opType: RowUpdateType;
-    switch (update.operation) {
-      case 'INSERT':
-        opType = RowUpdateType.SQLITE_INSERT;
-        break;
-      case 'DELETE':
-        opType = RowUpdateType.SQLITE_DELETE;
-        break;
-      case 'UPDATE':
-        opType = RowUpdateType.SQLITE_UPDATE;
-        break;
-    }
-
-    this.updateBuffer.push({
-      table: update.table,
-      opType,
-      rowId: update.rowId
-    });
+    this.updateBuffer.add(update.table);
   }
 
   flushUpdates() {
-    if (!this.updateBuffer.length) {
+    if (!this.updateBuffer.size) {
       return;
     }
 
-    const groupedUpdates = this.updateBuffer.reduce((grouping: Record<string, UpdateNotification[]>, update) => {
-      const { table } = update;
-      const updateGroup = grouping[table] || (grouping[table] = []);
-      updateGroup.push(update);
-      return grouping;
-    }, {});
-
     const batchedUpdate: BatchedUpdateNotification = {
-      groupedUpdates,
-      rawUpdates: this.updateBuffer,
-      tables: Object.keys(groupedUpdates)
+      tables: Array.from(this.updateBuffer)
     };
 
-    this.updateBuffer = [];
+    this.updateBuffer = new Set();
     this.tableUpdateDispatcher.iterateListeners((l) => l.tablesUpdated?.(batchedUpdate));
   }
 

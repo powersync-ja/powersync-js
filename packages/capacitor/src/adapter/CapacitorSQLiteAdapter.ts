@@ -335,9 +335,7 @@ export class CapacitorSQLiteAdapter extends DBAdapter {
         throw new Error('Could not fetch table updates');
       }
       const notification: BatchedUpdateNotification = {
-        rawUpdates: [],
-        tables: JSON.parse(jsonUpdates.table_name),
-        groupedUpdates: {}
+        tables: JSON.parse(jsonUpdates.table_name)
       };
       this.iterateListeners((l) => l.tablesUpdated?.(notification));
       return result;

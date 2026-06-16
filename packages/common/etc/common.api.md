@@ -218,10 +218,6 @@ export interface BaseTriggerDiffRecord<TOperationId extends string | number = nu
 // @public (undocumented)
 export interface BatchedUpdateNotification {
     // (undocumented)
-    groupedUpdates: Record<string, TableUpdateOperation[]>;
-    // (undocumented)
-    rawUpdates: UpdateNotification[];
-    // (undocumented)
     tables: string[];
 }
 
@@ -270,7 +266,7 @@ export enum ColumnType {
 }
 
 // @public (undocumented)
-export interface CommonPowerSyncDatabase extends BaseObserverInterface<PowerSyncDBListener> {
+export interface CommonPowerSyncDatabase extends BaseObserverInterface<PowerSyncDBListener>, SqlExecutor, DBGetUtils {
     close(options?: PowerSyncCloseOptions): Promise<void>;
     readonly closed: boolean;
     connect(connector: PowerSyncBackendConnector, options?: SyncOptions): Promise<void>;
@@ -284,16 +280,10 @@ export interface CommonPowerSyncDatabase extends BaseObserverInterface<PowerSync
     get database(): DBAdapter;
     disconnect(): Promise<void>;
     disconnectAndClear(options?: DisconnectAndClearOptions): Promise<void>;
-    execute(sql: string, parameters?: any[]): Promise<QueryResult>;
-    executeBatch(sql: string, parameters?: any[][]): Promise<QueryResult>;
-    executeRaw(sql: string, parameters?: any[]): Promise<any[][]>;
-    get<T>(sql: string, parameters?: any[]): Promise<T>;
-    getAll<T>(sql: string, parameters?: any[]): Promise<T[]>;
     getClientId(): Promise<string>;
     getCrudBatch(limit?: number): Promise<CrudBatch | null>;
     getCrudTransactions(): AsyncIterable<CrudTransaction, null>;
     getNextCrudTransaction(): Promise<CrudTransaction | null>;
-    getOptional<T>(sql: string, parameters?: any[]): Promise<T | null>;
     getUploadQueueStats(includeSize?: boolean): Promise<UploadQueueStats>;
     init(): Promise<void>;
     // (undocumented)
@@ -355,19 +345,6 @@ export interface CompiledQuery {
     readonly parameters: ReadonlyArray<unknown>;
     // (undocumented)
     readonly sql: string;
-}
-
-// @public (undocumented)
-export interface ConnectionPool extends BaseObserverInterface<DBAdapterListener> {
-    // (undocumented)
-    close: () => void | Promise<void>;
-    // (undocumented)
-    name: string;
-    // (undocumented)
-    readLock: <T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions) => Promise<T>;
-    refreshSchema: () => Promise<void>;
-    // (undocumented)
-    writeLock: <T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions) => Promise<T>;
 }
 
 // @public
@@ -433,38 +410,37 @@ export type DatabaseSource<OpenOptions extends SQLOpenOptions = SQLOpenOptions> 
 };
 
 // @public (undocumented)
-export interface DBAdapter extends ConnectionPool, SqlExecutor, DBGetUtils {
+export abstract class DBAdapter extends BaseObserver<DBAdapterListener> implements SqlExecutor, DBGetUtils {
     // (undocumented)
-    readTransaction: <T>(fn: (tx: Transaction) => Promise<T>, options?: DBLockOptions) => Promise<T>;
+    abstract close(): void | Promise<void>;
     // (undocumented)
-    writeTransaction: <T>(fn: (tx: Transaction) => Promise<T>, options?: DBLockOptions) => Promise<T>;
+    execute(query: string, params?: any[]): Promise<QueryResult>;
+    // (undocumented)
+    executeBatch(query: string, params?: any[][]): Promise<QueryResult>;
+    // (undocumented)
+    executeRaw(query: string, params?: any[]): Promise<QueryResult<RawResultSet>>;
+    // (undocumented)
+    get<T>(sql: string, parameters?: any[]): Promise<T>;
+    // (undocumented)
+    getAll<T>(sql: string, parameters?: any[]): Promise<T[]>;
+    // (undocumented)
+    getOptional<T>(sql: string, parameters?: any[]): Promise<T | null>;
+    // (undocumented)
+    abstract get name(): string;
+    // (undocumented)
+    abstract readLock<T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions): Promise<T>;
+    // (undocumented)
+    readTransaction<T>(fn: (tx: Transaction) => Promise<T>, options?: DBLockOptions): Promise<T>;
+    abstract refreshSchema(): Promise<void>;
+    // (undocumented)
+    abstract writeLock<T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions): Promise<T>;
+    // (undocumented)
+    writeTransaction<T>(fn: (tx: Transaction) => Promise<T>, options?: DBLockOptions): Promise<T>;
 }
-
-// Warning: (ae-internal-missing-underscore) The name "DBAdapterDefaultMixin" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal
-export function DBAdapterDefaultMixin<TBase extends new (...args: any[]) => ConnectionPool>(Base: TBase): {
-    new (...args: any[]): {
-        readTransaction<T>(fn: (tx: Transaction) => Promise<T>, options?: DBLockOptions): Promise<T>;
-        writeTransaction<T>(fn: (tx: Transaction) => Promise<T>, options?: DBLockOptions): Promise<T>;
-        getAll<T>(sql: string, parameters?: any[]): Promise<T[]>;
-        getOptional<T>(sql: string, parameters?: any[]): Promise<T | null>;
-        get<T>(sql: string, parameters?: any[]): Promise<T>;
-        execute(query: string, params?: any[]): Promise<QueryResult>;
-        executeRaw(query: string, params?: any[]): Promise<any[][]>;
-        executeBatch(query: string, params?: any[][]): Promise<QueryResult>;
-        name: string;
-        close: () => void | Promise<void>;
-        readLock: <T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions) => Promise<T>;
-        writeLock: <T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions) => Promise<T>;
-        refreshSchema: () => Promise<void>;
-        registerListener(listener: Partial<DBAdapterListener>): () => void;
-    };
-} & TBase;
 
 // @public (undocumented)
 export interface DBAdapterListener extends BaseListener {
-    tablesUpdated: (updateNotification: BatchedUpdateNotification | UpdateNotification) => void;
+    tablesUpdated: (updateNotification: BatchedUpdateNotification) => void;
 }
 
 // @public (undocumented)
@@ -473,20 +449,6 @@ export interface DBGetUtils {
     getAll<T>(sql: string, parameters?: any[]): Promise<T[]>;
     getOptional<T>(sql: string, parameters?: any[]): Promise<T | null>;
 }
-
-// Warning: (ae-internal-missing-underscore) The name "DBGetUtilsDefaultMixin" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal
-export function DBGetUtilsDefaultMixin<TBase extends new (...args: any[]) => Omit<SqlExecutor, 'executeBatch'>>(Base: TBase): {
-    new (...args: any[]): {
-        getAll<T>(sql: string, parameters?: any[]): Promise<T[]>;
-        getOptional<T>(sql: string, parameters?: any[]): Promise<T | null>;
-        get<T>(sql: string, parameters?: any[]): Promise<T>;
-        executeBatch(query: string, params?: any[][]): Promise<QueryResult>;
-        execute: (query: string, params?: any[] | undefined) => Promise<QueryResult>;
-        executeRaw: (query: string, params?: any[] | undefined) => Promise<any[][]>;
-    };
-} & TBase;
 
 // @public (undocumented)
 export interface DBLockOptions {
@@ -559,11 +521,6 @@ export type ExtractedTriggerDiffRecord<T, TOperationId extends string | number =
 } & {
     __previous_value?: string;
 };
-
-// Warning: (ae-internal-missing-underscore) The name "extractTableUpdates" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export function extractTableUpdates(update: BatchedUpdateNotification | UpdateNotification): string[];
 
 // @public
 export const FalsyComparator: WatchedQueryComparator<unknown>;
@@ -654,11 +611,6 @@ export interface IndexOptions {
 // @public (undocumented)
 export type IndexShorthand = Record<string, string[]>;
 
-// Warning: (ae-internal-missing-underscore) The name "isBatchedUpdateNotification" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export function isBatchedUpdateNotification(update: BatchedUpdateNotification | UpdateNotification): update is BatchedUpdateNotification;
-
 // @public
 export type ListenerCounts<Listener extends BaseListener> = Partial<Record<keyof Listener, number>> & {
     total: number;
@@ -684,8 +636,20 @@ export interface LocalStorageAdapter {
 }
 
 // @public (undocumented)
-export interface LockContext extends SqlExecutor, DBGetUtils {
-    connectionType?: 'writer' | 'queryOnly' | 'readOnly';
+export abstract class LockContext implements SqlExecutor, DBGetUtils {
+    abstract get connectionType(): 'writer' | 'queryOnly' | 'readOnly' | undefined;
+    // (undocumented)
+    execute(query: string, params?: any[] | undefined): Promise<QueryResult>;
+    // (undocumented)
+    executeBatch(query: string, params?: any[][]): Promise<QueryResult>;
+    // (undocumented)
+    abstract executeRaw(query: string, params?: any[] | undefined): Promise<QueryResult<RawResultSet>>;
+    // (undocumented)
+    get<T>(sql: string, parameters?: any[]): Promise<T>;
+    // (undocumented)
+    getAll<T>(sql: string, parameters?: any[]): Promise<T[]>;
+    // (undocumented)
+    getOptional<T>(sql: string, parameters?: any[]): Promise<T | null>;
 }
 
 // @public (undocumented)
@@ -805,15 +769,17 @@ export interface Query<RowType> {
 export type QueryParam = string | number | boolean | null | undefined | bigint | Uint8Array;
 
 // @public
-export type QueryResult = {
+export type QueryResult<Rows extends RawResultSet = ResultSet> = {
     insertId?: number;
-    rowsAffected: number;
-    rows?: {
-        _array: any[];
-        length: number;
-        item: (idx: number) => any;
-    };
+    rowsAffected?: number;
+    rows?: Rows;
 };
+
+// @public
+export interface RawResultSet {
+    columnNames: string[];
+    rawRows: SqliteValue[][];
+}
 
 // Warning: (ae-forgotten-export) The symbol "RawTableTypeWithStatements" needs to be exported by the entry point index.d.ts
 // Warning: (ae-forgotten-export) The symbol "InferredRawTableType" needs to be exported by the entry point index.d.ts
@@ -828,22 +794,27 @@ export interface RemoteStorageAdapter {
     uploadFile(fileData: ArrayBuffer, attachment: AttachmentRecord): Promise<void>;
 }
 
+// @public
+export class ResultSet implements RawResultSet {
+    constructor(resultSet: RawResultSet);
+    // @deprecated (undocumented)
+    get _array(): any[];
+    // (undocumented)
+    columnNames: string[];
+    // (undocumented)
+    item<T>(idx: number): T;
+    get length(): number;
+    mapped<T>(): T[];
+    // (undocumented)
+    rawRows: SqliteValue[][];
+}
+
 // @public (undocumented)
 export type RowType<T extends TableV2<any>> = {
     [K in keyof T['columnMap']]: ExtractColumnValueType<T['columnMap'][K]>;
 } & {
     id: string;
 };
-
-// @public
-export enum RowUpdateType {
-    // (undocumented)
-    SQLITE_DELETE = 9,
-    // (undocumented)
-    SQLITE_INSERT = 18,
-    // (undocumented)
-    SQLITE_UPDATE = 23
-}
 
 // @alpha
 export function sanitizeSQL(strings: TemplateStringsArray, ...values: any[]): string;
@@ -882,10 +853,12 @@ export type SchemaTableType<S extends SchemaType> = {
 // @public (undocumented)
 export interface SqlExecutor {
     execute: (query: string, params?: any[] | undefined) => Promise<QueryResult>;
-    // (undocumented)
     executeBatch: (query: string, params?: any[][]) => Promise<QueryResult>;
-    executeRaw: (query: string, params?: any[] | undefined) => Promise<any[][]>;
+    executeRaw: (query: string, params?: any[] | undefined) => Promise<QueryResult<RawResultSet>>;
 }
+
+// @public
+export type SqliteValue = string | number | bigint | number[] | Uint8Array | null;
 
 // @public (undocumented)
 export interface SQLOnChangeOptions {
@@ -1136,14 +1109,6 @@ export interface TableOrRawTableOptions {
     trackPrevious?: boolean | TrackPreviousOptions;
 }
 
-// @public (undocumented)
-export interface TableUpdateOperation {
-    // (undocumented)
-    opType: RowUpdateType;
-    // (undocumented)
-    rowId: number;
-}
-
 // @public @deprecated
 export class TableV2<Columns extends ColumnsType = ColumnsType> extends Table<Columns> {
 }
@@ -1185,7 +1150,9 @@ export interface TriggerDiffDeleteRecord<TOperationId extends string | number = 
 }
 
 // @alpha
-export interface TriggerDiffHandlerContext extends LockContext {
+export interface TriggerDiffHandlerContext {
+    // (undocumented)
+    context: LockContext;
     destinationTable: string;
     withDiff: <T = any>(query: string, params?: ReadonlyArray<Readonly<any>>, options?: WithDiffOptions) => Promise<T[]>;
     withExtractedDiff: <T = any>(query: string, params?: ReadonlyArray<Readonly<any>>) => Promise<T[]>;
@@ -1222,12 +1189,6 @@ export type TriggerRemoveCallback = (options?: TriggerRemoveCallbackOptions) => 
 export interface TriggerRemoveCallbackOptions {
     // (undocumented)
     context?: LockContext;
-}
-
-// @public
-export interface UpdateNotification extends TableUpdateOperation {
-    // (undocumented)
-    table: string;
 }
 
 // @public

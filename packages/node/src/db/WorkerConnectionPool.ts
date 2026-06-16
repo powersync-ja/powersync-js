@@ -176,9 +176,7 @@ export class WorkerConnectionPool extends DBAdapter {
 
         if (updates.length > 0) {
           const event: BatchedUpdateNotification = {
-            tables: updates,
-            groupedUpdates: {},
-            rawUpdates: []
+            tables: updates
           };
           this.iterateListeners((cb) => cb.tablesUpdated?.(event));
         }

@@ -3,7 +3,6 @@ import {
   LogLevels,
   PowerSyncLogger,
   DBAdapter,
-  extractTableUpdates,
   Transaction,
   CrudEntry,
   CrudBatch
@@ -33,8 +32,7 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
     super();
     this.tableNames = new Set();
     this.updateListener = db.registerListener({
-      tablesUpdated: (update) => {
-        const tables = extractTableUpdates(update);
+      tablesUpdated: ({ tables }) => {
         if (tables.includes(PSInternalTable.CRUD)) {
           this.iterateListeners((l) => l.crudUpdate?.());
         }

@@ -65,9 +65,7 @@ export class DatabaseClient<Config extends SQLOpenOptions = WebDBAdapterConfigur
     port2.onmessage = (event) => {
       const tables = event.data as string[];
       const notification: BatchedUpdateNotification = {
-        tables,
-        groupedUpdates: {},
-        rawUpdates: []
+        tables
       };
       this.iterateListeners((l) => {
         l.tablesUpdated && l.tablesUpdated(notification);

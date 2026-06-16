@@ -154,9 +154,7 @@ export class SQLJSDBAdapter extends DBAdapter {
       }
 
       const notification: BatchedUpdateNotification = {
-        rawUpdates: [],
-        tables: Array.from(this.tableUpdateCache),
-        groupedUpdates: {}
+        tables: Array.from(this.tableUpdateCache)
       };
       this.tableUpdateCache.clear();
       this.iterateListeners((l) => l.tablesUpdated?.(notification));

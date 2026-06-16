@@ -24,7 +24,7 @@ export type GetAllQueryOptions<RowType = unknown> = {
 };
 
 /**
- * Performs a {@link CommonPowerSyncDatabase.getAll} operation for a watched query.
+ * Performs a {@link DBGetUtils.getAll} operation for a watched query.
  *
  * @public
  */
