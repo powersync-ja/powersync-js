@@ -3,7 +3,7 @@
  * different SQLite DB implementations.
  */
 
-import { BaseListener, BaseObserver, BaseObserverInterface } from '../utils/BaseObserver.js';
+import { BaseListener, BaseObserver } from '../utils/BaseObserver.js';
 
 /**
  * A SQLite value, either text, a number, a blob value or null.
