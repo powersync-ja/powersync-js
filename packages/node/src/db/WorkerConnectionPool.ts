@@ -4,11 +4,8 @@ import * as path from 'node:path';
 import { Worker } from 'node:worker_threads';
 
 import {
-  BaseObserver,
   BatchedUpdateNotification,
-  ConnectionPool,
-  DBAdapterDefaultMixin,
-  DBAdapterListener,
+  DBAdapter,
   DBLockOptions,
   LockContext,
   QueryResult,
@@ -35,7 +32,7 @@ const defaultDatabaseImplementation: NodeDatabaseImplementation = {
 /**
  * Adapter for better-sqlite3
  */
-export class WorkerConnectionPool extends BaseObserver<DBAdapterListener> implements ConnectionPool {
+export class WorkerConnectionPool extends DBAdapter {
   private readonly options: NodeSQLOpenOptions;
   public readonly name: string;
 
@@ -202,5 +199,3 @@ export class WorkerConnectionPool extends BaseObserver<DBAdapterListener> implem
     }
   }
 }
-
-export class WorkerPoolDatabaseAdapter extends DBAdapterDefaultMixin(WorkerConnectionPool) {}

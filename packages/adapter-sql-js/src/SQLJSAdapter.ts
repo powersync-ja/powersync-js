@@ -2,21 +2,15 @@ import {
   BaseObserver,
   BaseListener,
   BatchedUpdateNotification,
-  ConnectionPool,
   createConsoleLogger,
   DBAdapter,
-  DBAdapterDefaultMixin,
-  DBAdapterListener,
-  DBGetUtilsDefaultMixin,
   DBLockOptions,
   LockContext,
   LogLevels,
   PowerSyncLogger,
   QueryResult,
-  SqlExecutor,
   SQLOpenFactory,
   SQLOpenOptions,
-  Transaction,
   RawResultSet,
   SqliteValue
 } from '@powersync/common';
@@ -62,7 +56,7 @@ interface TableObserverListener extends BaseListener {
 }
 class TableObserver extends BaseObserver<TableObserverListener> {}
 
-class SqlJsConnectionPool extends BaseObserver<DBAdapterListener> implements ConnectionPool {
+export class SQLJSDBAdapter extends DBAdapter {
   protected initPromise: Promise<SQLJs.Database>;
   protected _db: SQLJs.Database | null;
   protected tableUpdateCache: Set<string>;
@@ -175,8 +169,14 @@ class SqlJsConnectionPool extends BaseObserver<DBAdapterListener> implements Con
   }
 }
 
-class SqlJsExecutor implements Omit<SqlExecutor, 'execute'> {
-  constructor(readonly db: SQLJs.Database) {}
+class SqlJsLockContext extends LockContext {
+  constructor(readonly db: SQLJs.Database) {
+    super();
+  }
+
+  get connectionType() {
+    return undefined;
+  }
 
   async executeRaw(query: string, params?: any[]): Promise<QueryResult<RawResultSet>> {
     const db = this.db;
@@ -225,7 +225,3 @@ class SqlJsExecutor implements Omit<SqlExecutor, 'execute'> {
     }
   }
 }
-
-class SqlJsLockContext extends DBGetUtilsDefaultMixin(SqlJsExecutor) implements LockContext {}
-
-export class SQLJSDBAdapter extends DBAdapterDefaultMixin(SqlJsConnectionPool) implements DBAdapter {}

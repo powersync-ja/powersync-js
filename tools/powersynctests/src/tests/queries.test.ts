@@ -2,11 +2,11 @@ import { OPSqliteOpenFactory } from '@powersync/op-sqlite';
 import {
   CommonPowerSyncDatabase,
   column,
-  LockContext,
   PowerSyncDatabase,
   QueryResult,
   Schema,
-  Table
+  Table,
+  SqlExecutor
 } from '@powersync/react-native';
 import { expect, use } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
@@ -27,7 +27,7 @@ function generateUserInfo() {
   };
 }
 
-function createTestUser(context: LockContext) {
+function createTestUser(context: SqlExecutor) {
   const { name, age, networth } = generateUserInfo();
   return context.execute('INSERT INTO users (id, name, age, networth) VALUES(uuid(), ?, ?, ?)', [name, age, networth]);
 }

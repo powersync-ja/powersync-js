@@ -2,13 +2,10 @@ import { DB, SQLBatchTuple, UpdateHookOperation } from '@op-engineering/op-sqlit
 import {
   BaseObserver,
   BatchedUpdateNotification,
-  DBAdapterListener,
-  DBGetUtilsDefaultMixin,
   LockContext,
   QueryResult,
   RawResultSet,
   RowUpdateType,
-  SqlExecutor,
   SqliteValue,
   UpdateNotification
 } from '@powersync/common';
@@ -25,9 +22,10 @@ export type OPSQLiteUpdateNotification = {
   rowId: number;
 };
 
-class OPSQLiteExecutor extends BaseObserver<DBAdapterListener> implements Omit<SqlExecutor, 'execute'> {
+export class OPSQLiteConnection extends LockContext {
   protected DB: DB;
   private updateBuffer: UpdateNotification[];
+  readonly tableUpdateDispatcher = new BaseObserver();
 
   constructor(protected options: OPSQLiteConnectionOptions) {
     super();
@@ -41,6 +39,10 @@ class OPSQLiteExecutor extends BaseObserver<DBAdapterListener> implements Omit<S
     this.DB.updateHook((update) => {
       this.addTableUpdate(update);
     });
+  }
+
+  get connectionType() {
+    return this.options.readonly ? 'queryOnly' : 'writer';
   }
 
   addTableUpdate(update: OPSQLiteUpdateNotification) {
@@ -83,7 +85,7 @@ class OPSQLiteExecutor extends BaseObserver<DBAdapterListener> implements Omit<S
     };
 
     this.updateBuffer = [];
-    this.iterateListeners((l) => l.tablesUpdated?.(batchedUpdate));
+    this.tableUpdateDispatcher.iterateListeners((l) => l.tablesUpdated?.(batchedUpdate));
   }
 
   close() {
@@ -111,12 +113,6 @@ class OPSQLiteExecutor extends BaseObserver<DBAdapterListener> implements Omit<S
     return {
       rowsAffected: result.rowsAffected ?? 0
     };
-  }
-}
-
-export class OPSQLiteConnection extends DBGetUtilsDefaultMixin(OPSQLiteExecutor) implements LockContext {
-  get connectionType() {
-    return this.options.readonly ? 'queryOnly' : 'writer';
   }
 
   async refreshSchema() {

@@ -1,15 +1,4 @@
-import {
-  BaseObserver,
-  ConnectionPool,
-  DBAdapterDefaultMixin,
-  DBAdapterListener,
-  DBGetUtilsDefaultMixin,
-  DBLockOptions,
-  LockContext,
-  QueryResult,
-  RawResultSet,
-  SqlExecutor
-} from '@powersync/common';
+import { DBAdapter, DBLockOptions, LockContext, QueryResult, RawResultSet } from '@powersync/common';
 import { ExecuteBatchResult, ExecuteSqlResult, powersyncCommand } from './command';
 
 /**
@@ -19,7 +8,10 @@ export interface LateHandle {
   handle: number;
 }
 
-class RustDatabase extends BaseObserver<DBAdapterListener> implements ConnectionPool {
+/**
+ * A SQLite connection pool backed by the PowerSync Rust SDK.
+ */
+export class RustDatabaseAdapter extends DBAdapter {
   name: string;
 
   constructor(
@@ -65,13 +57,14 @@ class RustDatabase extends BaseObserver<DBAdapterListener> implements Connection
   }
 }
 
-/**
- * A SQLite connection pool backed by the PowerSync Rust SDK.
- */
-export class RustDatabaseAdapter extends DBAdapterDefaultMixin(RustDatabase) {}
+class RustLockContext extends LockContext {
+  constructor(readonly handle: number) {
+    super();
+  }
 
-class RustSqlExecutor implements Omit<SqlExecutor, 'execute'> {
-  constructor(readonly handle: number) {}
+  get connectionType(): undefined {
+    return undefined;
+  }
 
   private async executeInner(query: string, params: any[]) {
     const result = await powersyncCommand({
@@ -117,5 +110,3 @@ class RustSqlExecutor implements Omit<SqlExecutor, 'execute'> {
     return { insertId: batchResult.last_insert_rowid, rowsAffected: batchResult.changes };
   }
 }
-
-class RustLockContext extends DBGetUtilsDefaultMixin(RustSqlExecutor) {}

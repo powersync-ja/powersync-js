@@ -1,4 +1,4 @@
-import { DBGetUtilsDefaultMixin, QueryResult, SqlExecutor, LockContext, RawResultSet } from '@powersync/common';
+import { QueryResult, LockContext, RawResultSet } from '@powersync/common';
 import { releaseProxy, Remote } from 'comlink';
 import { Worker } from 'node:worker_threads';
 import { AsyncDatabase, AsyncDatabaseOpener } from './AsyncDatabase.js';
@@ -7,7 +7,7 @@ import { ConnectionClosedError } from '@powersync/shared-internals';
 /**
  * A PowerSync database connection implemented with RPC calls to a background worker.
  */
-class BaseRemoteConnection implements Omit<SqlExecutor, 'execute'> {
+export class RemoteConnection extends LockContext {
   private readonly worker: Worker;
   private readonly comlink: Remote<AsyncDatabaseOpener>;
   private readonly database: Remote<AsyncDatabase>;
@@ -20,6 +20,7 @@ class BaseRemoteConnection implements Omit<SqlExecutor, 'execute'> {
     database: Remote<AsyncDatabase>,
     private readonly readonly: boolean
   ) {
+    super();
     this.worker = worker;
     this.comlink = comlink;
     this.database = database;
@@ -93,5 +94,3 @@ class BaseRemoteConnection implements Omit<SqlExecutor, 'execute'> {
     await this.worker.terminate();
   }
 }
-
-export class RemoteConnection extends DBGetUtilsDefaultMixin(BaseRemoteConnection) implements LockContext {}

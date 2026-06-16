@@ -1,20 +1,17 @@
 import {
-  BaseObserver,
   DBAdapter,
-  DBAdapterListener,
   LockContext as PowerSyncLockContext,
   DBLockOptions,
-  ConnectionPool,
-  DBGetUtilsDefaultMixin,
   LockContext,
-  DBAdapterDefaultMixin,
-  Transaction,
   RawResultSet
 } from '@powersync/common';
 import type { QuickSQLiteConnection, LockContext as RNQSLockContext } from '@journeyapps/react-native-quick-sqlite';
-import { QueryResult, SqlExecutor } from '@powersync/common';
+import { QueryResult } from '@powersync/common';
 
-class RNQSConnectionPool extends BaseObserver<DBAdapterListener> implements ConnectionPool {
+/**
+ * Adapter for React Native Quick SQLite
+ */
+export class RNQSDBAdapter extends DBAdapter {
   constructor(
     protected baseDB: QuickSQLiteConnection,
     public name: string
@@ -45,10 +42,31 @@ class RNQSConnectionPool extends BaseObserver<DBAdapterListener> implements Conn
   async refreshSchema() {
     await this.baseDB.refreshSchema();
   }
+
+  // We don't want the default implementation here, RNQS does not support executeBatch for lock contexts so that would
+  // be less efficient.
+  async executeBatch(query: string, params: any[][] = []): Promise<QueryResult> {
+    const commands: any[] = [];
+
+    for (let i = 0; i < params.length; i++) {
+      commands.push([query, params[i]]);
+    }
+
+    const result = await this.baseDB.executeBatch(commands);
+    return {
+      rowsAffected: result.rowsAffected ? result.rowsAffected : 0
+    };
+  }
 }
 
-class QuickSqliteExecutor implements Omit<SqlExecutor, 'executeBatch'> {
-  constructor(readonly context: RNQSLockContext) {}
+class QuickSqliteContext extends LockContext {
+  constructor(readonly context: RNQSLockContext) {
+    super();
+  }
+
+  get connectionType() {
+    return undefined;
+  }
 
   async execute(query: string, params?: any[]): Promise<QueryResult> {
     const { insertId, rowsAffected, metadata, rows } = await this.context.execute(query, params);
@@ -84,27 +102,5 @@ class QuickSqliteExecutor implements Omit<SqlExecutor, 'executeBatch'> {
    */
   async executeRaw(query: string, params?: any[]): Promise<QueryResult<RawResultSet>> {
     return await this.execute(query, params);
-  }
-}
-
-class QuickSqliteContext extends DBGetUtilsDefaultMixin(QuickSqliteExecutor) implements LockContext {}
-
-/**
- * Adapter for React Native Quick SQLite
- */
-export class RNQSDBAdapter extends DBAdapterDefaultMixin(RNQSConnectionPool) implements DBAdapter {
-  // We don't want the default implementation here, RNQS does not support executeBatch for lock contexts so that would
-  // be less efficient.
-  async executeBatch(query: string, params: any[][] = []): Promise<QueryResult> {
-    const commands: any[] = [];
-
-    for (let i = 0; i < params.length; i++) {
-      commands.push([query, params[i]]);
-    }
-
-    const result = await this.baseDB.executeBatch(commands);
-    return {
-      rowsAffected: result.rowsAffected ? result.rowsAffected : 0
-    };
   }
 }

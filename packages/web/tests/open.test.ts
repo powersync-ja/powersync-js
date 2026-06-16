@@ -1,4 +1,4 @@
-import { CommonPowerSyncDatabase, createConsoleLogger, DBAdapterDefaultMixin, Schema } from '@powersync/common';
+import { CommonPowerSyncDatabase, createConsoleLogger, Schema } from '@powersync/common';
 import { PowerSyncDatabase, TemporaryStorageOption, WASQLiteOpenFactory, WASQLiteVFS } from '@powersync/web';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TEST_SCHEMA } from './utils/test-schema.js';
@@ -75,8 +75,7 @@ describe('Open Methods', { sequential: true }, () => {
       readonly: false
     };
     const connection = await server.openConnectionLocally(logger, options);
-    const Adapter = DBAdapterDefaultMixin(DatabaseClient);
-    const client = new Adapter(
+    const client = new DatabaseClient(
       {
         connection,
         remoteCanCloseUnexpectedly: false,

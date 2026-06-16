@@ -1,14 +1,5 @@
 import { getDylibPath, open, type DB } from '@op-engineering/op-sqlite';
-import {
-  BaseObserver,
-  ConnectionPool,
-  DBAdapter,
-  DBAdapterDefaultMixin,
-  DBAdapterListener,
-  DBLockOptions,
-  QueryResult,
-  Transaction
-} from '@powersync/common';
+import { DBAdapter, DBLockOptions } from '@powersync/common';
 import { timeoutSignal, Semaphore } from '@powersync/shared-internals';
 import { Platform } from 'react-native';
 import { OPSQLiteConnection } from './OPSQLiteConnection';
@@ -25,7 +16,7 @@ export type OPSQLiteAdapterOptions = {
 
 const READ_CONNECTIONS = 5;
 
-class OPSQLiteConnectionPool extends BaseObserver<DBAdapterListener> implements ConnectionPool {
+export class OPSQLiteDBAdapter extends DBAdapter {
   name: string;
 
   protected initialized: Promise<void>;
@@ -83,7 +74,7 @@ class OPSQLiteConnectionPool extends BaseObserver<DBAdapterListener> implements 
     }
 
     // Changes should only occur in the write connection
-    underlyingWriteConnection.registerListener({
+    underlyingWriteConnection.tableUpdateDispatcher.registerListener({
       tablesUpdated: (notification) => this.iterateListeners((cb) => cb.tablesUpdated?.(notification))
     });
 
@@ -232,5 +223,3 @@ class OPSQLiteConnectionPool extends BaseObserver<DBAdapterListener> implements 
     }
   }
 }
-
-export class OPSQLiteDBAdapter extends DBAdapterDefaultMixin(OPSQLiteConnectionPool) implements DBAdapter {}

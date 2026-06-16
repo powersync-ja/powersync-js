@@ -2,12 +2,8 @@ import { CapacitorSQLite, SQLiteConnection, SQLiteDBConnection } from '@capacito
 import { Capacitor } from '@capacitor/core';
 
 import {
-  BaseObserver,
   BatchedUpdateNotification,
-  ConnectionPool,
   DBAdapter,
-  DBAdapterDefaultMixin,
-  DBAdapterListener,
   DBLockOptions,
   LockContext,
   QueryResult,
@@ -73,7 +69,13 @@ function mapSQLiteParameterValues({ platform, values }: { platform: string; valu
   });
 }
 
-class CapacitorConnectionPool extends BaseObserver<DBAdapterListener> implements ConnectionPool {
+/**
+ * An implementation of {@link DBAdapter} using the Capacitor Community SQLite [plugin](https://github.com/capacitor-community/sqlite).
+ *
+ * @experimental
+ * @alpha This is currently experimental and may change without a major version bump.
+ */
+export class CapacitorSQLiteAdapter extends DBAdapter {
   protected _writeConnection: SQLiteDBConnection | null;
   protected _readConnection: SQLiteDBConnection | null;
   protected initializedPromise: Promise<void>;
@@ -281,14 +283,37 @@ class CapacitorConnectionPool extends BaseObserver<DBAdapterListener> implements
       };
     };
 
-    return {
-      getAll,
-      getOptional,
-      get,
-      executeRaw: execute,
-      execute,
-      executeBatch
-    };
+    class CapacitorLockContext extends LockContext {
+      get connectionType() {
+        return undefined;
+      }
+
+      getAll<T>(sql: string, parameters?: any[]): Promise<T[]> {
+        return getAll(sql, parameters);
+      }
+
+      getOptional<T>(sql: string, parameters?: any[]): Promise<T | null> {
+        return getOptional(sql, parameters);
+      }
+
+      get<T>(sql: string, parameters?: any[]): Promise<T> {
+        return get(sql, parameters);
+      }
+
+      execute(query: string, params?: any[] | undefined): Promise<QueryResult> {
+        return execute(query, params);
+      }
+
+      executeRaw(query: string, params?: any[] | undefined): Promise<QueryResult<RawResultSet>> {
+        return execute(query, params);
+      }
+
+      executeBatch(query: string, params?: any[][]): Promise<QueryResult> {
+        return executeBatch(query, params);
+      }
+    }
+
+    return new CapacitorLockContext();
   }
 
   readLock<T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions): Promise<T> {
@@ -329,11 +354,3 @@ class CapacitorConnectionPool extends BaseObserver<DBAdapterListener> implements
     });
   }
 }
-
-/**
- * An implementation of {@link DBAdapter} using the Capacitor Community SQLite [plugin](https://github.com/capacitor-community/sqlite).
- *
- * @experimental
- * @alpha This is currently experimental and may change without a major version bump.
- */
-export class CapacitorSQLiteAdapter extends DBAdapterDefaultMixin(CapacitorConnectionPool) {}

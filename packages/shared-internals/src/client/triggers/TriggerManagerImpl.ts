@@ -461,7 +461,7 @@ export class TriggerManagerImpl implements TriggerManager {
           // destination table consistent.
           await this.db.writeTransaction(async (tx) => {
             const callbackResult = await options.onChange({
-              ...tx,
+              context: tx,
               destinationTable: destination,
               withDiff: async <T>(query: string, params: any, options?: WithDiffOptions) => {
                 // Wrap the query to expose the destination table

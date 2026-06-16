@@ -1,15 +1,12 @@
 import {
-  BaseObserver,
   QueryResult,
   LockContext,
   DBLockOptions,
-  DBAdapterListener,
-  ConnectionPool,
   SqlExecutor,
-  DBGetUtilsDefaultMixin,
   BatchedUpdateNotification,
   SQLOpenOptions,
-  RawResultSet
+  RawResultSet,
+  DBAdapter
 } from '@powersync/common';
 import { SharedConnectionWorker, WebDBAdapterConfiguration } from '../WebDBAdapter.js';
 import { ClientConnectionView } from './DatabaseServer.js';
@@ -45,10 +42,7 @@ export interface ClientOptions {
 /**
  * A single-connection {@link ConnectionPool} implementation based on a worker connection.
  */
-export class DatabaseClient<Config extends SQLOpenOptions = WebDBAdapterConfiguration>
-  extends BaseObserver<DBAdapterListener>
-  implements ConnectionPool
-{
+export class DatabaseClient<Config extends SQLOpenOptions = WebDBAdapterConfiguration> extends DBAdapter {
   #connection: ConnectionState;
   #shareConnectionAbortController = new AbortController();
   #receiveTableUpdates: MessagePort;
@@ -119,7 +113,7 @@ export class DatabaseClient<Config extends SQLOpenOptions = WebDBAdapterConfigur
   async #lock<T>(write: boolean, fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions): Promise<T> {
     const token = await useConnectionState(this.#connection, (c) => c.requestAccess(write, options?.timeoutMs));
     try {
-      return await fn(new ClientLockContext(this.#connection, token));
+      return await fn(new ClientSqlExecutor(this.#connection, token));
     } finally {
       await useConnectionState(this.#connection, (c) => c.completeAccess(token));
     }
@@ -191,13 +185,18 @@ export class DatabaseClient<Config extends SQLOpenOptions = WebDBAdapterConfigur
  * While an instance is active, it has exclusive access to the underlying database connection (as represented by its
  * token).
  */
-class ClientSqlExecutor implements Omit<SqlExecutor, 'execute'> {
+class ClientSqlExecutor extends LockContext {
   readonly #connection: ConnectionState;
   readonly #token: string;
 
   constructor(connection: ConnectionState, token: string) {
+    super();
     this.#connection = connection;
     this.#token = token;
+  }
+
+  get connectionType() {
+    return undefined;
   }
 
   /**
@@ -254,8 +253,6 @@ class ClientSqlExecutor implements Omit<SqlExecutor, 'execute'> {
     return result;
   }
 }
-
-class ClientLockContext extends DBGetUtilsDefaultMixin(ClientSqlExecutor) implements LockContext {}
 
 interface ConnectionState {
   connection: ClientConnectionView;
