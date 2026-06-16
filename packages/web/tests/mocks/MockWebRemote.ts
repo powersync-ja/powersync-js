@@ -1,9 +1,8 @@
 import { PowerSyncLogger } from '@powersync/common';
 import {
   AbstractRemote,
-  AbstractRemoteOptions,
   FetchImplementation,
-  FetchImplementationProvider,
+  FetchOptions,
   RemoteConnector,
   SocketSyncStreamOptions
 } from '@powersync/shared-internals';
@@ -21,37 +20,33 @@ import { MockSyncService, setupMockServiceMessageHandler } from '../utils/MockSy
  * 2. Wait for a client to create a response before returning
  * 3. Set up message handler for the mock service when onconnect is called
  */
-class MockSyncServiceFetchProvider extends FetchImplementationProvider {
-  getFetch(): FetchImplementation {
-    return async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
-      const request = new Request(input, init);
+export async function mockFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+  const request = new Request(input, init);
 
-      const mockService = MockSyncService.GLOBAL_INSTANCE;
+  const mockService = MockSyncService.GLOBAL_INSTANCE;
 
-      // Read the request body (if any)
-      let body: any = null;
-      try {
-        if (request.body) {
-          const clonedRequest = request.clone();
-          body = await clonedRequest.json().catch(() => {
-            // If JSON parsing fails, try text
-            return clonedRequest.text().catch(() => null);
-          });
-        }
-      } catch (e) {
-        // Body might not be readable, that's okay
-      }
-
-      // Extract headers from the request
-      const headers: Record<string, string> = {};
-      request.headers.forEach((value, key) => {
-        headers[key] = value;
+  // Read the request body (if any)
+  let body: any = null;
+  try {
+    if (request.body) {
+      const clonedRequest = request.clone();
+      body = await clonedRequest.json().catch(() => {
+        // If JSON parsing fails, try text
+        return clonedRequest.text().catch(() => null);
       });
-
-      // Register as a pending request and wait for client to create response
-      return await mockService.registerPendingRequest(request.url, request.method, headers, body, request.signal);
-    };
+    }
+  } catch (e) {
+    // Body might not be readable, that's okay
   }
+
+  // Extract headers from the request
+  const headers: Record<string, string> = {};
+  request.headers.forEach((value, key) => {
+    headers[key] = value;
+  });
+
+  // Register as a pending request and wait for client to create response
+  return await mockService.registerPendingRequest(request.url, request.method, headers, body, request.signal);
 }
 
 /**
@@ -87,16 +82,13 @@ export class WebRemote extends AbstractRemote {
 
   constructor(
     protected connector: RemoteConnector,
-    protected logger: PowerSyncLogger,
-    options?: Partial<AbstractRemoteOptions>
+    logger: PowerSyncLogger
   ) {
-    // Use mock service fetch provider if we're in a shared worker context
-    const fetchProvider = new MockSyncServiceFetchProvider();
+    super(connector, logger);
+  }
 
-    super(connector, logger, {
-      ...(options ?? {}),
-      fetchImplementation: options?.fetchImplementation ?? fetchProvider
-    });
+  protected fetch(options: FetchOptions): Promise<Response> {
+    return mockFetch(options.resource, options.request);
   }
 
   getUserAgent(): string {

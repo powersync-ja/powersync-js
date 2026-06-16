@@ -1,24 +1,17 @@
 import * as os from 'node:os';
 
-import {
-  AbstractRemote,
-  AbstractRemoteOptions,
-  FetchImplementation,
-  FetchImplementationProvider,
-  RemoteConnector
-} from '@powersync/shared-internals';
+import { AbstractRemote, FetchOptions, RemoteConnector } from '@powersync/shared-internals';
 import { Dispatcher, EnvHttpProxyAgent, getGlobalDispatcher, ProxyAgent, WebSocket as UndiciWebSocket } from 'undici';
 import { PowerSyncLogger } from '@powersync/common';
 
 export const STREAMING_POST_TIMEOUT_MS = 30_000;
 
-class NodeFetchProvider extends FetchImplementationProvider {
-  getFetch(): FetchImplementation {
-    return fetch.bind(globalThis);
-  }
-}
+export interface NodeRemoteOptions {
+  /**
+   * @internal Only meant to be used for tests.
+   */
+  customFetch: typeof fetch;
 
-export interface NodeRemoteOptions extends AbstractRemoteOptions {
   /**
    * Optional custom dispatcher for HTTP or WEB_SOCKET connections.
    *
@@ -30,23 +23,30 @@ export interface NodeRemoteOptions extends AbstractRemoteOptions {
 
 export class NodeRemote extends AbstractRemote {
   private wsDispatcher: Dispatcher | undefined;
+  private fetchImpl: typeof fetch;
 
   constructor(
     protected connector: RemoteConnector,
-    protected logger: PowerSyncLogger,
-    options?: Partial<NodeRemoteOptions>
+    logger: PowerSyncLogger,
+    options?: NodeRemoteOptions
   ) {
-    const fetchDispatcher = options?.dispatcher ?? defaultFetchDispatcher();
+    super(connector, logger);
 
-    super(connector, logger, {
-      fetchImplementation: options?.fetchImplementation ?? new NodeFetchProvider(),
-      fetchOptions: {
-        dispatcher: fetchDispatcher
-      },
-      ...(options ?? {})
-    });
+    this.fetchImpl =
+      options?.customFetch ??
+      ((resource, init) => {
+        return fetch(resource, {
+          // @ts-expect-error
+          dispatcher: fetchDispatcher,
+          ...init
+        });
+      });
 
     this.wsDispatcher = options?.dispatcher;
+  }
+
+  protected fetch({ resource, request }: FetchOptions): Promise<Response> {
+    return this.fetchImpl(resource, request);
   }
 
   protected createSocket(url: string): globalThis.WebSocket {
