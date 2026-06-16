@@ -2,11 +2,7 @@ import { Factory as WaSqliteFactory, SQLITE_ROW } from '@journeyapps/wa-sqlite';
 
 import { DEFAULT_MODULE_FACTORIES, WASQLiteModuleFactory, WASQLiteVFS } from './vfs.js';
 import { TemporaryStorageOption } from '../options.js';
-
-export interface RawResultSet {
-  columns: string[];
-  rows: SQLiteCompatibleType[][];
-}
+import { RawResultSet } from '@powersync/common';
 
 export interface RawQueryResult {
   changes: number;
@@ -152,7 +148,7 @@ export class RawSqliteConnection {
       let columns;
 
       const rs = await this.stepThroughStatement(api, stmt, bindings ?? [], columns);
-      columns = rs.columns;
+      columns = rs.columnNames;
       if (columns.length) {
         results.push(rs);
       }
@@ -194,7 +190,7 @@ export class RawSqliteConnection {
     }
 
     knownColumns ??= api.column_names(stmt);
-    return { columns: knownColumns, rows };
+    return { columnNames: knownColumns, rawRows: rows };
   }
 
   async close() {

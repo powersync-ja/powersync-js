@@ -1,4 +1,4 @@
-import { DBAdapter, LockContext, QueryResult, Transaction } from '../db/DBAdapter.js';
+import { DBAdapter, DBGetUtils, LockContext, QueryResult, SqlExecutor, Transaction } from '../db/DBAdapter.js';
 import { SyncStatus } from '../db/crud/SyncStatus.js';
 import { Schema } from '../db/schema/Schema.js';
 import { BaseListener, BaseObserverInterface } from '../utils/BaseObserver.js';
@@ -135,7 +135,7 @@ export type AbstractPowerSyncDatabase = CommonPowerSyncDatabase;
 /**
  * @public
  */
-export interface CommonPowerSyncDatabase extends BaseObserverInterface<PowerSyncDBListener> {
+export interface CommonPowerSyncDatabase extends BaseObserverInterface<PowerSyncDBListener>, SqlExecutor, DBGetUtils {
   /**
    * Returns true if the connection is closed.
    */
@@ -336,70 +336,6 @@ export interface CommonPowerSyncDatabase extends BaseObserverInterface<PowerSync
    * @returns A unique identifier for the database instance
    */
   getClientId(): Promise<string>;
-
-  /**
-   * Execute a SQL write (INSERT/UPDATE/DELETE) query
-   * and optionally return results.
-   *
-   * When using the default client-side [JSON-based view system](https://docs.powersync.com/architecture/client-architecture#client-side-schema-and-sqlite-database-structure),
-   * the returned result's `rowsAffected` may be `0` for successful `UPDATE` and `DELETE` statements.
-   * Use a `RETURNING` clause and inspect `result.rows` when you need to confirm which rows changed.
-   *
-   * @param sql - The SQL query to execute
-   * @param parameters - Optional array of parameters to bind to the query
-   * @returns The query result as an object with structured key-value pairs
-   */
-  execute(sql: string, parameters?: any[]): Promise<QueryResult>;
-
-  /**
-   * Execute a SQL write (INSERT/UPDATE/DELETE) query directly on the database without any PowerSync processing.
-   * This bypasses certain PowerSync abstractions and is useful for accessing the raw database results.
-   *
-   * @param sql - The SQL query to execute
-   * @param parameters - Optional array of parameters to bind to the query
-   * @returns The raw query result from the underlying database as a nested array of raw values, where each row is
-   * represented as an array of column values without field names.
-   */
-  executeRaw(sql: string, parameters?: any[]): Promise<any[][]>;
-
-  /**
-   * Execute a write query (INSERT/UPDATE/DELETE) multiple times with each parameter set
-   * and optionally return results.
-   * This is faster than executing separately with each parameter set.
-   *
-   * @param sql - The SQL query to execute
-   * @param parameters - Optional 2D array of parameter sets, where each inner array is a set of parameters for one execution
-   * @returns The query result
-   */
-  executeBatch(sql: string, parameters?: any[][]): Promise<QueryResult>;
-
-  /**
-   *  Execute a read-only query and return results.
-   *
-   * @param sql - The SQL query to execute
-   * @param parameters - Optional array of parameters to bind to the query
-   * @returns An array of results
-   */
-  getAll<T>(sql: string, parameters?: any[]): Promise<T[]>;
-
-  /**
-   * Execute a read-only query and return the first result, or null if the ResultSet is empty.
-   *
-   * @param sql - The SQL query to execute
-   * @param parameters - Optional array of parameters to bind to the query
-   * @returns The first result if found, or null if no results are returned
-   */
-  getOptional<T>(sql: string, parameters?: any[]): Promise<T | null>;
-
-  /**
-   * Execute a read-only query and return the first result, error if the ResultSet is empty.
-   *
-   * @param sql - The SQL query to execute
-   * @param parameters - Optional array of parameters to bind to the query
-   * @returns The first result matching the query
-   * @throws Error if no rows are returned
-   */
-  get<T>(sql: string, parameters?: any[]): Promise<T>;
 
   /**
    * Takes a read lock, without starting a transaction.

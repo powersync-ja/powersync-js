@@ -233,10 +233,4 @@ class OPSQLiteConnectionPool extends BaseObserver<DBAdapterListener> implements 
   }
 }
 
-export class OPSQLiteDBAdapter extends DBAdapterDefaultMixin(OPSQLiteConnectionPool) implements DBAdapter {
-  async executeBatch(query: string, params: any[][] = []): Promise<QueryResult> {
-    return await this.writeLock(async (tx) => {
-      return await (tx as OPSQLiteConnection).executeNativeBatch(query, params);
-    });
-  }
-}
+export class OPSQLiteDBAdapter extends DBAdapterDefaultMixin(OPSQLiteConnectionPool) implements DBAdapter {}

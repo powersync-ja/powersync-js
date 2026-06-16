@@ -392,7 +392,7 @@ export function registerBaseTests() {
           .map(() => db.readLock((context) => context.execute('SELECT * FROM users WHERE name = ?', [name])))
       );
 
-      expect(lockResults.map((r) => r.rows?.item(0).name)).to.deep.equal(new Array(numberOfReads).fill(name));
+      expect(lockResults.map((r) => r.rows?.item<{name: string}>(0).name)).to.deep.equal(new Array(numberOfReads).fill(name));
     });
 
     it('Multiple reads should occur at the same time', async () => {
@@ -509,7 +509,7 @@ export function registerBaseTests() {
           [],
           {
             onResult: (results) => {
-              if (results.rows?.item(0).count == 1) {
+              if (results.rows?.item<{count:number}>(0).count == 1) {
                 resolve();
                 abort.abort();
               }
@@ -532,7 +532,7 @@ export function registerBaseTests() {
     it('Should reflect writeTransaction updates on read connections (iterator)', async () => {
       const watched = new Promise<void>(async (resolve) => {
         for await (const result of db.watch('SELECT COUNT(*) as count FROM users', [])) {
-          if (result.rows?.item(0).count == 1) {
+          if (result.rows?.item<{count:number}>(0).count == 1) {
             resolve();
           }
         }
@@ -582,7 +582,7 @@ export function registerBaseTests() {
           [],
           {
             onResult: (results) => {
-              if (results.rows?.item(0).count == numberOfUsers) {
+              if (results.rows?.item<{count:number}>(0).count == numberOfUsers) {
                 resolve();
                 abort.abort();
               }

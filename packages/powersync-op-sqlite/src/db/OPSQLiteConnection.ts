@@ -6,8 +6,10 @@ import {
   DBGetUtilsDefaultMixin,
   LockContext,
   QueryResult,
+  RawResultSet,
   RowUpdateType,
   SqlExecutor,
+  SqliteValue,
   UpdateNotification
 } from '@powersync/common';
 
@@ -23,7 +25,7 @@ export type OPSQLiteUpdateNotification = {
   rowId: number;
 };
 
-class OPSQLiteExecutor extends BaseObserver<DBAdapterListener> implements Omit<SqlExecutor, 'executeBatch'> {
+class OPSQLiteExecutor extends BaseObserver<DBAdapterListener> implements Omit<SqlExecutor, 'execute'> {
   protected DB: DB;
   private updateBuffer: UpdateNotification[];
 
@@ -88,24 +90,20 @@ class OPSQLiteExecutor extends BaseObserver<DBAdapterListener> implements Omit<S
     return this.DB.close();
   }
 
-  async execute(query: string, params?: any[]): Promise<QueryResult> {
-    const res = await this.DB.execute(query, params);
+  async executeRaw(query: string, params?: any[]): Promise<QueryResult<RawResultSet>> {
+    const { insertId, rowsAffected, columnNames, rawRows } = await this.DB.execute(query, params);
     return {
-      insertId: res.insertId,
-      rowsAffected: res.rowsAffected,
-      rows: {
-        _array: res.rows ?? [],
-        length: res.rows?.length ?? 0,
-        item: (index: number) => res.rows?.[index]
-      }
+      insertId: insertId,
+      rowsAffected: rowsAffected,
+      rows: columnNames &&
+        rawRows && {
+          columnNames,
+          rawRows: rawRows as SqliteValue[][]
+        }
     };
   }
 
-  async executeRaw(query: string, params?: any[]): Promise<any[][]> {
-    return await this.DB.executeRaw(query, params);
-  }
-
-  async executeNativeBatch(query: string, params: any[][] = []): Promise<QueryResult> {
+  async executeBatch(query: string, params: any[][] = []): Promise<QueryResult> {
     const tuple: SQLBatchTuple[] = [[query, params[0]]];
     params.slice(1).forEach((p) => tuple.push([query, p]));
 

@@ -80,13 +80,15 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
       // Nothing to update
       return false;
     }
-    const rs = await this.db.getAll<{ seq: number }>("SELECT seq FROM main.sqlite_sequence WHERE name = 'ps_crud'");
-    if (!rs.length) {
+    const rs = await this.db.getOptional<{ seq: number }>(
+      "SELECT seq FROM main.sqlite_sequence WHERE name = 'ps_crud'"
+    );
+    if (!rs) {
       // Nothing to update
       return false;
     }
 
-    const seqBefore: number = rs[0]['seq'];
+    const seqBefore = rs.seq;
 
     const opId = await cb();
 
@@ -101,13 +103,10 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
         return false;
       }
 
-      const rs = await tx.execute("SELECT seq FROM main.sqlite_sequence WHERE name = 'ps_crud'");
-      if (!rs.rows?.length) {
-        // assert isNotEmpty
-        throw new Error('SQLite Sequence should not be empty');
-      }
+      const { seq: seqAfter } = await tx.get<{ seq: number }>(
+        "SELECT seq FROM main.sqlite_sequence WHERE name = 'ps_crud'"
+      );
 
-      const seqAfter: number = rs.rows?.item(0)['seq'];
       if (seqAfter != seqBefore) {
         this.logger.log({
           level: LogLevels.debug,
@@ -190,8 +189,8 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
 
   async control(op: PowerSyncControlCommand, payload: string | Uint8Array | ArrayBuffer | null): Promise<string> {
     return await this.writeTransaction(async (tx) => {
-      const [[raw]] = await tx.executeRaw('SELECT powersync_control(?, ?)', [op, payload]);
-      return raw;
+      const { rows } = await tx.executeRaw('SELECT powersync_control(?, ?)', [op, payload]);
+      return rows!.rawRows[0][0] as string;
     });
   }
 

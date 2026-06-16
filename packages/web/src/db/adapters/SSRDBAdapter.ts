@@ -5,11 +5,12 @@ import {
   DBLockOptions,
   LockContext,
   QueryResult,
-  Transaction
+  Transaction,
+  RawResultSet
 } from '@powersync/common';
 import { Mutex, timeoutSignal } from '@powersync/shared-internals';
 
-const MOCK_QUERY_RESPONSE: QueryResult = {
+const MOCK_QUERY_RESPONSE: QueryResult<never> = {
   rowsAffected: 0
 };
 
@@ -52,8 +53,8 @@ export class SSRDBAdapter extends BaseObserver<DBAdapterListener> implements DBA
     return this.writeMutex.runExclusive(async () => MOCK_QUERY_RESPONSE);
   }
 
-  async executeRaw(query: string, params?: any[]): Promise<any[][]> {
-    return this.writeMutex.runExclusive(async () => []);
+  async executeRaw(query: string, params?: any[]): Promise<QueryResult<RawResultSet>> {
+    return this.writeMutex.runExclusive(async () => MOCK_QUERY_RESPONSE);
   }
 
   async executeBatch(query: string, params?: any[][]): Promise<QueryResult> {

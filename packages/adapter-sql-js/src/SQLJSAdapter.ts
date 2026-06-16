@@ -16,7 +16,9 @@ import {
   SqlExecutor,
   SQLOpenFactory,
   SQLOpenOptions,
-  Transaction
+  Transaction,
+  RawResultSet,
+  SqliteValue
 } from '@powersync/common';
 import { Mutex, timeoutSignal, ControlledExecutor } from '@powersync/shared-internals';
 // This uses a pure JS version which avoids the need for WebAssembly, which is not supported in React Native.
@@ -173,55 +175,32 @@ class SqlJsConnectionPool extends BaseObserver<DBAdapterListener> implements Con
   }
 }
 
-class SqlJsExecutor implements SqlExecutor {
+class SqlJsExecutor implements Omit<SqlExecutor, 'execute'> {
   constructor(readonly db: SQLJs.Database) {}
 
-  async execute(query: string, params?: any[]): Promise<QueryResult> {
+  async executeRaw(query: string, params?: any[]): Promise<QueryResult<RawResultSet>> {
     const db = this.db;
     const statement = db.prepare(query);
-    const rawResults: any[][] = [];
+    const rawResults: SqliteValue[][] = [];
     let columnNames: string[] | null = null;
+
     try {
       if (params) {
         statement.bind(params);
       }
       while (statement.step()) {
-        if (!columnNames) {
-          columnNames = statement.getColumnNames();
-        }
         rawResults.push(statement.get());
       }
 
-      const rows = rawResults.map((row) => {
-        return Object.fromEntries(row.map((value, index) => [columnNames![index], value]));
-      });
       return {
+        rowsAffected: db.getRowsModified(),
         // `lastInsertId` is not available in the original version of SQL.js or its types, but it's available in the fork we use.
         insertId: (db as any).lastInsertId(),
-        rowsAffected: db.getRowsModified(),
         rows: {
-          _array: rows,
-          length: rows.length,
-          item: (idx: number) => rows[idx]
+          columnNames: statement.getColumnNames(),
+          rawRows: rawResults
         }
       };
-    } finally {
-      statement.free();
-    }
-  }
-
-  async executeRaw(query: string, params?: any[]): Promise<any[][]> {
-    const db = this.db;
-    const statement = db.prepare(query);
-    const rawResults: any[][] = [];
-    try {
-      if (params) {
-        statement.bind(params);
-      }
-      while (statement.step()) {
-        rawResults.push(statement.get());
-      }
-      return rawResults;
     } finally {
       statement.free();
     }

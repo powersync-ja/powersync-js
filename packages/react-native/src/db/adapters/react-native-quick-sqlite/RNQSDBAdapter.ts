@@ -8,7 +8,8 @@ import {
   DBGetUtilsDefaultMixin,
   LockContext,
   DBAdapterDefaultMixin,
-  Transaction
+  Transaction,
+  RawResultSet
 } from '@powersync/common';
 import type { QuickSQLiteConnection, LockContext as RNQSLockContext } from '@journeyapps/react-native-quick-sqlite';
 import { QueryResult, SqlExecutor } from '@powersync/common';
@@ -49,16 +50,40 @@ class RNQSConnectionPool extends BaseObserver<DBAdapterListener> implements Conn
 class QuickSqliteExecutor implements Omit<SqlExecutor, 'executeBatch'> {
   constructor(readonly context: RNQSLockContext) {}
 
-  execute(query: string, params?: any[]) {
-    return this.context.execute(query, params);
+  async execute(query: string, params?: any[]): Promise<QueryResult> {
+    const { insertId, rowsAffected, metadata, rows } = await this.context.execute(query, params);
+    let columnNames = metadata?.map((m) => m.columnName);
+    if (columnNames == null && rows != null && rows.length > 0) {
+      columnNames = Object.keys(rows._array[0]);
+    }
+    columnNames ??= [];
+
+    return {
+      insertId,
+      rowsAffected,
+      rows:
+        rows == null
+          ? rows
+          : {
+              columnNames,
+              _array: rows._array,
+              rawRows: rows._array.map((r) => Object.values(r)),
+              length: rows.length,
+              mapped() {
+                return rows._array;
+              },
+              item(idx) {
+                return rows.item(idx);
+              }
+            }
+    };
   }
+
   /**
    * 'executeRaw' is not implemented in RNQS, this falls back to 'execute'.
    */
-  async executeRaw(query: string, params?: any[]): Promise<any[][]> {
-    const result = await this.context.execute(query, params);
-    const rows = result.rows?._array ?? [];
-    return rows.map((row) => Object.values(row));
+  async executeRaw(query: string, params?: any[]): Promise<QueryResult<RawResultSet>> {
+    return await this.execute(query, params);
   }
 }
 

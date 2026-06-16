@@ -38,7 +38,7 @@ export class PowerSyncConnection implements DatabaseConnection {
 
     return {
       insertId: result.insertId ? BigInt(result.insertId!) : undefined,
-      numAffectedRows: BigInt(result.rowsAffected),
+      numAffectedRows: BigInt(result.rowsAffected ?? 0),
       rows: result.rows?._array ?? []
     };
   }

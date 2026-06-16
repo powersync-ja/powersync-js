@@ -8,7 +8,8 @@ import {
   SqlExecutor,
   DBGetUtilsDefaultMixin,
   BatchedUpdateNotification,
-  SQLOpenOptions
+  SQLOpenOptions,
+  RawResultSet
 } from '@powersync/common';
 import { SharedConnectionWorker, WebDBAdapterConfiguration } from '../WebDBAdapter.js';
 import { ClientConnectionView } from './DatabaseServer.js';
@@ -190,7 +191,7 @@ export class DatabaseClient<Config extends SQLOpenOptions = WebDBAdapterConfigur
  * While an instance is active, it has exclusive access to the underlying database connection (as represented by its
  * token).
  */
-class ClientSqlExecutor implements SqlExecutor {
+class ClientSqlExecutor implements Omit<SqlExecutor, 'execute'> {
   readonly #connection: ConnectionState;
   readonly #token: string;
 
@@ -223,37 +224,13 @@ class ClientSqlExecutor implements SqlExecutor {
     }
   }
 
-  async execute(query: string, params?: any[] | undefined): Promise<QueryResult> {
-    const rs = await this.#executeOnWorker(query, params);
-    let rows: QueryResult['rows'] | undefined;
-    if (rs.resultSet) {
-      const resultSet = rs.resultSet;
-
-      function rowToJavaScriptObject(row: any[]): Record<string, any> {
-        const obj: Record<string, any> = {};
-        resultSet.columns.forEach((key, idx) => (obj[key] = row[idx]));
-        return obj;
-      }
-
-      const mapped = resultSet.rows.map(rowToJavaScriptObject);
-
-      rows = {
-        _array: mapped,
-        length: mapped.length,
-        item: (idx: number) => mapped[idx]
-      };
-    }
-
+  async executeRaw(query: string, params?: any[] | undefined): Promise<QueryResult<RawResultSet>> {
+    const { resultSet, lastInsertRowId, changes } = await this.#executeOnWorker(query, params);
     return {
-      rowsAffected: rs.changes,
-      insertId: rs.lastInsertRowId,
-      rows
+      rowsAffected: changes,
+      insertId: lastInsertRowId,
+      rows: resultSet
     };
-  }
-
-  async executeRaw(query: string, params?: any[] | undefined): Promise<any[][]> {
-    const rs = await this.#executeOnWorker(query, params);
-    return rs.resultSet?.rows ?? [];
   }
 
   async #executeOnWorker(query: string, params: any[] | undefined): Promise<RawQueryResult> {
@@ -271,7 +248,7 @@ class ClientSqlExecutor implements SqlExecutor {
     const result: QueryResult = { insertId: undefined, rowsAffected: 0 };
     for (const source of results) {
       result.insertId = source.lastInsertRowId;
-      result.rowsAffected += source.changes;
+      result.rowsAffected = (result.rowsAffected ?? 0) + source.changes;
     }
 
     return result;

@@ -124,7 +124,7 @@ export class PowerSyncSQLitePreparedQuery<
     this.logger.logQuery(this.query.sql, params);
 
     return await this.useContext(async (ctx) => {
-      return await ctx.executeRaw(this.query.sql, params);
+      return (await ctx.executeRaw(this.query.sql, params)).rows!.rawRows;
     });
   }
 

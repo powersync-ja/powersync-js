@@ -2,6 +2,7 @@ import type { Database } from 'better-sqlite3';
 import { AsyncDatabase, AsyncDatabaseOpenOptions } from './AsyncDatabase.js';
 import { PowerSyncWorkerOptions } from './SqliteWorker.js';
 import { threadId } from 'node:worker_threads';
+import { QueryResult, RawResultSet, SqliteValue } from '@powersync/common';
 
 class BlockingAsyncDatabase implements AsyncDatabase {
   private readonly db: Database;
@@ -16,15 +17,16 @@ class BlockingAsyncDatabase implements AsyncDatabase {
     this.db.close();
   }
 
-  async execute(query: string, params: any[]) {
+  async executeRaw(query: string, params: any[]): Promise<QueryResult<RawResultSet>> {
     const stmt = this.db.prepare(query);
     if (stmt.reader) {
+      stmt.raw();
       const rows = stmt.all(params);
       return {
         rowsAffected: 0,
         rows: {
-          _array: rows,
-          length: rows.length
+          columnNames: stmt.columns().map((c) => c.name),
+          rawRows: rows as SqliteValue[][]
         }
       };
     } else {
@@ -33,17 +35,6 @@ class BlockingAsyncDatabase implements AsyncDatabase {
         rowsAffected: info.changes,
         insertId: Number(info.lastInsertRowid)
       };
-    }
-  }
-
-  async executeRaw(query: string, params: any[]) {
-    const stmt = this.db.prepare(query);
-
-    if (stmt.reader) {
-      return stmt.raw().all(params) as any[][];
-    } else {
-      stmt.raw().run(params);
-      return [];
     }
   }
 

@@ -7,9 +7,10 @@ import {
   DBLockOptions,
   LockContext,
   QueryResult,
+  RawResultSet,
   SqlExecutor
 } from '@powersync/common';
-import { ExecuteBatchResult, ExecuteSqlResult, powersyncCommand, SqliteValue } from './command';
+import { ExecuteBatchResult, ExecuteSqlResult, powersyncCommand } from './command';
 
 /**
  *  A handle identfier that is set by an outer context after constructing the rust database instance.
@@ -69,7 +70,7 @@ class RustDatabase extends BaseObserver<DBAdapterListener> implements Connection
  */
 export class RustDatabaseAdapter extends DBAdapterDefaultMixin(RustDatabase) {}
 
-class RustSqlExecutor implements SqlExecutor {
+class RustSqlExecutor implements Omit<SqlExecutor, 'execute'> {
   constructor(readonly handle: number) {}
 
   private async executeInner(query: string, params: any[]) {
@@ -91,34 +92,17 @@ class RustSqlExecutor implements SqlExecutor {
     };
   }
 
-  async execute(query: string, params?: any[] | undefined): Promise<QueryResult> {
-    const { rows, columnNames, insertId, rowsAffected } = await this.executeInner(query, params ?? []);
-    const mappedRows = rows.map((row) => {
-      const names = columnNames;
-      const record: Record<string, SqliteValue> = {};
-      for (let i = 0; i < names.length; i++) {
-        record[names[i]] = row[i];
-      }
-
-      return record;
-    });
+  async executeRaw(query: string, params?: any[] | undefined): Promise<QueryResult<RawResultSet>> {
+    const { rows, insertId, rowsAffected, columnNames } = await this.executeInner(query, params ?? []);
 
     return {
-      insertId,
       rowsAffected,
+      insertId,
       rows: {
-        _array: mappedRows,
-        length: mappedRows.length,
-        item(idx) {
-          return mappedRows[idx];
-        }
+        columnNames,
+        rawRows: rows
       }
     };
-  }
-
-  async executeRaw(query: string, params?: any[] | undefined): Promise<any[][]> {
-    const { rows } = await this.executeInner(query, params ?? []);
-    return rows ?? [];
   }
 
   async executeBatch(query: string, params?: any[][]): Promise<QueryResult> {

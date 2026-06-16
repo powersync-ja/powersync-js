@@ -10,7 +10,9 @@ import {
   DBAdapterListener,
   DBLockOptions,
   LockContext,
-  QueryResult
+  QueryResult,
+  RawResultSet,
+  ResultSet
 } from '@powersync/web';
 import { Mutex, timeoutSignal } from '@powersync/shared-internals';
 import { PowerSyncCore } from '../plugin/PowerSyncCore.js';
@@ -156,7 +158,36 @@ class CapacitorConnectionPool extends BaseObserver<DBAdapterListener> implements
   }
 
   protected generateLockContext(db: SQLiteDBConnection): LockContext {
-    const _query = async (query: string, params: any[] = []) => {
+    function asResultSet(rows: any[]): ResultSet {
+      let cachedColumnNames: string[] | undefined;
+      let cachedRawRows: any[][];
+
+      return {
+        get columnNames() {
+          if (cachedColumnNames == null) {
+            cachedColumnNames = rows.length > 0 ? Object.keys(rows[0]) : [];
+          }
+
+          return cachedColumnNames;
+        },
+        get rawRows() {
+          if (cachedRawRows == null) {
+            cachedRawRows = rows.map(Object.values);
+          }
+          return cachedRawRows;
+        },
+        length: rows.length,
+        _array: rows,
+        mapped: function <T>(): T[] {
+          return rows;
+        },
+        item: function <T>(idx: number): T {
+          return rows[idx];
+        }
+      };
+    }
+
+    const _query = async (query: string, params: any[] = []): Promise<QueryResult> => {
       const mappedParams = mapSQLiteParameterValues({
         platform: Capacitor.getPlatform(),
         values: params
@@ -165,11 +196,7 @@ class CapacitorConnectionPool extends BaseObserver<DBAdapterListener> implements
       const arrayResult = result.values ?? [];
       return {
         rowsAffected: 0,
-        rows: {
-          _array: arrayResult,
-          length: arrayResult.length,
-          item: (idx: number) => arrayResult[idx]
-        }
+        rows: asResultSet(arrayResult)
       };
     };
 
@@ -195,11 +222,7 @@ class CapacitorConnectionPool extends BaseObserver<DBAdapterListener> implements
         return {
           insertId: result.changes?.lastId,
           rowsAffected: result.changes?.changes ?? 0,
-          rows: {
-            _array: [],
-            length: 0,
-            item: () => null
-          }
+          rows: new ResultSet({ columnNames: [], rawRows: [] })
         };
       }
 
@@ -209,11 +232,7 @@ class CapacitorConnectionPool extends BaseObserver<DBAdapterListener> implements
       return {
         insertId: result.changes?.lastId,
         rowsAffected: result.changes?.changes ?? 0,
-        rows: {
-          _array: resultSet,
-          length: resultSet.length,
-          item: (idx) => resultSet[idx]
-        }
+        rows: asResultSet(resultSet)
       };
     };
 
@@ -243,12 +262,6 @@ class CapacitorConnectionPool extends BaseObserver<DBAdapterListener> implements
       return result;
     };
 
-    const executeRaw = async (query: string, params?: any[]): Promise<any[][]> => {
-      // This is a workaround, we don't support multiple columns of the same name
-      const results = await execute(query, params);
-      return results.rows?._array.map((row) => Object.values(row)) ?? [];
-    };
-
     const executeBatch = async (query: string, params: any[][] = []): Promise<QueryResult> => {
       const platform = Capacitor.getPlatform();
       let result = await db.executeSet(
@@ -272,7 +285,7 @@ class CapacitorConnectionPool extends BaseObserver<DBAdapterListener> implements
       getAll,
       getOptional,
       get,
-      executeRaw,
+      executeRaw: execute,
       execute,
       executeBatch
     };

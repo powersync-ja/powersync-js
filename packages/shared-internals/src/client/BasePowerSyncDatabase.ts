@@ -441,16 +441,14 @@ export abstract class BasePowerSyncDatabase<Options extends BasePowerSyncDatabas
   async getUploadQueueStats(includeSize?: boolean): Promise<UploadQueueStats> {
     return this.readTransaction(async (tx) => {
       if (includeSize) {
-        const result = await tx.execute(
+        const row = await tx.get<{ size: number; count: number }>(
           `SELECT SUM(cast(data as blob) + 20) as size, count(*) as count FROM ${PSInternalTable.CRUD}`
         );
 
-        const row = result.rows!.item(0);
-        return new UploadQueueStats(row?.count ?? 0, row?.size ?? 0);
+        return new UploadQueueStats(row.count ?? 0, row.size ?? 0);
       } else {
-        const result = await tx.execute(`SELECT count(*) as count FROM ${PSInternalTable.CRUD}`);
-        const row = result.rows!.item(0);
-        return new UploadQueueStats(row?.count ?? 0);
+        const { count } = await tx.get<{ count: number }>(`SELECT count(*) as count FROM ${PSInternalTable.CRUD}`);
+        return new UploadQueueStats(count ?? 0);
       }
     });
   }

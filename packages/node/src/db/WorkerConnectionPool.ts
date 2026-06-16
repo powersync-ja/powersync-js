@@ -119,7 +119,7 @@ export class WorkerConnectionPool extends BaseObserver<DBAdapterListener> implem
         implementation: this.options.implementation ?? defaultDatabaseImplementation
       })) as Remote<AsyncDatabase>;
       if (isWriter) {
-        await database.execute("SELECT powersync_update_hooks('install');", []);
+        await database.executeRaw("SELECT powersync_update_hooks('install');", []);
       }
 
       const connection = new RemoteConnection(worker, comlink, database, !isWriter);
@@ -174,8 +174,8 @@ export class WorkerConnectionPool extends BaseObserver<DBAdapterListener> implem
       try {
         return await fn(item);
       } finally {
-        const serializedUpdates = await item.executeRaw("SELECT powersync_update_hooks('get');", []);
-        const updates = JSON.parse(serializedUpdates[0][0] as string) as string[];
+        const { rows: serializedUpdates } = await item.executeRaw("SELECT powersync_update_hooks('get');", []);
+        const updates = JSON.parse(serializedUpdates!.rawRows[0][0] as string) as string[];
 
         if (updates.length > 0) {
           const event: BatchedUpdateNotification = {
