@@ -330,7 +330,7 @@ export abstract class AbstractRemote {
     let keepAliveTimeout: any;
     let rsocket: RSocket | null = null;
     let paused = false;
-    const queue = new EventQueue<Uint8Array>({
+    const queue = new EventQueue<Uint8Array | null>({
       eventDelivered: () => {
         if (queue.countOutstandingEvents <= SYNC_QUEUE_REQUEST_LOW_WATER) {
           paused = false;
@@ -358,6 +358,10 @@ export abstract class AbstractRemote {
       if (rsocket) {
         rsocket.close();
       }
+
+      // Send a bogus event to the queue to ensure a pending listener gets woken up. We check for didClose and would
+      // return a doneEvent.
+      queue.notify(null);
     };
 
     function push(event: Uint8Array) {
@@ -437,6 +441,8 @@ export abstract class AbstractRemote {
     return await new Promise((resolve, reject) => {
       const queueAsIterator: SimpleAsyncIterator<Uint8Array> = {
         next: async () => {
+          if (didClose) return doneResult;
+
           const notification = await queue.waitForEvent(options.abortSignal);
           if (didClose) {
             return doneResult;

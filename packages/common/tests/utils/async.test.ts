@@ -71,7 +71,33 @@ describe('event queue', () => {
   test('does not allow concurrent waits', async () => {
     const queue = new EventQueue<number>();
     queue.waitForEvent(neverAbort);
-    expect(() => queue.waitForEvent(neverAbort)).rejects.toThrow();
+    await expect(() => queue.waitForEvent(neverAbort)).rejects.toThrow();
+  });
+
+  test('calls eventDelivered after dispatching to a waiting consumer', async () => {
+    let deliveredCount = 0;
+    const queue = new EventQueue<number>({ eventDelivered: () => deliveredCount++ });
+
+    const waiter = queue.waitForEvent(neverAbort);
+    queue.notify(42);
+    await waiter;
+
+    expect(deliveredCount).toBe(1);
+  });
+
+  test('calls eventDelivered after dispatching a buffered event', async () => {
+    let deliveredCount = 0;
+    const queue = new EventQueue<number>({ eventDelivered: () => deliveredCount++ });
+
+    queue.notify(1);
+    queue.notify(2);
+    expect(deliveredCount).toBe(0); // not called until consumed
+
+    await queue.waitForEvent(neverAbort);
+    expect(deliveredCount).toBe(1);
+
+    await queue.waitForEvent(neverAbort);
+    expect(deliveredCount).toBe(2);
   });
 
   describe('queueBasedAsyncIterable', () => {

@@ -64,8 +64,6 @@ function checkNoIllegalAsyncIteratorUse() {
       if (code.includes('Symbol.asyncIterator')) {
         throw new Error(`${id} is not allowed to use Symbol.asyncIterator. Import compatibility.ts instead.`);
       }
-
-      return code;
     }
   };
 }
