@@ -1,5 +1,5 @@
 import {
-  AbstractPowerSyncDatabase,
+  CommonPowerSyncDatabase,
   BaseObserver,
   CrudEntry,
   PowerSyncBackendConnector,

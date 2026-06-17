@@ -1,6 +1,6 @@
 import { OPSqliteOpenFactory } from '@powersync/op-sqlite';
 import {
-  AbstractPowerSyncDatabase,
+  CommonPowerSyncDatabase,
   column,
   LockContext,
   PowerSyncDatabase,
@@ -54,7 +54,7 @@ const createDatabase = () => {
   });
 };
 
-let db: AbstractPowerSyncDatabase;
+let db: CommonPowerSyncDatabase;
 
 export function registerBaseTests() {
   describe('Raw queries', () => {

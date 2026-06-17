@@ -1,6 +1,6 @@
 import { usePowerSync, useStatus } from '@powersync/vue';
 import type {
-  AbstractPowerSyncDatabase,
+  CommonPowerSyncDatabase,
   PowerSyncBackendConnector,
   SyncOptions,
   SyncStatus,
@@ -10,6 +10,7 @@ import type { ComputedRef, Ref } from 'vue';
 import { ref, computed, readonly, onMounted, onUnmounted } from 'vue';
 import { computedAsync } from '@vueuse/core';
 import { usePowerSyncInspector } from './usePowerSyncInspector';
+import type { NuxtDatabaseImplementation } from '../utils/NuxtPowerSyncDatabase';
 
 // queries
 const BUCKETS_QUERY = `
@@ -105,7 +106,7 @@ type ReadonlyRef<T> = Readonly<Ref<T>>;
  * Uses named types so the signature stays readable in docs and IDE.
  */
 export interface UsePowerSyncInspectorDiagnosticsReturn {
-  db: Ref<AbstractPowerSyncDatabase> | undefined;
+  db: Ref<CommonPowerSyncDatabase> | undefined;
   connector: ComputedRef<PowerSyncBackendConnector | null>;
   connectionOptions: ComputedRef<SyncOptions | null>;
   isDiagnosticSchemaSetup: ReadonlyRef<boolean>;
@@ -235,7 +236,7 @@ function formatBytes(bytes: number, decimals = 2) {
  * ```
  */
 export function usePowerSyncInspectorDiagnostics(): UsePowerSyncInspectorDiagnosticsReturn {
-  const db = usePowerSync();
+  const db = usePowerSync() as Ref<NuxtDatabaseImplementation>;
 
   const syncStatus = useStatus();
   const { getCurrentSchemaManager } = usePowerSyncInspector();
@@ -247,12 +248,12 @@ export function usePowerSyncInspectorDiagnostics(): UsePowerSyncInspectorDiagnos
   const hasSynced = ref(syncStatus.value?.hasSynced || false);
   const isConnected = ref(syncStatus.value?.connected || false);
   const isSyncing = ref(false);
-  const isDownloading = ref(syncStatus.value?.dataFlowStatus.downloading || false);
+  const isDownloading = ref(syncStatus.value?.downloading || false);
   const isUploading = ref(syncStatus.value?.dataFlowStatus.uploading || false);
   const lastSyncedAt = ref<Date | null>(syncStatus.value?.lastSyncedAt || null);
   const uploadError = ref(syncStatus.value?.dataFlowStatus.uploadError || null);
   const downloadError = ref(syncStatus.value?.dataFlowStatus.downloadError || null);
-  const downloadProgressDetails = ref(syncStatus.value?.dataFlowStatus.downloadProgress || null);
+  const downloadProgressDetails = ref(syncStatus.value?.downloadProgress || null);
   const bucketRows = ref<null | BucketRow[]>(null);
   const tableRows = ref<null | TableRow[]>(null);
 
@@ -295,7 +296,7 @@ export function usePowerSyncInspectorDiagnostics(): UsePowerSyncInspectorDiagnos
 
   // functions
   const clearData = async () => {
-    await db.value?.syncStreamImplementation?.disconnect();
+    await db.value?.disconnect();
     const connector = db.value.connector;
     const connectionOptions = db.value.connectionOptions as SyncOptions;
     await db.value?.disconnectAndClear();
@@ -313,7 +314,7 @@ export function usePowerSyncInspectorDiagnostics(): UsePowerSyncInspectorDiagnos
 
       uploadQueueStats.value = await db.value?.getUploadQueueStats(true);
 
-      if (synced_at != null && !syncStatus.value?.dataFlowStatus.downloading) {
+      if (synced_at != null && !syncStatus.value?.downloading) {
         // These are potentially expensive queries - do not run during initial sync
         bucketRows.value = await db.value.getAll(BUCKETS_QUERY);
         tableRows.value = await db.value.getAll(TABLES_QUERY);
@@ -342,12 +343,12 @@ export function usePowerSyncInspectorDiagnostics(): UsePowerSyncInspectorDiagnos
         // Update reactive status
         hasSynced.value = !!newStatus.hasSynced;
         isConnected.value = !!newStatus.connected;
-        isDownloading.value = !!newStatus.dataFlowStatus.downloading;
+        isDownloading.value = !!newStatus.downloading;
         isUploading.value = !!newStatus.dataFlowStatus.uploading;
         lastSyncedAt.value = newStatus.lastSyncedAt || null;
         uploadError.value = newStatus.dataFlowStatus.uploadError || null;
         downloadError.value = newStatus.dataFlowStatus.downloadError || null;
-        downloadProgressDetails.value = newStatus.dataFlowStatus.downloadProgress || null;
+        downloadProgressDetails.value = newStatus.downloadProgress || null;
 
         if (
           newStatus?.hasSynced === undefined ||
@@ -356,7 +357,7 @@ export function usePowerSyncInspectorDiagnostics(): UsePowerSyncInspectorDiagnos
           hasSynced.value = newStatus?.priorityStatusEntries.every((entry) => entry.hasSynced) ?? false;
         }
 
-        if (newStatus?.dataFlowStatus.downloading || newStatus?.dataFlowStatus.uploading) {
+        if (newStatus?.downloading || newStatus?.dataFlowStatus.uploading) {
           isSyncing.value = true;
         } else {
           isSyncing.value = false;

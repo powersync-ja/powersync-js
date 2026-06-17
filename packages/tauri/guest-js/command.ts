@@ -1,4 +1,5 @@
-import { SyncStatusOptions, SyncStreamDescription, SyncStreamSubscribeOptions } from '@powersync/common';
+import { SyncStreamDescription, SyncStreamSubscribeOptions } from '@powersync/common';
+import { SyncStatusJson } from '@powersync/shared-internals';
 import { invoke } from '@tauri-apps/api/core';
 
 export interface OpenDatabase {
@@ -67,7 +68,7 @@ export type CommandResult =
   | { CreatedHandle: number }
   | { ExecuteSqlResult: ExecuteSqlResult }
   | { ExecuteBatchResult: ExecuteBatchResult }
-  | { SyncStatus: SyncStatusOptions }
+  | { SyncStatus: SyncStatusJson }
   | 'Void';
 
 export async function powersyncCommand(command: Command): Promise<CommandResult> {

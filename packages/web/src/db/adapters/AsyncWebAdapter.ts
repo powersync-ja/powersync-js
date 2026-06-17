@@ -3,11 +3,9 @@ import {
   DBAdapterDefaultMixin,
   DBAdapterListener,
   DBLockOptions,
-  LockContext,
-  Mutex,
-  Semaphore,
-  UnlockFn
+  LockContext
 } from '@powersync/common';
+import { Mutex, Semaphore, UnlockFn } from '@powersync/shared-internals';
 import { SharedConnectionWorker, WebDBAdapter, WebDBAdapterConfiguration } from './WebDBAdapter.js';
 import { DatabaseClient } from './wa-sqlite/DatabaseClient.js';
 

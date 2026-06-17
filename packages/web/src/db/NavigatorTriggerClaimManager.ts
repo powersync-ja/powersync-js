@@ -1,4 +1,4 @@
-import { TriggerClaimManager } from '@powersync/common';
+import { TriggerClaimManager } from '@powersync/shared-internals';
 import { getNavigatorLocks } from '../shared/navigator.js';
 
 /**

@@ -1,15 +1,19 @@
-import { LogLevels, PowerSyncLogger } from '../utils/Logger.js';
-import { SyncStatus } from '../db/crud/SyncStatus.js';
-import { BaseListener, BaseObserver } from '../utils/BaseObserver.js';
-import { PowerSyncBackendConnector } from './connection/PowerSyncBackendConnector.js';
-import { StreamingSyncImplementation, SubscribedStream } from './sync/stream/AbstractStreamingSyncImplementation.js';
 import {
+  BaseObserver,
+  LogLevels,
+  PowerSyncLogger,
+  SyncStatus,
+  BaseListener,
+  PowerSyncBackendConnector,
   SyncStream,
   SyncStreamDescription,
   SyncStreamSubscribeOptions,
-  SyncStreamSubscription
-} from './sync/sync-streams.js';
-import { ResolvedSyncOptions, resolveSyncOptions, SyncOptions } from './sync/options.js';
+  SyncStreamSubscription,
+  SyncOptions
+} from '@powersync/common';
+
+import { StreamingSyncImplementation, SubscribedStream } from './sync/stream/AbstractStreamingSyncImplementation.js';
+import { ResolvedSyncOptions, resolveSyncOptions } from './sync/options.js';
 
 /**
  * @internal

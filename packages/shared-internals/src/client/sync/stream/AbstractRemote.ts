@@ -1,9 +1,9 @@
 import { type fetch } from 'cross-fetch';
 import { Requestable, RSocket, RSocketConnector } from 'rsocket-core';
 import PACKAGE from '../../../../package.json' with { type: 'json' };
+import { FetchStrategy, PowerSyncCredentials, LogLevels, PowerSyncLogger } from '@powersync/common';
+
 import { AbortOperation } from '../../../utils/AbortOperation.js';
-import { LogLevels, PowerSyncLogger } from '../../../utils/Logger.js';
-import { PowerSyncCredentials } from '../../connection/PowerSyncCredentials.js';
 import { WebsocketClientTransport } from './WebsocketClientTransport.js';
 import {
   doneResult,
@@ -13,7 +13,6 @@ import {
   valueResult
 } from '../../../utils/stream_transform.js';
 import { EventQueue } from '../../../utils/async.js';
-import { FetchStrategy } from '../options.js';
 
 /**
  * @internal

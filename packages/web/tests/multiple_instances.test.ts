@@ -1,5 +1,5 @@
 import {
-  AbstractPowerSyncDatabase,
+  CommonPowerSyncDatabase,
   createConsoleLogger,
   DBAdapterDefaultMixin,
   LogLevels,
@@ -27,7 +27,7 @@ describe('Multiple Instances', { sequential: true }, () => {
       schema: TEST_SCHEMA
     });
 
-  function createAsset(powersync: AbstractPowerSyncDatabase) {
+  function createAsset(powersync: CommonPowerSyncDatabase) {
     return powersync.execute('INSERT INTO assets(id, description) VALUES(uuid(), ?)', ['test']);
   }
 

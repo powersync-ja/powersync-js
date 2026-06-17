@@ -1,4 +1,4 @@
-import { AbstractPowerSyncDatabase } from '../client/AbstractPowerSyncDatabase.js';
+import { CommonPowerSyncDatabase } from '../client/CommonPowerSyncDatabase.js';
 import { DifferentialWatchedQuery } from '../client/watched/processors/DifferentialQueryProcessor.js';
 import { PowerSyncLogger, LogLevels } from '../utils/Logger.js';
 import { Mutex } from '../utils/mutex.js';
@@ -11,15 +11,16 @@ import { AttachmentRecord, AttachmentState } from './Schema.js';
  * @internal
  */
 export class AttachmentService {
-  private mutex = new Mutex();
+  private mutex: Mutex;
   private context: AttachmentContext;
 
   constructor(
-    private db: AbstractPowerSyncDatabase,
+    private db: CommonPowerSyncDatabase,
     private logger: PowerSyncLogger,
     private tableName: string = 'attachments',
     archivedCacheLimit: number = 100
   ) {
+    this.mutex = db.createMutex();
     this.context = new AttachmentContext(db, tableName, logger, archivedCacheLimit);
   }
 

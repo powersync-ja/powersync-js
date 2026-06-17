@@ -1,15 +1,22 @@
-import { LogLevels, PowerSyncLogger } from '../../../utils/Logger.js';
-import { DBAdapter, extractTableUpdates, Transaction } from '../../../db/DBAdapter.js';
-import { BaseObserver } from '../../../utils/BaseObserver.js';
-import { MAX_OP_ID } from '../../constants.js';
+import {
+  BaseObserver,
+  LogLevels,
+  PowerSyncLogger,
+  DBAdapter,
+  extractTableUpdates,
+  Transaction,
+  CrudEntry,
+  CrudBatch
+} from '@powersync/common';
+
 import {
   BucketStorageAdapter,
   BucketStorageListener,
   PowerSyncControlCommand,
   PSInternalTable
 } from './BucketStorageAdapter.js';
-import { CrudBatch } from './CrudBatch.js';
-import { CrudEntry, CrudEntryJSON } from './CrudEntry.js';
+import { CrudEntryImpl, CrudEntryJSON } from './CrudEntry.js';
+import { MAX_OP_ID } from '../../../constants.js';
 
 /**
  * @internal
@@ -125,7 +132,7 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
     if (!next) {
       return;
     }
-    return CrudEntry.fromRow(next);
+    return CrudEntryImpl.fromRow(next);
   }
 
   async hasCrud(): Promise<boolean> {
@@ -146,7 +153,7 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
 
     const all: CrudEntry[] = [];
     for (const row of crudResult) {
-      all.push(CrudEntry.fromRow(row));
+      all.push(CrudEntryImpl.fromRow(row));
     }
 
     if (all.length === 0) {

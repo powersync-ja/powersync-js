@@ -22,43 +22,11 @@ export enum UpdateType {
 }
 
 /**
- * @internal
- */
-export type CrudEntryJSON = {
-  id: string;
-  data: string;
-  tx_id?: number;
-};
-
-type CrudEntryDataJSON = {
-  data: Record<string, any>;
-  old?: Record<string, any>;
-  op: UpdateType;
-  type: string;
-  id: string;
-  metadata?: string;
-};
-
-/**
- * The output JSON seems to be a third type of JSON, not the same as the input JSON.
- */
-type CrudEntryOutputJSON = {
-  op_id: number;
-  op: UpdateType;
-  type: string;
-  id: string;
-  tx_id?: number;
-  data?: Record<string, any>;
-  old?: Record<string, any>;
-  metadata?: string;
-};
-
-/**
  * A single client-side change.
  *
  * @public
  */
-export class CrudEntry {
+export interface CrudEntry {
   /**
    * Auto-incrementing client-side id.
    */
@@ -99,83 +67,15 @@ export class CrudEntry {
    */
   metadata?: string;
 
-  static fromRow(dbRow: CrudEntryJSON) {
-    const data: CrudEntryDataJSON = JSON.parse(dbRow.data);
-    return new CrudEntry(
-      parseInt(dbRow.id),
-      data.op,
-      data.type,
-      data.id,
-      dbRow.tx_id,
-      data.data,
-      data.old,
-      data.metadata
-    );
-  }
-
-  constructor(
-    clientId: number,
-    op: UpdateType,
-    table: string,
-    id: string,
-    transactionId?: number,
-    opData?: Record<string, any>,
-    previousValues?: Record<string, any>,
-    metadata?: string
-  ) {
-    this.clientId = clientId;
-    this.id = id;
-    this.op = op;
-    this.opData = opData;
-    this.table = table;
-    this.transactionId = transactionId;
-    this.previousValues = previousValues;
-    this.metadata = metadata;
-  }
-
   /**
    * Converts the change to JSON format.
    */
-  toJSON(): CrudEntryOutputJSON {
-    return {
-      op_id: this.clientId,
-      op: this.op,
-      type: this.table,
-      id: this.id,
-      tx_id: this.transactionId,
-      data: this.opData,
-      old: this.previousValues,
-      metadata: this.metadata
-    };
-  }
+  toJSON(): unknown;
 
-  equals(entry: CrudEntry) {
-    return JSON.stringify(this.toComparisonArray()) == JSON.stringify(entry.toComparisonArray());
-  }
-
-  /**
-   * The hash code for this object.
-   * @deprecated This should not be necessary in the JS SDK.
-   * Use the  @see CrudEntry#equals method instead.
-   * TODO remove in the next major release.
-   */
-  hashCode() {
-    return JSON.stringify(this.toComparisonArray());
-  }
+  equals(entry: CrudEntry): boolean;
 
   /**
    * Generates an array for use in deep comparison operations
    */
-  toComparisonArray() {
-    return [
-      this.transactionId,
-      this.clientId,
-      this.op,
-      this.table,
-      this.id,
-      this.opData,
-      this.previousValues,
-      this.metadata
-    ];
-  }
+  toComparisonArray(): unknown[];
 }

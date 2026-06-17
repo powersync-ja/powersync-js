@@ -77,17 +77,9 @@ function AppSidebar() {
       <Sidebar variant="inset" collapsible="icon">
         <SidebarHeader className={cn('p-4', !open && 'p-2')}>
           {open ? (
-            <img
-              alt="PowerSync Logo"
-              className="w-full max-w-[180px] object-contain"
-              src="/powersync-logo.svg"
-            />
+            <img alt="PowerSync Logo" className="w-full max-w-[180px] object-contain" src="/powersync-logo.svg" />
           ) : (
-            <img
-              alt="PowerSync"
-              className="w-8 h-8 object-contain rounded-[20%]"
-              src="/icons/icon-192x192.png"
-            />
+            <img alt="PowerSync" className="w-8 h-8 object-contain rounded-[20%]" src="/icons/icon-192x192.png" />
           )}
         </SidebarHeader>
         <Separator className={cn('bg-sidebar-border', !open ? 'mx-1' : 'mx-2')} />
@@ -97,8 +89,7 @@ function AppSidebar() {
               <SidebarMenu>
                 {NAVIGATION_ITEMS.map((item) => {
                   const Icon = item.icon;
-                  const isActive =
-                    location.pathname === item.path || location.pathname.startsWith(item.path + '/');
+                  const isActive = location.pathname === item.path || location.pathname.startsWith(item.path + '/');
                   return (
                     <SidebarMenuItem key={item.path}>
                       <SidebarMenuButton
@@ -121,9 +112,7 @@ function AppSidebar() {
             <SidebarGroupContent>
               <SidebarMenu>
                 <SidebarMenuItem>
-                  <SidebarMenuButton
-                    tooltip={!open ? 'Sign Out' : undefined}
-                    onClick={() => setShowLogoutDialog(true)}>
+                  <SidebarMenuButton tooltip={!open ? 'Sign Out' : undefined} onClick={() => setShowLogoutDialog(true)}>
                     <LogOut />
                     <span>Sign Out</span>
                   </SidebarMenuButton>
@@ -166,44 +155,41 @@ function AuthenticatedLayout() {
         <AppSidebar />
 
         <SidebarInset>
-        {/* Top Bar */}
-        <header className="sticky top-0 z-40 flex h-14 items-center gap-2 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4">
-          <div className="flex-1 min-w-0">
-            <h1 className="text-lg font-semibold truncate">{title}</h1>
-          </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <ArrowUp
-              className={cn(
-                'h-5 w-5 -mr-2.5',
-                syncStatus?.dataFlowStatus.uploading ? 'text-primary' : 'text-muted-foreground'
+          {/* Top Bar */}
+          <header className="sticky top-0 z-40 flex h-14 items-center gap-2 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-lg font-semibold truncate">{title}</h1>
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <ArrowUp
+                className={cn(
+                  'h-5 w-5 -mr-2.5',
+                  syncStatus?.dataFlowStatus.uploading ? 'text-primary' : 'text-muted-foreground'
+                )}
+              />
+              <ArrowDown
+                className={cn('h-5 w-5', syncStatus?.downloading ? 'text-primary' : 'text-muted-foreground')}
+              />
+              {syncStatus?.connected ? (
+                <Wifi className="h-5 w-5" />
+              ) : (
+                <span title={syncError?.message ?? 'Not connected'}>
+                  <WifiOff className="h-5 w-5" />
+                </span>
               )}
-            />
-            <ArrowDown
-              className={cn(
-                'h-5 w-5',
-                syncStatus?.dataFlowStatus.downloading ? 'text-primary' : 'text-muted-foreground'
-              )}
-            />
-            {syncStatus?.connected ? (
-              <Wifi className="h-5 w-5" />
-            ) : (
-              <span title={syncError?.message ?? 'Not connected'}>
-                <WifiOff className="h-5 w-5" />
-              </span>
-            )}
-          </div>
-        </header>
+            </div>
+          </header>
 
-        {/* Main Content Area - min-w-0 so wide table content scrolls inside DataTable, not the whole page */}
-        <main className="flex-1 min-w-0 overflow-x-hidden p-4 md:p-6">
-          {syncError ? (
-            <Alert variant="destructive" className="mb-4">
-              <AlertDescription>Sync error detected: {syncError.message}</AlertDescription>
-            </Alert>
-          ) : null}
-          <Outlet />
-        </main>
-      </SidebarInset>
+          {/* Main Content Area - min-w-0 so wide table content scrolls inside DataTable, not the whole page */}
+          <main className="flex-1 min-w-0 overflow-x-hidden p-4 md:p-6">
+            {syncError ? (
+              <Alert variant="destructive" className="mb-4">
+                <AlertDescription>Sync error detected: {syncError.message}</AlertDescription>
+              </Alert>
+            ) : null}
+            <Outlet />
+          </main>
+        </SidebarInset>
       </SidebarProvider>
     </InspectorProvider>
   );
