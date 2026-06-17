@@ -1,5 +1,5 @@
-import { AbstractPowerSyncDatabase, Column, ColumnType, Schema, Table } from '@powersync/web';
-import type { SyncDataBucketJSON } from '@powersync/common/internal/sync_protocol';
+import { CommonPowerSyncDatabase, Column, ColumnType, Schema, Table } from '@powersync/web';
+import type { SyncDataBucketJSON } from '@powersync/shared-internals/internal/sync_protocol';
 import { AppSchema } from './AppSchema';
 import { JsSchemaGenerator } from './JsSchemaGenerator';
 import { localStateDb } from './LocalStateManager';
@@ -14,7 +14,7 @@ export class DynamicSchemaManager {
   private tables: Record<string, Record<string, ColumnType>> = {};
   private dirty = false;
   private refreshTimeout: ReturnType<typeof setTimeout> | null = null;
-  private pendingDb: AbstractPowerSyncDatabase | null = null;
+  private pendingDb: CommonPowerSyncDatabase | null = null;
 
   /**
    * Load dynamic schema from local DB. Call after localStateDb is initialized (e.g. before connect).
@@ -88,7 +88,7 @@ export class DynamicSchemaManager {
    * Apply schema to db. Debounced so we don't call db.updateSchema() on every sync batch
    * (updateFromOperations can fire many times per second during sync).
    */
-  async refreshSchema(db: AbstractPowerSyncDatabase) {
+  async refreshSchema(db: CommonPowerSyncDatabase) {
     if (!this.dirty) return;
     this.pendingDb = db;
     if (this.refreshTimeout != null) return;
@@ -105,7 +105,7 @@ export class DynamicSchemaManager {
   }
 
   /** Call when refresh must run immediately (e.g. after connect). */
-  async refreshSchemaNow(db: AbstractPowerSyncDatabase) {
+  async refreshSchemaNow(db: CommonPowerSyncDatabase) {
     if (this.refreshTimeout != null) {
       clearTimeout(this.refreshTimeout);
       this.refreshTimeout = null;

@@ -4,7 +4,7 @@ import {
   LockOptions,
   LockType,
   Mutex
-} from '@powersync/common';
+} from '@powersync/shared-internals';
 
 /**
  * Global locks which prevent multiple instances from syncing

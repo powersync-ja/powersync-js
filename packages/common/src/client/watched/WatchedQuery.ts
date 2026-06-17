@@ -1,7 +1,7 @@
 import { CompiledQuery } from '../../types/types.js';
 import { BaseListener } from '../../utils/BaseObserver.js';
 import { MetaBaseObserverInterface } from '../../utils/MetaBaseObserver.js';
-import { AbstractPowerSyncDatabase } from '../AbstractPowerSyncDatabase.js';
+import { CommonPowerSyncDatabase } from '../CommonPowerSyncDatabase.js';
 
 /**
  * State for {@link WatchedQuery} instances.
@@ -41,7 +41,7 @@ export interface WatchedQueryState<Data> {
 export interface WatchExecuteOptions {
   sql: string;
   parameters: any[];
-  db: AbstractPowerSyncDatabase;
+  db: CommonPowerSyncDatabase;
 }
 
 /**
@@ -95,19 +95,6 @@ export interface WatchedQueryListener<Data> extends BaseListener {
   [WatchedQueryListenerEvent.SETTINGS_WILL_UPDATE]?: () => void;
   [WatchedQueryListenerEvent.CLOSED]?: () => void | Promise<void>;
 }
-
-/**
- * @internal
- */
-export const DEFAULT_WATCH_THROTTLE_MS = 30;
-
-/**
- * @internal
- */
-export const DEFAULT_WATCH_QUERY_OPTIONS: WatchedQueryOptions = {
-  throttleMs: DEFAULT_WATCH_THROTTLE_MS,
-  reportFetching: true
-};
 
 /**
  * @public

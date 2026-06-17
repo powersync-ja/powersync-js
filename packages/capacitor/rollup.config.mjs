@@ -4,6 +4,7 @@ const external = [
   '@capacitor/core',
   '@capacitor-community/sqlite',
   '@powersync/common',
+  '@powersync/shared-internals',
   '@powersync/web',
   '@journeyapps/wa-sqlite'
 ];

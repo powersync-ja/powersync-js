@@ -2,10 +2,9 @@ import {
   type CompilableQuery,
   DifferentialWatchedQueryComparator,
   LogLevels,
-  ParsedQuery,
-  parseQuery,
   SQLOnChangeOptions
 } from '@powersync/common';
+import { ParsedQuery, parseQuery } from '@powersync/shared-internals';
 import { type MaybeRef, type Ref, ref, toValue, watchEffect } from 'vue';
 import { usePowerSync } from './powerSync.js';
 import { QuerySyncStreamOptions } from './useAllSyncStreamsHaveSynced.js';

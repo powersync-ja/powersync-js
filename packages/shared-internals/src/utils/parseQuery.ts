@@ -1,4 +1,4 @@
-import type { CompilableQuery } from '../types/types.js';
+import { CompilableQuery } from '@powersync/common';
 
 /**
  * @internal

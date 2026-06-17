@@ -1,13 +1,14 @@
+import { PowerSyncLogger } from '@powersync/common';
 import {
   AbstractRemote,
   AbstractRemoteOptions,
   FetchImplementation,
   FetchImplementationProvider,
-  PowerSyncLogger,
   RemoteConnector,
-  SimpleAsyncIterator,
   SocketSyncStreamOptions
-} from '@powersync/common';
+} from '@powersync/shared-internals';
+
+import { SimpleAsyncIterator } from '@powersync/shared-internals';
 import { type BSON } from 'bson';
 import { MockSyncService, setupMockServiceMessageHandler } from '../utils/MockSyncServiceWorker.js';
 
