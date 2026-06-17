@@ -64,7 +64,7 @@
     "@powersync/common": "workspace:*",
     "@rollup/plugin-commonjs": "^25.0.7",
     "@rollup/plugin-node-resolve": "15.2.3",
-    "@rollup/plugin-typescript": "^11.1.6",
+    "@rollup/plugin-typescript": "^12.3.0",
     "@dr.pogodin/react-native-fs": "^2.36.1",
     "expo-file-system": "^19.0.21",
     "rollup": "4.14.3",

@@ -1,18 +1,20 @@
 import {
-  PowerSyncDatabase,
+  WebPowerSyncDatabase,
   Schema,
   SharedWebStreamingSyncImplementation,
   WebRemote,
   WebStreamingSyncImplementation,
   type DisconnectAndClearOptions,
   type PowerSyncBackendConnector,
-  type StreamingSyncImplementation,
   type WebPowerSyncDatabaseOptions,
   type WebDBAdapter,
   LogLevels,
-  type CreateSyncImplementationOptions,
-  type SyncOptions
+  type SyncOptions,
+  type CommonPowerSyncDatabase,
+  type PowerSyncDatabaseConstructor,
+  PowerSyncDatabase
 } from '@powersync/web';
+import { type StreamingSyncImplementation, type CreateSyncImplementationOptions } from '@powersync/shared-internals';
 import type { DynamicSchemaManager } from './DynamicSchemaManager';
 import { usePowerSyncInspector } from '../composables/usePowerSyncInspector';
 import { useDiagnosticsLogger } from '../composables/useDiagnosticsLogger';
@@ -21,32 +23,7 @@ import { shallowRef, type ShallowRef } from 'vue';
 import { useRuntimeConfig } from '#app';
 import { RustClientInterceptor } from './RustClientInterceptor';
 
-/**
- * An extended PowerSync database class that includes diagnostic capabilities for use with the PowerSync Inspector.
- *
- * This class automatically configures diagnostics when `useDiagnostics: true` is set in the module configuration.
- * It provides enhanced VFS support, schema management, and logging capabilities for the inspector.
- *
- * @example
- * ```typescript
- * import { NuxtPowerSyncDatabase } from '@powersync/nuxt'
- *
- * const db = new NuxtPowerSyncDatabase({
- *   database: {
- *     dbFilename: 'your-db-filename.sqlite',
- *   },
- *   schema: yourSchema,
- * })
- * ```
- *
- * @remarks
- * - When diagnostics are enabled, automatically uses cooperative sync VFS for improved compatibility
- * - Stores connector internally for inspector access
- * - Integrates with dynamic schema management for inspector features
- * - Automatically configures logging when diagnostics are enabled
- * - When diagnostics are disabled, behaves like a standard `PowerSyncDatabase`
- */
-export class NuxtPowerSyncDatabase extends PowerSyncDatabase {
+export class NuxtDatabaseImplementation extends WebPowerSyncDatabase {
   private schemaManager!: DynamicSchemaManager;
   private _connector: PowerSyncBackendConnector | null = null;
   private useDiagnostics: boolean = false;
@@ -159,3 +136,33 @@ export class NuxtPowerSyncDatabase extends PowerSyncDatabase {
     await super.disconnectAndClear(options);
   }
 }
+
+/**
+ * An extended PowerSync database class that includes diagnostic capabilities for use with the PowerSync Inspector.
+ *
+ * This class automatically configures diagnostics when `useDiagnostics: true` is set in the module configuration.
+ * It provides enhanced VFS support, schema management, and logging capabilities for the inspector.
+ *
+ * @example
+ * ```typescript
+ * import { NuxtPowerSyncDatabase } from '@powersync/nuxt'
+ *
+ * const db = new NuxtPowerSyncDatabase({
+ *   database: {
+ *     dbFilename: 'your-db-filename.sqlite',
+ *   },
+ *   schema: yourSchema,
+ * })
+ * ```
+ *
+ * @remarks
+ * - When diagnostics are enabled, automatically uses cooperative sync VFS for improved compatibility
+ * - Stores connector internally for inspector access
+ * - Integrates with dynamic schema management for inspector features
+ * - Automatically configures logging when diagnostics are enabled
+ * - When diagnostics are disabled, behaves like a standard `PowerSyncDatabase`
+ */
+export const NuxtPowerSyncDatabase: PowerSyncDatabaseConstructor<WebPowerSyncDatabaseOptions> =
+  NuxtDatabaseImplementation;
+
+export interface NuxtPowerSyncDatabase extends CommonPowerSyncDatabase {}

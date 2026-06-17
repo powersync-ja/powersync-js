@@ -1,7 +1,5 @@
 import {
-  AbortOperation,
   BaseObserver,
-  ConnectionManager,
   ConnectionPool,
   DBAdapter,
   DBAdapterDefaultMixin,
@@ -9,16 +7,20 @@ import {
   DBLockOptions,
   LockContext,
   PowerSyncBackendConnector,
+  SyncStatus,
+  LogLevels
+} from '@powersync/common';
+import {
+  AbortOperation,
+  ConnectionManager,
   SqliteBucketStorage,
   SubscribedStream,
-  SyncStatus,
-  Mutex,
   type StreamingSyncImplementation,
   type StreamingSyncImplementationListener,
-  type SyncStatusOptions,
-  LogLevels,
-  ResolvedSyncOptions
-} from '@powersync/common';
+  Mutex,
+  ResolvedSyncOptions,
+  SyncStatusSnapshot
+} from '@powersync/shared-internals';
 import * as Comlink from 'comlink';
 import { WebRemote } from '../../db/sync/WebRemote.js';
 import {
@@ -119,7 +121,7 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
   private subscriptions: SubscribedStream[] = [];
 
   protected connectionManager: ConnectionManager;
-  syncStatus: SyncStatus;
+  private syncStatus?: SyncStatusSnapshot;
   logger: BroadcastLogger;
   protected readonly database = this.generateReconnectableDatabase();
 
@@ -139,7 +141,6 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
       });
     });
 
-    this.syncStatus = new SyncStatus({});
     this.logger = new BroadcastLogger('shared-sync', this.ports);
 
     this.connectionManager = new ConnectionManager({
@@ -148,8 +149,11 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
 
         const sync = this.generateStreamingImplementation();
         const onDispose = sync.registerListener({
-          statusChanged: (status) => {
-            this.updateAllStatuses(status.toJSON());
+          statusChanged: (status, dataFlow) => {
+            const snapshot = new SyncStatusSnapshot(status, dataFlow);
+            this.syncStatus = snapshot;
+            const json = snapshot.toJSON();
+            this.ports.forEach((p) => p.clientProvider.statusChanged(json));
           }
         });
 
@@ -189,12 +193,6 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
     return await this.portMutex.runExclusive(() => {
       const nonClosingPorts = this.ports.filter((p) => !p.isClosing);
       return nonClosingPorts[Math.floor(Math.random() * nonClosingPorts.length)];
-    });
-  }
-
-  async waitForStatus(status: SyncStatusOptions): Promise<void> {
-    return this.withSyncImplementation(async (sync) => {
-      return sync.waitForStatus(status);
     });
   }
 
@@ -302,7 +300,7 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
       this.ports.push(portProvider);
 
       // Give the newly connected client the latest status
-      const status = this.connectionManager.syncStreamImplementation?.syncStatus;
+      const status = this.syncStatus;
       if (status) {
         portProvider.clientProvider.statusChanged(status.toJSON());
       }
@@ -647,15 +645,6 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
 
     const Adapter = DBAdapterDefaultMixin(ReconnectPool);
     return new Adapter();
-  }
-
-  /**
-   * A method to update the all shared statuses for each
-   * client.
-   */
-  private updateAllStatuses(status: SyncStatusOptions) {
-    this.syncStatus = new SyncStatus(status);
-    this.ports.forEach((p) => p.clientProvider.statusChanged(status));
   }
 }
 

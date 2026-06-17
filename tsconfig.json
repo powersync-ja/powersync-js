@@ -38,6 +38,9 @@
             "path": "./packages/react-native"
         },
         {
+            "path": "./packages/shared-internals"
+        },
+        {
             "path": "./packages/tanstack-react-query"
         },
         {

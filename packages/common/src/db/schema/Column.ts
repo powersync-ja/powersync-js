@@ -46,14 +46,6 @@ const real: BaseColumnType<number | null> = {
 };
 
 /**
- * powersync-sqlite-core limits the number of column per table to 1999, due to internal SQLite limits.
- * In earlier versions this was limited to 63.
- *
- * @internal
- */
-export const MAX_AMOUNT_OF_COLUMNS = 1999;
-
-/**
  * @public
  */
 export const column = {

@@ -7,7 +7,7 @@ import { usePowerSync } from './powerSync.js';
  */
 export const usePowerSyncStatus = (): Ref<SyncStatus> => {
   const powerSync = usePowerSync();
-  const status = ref(new SyncStatus({})) as Ref<SyncStatus>;
+  const status = ref<SyncStatus>();
 
   if (!powerSync) {
     return status;

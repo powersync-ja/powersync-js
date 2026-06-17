@@ -1,13 +1,12 @@
+import { LogLevels, PowerSyncLogger } from '@powersync/common';
 import {
   AbstractRemote,
   AbstractRemoteOptions,
   FetchImplementation,
   FetchImplementationProvider,
-  LogLevels,
-  PowerSyncLogger,
   RemoteConnector,
   SyncStreamOptions
-} from '@powersync/common';
+} from '@powersync/shared-internals';
 import { Platform } from 'react-native';
 // @ts-expect-error
 import { TextDecoder } from 'text-encoding';

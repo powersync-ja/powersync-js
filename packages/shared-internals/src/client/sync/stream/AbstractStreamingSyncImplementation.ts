@@ -1,14 +1,23 @@
-import { SyncStatus, SyncStatusOptions } from '../../../db/crud/SyncStatus.js';
+import {
+  BaseObserverInterface,
+  BaseListener,
+  CrudEntry,
+  Disposable,
+  LogLevels,
+  PowerSyncLogger,
+  SyncStreamConnectionMethod,
+  SyncStatus,
+  SyncDataFlowStatus,
+  BaseObserver
+} from '@powersync/common';
+
 import { AbortOperation } from '../../../utils/AbortOperation.js';
-import { BaseListener, BaseObserver, BaseObserverInterface, Disposable } from '../../../utils/BaseObserver.js';
-import { LogLevels, PowerSyncLogger } from '../../../utils/Logger.js';
 import { BucketStorageAdapter, PowerSyncControlCommand } from '../bucket/BucketStorageAdapter.js';
-import { CrudEntry } from '../bucket/CrudEntry.js';
 import { AbstractRemote, SyncStreamOptions } from './AbstractRemote.js';
 import {
+  CoreSyncStatus,
   Instruction,
   NonInterruptingInstruction,
-  coreStatusToJs,
   isInterruptingInstruction
 } from './core-instruction.js';
 import {
@@ -19,7 +28,8 @@ import {
   valueResult
 } from '../../../utils/stream_transform.js';
 import { asyncNotifier } from '../../../utils/async.js';
-import { ResolvedSyncOptions, SyncStreamConnectionMethod } from '../options.js';
+import { SyncStatusSnapshot } from '../../../db/crud/SyncStatus.js';
+import { ResolvedSyncOptions } from '../options.js';
 
 /**
  * @internal
@@ -65,14 +75,9 @@ export interface AbstractStreamingSyncImplementationOptions {
  */
 export interface StreamingSyncImplementationListener extends BaseListener {
   /**
-   * Triggered whenever a status update has been attempted to be made or
-   * refreshed.
-   */
-  statusUpdated?: ((statusUpdate: SyncStatusOptions) => void) | undefined;
-  /**
    * Triggers whenever the status' members have changed in value
    */
-  statusChanged?: ((status: SyncStatus) => void) | undefined;
+  statusChanged?: ((core: CoreSyncStatus | null, dataFlow: SyncDataFlowStatus) => void) | undefined;
 }
 
 /**
@@ -91,10 +96,8 @@ export interface StreamingSyncImplementation
   disconnect(): Promise<void>;
   getWriteCheckpoint: () => Promise<string>;
   isConnected: boolean;
-  syncStatus: SyncStatus;
   triggerCrudUpload: () => void;
   waitForReady(): Promise<void>;
-  waitForStatus(status: SyncStatusOptions): Promise<void>;
   waitUntilStatusMatches(predicate: (status: SyncStatus) => boolean): Promise<void>;
   updateSubscriptions(subscriptions: SubscribedStream[]): void;
   markConnectionMayHaveChanged(): void;
@@ -127,7 +130,7 @@ export abstract class AbstractStreamingSyncImplementation
   private notifyCompletedUploads?: () => void;
   private handleActiveStreamsChange?: () => void;
 
-  syncStatus: SyncStatus;
+  syncStatus: SyncStatusSnapshot;
 
   constructor(options: AbstractStreamingSyncImplementationOptions) {
     super();
@@ -135,15 +138,7 @@ export abstract class AbstractStreamingSyncImplementation
     this.activeStreams = options.subscriptions;
     this.logger = options.logger;
 
-    this.syncStatus = new SyncStatus({
-      connected: false,
-      connecting: false,
-      lastSyncedAt: undefined,
-      dataFlow: {
-        uploading: false,
-        downloading: false
-      }
-    });
+    this.syncStatus = new SyncStatusSnapshot(null, {});
     this.abortController = null;
   }
 
@@ -153,26 +148,6 @@ export abstract class AbstractStreamingSyncImplementation
 
   async waitForReady() {}
 
-  waitForStatus(status: SyncStatusOptions): Promise<void> {
-    return this.waitUntilStatusMatches((currentStatus) => {
-      /**
-       * Match only the partial status options provided in the
-       * matching status
-       */
-      const matchPartialObject = (compA: object, compB: any): any => {
-        return Object.entries(compA).every(([key, value]) => {
-          const comparisonBValue = compB[key];
-          if (typeof value == 'object' && typeof comparisonBValue == 'object') {
-            return matchPartialObject(value, comparisonBValue);
-          }
-          return value == comparisonBValue;
-        });
-      };
-
-      return matchPartialObject(status, currentStatus);
-    });
-  }
-
   waitUntilStatusMatches(predicate: (status: SyncStatus) => boolean): Promise<void> {
     return new Promise((resolve) => {
       if (predicate(this.syncStatus)) {
@@ -181,8 +156,8 @@ export abstract class AbstractStreamingSyncImplementation
       }
 
       const l = this.registerListener({
-        statusChanged: (updatedStatus) => {
-          if (predicate(updatedStatus)) {
+        statusChanged: () => {
+          if (predicate(this.syncStatus)) {
             resolve();
             l?.();
           }
@@ -245,11 +220,7 @@ export abstract class AbstractStreamingSyncImplementation
              */
             const nextCrudItem = await this.options.adapter.nextCrudItem();
             if (nextCrudItem) {
-              this.updateSyncStatus({
-                dataFlow: {
-                  uploading: true
-                }
-              });
+              this.updateDataFlowStatus({ uploading: true });
 
               if (nextCrudItem.clientId == checkedCrudItem?.clientId) {
                 // This will force a higher log level than exceptions which are caught here.
@@ -265,11 +236,7 @@ The next upload iteration will be delayed.`
 
               checkedCrudItem = nextCrudItem;
               await this.options.uploadCrud();
-              this.updateSyncStatus({
-                dataFlow: {
-                  uploadError: undefined
-                }
-              });
+              this.updateDataFlowStatus({ uploadError: undefined });
             } else {
               // Uploading is completed
               const neededUpdate = await this.options.adapter.updateLocalTarget(() => this.getWriteCheckpoint());
@@ -283,12 +250,7 @@ The next upload iteration will be delayed.`
             }
           } catch (ex) {
             checkedCrudItem = undefined;
-            this.updateSyncStatus({
-              dataFlow: {
-                uploading: false,
-                uploadError: ex as Error
-              }
-            });
+            this.updateDataFlowStatus({ uploading: false, uploadError: ex as Error });
             await this.delayRetry(signal, options.retryDelayMs);
             if (!this.isConnected) {
               // Exit the upload loop if the sync stream is no longer connected
@@ -300,11 +262,7 @@ The next upload iteration will be delayed.`
               error: ex
             });
           } finally {
-            this.updateSyncStatus({
-              dataFlow: {
-                uploading: false
-              }
-            });
+            this.updateDataFlowStatus({ uploading: false });
           }
         }
       }
@@ -328,13 +286,13 @@ The next upload iteration will be delayed.`
     // Return a promise that resolves when the connection status is updated to indicate that we're connected.
     return new Promise<void>((resolve) => {
       const disposer = this.registerListener({
-        statusChanged: (status) => {
-          if (status.dataFlowStatus.downloadError != null) {
+        statusChanged: (status, dataFlow) => {
+          if (dataFlow.downloadError != null) {
             this.logger.log({
               level: LogLevels.warn,
               message: 'Initial connect attempt did not successfully connect to server'
             });
-          } else if (status.connecting) {
+          } else if (status && status.connecting) {
             // Still connecting.
             return;
           }
@@ -366,7 +324,18 @@ The next upload iteration will be delayed.`
     this.streamingSyncPromise = undefined;
 
     this.abortController = null;
-    this.updateSyncStatus({ connected: false, connecting: false });
+    this.markAsDisconnected();
+  }
+
+  private markAsDisconnected() {
+    const current = this.syncStatus.core;
+    this.updateSyncStatus({
+      connected: false,
+      connecting: false,
+      priority_status: current?.priority_status ?? [],
+      downloading: null,
+      streams: current?.streams ?? []
+    });
   }
 
   private async streamingSync(signal: AbortSignal, options: ResolvedSyncOptions): Promise<void> {
@@ -391,14 +360,7 @@ The next upload iteration will be delayed.`
       nestedAbortController.abort(signal?.reason ?? new AbortOperation('Received command to disconnect from upstream'));
       this.crudUpdateListener?.();
       this.crudUpdateListener = undefined;
-      this.updateSyncStatus({
-        connected: false,
-        connecting: false,
-        dataFlow: {
-          downloading: false,
-          downloadProgress: null
-        }
-      });
+      this.markAsDisconnected();
     });
 
     /**
@@ -408,7 +370,6 @@ The next upload iteration will be delayed.`
      *  - Close any sync stream ReadableStreams (which will also close any established network requests)
      */
     while (true) {
-      this.updateSyncStatus({ connecting: true });
       let shouldDelayRetry = true;
       let result: RustIterationResult | null = null;
 
@@ -444,11 +405,7 @@ The next upload iteration will be delayed.`
           this.logger.log({ level: LogLevels.error, message: 'Sync error', error: ex });
         }
 
-        this.updateSyncStatus({
-          dataFlow: {
-            downloadError: ex as Error
-          }
-        });
+        this.updateDataFlowStatus({ downloadError: ex as Error });
       } finally {
         this.notifyCompletedUploads = undefined;
 
@@ -458,10 +415,7 @@ The next upload iteration will be delayed.`
         }
 
         if (result?.immediateRestart != true) {
-          this.updateSyncStatus({
-            connected: false,
-            connecting: true // May be unnecessary
-          });
+          this.markAsDisconnected();
 
           // On error, wait a little before retrying
           if (shouldDelayRetry) {
@@ -472,7 +426,7 @@ The next upload iteration will be delayed.`
     }
 
     // Mark as disconnected if here
-    this.updateSyncStatus({ connected: false, connecting: false });
+    this.markAsDisconnected();
   }
 
   markConnectionMayHaveChanged() {
@@ -668,7 +622,7 @@ The next upload iteration will be delayed.`
             break;
         }
       } else if ('UpdateSyncStatus' in instruction) {
-        syncImplementation.updateSyncStatus(coreStatusToJs(instruction.UpdateSyncStatus.status));
+        syncImplementation.updateSyncStatus(instruction.UpdateSyncStatus.status);
       } else if ('FetchCredentials' in instruction) {
         if (instruction.FetchCredentials.did_expire) {
           remote.invalidateCredentials();
@@ -692,11 +646,7 @@ The next upload iteration will be delayed.`
       } else if ('FlushFileSystem' in instruction) {
         // Not necessary on JS platforms.
       } else if ('DidCompleteSync' in instruction) {
-        syncImplementation.updateSyncStatus({
-          dataFlow: {
-            downloadError: undefined
-          }
-        });
+        syncImplementation.updateDataFlowStatus({ downloadError: undefined });
       }
     }
 
@@ -782,26 +732,21 @@ The next upload iteration will be delayed.`
     return { immediateRestart: hideDisconnectOnRestart };
   }
 
-  protected updateSyncStatus(options: SyncStatusOptions) {
-    const updatedStatus = new SyncStatus({
-      connected: options.connected ?? this.syncStatus.connected,
-      connecting: !options.connected && (options.connecting ?? this.syncStatus.connecting),
-      lastSyncedAt: options.lastSyncedAt ?? this.syncStatus.lastSyncedAt,
-      dataFlow: {
-        ...this.syncStatus.dataFlowStatus,
-        ...options.dataFlow
-      },
-      priorityStatusEntries: options.priorityStatusEntries ?? this.syncStatus.priorityStatusEntries
+  protected updateSyncStatus(core: CoreSyncStatus | null, dataFlow?: SyncDataFlowStatus) {
+    const updated = new SyncStatusSnapshot(core, {
+      ...this.syncStatus.dataFlowStatus,
+      ...dataFlow
     });
 
-    if (!this.syncStatus.isEqual(updatedStatus)) {
-      this.syncStatus = updatedStatus;
+    if (!this.syncStatus.isEqual(updated)) {
+      this.syncStatus = updated;
       // Only trigger this is there was a change
-      this.iterateListeners((cb) => cb.statusChanged?.(updatedStatus));
+      this.iterateListeners((cb) => cb.statusChanged?.(updated.core, updated.dataFlowStatus));
     }
+  }
 
-    // trigger this for all updates
-    this.iterateListeners((cb) => cb.statusUpdated?.(options));
+  protected updateDataFlowStatus(dataFlow: SyncDataFlowStatus) {
+    this.updateSyncStatus(this.syncStatus.core, dataFlow);
   }
 
   private async delayRetry(signal: AbortSignal, delay: number): Promise<void> {

@@ -12,7 +12,7 @@ describe('parseQuery', () => {
 
   it('should compile the query and return the sql statement and parameters if the query is compilable', () => {
     const sqlStatement = 'SELECT * FROM table';
-    const parameters = [];
+    const parameters: any[] = [];
     const query = {
       compile: () => ({ sql: sqlStatement, parameters: ['test'] }),
       execute: () => Promise.resolve([])

@@ -57,6 +57,7 @@ export default () => {
       '@journeyapps/react-native-quick-sqlite',
       '@powersync/common',
       '@powersync/react',
+      '@powersync/shared-internals',
       'node-fetch',
       'react-native',
       'react'

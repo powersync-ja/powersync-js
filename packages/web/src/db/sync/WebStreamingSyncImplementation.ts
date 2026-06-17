@@ -1,10 +1,10 @@
+import { LogLevels } from '@powersync/common';
 import {
   AbstractStreamingSyncImplementation,
   AbstractStreamingSyncImplementationOptions,
   LockOptions,
-  LockType,
-  LogLevels
-} from '@powersync/common';
+  LockType
+} from '@powersync/shared-internals';
 import { getNavigatorLocks } from '../../shared/navigator.js';
 
 export interface WebStreamingSyncImplementationOptions extends AbstractStreamingSyncImplementationOptions {

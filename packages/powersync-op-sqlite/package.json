@@ -71,7 +71,8 @@
     "react-native": "*"
   },
   "dependencies": {
-    "@powersync/common": "workspace:*"
+    "@powersync/common": "workspace:*",
+    "@powersync/shared-internals": "workspace:*"
   },
   "devDependencies": {
     "@op-engineering/op-sqlite": "catalog:",

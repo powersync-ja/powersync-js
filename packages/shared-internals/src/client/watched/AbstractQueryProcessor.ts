@@ -1,19 +1,19 @@
-import { LogLevels } from '../../../utils/Logger.js';
-import { AbstractPowerSyncDatabase } from '../../../client/AbstractPowerSyncDatabase.js';
-import { MetaBaseObserver } from '../../../utils/MetaBaseObserver.js';
 import {
+  LogLevels,
   WatchedQuery,
   WatchedQueryListener,
   WatchedQueryListenerEvent,
   WatchedQueryOptions,
   WatchedQueryState
-} from '../WatchedQuery.js';
+} from '@powersync/common';
+import { MetaBaseObserver } from '../../utils/MetaBaseObserver.js';
+import { BasePowerSyncDatabase } from '../BasePowerSyncDatabase.js';
 
 /**
  * @internal
  */
 export interface AbstractQueryProcessorOptions<Data, Settings extends WatchedQueryOptions = WatchedQueryOptions> {
-  db: AbstractPowerSyncDatabase;
+  db: BasePowerSyncDatabase;
   watchOptions: Settings;
   placeholderData: Data;
 }

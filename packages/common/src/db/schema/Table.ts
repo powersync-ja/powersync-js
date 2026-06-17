@@ -1,15 +1,14 @@
-import {
-  BaseColumnType,
-  Column,
-  ColumnsType,
-  ColumnType,
-  ExtractColumnValueType,
-  MAX_AMOUNT_OF_COLUMNS
-} from './Column.js';
+import { BaseColumnType, Column, ColumnsType, ColumnType, ExtractColumnValueType } from './Column.js';
 import { Index } from './Index.js';
 import { IndexedColumn } from './IndexedColumn.js';
 import { encodeTableOptions } from './internal.js';
 import { TableV2 } from './TableV2.js';
+
+/**
+ * powersync-sqlite-core limits the number of column per table to 1999, due to internal SQLite limits.
+ * In earlier versions this was limited to 63.
+ */
+const MAX_AMOUNT_OF_COLUMNS = 1999;
 
 /**
  * Options that apply both to JSON-based tables and raw tables.
@@ -76,10 +75,7 @@ export interface TableV2Options extends SharedTableOptions {
   indexes?: IndexShorthand;
 }
 
-/**
- * @internal
- */
-export const DEFAULT_TABLE_OPTIONS = {
+const DEFAULT_TABLE_OPTIONS = {
   indexes: [],
   insertOnly: false,
   localOnly: false,
@@ -88,10 +84,7 @@ export const DEFAULT_TABLE_OPTIONS = {
   ignoreEmptyUpdates: false
 };
 
-/**
- * @internal
- */
-export const InvalidSQLCharacters = /["'%,.#\s[\]]/;
+const InvalidSQLCharacters = /["'%,.#\s[\]]/;
 
 /**
  * @public

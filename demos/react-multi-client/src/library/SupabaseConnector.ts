@@ -1,11 +1,11 @@
 import {
-  AbstractPowerSyncDatabase,
+  CommonPowerSyncDatabase,
   BaseListener,
   BaseObserver,
   CrudEntry,
-  Mutex,
   PowerSyncBackendConnector,
-  UpdateType
+  UpdateType,
+  Mutex
 } from '@powersync/web';
 
 import { Session, SupabaseClient } from '@supabase/supabase-js';
@@ -16,15 +16,17 @@ export interface SupabaseConnectorListener extends BaseListener {
 }
 
 export class SupabaseConnector extends BaseObserver<SupabaseConnectorListener> implements PowerSyncBackendConnector {
-  static SHARED_MUTEX = new Mutex();
+  static SHARED_MUTEX: Mutex | null = null;
   readonly client: SupabaseClient;
 
   ready: boolean;
 
   currentSession: Session | null;
 
-  constructor(client: SupabaseClient) {
+  constructor(client: SupabaseClient, db: CommonPowerSyncDatabase) {
     super();
+
+    SupabaseConnector.SHARED_MUTEX ??= db.createMutex();
     this.client = client;
     this.currentSession = null;
     this.ready = false;
@@ -36,26 +38,24 @@ export class SupabaseConnector extends BaseObserver<SupabaseConnectorListener> i
     }
 
     // Ensures that we don't accidentally check/create multiple anon sessions during initialization
-    const release = await SupabaseConnector.SHARED_MUTEX.acquire();
-
-    let sessionResponse = await this.client.auth.getSession();
-    if (sessionResponse.error) {
-      console.error(sessionResponse.error);
-      throw sessionResponse.error;
-    } else if (!sessionResponse.data.session) {
-      const anonUser = await this.client.auth.signInAnonymously();
-      if (anonUser.error) {
-        throw anonUser.error;
+    await SupabaseConnector.SHARED_MUTEX!.runExclusive(async () => {
+      let sessionResponse = await this.client.auth.getSession();
+      if (sessionResponse.error) {
+        console.error(sessionResponse.error);
+        throw sessionResponse.error;
+      } else if (!sessionResponse.data.session) {
+        const anonUser = await this.client.auth.signInAnonymously();
+        if (anonUser.error) {
+          throw anonUser.error;
+        }
+        sessionResponse = await this.client.auth.getSession();
       }
-      sessionResponse = await this.client.auth.getSession();
-    }
 
-    this.updateSession(sessionResponse.data.session);
+      this.updateSession(sessionResponse.data.session);
 
-    this.ready = true;
-    this.iterateListeners((cb) => cb.initialized?.());
-
-    release();
+      this.ready = true;
+      this.iterateListeners((cb) => cb.initialized?.());
+    });
   }
 
   async fetchCredentials() {
@@ -73,7 +73,7 @@ export class SupabaseConnector extends BaseObserver<SupabaseConnectorListener> i
     };
   }
 
-  async uploadData(database: AbstractPowerSyncDatabase): Promise<void> {
+  async uploadData(database: CommonPowerSyncDatabase): Promise<void> {
     const transaction = await database.getNextCrudTransaction();
     if (!transaction) {
       return;

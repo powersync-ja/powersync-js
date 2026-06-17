@@ -9,10 +9,7 @@ export interface IndexOptions {
   columns?: IndexedColumn[];
 }
 
-/**
- * @internal
- */
-export const DEFAULT_INDEX_OPTIONS: Partial<IndexOptions> = {
+const DEFAULT_INDEX_OPTIONS: Partial<IndexOptions> = {
   columns: []
 };
 

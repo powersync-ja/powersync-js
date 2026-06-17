@@ -1,9 +1,8 @@
 import {
-  BaseListener,
   BaseObserver,
+  BaseListener,
   BatchedUpdateNotification,
   ConnectionPool,
-  ControlledExecutor,
   createConsoleLogger,
   DBAdapter,
   DBAdapterDefaultMixin,
@@ -12,15 +11,14 @@ import {
   DBLockOptions,
   LockContext,
   LogLevels,
-  Mutex,
   PowerSyncLogger,
   QueryResult,
   SqlExecutor,
   SQLOpenFactory,
   SQLOpenOptions,
-  timeoutSignal,
   Transaction
 } from '@powersync/common';
+import { Mutex, timeoutSignal, ControlledExecutor } from '@powersync/shared-internals';
 // This uses a pure JS version which avoids the need for WebAssembly, which is not supported in React Native.
 import SQLJs from '@powersync/sql-js/dist/sql-asm.js';
 
