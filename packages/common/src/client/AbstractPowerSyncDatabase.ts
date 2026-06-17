@@ -46,7 +46,7 @@ import { DEFAULT_WATCH_THROTTLE_MS, WatchCompatibleQuery } from './watched/Watch
 import { OnChangeQueryProcessor } from './watched/processors/OnChangeQueryProcessor.js';
 import { WatchedQueryComparator } from './watched/processors/comparators.js';
 import { Mutex } from '../utils/mutex.js';
-import { doneResult, valueResult } from '../utils/stream_transform.js';
+import { symbolAsyncIterator } from '../utils/compatibility.js';
 
 /**
  * @public
@@ -762,7 +762,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * @returns A transaction of CRUD operations to upload, or null if there are none
    */
   async getNextCrudTransaction(): Promise<CrudTransaction | null> {
-    const iterator = this.getCrudTransactions()[Symbol.asyncIterator]();
+    const iterator = this.getCrudTransactions()[symbolAsyncIterator]();
     return (await iterator.next()).value;
   }
 
@@ -799,7 +799,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    */
   getCrudTransactions(): AsyncIterable<CrudTransaction, null> {
     return {
-      [Symbol.asyncIterator]: () => {
+      [symbolAsyncIterator]: () => {
         let lastCrudItemId = -1;
         const sql = `
 WITH RECURSIVE crud_entries AS (

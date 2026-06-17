@@ -1,3 +1,4 @@
+import { symbolAsyncIterator } from './compatibility.js';
 import { doneResult, valueResult } from './stream_transform.js';
 
 /**
@@ -149,7 +150,7 @@ export class EventQueue<T> {
     abort?: AbortSignal
   ): AsyncIterable<T> {
     return {
-      [Symbol.asyncIterator]: () => {
+      [symbolAsyncIterator]: () => {
         const queue = new EventQueue<T>();
         const controller = new AbortController();
 
