@@ -112,7 +112,7 @@ async function fetchSyncStats(): Promise<SyncStats> {
   const { synced_at } = await db.get<{ synced_at: string | null }>('SELECT powersync_last_synced_at() as synced_at');
   const lastSyncedAt = synced_at ? new Date(synced_at + 'Z') : null;
 
-  if (synced_at != null && !sync?.syncStatus.dataFlowStatus.downloading) {
+  if (synced_at != null && !sync?.syncStatus.downloading) {
     const bucketRows = await db.getAll(BUCKETS_QUERY);
     const tableRows = await db.getAll(TABLES_SIZE_QUERY);
     return { bucketRows, tableRows, lastSyncedAt };
@@ -295,24 +295,23 @@ export default function SyncDiagnosticsPage() {
                         </span>
                       </TooltipTrigger>
                       <TooltipContent className="max-w-92">
-                        Two separate limits apply: <strong>bucket count</strong> and <strong>parameter query results</strong>. 
-                        Both yield a PSYNC_S2305 error when exceeded. Both <a
-                            href="https://docs.powersync.com/debugging/troubleshooting#too-many-buckets-psync_s2305"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="underline hover:text-primary-foreground/80"
-                          >
-                            default
-                          </a>{' '}
-                          to a limit of {DEFAULT_SYNC_LIMIT.toLocaleString()}.
+                        Two separate limits apply: <strong>bucket count</strong> and{' '}
+                        <strong>parameter query results</strong>. Both yield a PSYNC_S2305 error when exceeded. Both{' '}
+                        <a
+                          href="https://docs.powersync.com/debugging/troubleshooting#too-many-buckets-psync_s2305"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="underline hover:text-primary-foreground/80">
+                          default
+                        </a>{' '}
+                        to a limit of {DEFAULT_SYNC_LIMIT.toLocaleString()}.
                         <div className="mt-2">
                           Global buckets count only toward bucket count. Parameter query buckets (in either{' '}
                           <a
                             href="https://docs.powersync.com/sync/rules/parameter-queries"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="underline hover:text-primary-foreground/80"
-                          >
+                            className="underline hover:text-primary-foreground/80">
                             Sync Rules
                           </a>{' '}
                           or{' '}
@@ -320,12 +319,11 @@ export default function SyncDiagnosticsPage() {
                             href="https://docs.powersync.com/sync/streams/parameters"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="underline hover:text-primary-foreground/80"
-                          >
+                            className="underline hover:text-primary-foreground/80">
                             Sync Streams
                           </a>
-                          ) count toward both, but are de-duplicated client-side, so the parameter result count 
-                          on the PowerSync Service side may be higher.
+                          ) count toward both, but are de-duplicated client-side, so the parameter result count on the
+                          PowerSync Service side may be higher.
                         </div>
                       </TooltipContent>
                     </Tooltip>
@@ -346,8 +344,7 @@ export default function SyncDiagnosticsPage() {
                   <span
                     className={cn(
                       totals.buckets >= 900 ? 'text-destructive' : totals.buckets >= 800 ? 'text-amber-600' : ''
-                    )}
-                  >
+                    )}>
                     {totals.buckets.toLocaleString()}
                   </span>
                   <span className="text-muted-foreground text-xs ml-1">
@@ -377,8 +374,7 @@ export default function SyncDiagnosticsPage() {
               <span
                 className={cn(
                   totals.buckets >= 900 ? 'text-destructive' : totals.buckets >= 800 ? 'text-amber-600' : ''
-                )}
-              >
+                )}>
                 {totals.buckets.toLocaleString()}
               </span>
               <span className="text-muted-foreground text-xs ml-1">
@@ -446,8 +442,7 @@ export default function SyncDiagnosticsPage() {
                   variant="ghost"
                   size="sm"
                   className="h-7 gap-1.5 text-muted-foreground"
-                  onClick={() => setShowTokenDialog(true)}
-                >
+                  onClick={() => setShowTokenDialog(true)}>
                   <Eye className="h-3.5 w-3.5" />
                   View Token
                 </Button>
@@ -490,8 +485,7 @@ export default function SyncDiagnosticsPage() {
               variant="outline"
               onClick={() => {
                 clearData();
-              }}
-            >
+              }}>
               Clear & Redownload
             </Button>
             <span className="text-sm text-muted-foreground">
@@ -510,8 +504,7 @@ export default function SyncDiagnosticsPage() {
                   href="https://docs.powersync.com/maintenance-ops/compacting-buckets"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="underline hover:text-foreground"
-                >
+                  className="underline hover:text-foreground">
                   Learn about compacting
                 </a>
               </AlertDescription>
@@ -524,16 +517,17 @@ export default function SyncDiagnosticsPage() {
                 <span className={cn('font-medium', totals.buckets >= 900 ? 'text-destructive' : 'text-amber-600')}>
                   {totals.buckets >= 900 ? 'Critical: ' : 'Warning: '}
                 </span>
-                {totals.buckets.toLocaleString()} buckets used (PSYNC_S2305, default limit of {DEFAULT_SYNC_LIMIT.toLocaleString()} unless specifically
-                configured higher for your instance). {totals.parameterized_buckets.toLocaleString()} are parameterized - at least that many
-                parameter query results on the server. Depending on your configuration ({DEFAULT_SYNC_LIMIT.toLocaleString()} is the default limit), you may
-                need to adjust your Sync Config to reduce the numbe rof buckets and parameter query results for this user.{' '}
+                {totals.buckets.toLocaleString()} buckets used (PSYNC_S2305, default limit of{' '}
+                {DEFAULT_SYNC_LIMIT.toLocaleString()} unless specifically configured higher for your instance).{' '}
+                {totals.parameterized_buckets.toLocaleString()} are parameterized - at least that many parameter query
+                results on the server. Depending on your configuration ({DEFAULT_SYNC_LIMIT.toLocaleString()} is the
+                default limit), you may need to adjust your Sync Config to reduce the numbe rof buckets and parameter
+                query results for this user.{' '}
                 <a
                   href="https://docs.powersync.com/debugging/troubleshooting#too-many-buckets-psync_s2305"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="underline hover:text-foreground"
-                >
+                  className="underline hover:text-foreground">
                   For troubleshooting steps, see the docs
                 </a>
               </AlertDescription>
@@ -624,8 +618,7 @@ function TruncatedTablesList({ tables }: { tables: string }) {
           e.stopPropagation();
           setExpanded(!expanded);
         }}
-        className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-      >
+        className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
         {expanded ? (
           <>
             <ChevronUp className="h-3 w-3" />

@@ -2,6 +2,7 @@ use powersync::error::PowerSyncError;
 use powersync::{PowerSyncDatabase, SyncStatusData};
 use serde::ser::SerializeStruct;
 use serde::{Serialize, Serializer};
+use std::collections::HashMap;
 use std::sync::Arc;
 use tauri::{AppHandle, Emitter, Runtime};
 use tokio::task::JoinHandle;
@@ -88,14 +89,43 @@ impl Serialize for SerializableSyncStatus {
         S: Serializer,
     {
         let status = self.0.as_ref();
-        // Note: This must match SyncStatusOptions in common/src/db/crud/SyncStatus.ts
-        let mut inner = serializer.serialize_struct("SyncStatusOptions", 4)?;
-        inner.serialize_field("connected", &status.is_connected())?;
-        inner.serialize_field("connecting", &status.is_connecting())?;
+        // Note: This must match SyncStatusJson in shared-internals/src/db/crud/SyncStatus.ts
+        let mut inner = serializer.serialize_struct("SyncStatusJson", 2)?;
+        inner.serialize_field("core", &SerializableCoreSyncStatus(status))?;
         inner.serialize_field("dataFlow", &SerializableDataFlowStatus(status))?;
-        // TODO: lastSyncedAt, hasSynced and priorityStatusEntries are not available from the Rust
-        // SDK since it's centered around Sync Streams.
-        inner.serialize_field("clientImplementation", "RUST")?;
+
+        inner.end()
+    }
+}
+
+struct SerializableCoreSyncStatus<'a>(&'a SyncStatusData);
+
+impl Serialize for SerializableCoreSyncStatus<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        #[derive(Serialize, Default)]
+        struct EmptyDownloadProgress {
+            buckets: HashMap<String, ()>,
+        }
+
+        let status = self.0;
+        // Note: This must match CoreSyncStatus in shared-internals/src/client/sync/stream/core-instruction.ts
+        let mut inner = serializer.serialize_struct("CoreSyncStatus", 5)?;
+        inner.serialize_field("connected", &status.is_connected())?;
+        inner.serialize_field("connecting", &&status.is_connecting())?;
+
+        // Note: Priority status and download progress is not available outside of streams.
+        inner.serialize_field::<[()]>("priority_status", &[])?;
+        if status.is_downloading() {
+            let progress = Some(EmptyDownloadProgress::default());
+            inner.serialize_field("downloading", &progress)
+        } else {
+            inner.serialize_field("downloading", &None::<()>)
+        }?;
+
+        inner.serialize_field("streams", status.internal_streams())?;
 
         inner.end()
     }
@@ -108,13 +138,9 @@ impl Serialize for SerializableDataFlowStatus<'_> {
     where
         S: Serializer,
     {
-        #[derive(Serialize)]
-        struct EmptyDownloadProgress {}
-
         let status = self.0;
         // Note: This must match SyncDataFlowStatus in common/src/db/crud/SyncStatus.ts
-        let mut inner = serializer.serialize_struct("DataFlowOptions", 10)?;
-        inner.serialize_field("downloading", &status.is_downloading())?;
+        let mut inner = serializer.serialize_struct("DataFlowOptions", 3)?;
         inner.serialize_field("uploading", &status.is_uploading())?;
         inner.serialize_field(
             "downloadError",
@@ -124,15 +150,6 @@ impl Serialize for SerializableDataFlowStatus<'_> {
             "uploadError",
             &status.upload_error().map(SerializeAsJavaScriptError),
         )?;
-        inner.serialize_field(
-            "downloadProgress",
-            if status.is_downloading() {
-                &Some(EmptyDownloadProgress {})
-            } else {
-                &None
-            },
-        )?;
-        inner.serialize_field("internalStreamSubscriptions", status.internal_streams())?;
 
         inner.end()
     }

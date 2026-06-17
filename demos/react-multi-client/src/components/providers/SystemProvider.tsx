@@ -16,8 +16,6 @@ export interface SystemProviderProps {
 const SystemProvider: React.FC<PropsWithChildren<SystemProviderProps>> = (props) => {
   const { client } = useSupabase();
 
-  const [connector] = React.useState(new SupabaseConnector(client));
-
   const [powersync] = React.useState(
     new TimedPowerSyncDatabase({
       database: {
@@ -28,6 +26,8 @@ const SystemProvider: React.FC<PropsWithChildren<SystemProviderProps>> = (props)
       logger: logger
     })
   );
+
+  const [connector] = React.useState(new SupabaseConnector(client, powersync));
 
   React.useEffect(() => {
     powersync.init();

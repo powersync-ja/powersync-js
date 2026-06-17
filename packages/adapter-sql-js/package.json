@@ -32,7 +32,8 @@
     "test": "vitest"
   },
   "dependencies": {
-    "@powersync/common": "workspace:^"
+    "@powersync/common": "workspace:^",
+    "@powersync/shared-internals": "workspace:*"
   },
   "devDependencies": {
     "@powersync/sql-js": "0.0.9",

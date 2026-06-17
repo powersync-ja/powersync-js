@@ -1,4 +1,4 @@
-import { AbstractPowerSyncDatabase } from '@powersync/common';
+import { CommonPowerSyncDatabase } from '@powersync/common';
 import { App, MaybeRef, Ref, hasInjectionContext, inject, provide, shallowRef, toRaw, toValue } from 'vue';
 import { setupTopLevelWarningMessage } from './messages.js';
 
@@ -11,7 +11,7 @@ const POWERSYNC_KEY = Symbol('POWERSYNC_KEY');
  *
  * Needs to be installed on a Vue instance using `app.use()`.
  */
-export function createPowerSyncPlugin(powerSyncPluginOptions: { database: MaybeRef<AbstractPowerSyncDatabase> }) {
+export function createPowerSyncPlugin(powerSyncPluginOptions: { database: MaybeRef<CommonPowerSyncDatabase> }) {
   const install = (app: App) => {
     app.provide(POWERSYNC_KEY, shallowRef(toRaw(toValue(powerSyncPluginOptions.database))));
   };
@@ -25,7 +25,7 @@ export function createPowerSyncPlugin(powerSyncPluginOptions: { database: MaybeR
  *
  * If the key parameter is provided, the client will be provided under that key instead of the default PowerSync key.
  */
-export function providePowerSync(database: MaybeRef<AbstractPowerSyncDatabase>, key: string | undefined = undefined) {
+export function providePowerSync(database: MaybeRef<CommonPowerSyncDatabase>, key: string | undefined = undefined) {
   provide(key || POWERSYNC_KEY, shallowRef(toRaw(toValue(database))));
 }
 
@@ -42,7 +42,7 @@ export const usePowerSync = (key: string | undefined = undefined) => {
   if (!hasInjectionContext()) {
     throw setupTopLevelWarningMessage;
   }
-  const powerSync = inject<Ref<AbstractPowerSyncDatabase> | undefined>(key || POWERSYNC_KEY);
+  const powerSync = inject<Ref<CommonPowerSyncDatabase> | undefined>(key || POWERSYNC_KEY);
 
   if (!powerSync) {
     console.warn('[PowerSync warn]: No PowerSync client found.');

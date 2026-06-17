@@ -81,7 +81,7 @@ export interface SyncStreamSubscribeOptions {
 /**
  * A handle to a {@link SyncStreamDescription} that allows subscribing to the stream.
  *
- * To obtain an instance of {@link SyncStream}, call {@link AbstractPowerSyncDatabase.syncStream}.
+ * To obtain an instance of {@link SyncStream}, call {@link CommonPowerSyncDatabase.syncStream}.
  *
  * @public
  */

@@ -1,10 +1,4 @@
-import {
-  LogRecord,
-  PowerSyncCredentials,
-  ResolvedSyncOptions,
-  SubscribedStream,
-  SyncStatusOptions
-} from '@powersync/common';
+import { LogRecord, PowerSyncCredentials } from '@powersync/common';
 import * as Comlink from 'comlink';
 import { AbstractSharedSyncClientProvider } from '../../worker/sync/AbstractSharedSyncClientProvider.js';
 import { ManualSharedSyncPayload, SharedSyncClientEvent } from '../../worker/sync/SharedSyncImplementation.js';
@@ -15,6 +9,7 @@ import {
   WebStreamingSyncImplementationOptions
 } from './WebStreamingSyncImplementation.js';
 import { generateTabCloseSignal } from '../../shared/tab_close_signal.js';
+import { SubscribedStream, SyncStatusJson, ResolvedSyncOptions } from '@powersync/shared-internals';
 
 /**
  * The shared worker will trigger methods on this side of the message port
@@ -23,7 +18,7 @@ import { generateTabCloseSignal } from '../../shared/tab_close_signal.js';
 class SharedSyncClientProvider extends AbstractSharedSyncClientProvider {
   constructor(
     protected options: WebStreamingSyncImplementationOptions,
-    public statusChanged: (status: SyncStatusOptions) => void,
+    public statusChanged: (status: SyncStatusJson) => void,
     protected webDB: WebDBAdapter
   ) {
     super();
@@ -124,8 +119,8 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
      */
     this.clientProvider = new SharedSyncClientProvider(
       this.webOptions,
-      (status) => {
-        this.updateSyncStatus(status);
+      ({ core, dataFlow }) => {
+        this.updateSyncStatus(core, dataFlow);
       },
       options.db
     );

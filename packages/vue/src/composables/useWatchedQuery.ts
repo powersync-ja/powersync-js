@@ -1,4 +1,5 @@
-import { type CompilableQuery, LogLevels, ParsedQuery, parseQuery, WatchCompatibleQuery } from '@powersync/common';
+import { type CompilableQuery, LogLevels, WatchCompatibleQuery } from '@powersync/common';
+import { ParsedQuery, parseQuery } from '@powersync/shared-internals';
 import { type MaybeRef, type Ref, ref, toValue, watchEffect } from 'vue';
 import { usePowerSync } from './powerSync.js';
 import { AdditionalOptions, WatchedQueryResult } from './useSingleQuery.js';

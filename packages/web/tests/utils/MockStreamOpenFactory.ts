@@ -1,17 +1,19 @@
 import {
-  AbstractPowerSyncDatabase,
+  CommonPowerSyncDatabase,
+  PowerSyncBackendConnector,
+  PowerSyncCredentials,
+  PowerSyncLogger
+} from '@powersync/common';
+import {
   AbstractRemote,
   AbstractStreamingSyncImplementation,
   CreateSyncImplementationOptions,
-  PowerSyncBackendConnector,
-  PowerSyncCredentials,
-  PowerSyncDatabaseOptions,
-  PowerSyncLogger,
-  RemoteConnector,
   SimpleAsyncIterator,
-  SyncStreamOptions
-} from '@powersync/common';
-import { StreamingSyncLine } from '@powersync/common/internal/sync_protocol';
+  RemoteConnector,
+  SyncStreamOptions,
+  SqliteBucketStorage
+} from '@powersync/shared-internals';
+import { StreamingSyncLine } from '@powersync/shared-internals/internal/sync_protocol';
 import { PowerSyncDatabase, WebPowerSyncDatabaseOptions, WebStreamingSyncImplementation } from '@powersync/web';
 import { MockedFunction, vi } from 'vitest';
 
@@ -22,7 +24,7 @@ export class TestConnector implements PowerSyncBackendConnector {
       token: ''
     };
   }
-  async uploadData(database: AbstractPowerSyncDatabase): Promise<void> {
+  async uploadData(database: CommonPowerSyncDatabase): Promise<void> {
     const tx = await database.getNextCrudTransaction();
     await tx?.complete();
   }
@@ -134,7 +136,7 @@ export class MockedStreamPowerSync extends PowerSyncDatabase {
   ): AbstractStreamingSyncImplementation {
     return new WebStreamingSyncImplementation({
       logger: this.logger,
-      adapter: this.bucketStorageAdapter,
+      adapter: new SqliteBucketStorage(this.database, this.logger),
       remote: this.remote,
       uploadCrud: async () => {
         await this.waitForReady();

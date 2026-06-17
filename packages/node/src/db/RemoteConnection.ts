@@ -1,13 +1,8 @@
-import {
-  ConnectionClosedError,
-  DBGetUtilsDefaultMixin,
-  QueryResult,
-  SqlExecutor,
-  LockContext
-} from '@powersync/common';
+import { DBGetUtilsDefaultMixin, QueryResult, SqlExecutor, LockContext } from '@powersync/common';
 import { releaseProxy, Remote } from 'comlink';
 import { Worker } from 'node:worker_threads';
 import { AsyncDatabase, AsyncDatabaseOpener, ProxiedQueryResult } from './AsyncDatabase.js';
+import { ConnectionClosedError } from '@powersync/shared-internals';
 
 /**
  * A PowerSync database connection implemented with RPC calls to a background worker.

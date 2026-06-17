@@ -1,8 +1,9 @@
-import { Column, ColumnType, CrudEntry, Schema, Table, UpdateType } from '@powersync/common';
+import { Column, ColumnType, Schema, Table, UpdateType } from '@powersync/common';
 import pDefer from 'p-defer';
 import { v4 as uuid } from 'uuid';
 import { describe, expect, it } from 'vitest';
 import { generateTestDb } from './utils/testDb.js';
+import { CrudEntryImpl } from '@powersync/shared-internals';
 
 const testId = '2290de4f-0488-4e50-abed-f8e8eb1d0b42';
 
@@ -22,7 +23,7 @@ describe('CRUD Tests', { sequential: true }, () => {
 
     const tx = (await powersync.getNextCrudTransaction())!;
     expect(tx.transactionId).equals(1);
-    const expectedCrudEntry = new CrudEntry(1, UpdateType.PUT, 'assets', testId, 1, { description: 'test' });
+    const expectedCrudEntry = new CrudEntryImpl(1, UpdateType.PUT, 'assets', testId, 1, { description: 'test' });
     expect(tx.crud[0].equals(expectedCrudEntry)).true;
   });
 
@@ -48,8 +49,8 @@ describe('CRUD Tests', { sequential: true }, () => {
 
     const crudBatch = (await powersync.getCrudBatch(2))!;
     expect(crudBatch.crud.length).equals(2);
-    const expectedCrudEntry = new CrudEntry(1, UpdateType.PUT, 'assets', testId, 1, { description: 'test' });
-    const expectedCrudEntry2 = new CrudEntry(2, UpdateType.PUT, 'assets', 'mockId', 1, { description: 'test1' });
+    const expectedCrudEntry = new CrudEntryImpl(1, UpdateType.PUT, 'assets', testId, 1, { description: 'test' });
+    const expectedCrudEntry2 = new CrudEntryImpl(2, UpdateType.PUT, 'assets', 'mockId', 1, { description: 'test1' });
     expect(crudBatch.crud[0].equals(expectedCrudEntry)).true;
     expect(crudBatch.crud[1].equals(expectedCrudEntry2)).true;
   });
@@ -95,7 +96,7 @@ describe('CRUD Tests', { sequential: true }, () => {
     const tx = (await powersync.getNextCrudTransaction())!;
     expect(tx.transactionId).equals(2);
 
-    const expectedCrudEntry = new CrudEntry(2, UpdateType.PATCH, 'assets', testId, 2, { description: 'test2' });
+    const expectedCrudEntry = new CrudEntryImpl(2, UpdateType.PATCH, 'assets', testId, 2, { description: 'test2' });
 
     expect(tx.crud[0].equals(expectedCrudEntry)).true;
   });
@@ -122,11 +123,11 @@ describe('CRUD Tests', { sequential: true }, () => {
 
     const crudBatch = (await powersync.getCrudBatch(2))!;
     expect(crudBatch.crud.length).equals(2);
-    const expectedCrudEntry = new CrudEntry(3, UpdateType.PATCH, 'assets', testId, 2, {
+    const expectedCrudEntry = new CrudEntryImpl(3, UpdateType.PATCH, 'assets', testId, 2, {
       description: 'test2',
       make: 'make2'
     });
-    const expectedCrudEntry2 = new CrudEntry(4, UpdateType.PATCH, 'assets', 'mockId', 2, {
+    const expectedCrudEntry2 = new CrudEntryImpl(4, UpdateType.PATCH, 'assets', 'mockId', 2, {
       description: 'test2',
       make: 'make2'
     });
@@ -148,7 +149,7 @@ describe('CRUD Tests', { sequential: true }, () => {
 
     const tx = (await powersync.getNextCrudTransaction())!;
     expect(tx.transactionId).equals(2);
-    const expectedCrudEntry = new CrudEntry(2, UpdateType.DELETE, 'assets', testId, 2);
+    const expectedCrudEntry = new CrudEntryImpl(2, UpdateType.DELETE, 'assets', testId, 2);
     expect(tx.crud[0].equals(expectedCrudEntry)).true;
   });
 
@@ -202,7 +203,7 @@ describe('CRUD Tests', { sequential: true }, () => {
 
     const tx = (await powersync.getNextCrudTransaction())!;
     expect(tx.transactionId).equals(1);
-    const expectedCrudEntry = new CrudEntry(1, UpdateType.PUT, 'logs', testId, 1, {
+    const expectedCrudEntry = new CrudEntryImpl(1, UpdateType.PUT, 'logs', testId, 1, {
       content: 'test log',
       level: 'INFO'
     });
@@ -227,9 +228,9 @@ describe('CRUD Tests', { sequential: true }, () => {
     const tx = (await powersync.getNextCrudTransaction())!;
     expect(tx.transactionId).equals(1);
 
-    expect(tx.crud[0].equals(new CrudEntry(1, UpdateType.PUT, 'assets', testId, 1, { quantity: bigNumber }))).equals(
-      true
-    );
+    expect(
+      tx.crud[0].equals(new CrudEntryImpl(1, UpdateType.PUT, 'assets', testId, 1, { quantity: bigNumber }))
+    ).equals(true);
   });
 
   it('big numbers - text', async () => {
@@ -280,8 +281,8 @@ describe('CRUD Tests', { sequential: true }, () => {
     const tx1 = (await powersync.getNextCrudTransaction())!;
     expect(tx1.transactionId).equals(1);
     const expectedCrudEntries = [
-      new CrudEntry(1, UpdateType.PUT, 'assets', testId, 1, { description: 'test1' }),
-      new CrudEntry(2, UpdateType.PUT, 'assets', 'test2', 1, { description: 'test2' })
+      new CrudEntryImpl(1, UpdateType.PUT, 'assets', testId, 1, { description: 'test1' }),
+      new CrudEntryImpl(2, UpdateType.PUT, 'assets', 'test2', 1, { description: 'test2' })
     ];
 
     expect(tx1.crud.map((entry, index) => entry.equals(expectedCrudEntries[index]))).deep.equals([true, true]);
@@ -289,7 +290,7 @@ describe('CRUD Tests', { sequential: true }, () => {
 
     const tx2 = (await powersync.getNextCrudTransaction())!;
     expect(tx2.transactionId).equals(2);
-    const expectedCrudEntry2 = new CrudEntry(3, UpdateType.PATCH, 'assets', testId, 2, { description: 'updated' });
+    const expectedCrudEntry2 = new CrudEntryImpl(3, UpdateType.PATCH, 'assets', testId, 2, { description: 'updated' });
     expect(tx2.crud[0].equals(expectedCrudEntry2)).true;
     await tx2.complete();
     expect(await powersync.getNextCrudTransaction()).equals(null);

@@ -45,7 +45,8 @@
   },
   "dependencies": {
     "@powersync/common": "workspace:*",
-    "@powersync/react": "workspace:*"
+    "@powersync/react": "workspace:*",
+    "@powersync/shared-internals": "workspace:*"
   },
   "devDependencies": {
     "@craftzdog/react-native-buffer": "^6.0.5",

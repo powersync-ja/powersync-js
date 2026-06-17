@@ -89,6 +89,9 @@
     "@capacitor-community/sqlite": "^8.1.0",
     "@powersync/web": "workspace:^1.38.3"
   },
+  "dependencies": {
+    "@powersync/shared-internals": "workspace:*"
+  },
   "swiftlint": "@ionic/swiftlint-config",
   "capacitor": {
     "name": "PowerSyncCapacitor",

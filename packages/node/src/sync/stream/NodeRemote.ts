@@ -5,10 +5,10 @@ import {
   AbstractRemoteOptions,
   FetchImplementation,
   FetchImplementationProvider,
-  PowerSyncLogger,
   RemoteConnector
-} from '@powersync/common';
+} from '@powersync/shared-internals';
 import { Dispatcher, EnvHttpProxyAgent, getGlobalDispatcher, ProxyAgent, WebSocket as UndiciWebSocket } from 'undici';
+import { PowerSyncLogger } from '@powersync/common';
 
 export const STREAMING_POST_TIMEOUT_MS = 30_000;
 

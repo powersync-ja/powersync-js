@@ -1,12 +1,11 @@
+import { LogLevels, PowerSyncLogger } from '@powersync/common';
 import {
   AbstractRemote,
   AbstractRemoteOptions,
   FetchImplementation,
   FetchImplementationProvider,
-  LogLevels,
-  PowerSyncLogger,
   RemoteConnector
-} from '@powersync/common';
+} from '@powersync/shared-internals';
 
 import { getUserAgentInfo } from './userAgent.js';
 

@@ -1,5 +1,3 @@
-import { AbstractPowerSyncDatabase } from '../client/AbstractPowerSyncDatabase.js';
-import { DEFAULT_WATCH_THROTTLE_MS } from '../client/watched/WatchedQuery.js';
 import { DifferentialWatchedQuery } from '../client/watched/processors/DifferentialQueryProcessor.js';
 import { Mutex } from '../utils/mutex.js';
 import { LogLevels, PowerSyncLogger } from '../utils/Logger.js';
@@ -12,6 +10,7 @@ import { RemoteStorageAdapter } from './RemoteStorageAdapter.js';
 import { ATTACHMENT_TABLE, AttachmentRecord, AttachmentState } from './Schema.js';
 import { SyncingService } from './SyncingService.js';
 import { WatchedAttachmentItem } from './WatchedAttachmentItem.js';
+import { CommonPowerSyncDatabase } from '../client/CommonPowerSyncDatabase.js';
 
 /**
  * Configuration options for {@link AttachmentQueue}.
@@ -23,7 +22,7 @@ export interface AttachmentQueueOptions {
   /**
    * PowerSync database instance
    */
-  db: AbstractPowerSyncDatabase;
+  db: CommonPowerSyncDatabase;
   /**
    * Remote storage adapter for upload/download operations
    */
@@ -115,7 +114,7 @@ export class AttachmentQueue {
    *  quick succession (e.g., bulk inserts). This is distinct from syncIntervalMs — it controls
    *  how quickly the queue reacts to changes, while syncIntervalMs controls how often it polls
    *  for retries. Default: 30 (from DEFAULT_WATCH_THROTTLE_MS) */
-  readonly syncThrottleDuration: number;
+  readonly syncThrottleDuration?: number;
 
   /** Whether to automatically download remote attachments. Default: true */
   readonly downloadAttachments: boolean = true;
@@ -127,7 +126,7 @@ export class AttachmentQueue {
   private readonly attachmentService: AttachmentService;
 
   /** PowerSync database instance */
-  private readonly db: AbstractPowerSyncDatabase;
+  private readonly db: CommonPowerSyncDatabase;
 
   /** Cleanup function for status change listener */
   private statusListenerDispose?: () => void;
@@ -164,7 +163,7 @@ export class AttachmentQueue {
     logger,
     tableName = ATTACHMENT_TABLE,
     syncIntervalMs = 30 * 1000,
-    syncThrottleDuration = DEFAULT_WATCH_THROTTLE_MS,
+    syncThrottleDuration,
     downloadAttachments = true,
     archivedCacheLimit = 100,
     errorHandler

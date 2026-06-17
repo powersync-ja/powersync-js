@@ -1,10 +1,10 @@
 import {
-  PowerSyncDatabase,
   PowerSyncDBListener,
   Transaction,
   WebPowerSyncDatabaseOptions,
   PowerSyncBackendConnector,
-  LockContext
+  LockContext,
+  WebPowerSyncDatabase
 } from '@powersync/web';
 
 export enum OperationType {
@@ -24,7 +24,7 @@ export interface TimedPowerSyncListener extends PowerSyncDBListener {
   operationCompleted: (event: TimedOperation) => void;
 }
 
-export class TimedPowerSyncDatabase extends PowerSyncDatabase {
+export class TimedPowerSyncDatabase extends WebPowerSyncDatabase {
   localKey: string;
 
   constructor(options: WebPowerSyncDatabaseOptions) {

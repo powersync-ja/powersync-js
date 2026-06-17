@@ -1,33 +1,23 @@
 import {
-  AbstractPowerSyncDatabase,
+  CommonPowerSyncDatabase,
+  DBAdapter,
+  PowerSyncBackendConnector,
+  PowerSyncDatabaseConstructor,
+  PowerSyncDatabaseOptions
+} from '@powersync/common';
+import {
+  BasePowerSyncDatabase,
   AbstractStreamingSyncImplementation,
   BucketStorageAdapter,
   CreateSyncImplementationOptions,
-  DBAdapter,
-  openDatabase,
-  PowerSyncBackendConnector,
-  PowerSyncDatabaseOptions
-} from '@powersync/common';
+  openDatabase
+} from '@powersync/shared-internals';
 import { ReactNativeRemote } from '../sync/stream/ReactNativeRemote';
 import { ReactNativeStreamingSyncImplementation } from '../sync/stream/ReactNativeStreamingSyncImplementation';
 import { ReactNativeBucketStorageAdapter } from './../sync/bucket/ReactNativeBucketStorageAdapter';
 import { ReactNativeQuickSqliteOpenFactory } from './adapters/react-native-quick-sqlite/ReactNativeQuickSQLiteOpenFactory';
 
-/**
- * A PowerSync database which provides SQLite functionality
- * which is automatically synced.
- *
- * @example
- * ```typescript
- * export const db = new PowerSyncDatabase({
- *  schema: AppSchema,
- *  database: {
- *    dbFilename: 'example.db'
- *  }
- * });
- * ```
- */
-export class PowerSyncDatabase extends AbstractPowerSyncDatabase<PowerSyncDatabaseOptions> {
+class ReactNativePowerSyncDatabase extends BasePowerSyncDatabase<PowerSyncDatabaseOptions> {
   constructor(options: PowerSyncDatabaseOptions) {
     super(options);
   }
@@ -64,3 +54,21 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase<PowerSyncDataba
     });
   }
 }
+
+/**
+ * A PowerSync database which provides SQLite functionality
+ * which is automatically synced.
+ *
+ * @example
+ * ```typescript
+ * export const db = new PowerSyncDatabase({
+ *  schema: AppSchema,
+ *  database: {
+ *    dbFilename: 'example.db'
+ *  }
+ * });
+ * ```
+ */
+export const PowerSyncDatabase: PowerSyncDatabaseConstructor<PowerSyncDatabaseOptions> = ReactNativePowerSyncDatabase;
+
+export interface PowerSyncDatabase extends CommonPowerSyncDatabase {}
