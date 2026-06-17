@@ -9,10 +9,10 @@ import {
   doneResult,
   extractBsonObjects,
   extractJsonLines,
-  SimpleAsyncIterator
+  SimpleAsyncIterator,
+  valueResult
 } from '../../../utils/stream_transform.js';
-import { EventIterator } from 'event-iterator';
-import type { Queue } from 'event-iterator/lib/event-iterator.js';
+import { EventQueue } from '../../../utils/async.js';
 
 /**
  * @internal
@@ -329,8 +329,19 @@ export abstract class AbstractRemote {
     let pendingSocket: WebSocket | null = null;
     let keepAliveTimeout: any;
     let rsocket: RSocket | null = null;
-    let queue: Queue<Uint8Array> | null = null;
+    let paused = false;
+    const queue = new EventQueue<Uint8Array>({
+      eventDelivered: () => {
+        if (queue.countOutstandingEvents <= SYNC_QUEUE_REQUEST_LOW_WATER) {
+          paused = false;
+          requestMore();
+        }
+      }
+    });
     let didClose = false;
+    let connectionEstablished = false;
+    let pendingEventsCount = syncQueueRequestSize;
+    let res: Requestable | null = null;
 
     const abortRequest = () => {
       if (didClose) {
@@ -347,11 +358,22 @@ export abstract class AbstractRemote {
       if (rsocket) {
         rsocket.close();
       }
-
-      if (queue) {
-        queue.stop();
-      }
     };
+
+    function push(event: Uint8Array) {
+      queue.notify(event);
+      if (queue.countOutstandingEvents >= SYNC_QUEUE_REQUEST_HIGH_WATER) {
+        paused = true;
+      }
+    }
+
+    function requestMore() {
+      const delta = syncQueueRequestSize - pendingEventsCount;
+      if (!paused && delta > 0) {
+        res?.request(delta);
+        pendingEventsCount = syncQueueRequestSize;
+      }
+    }
 
     // Handle upstream abort
     if (options.abortSignal.aborted) {
@@ -413,31 +435,16 @@ export abstract class AbstractRemote {
     rsocket.onClose(() => (rsocket = null));
 
     return await new Promise((resolve, reject) => {
-      let connectionEstablished = false;
-      let pendingEventsCount = syncQueueRequestSize;
-      let paused = false;
-      let res: Requestable | null = null;
-
-      function requestMore() {
-        const delta = syncQueueRequestSize - pendingEventsCount;
-        if (!paused && delta > 0) {
-          res?.request(delta);
-          pendingEventsCount = syncQueueRequestSize;
+      const queueAsIterator: SimpleAsyncIterator<Uint8Array> = {
+        next: async () => {
+          const notification = await queue.waitForEvent(options.abortSignal);
+          if (didClose) {
+            return doneResult;
+          } else {
+            return valueResult(notification!);
+          }
         }
-      }
-
-      const events = new EventIterator<Uint8Array>(
-        (q) => {
-          queue = q;
-
-          q.on('highWater', () => (paused = true));
-          q.on('lowWater', () => {
-            paused = false;
-            requestMore();
-          });
-        },
-        { highWaterMark: SYNC_QUEUE_REQUEST_HIGH_WATER, lowWaterMark: SYNC_QUEUE_REQUEST_LOW_WATER }
-      )[Symbol.asyncIterator]();
+      };
 
       res = rsocket!.requestStream(
         {
@@ -476,12 +483,12 @@ export abstract class AbstractRemote {
             // The connection is active
             if (!connectionEstablished) {
               connectionEstablished = true;
-              resolve(events);
+              resolve(queueAsIterator);
             }
             const { data } = payload;
 
             if (data) {
-              queue!.push(data);
+              push(data);
             }
 
             // Less events are now pending

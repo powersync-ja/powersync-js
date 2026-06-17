@@ -407,9 +407,6 @@ importers:
 
   packages/common:
     dependencies:
-      event-iterator:
-        specifier: ^2.0.0
-        version: 2.0.0
       js-logger:
         specifier: 'catalog:'
         version: 1.6.1
@@ -10793,9 +10790,6 @@ packages:
   eval@0.1.8:
     resolution: {integrity: sha512-EzV94NYKoO09GLXGjXj9JIlXijVck4ONSr5wiCWDvhsvj5jxSrzTmRU/9C1DyB6uToszLs8aifA6NQ7lEQdvFw==}
     engines: {node: '>= 0.8'}
-
-  event-iterator@2.0.0:
-    resolution: {integrity: sha512-KGft0ldl31BZVV//jj+IAIGCxkvvUkkON+ScH6zfoX+l+omX6001ggyRSpI0Io2Hlro0ThXotswCtfzS8UkIiQ==}
 
   event-pubsub@4.3.0:
     resolution: {integrity: sha512-z7IyloorXvKbFx9Bpie2+vMJKKx1fH1EN5yiTfp8CiLOTptSYy1g8H4yDpGlEdshL1PBiFtBHepF2cNsqeEeFQ==}
@@ -31222,8 +31216,6 @@ snapshots:
     dependencies:
       '@types/node': 25.9.1
       require-like: 0.1.2
-
-  event-iterator@2.0.0: {}
 
   event-pubsub@4.3.0: {}
 

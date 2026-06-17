@@ -36,8 +36,7 @@ function defineBuild(isNode) {
         sourcemap: true
       }
     ],
-    plugins,
-    external: [isNode ? 'event-iterator' : undefined]
+    plugins
   };
 }
 
