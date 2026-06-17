@@ -7,6 +7,8 @@ type TestContext = {
   powerSyncDb: ReturnType<typeof getPowerSyncDb>;
   readLockSpy: ReturnType<typeof vi.spyOn>;
   writeLockSpy: ReturnType<typeof vi.spyOn>;
+  readTransactionSpy: ReturnType<typeof vi.spyOn>;
+  writeTransactionSpy: ReturnType<typeof vi.spyOn>;
   db: ReturnType<typeof getDrizzleDb>;
 };
 
@@ -24,6 +26,18 @@ export const lockUsageTest = test.extend<TestContext>({
   },
   writeLockSpy: async ({ powerSyncDb }, use) => {
     const writeLockSpy = vi.spyOn(powerSyncDb, 'writeLock' as any) as any;
+    writeLockSpy.mockClear();
+    await use(writeLockSpy);
+    writeLockSpy.mockRestore();
+  },
+  readTransactionSpy: async ({ powerSyncDb }, use) => {
+    const readLockSpy = vi.spyOn(powerSyncDb, 'readTransaction' as any) as any;
+    readLockSpy.mockClear();
+    await use(readLockSpy);
+    readLockSpy.mockRestore();
+  },
+  writeTransactionSpy: async ({ powerSyncDb }, use) => {
+    const writeLockSpy = vi.spyOn(powerSyncDb, 'writeTransaction' as any) as any;
     writeLockSpy.mockClear();
     await use(writeLockSpy);
     writeLockSpy.mockRestore();
@@ -370,20 +384,20 @@ describe('Lock Usage Tests', () => {
 
   describe('Transaction operations', () => {
     lockUsageTest(
-      'should use writeLock for read-write transaction (default)',
-      async ({ db, readLockSpy, writeLockSpy }) => {
+      'should use writeTransaction for read-write transaction (default)',
+      async ({ db, readLockSpy, readTransactionSpy, writeTransactionSpy }) => {
         await db.transaction(async (tx) => {
           await tx.insert(drizzleUsers).values({ id: '2', name: 'Bob' });
         });
 
-        expect(writeLockSpy).toHaveBeenCalled();
-        expect(readLockSpy).not.toHaveBeenCalled();
+        expect(writeTransactionSpy).toHaveBeenCalled();
+        expect(readTransactionSpy).not.toHaveBeenCalled();
       }
     );
 
     lockUsageTest(
       'should use writeLock for explicit read-write transaction',
-      async ({ db, readLockSpy, writeLockSpy }) => {
+      async ({ db, readTransactionSpy, writeTransactionSpy }) => {
         await db.transaction(
           async (tx) => {
             await tx.insert(drizzleUsers).values({ id: '2', name: 'Bob' });
@@ -391,26 +405,29 @@ describe('Lock Usage Tests', () => {
           { accessMode: 'read write' }
         );
 
-        expect(writeLockSpy).toHaveBeenCalled();
-        expect(readLockSpy).not.toHaveBeenCalled();
+        expect(writeTransactionSpy).toHaveBeenCalled();
+        expect(readTransactionSpy).not.toHaveBeenCalled();
       }
     );
 
-    lockUsageTest('should use readLock for read-only transaction', async ({ db, readLockSpy, writeLockSpy }) => {
-      await db.transaction(
-        async (tx) => {
-          await tx.select().from(drizzleUsers);
-        },
-        { accessMode: 'read only' }
-      );
+    lockUsageTest(
+      'should use readLock for read-only transaction',
+      async ({ db, readTransactionSpy, writeTransactionSpy }) => {
+        await db.transaction(
+          async (tx) => {
+            await tx.select().from(drizzleUsers);
+          },
+          { accessMode: 'read only' }
+        );
 
-      expect(readLockSpy).toHaveBeenCalled();
-      expect(writeLockSpy).not.toHaveBeenCalled();
-    });
+        expect(readTransactionSpy).toHaveBeenCalled();
+        expect(writeTransactionSpy).not.toHaveBeenCalled();
+      }
+    );
 
     lockUsageTest(
       'should use readLock for read-only transaction with multiple reads',
-      async ({ db, readLockSpy, writeLockSpy }) => {
+      async ({ db, writeLockSpy, readTransactionSpy, writeTransactionSpy }) => {
         await db.transaction(
           async (tx) => {
             await tx.select().from(drizzleUsers);
@@ -419,14 +436,15 @@ describe('Lock Usage Tests', () => {
           { accessMode: 'read only' }
         );
 
-        expect(readLockSpy).toHaveBeenCalledTimes(1); // Transaction itself uses readLock once
+        expect(readTransactionSpy).toHaveBeenCalledTimes(1);
         expect(writeLockSpy).not.toHaveBeenCalled();
+        expect(writeTransactionSpy).not.toHaveBeenCalled();
       }
     );
 
     lockUsageTest(
       'should use writeLock for read-write transaction with multiple operations',
-      async ({ db, readLockSpy, writeLockSpy }) => {
+      async ({ db, readTransactionSpy, writeTransactionSpy }) => {
         await db.transaction(
           async (tx) => {
             await tx.insert(drizzleUsers).values({ id: '2', name: 'Bob' });
@@ -435,8 +453,8 @@ describe('Lock Usage Tests', () => {
           { accessMode: 'read write' }
         );
 
-        expect(writeLockSpy).toHaveBeenCalledTimes(1); // Transaction itself uses writeLock once
-        expect(readLockSpy).not.toHaveBeenCalled();
+        expect(writeTransactionSpy).toHaveBeenCalledTimes(1); // Transaction itself uses writeLock once
+        expect(readTransactionSpy).not.toHaveBeenCalled();
       }
     );
   });
