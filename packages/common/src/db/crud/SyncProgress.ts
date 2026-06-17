@@ -1,14 +1,4 @@
-import type { BucketProgress } from '../../client/sync/stream/core-instruction.js';
 import type { SyncStatus } from './SyncStatus.js';
-
-// (bucket, progress) pairs
-/** @internal */
-export type InternalProgressInformation = Record<string, BucketProgress>;
-
-/**
- * @internal The priority used by the core extension to indicate that a full sync was completed.
- */
-export const FULL_SYNC_PRIORITY = 2147483647;
 
 /**
  * Information about a progressing download made by the PowerSync SDK.
@@ -64,42 +54,12 @@ export interface ProgressWithOperations {
  *
  * @public
  */
-export class SyncProgress implements ProgressWithOperations {
-  totalOperations: number;
-  downloadedOperations: number;
-  downloadedFraction: number;
-
-  constructor(protected internal: InternalProgressInformation) {
-    const untilCompletion = this.untilPriority(FULL_SYNC_PRIORITY);
-
-    this.totalOperations = untilCompletion.totalOperations;
-    this.downloadedOperations = untilCompletion.downloadedOperations;
-    this.downloadedFraction = untilCompletion.downloadedFraction;
-  }
-
+export interface SyncProgress extends ProgressWithOperations {
   /**
    * Returns download progress towards all data up until the specified priority being received.
    *
    * The returned {@link ProgressWithOperations} tracks the target amount of operations that need
    * to be downloaded in total and how many of them have already been received.
    */
-  untilPriority(priority: number): ProgressWithOperations {
-    let total = 0;
-    let downloaded = 0;
-
-    for (const progress of Object.values(this.internal)) {
-      // Include higher-priority buckets, which are represented by lower numbers.
-      if (progress.priority <= priority) {
-        downloaded += progress.since_last;
-        total += progress.target_count - progress.at_last;
-      }
-    }
-
-    let progress = total == 0 ? 0.0 : downloaded / total;
-    return {
-      totalOperations: total,
-      downloadedOperations: downloaded,
-      downloadedFraction: progress
-    };
-  }
+  untilPriority(priority: number): ProgressWithOperations;
 }

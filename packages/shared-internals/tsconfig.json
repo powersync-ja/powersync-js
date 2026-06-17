@@ -1,0 +1,19 @@
+{
+  "extends": "../../tsconfig.base",
+  "compilerOptions": {
+    "types": ["node"],
+    "rootDir": "src",
+    "outDir": "./lib",
+    "lib": ["esnext"],
+    "declaration": true,
+    "module": "NodeNext",
+    "moduleResolution": "nodenext",
+    "preserveConstEnums": true,
+    "skipLibCheck": false,
+    "strictNullChecks": true
+  },
+  "include": ["src/**/*"],
+  "references": [
+    {"path": "../common"}
+  ]
+}

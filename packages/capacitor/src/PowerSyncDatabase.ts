@@ -1,31 +1,27 @@
 import { Capacitor } from '@capacitor/core';
 import {
-  CreateSyncImplementationOptions,
+  CommonPowerSyncDatabase,
   DBAdapter,
   LogLevels,
-  MEMORY_TRIGGER_CLAIM_MANAGER,
-  openDatabase,
   PowerSyncBackendConnector,
-  StreamingSyncImplementation,
+  PowerSyncDatabaseConstructor,
   SyncOptions,
   SyncStreamConnectionMethod,
-  TriggerManagerConfig,
-  PowerSyncDatabase as WebPowerSyncDatabase,
-  WebSQLOpenOptions
+  WebPowerSyncDatabase,
+  WebPowerSyncDatabaseOptions
 } from '@powersync/web';
 import { CapacitorSQLiteAdapter } from './adapter/CapacitorSQLiteAdapter.js';
 import { CapacitorRemote } from './sync/CapacitorRemote.js';
 import { CapacitorStreamingSyncImplementation } from './sync/CapacitorSyncImplementation.js';
+import {
+  CreateSyncImplementationOptions,
+  MEMORY_TRIGGER_CLAIM_MANAGER,
+  StreamingSyncImplementation,
+  TriggerManagerConfig,
+  openDatabase
+} from '@powersync/shared-internals';
 
-/**
- * PowerSyncDatabase class for managing database connections and sync implementations.
- * This extends the WebPowerSyncDatabase to provide platform-specific implementations
- * for Capacitor environments (iOS and Android).
- *
- * @experimental
- * @alpha
- */
-export class PowerSyncDatabase extends WebPowerSyncDatabase {
+class CapacitorPowerSyncDatabase extends WebPowerSyncDatabase {
   /**
    * Connects to stream of events from the PowerSync instance.
    * {@link PowerSyncConnectionOptions#connectionMethod} defaults to WebSocket connection on Web platforms
@@ -137,3 +133,15 @@ export class PowerSyncDatabase extends WebPowerSyncDatabase {
     }
   }
 }
+
+/**
+ * PowerSyncDatabase class for managing database connections and sync implementations.
+ * This extends the WebPowerSyncDatabase to provide platform-specific implementations
+ * for Capacitor environments (iOS and Android).
+ *
+ * @experimental
+ * @alpha
+ */
+export const PowerSyncDatabase: PowerSyncDatabaseConstructor<WebPowerSyncDatabaseOptions> = CapacitorPowerSyncDatabase;
+
+export interface PowerSyncDatabase extends CommonPowerSyncDatabase {}

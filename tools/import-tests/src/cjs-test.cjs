@@ -1,9 +1,12 @@
 const assert = require('assert');
 
 const NodeSDK = require('@powersync/node');
-const { ControlledExecutor } = require('@powersync/node');
+const { PowerSyncDatabase } = require('@powersync/node');
 assert(NodeSDK);
-assert(ControlledExecutor);
+assert(PowerSyncDatabase);
+
+const { AttachmentContext } = require('@powersync/common');
+assert(AttachmentContext);
 
 const Attachments = require('@powersync/attachments');
 const { AttachmentState } = require('@powersync/attachments');

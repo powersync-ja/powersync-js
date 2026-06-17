@@ -251,6 +251,9 @@ importers:
       '@powersync/common':
         specifier: workspace:^
         version: link:../common
+      '@powersync/shared-internals':
+        specifier: workspace:*
+        version: link:../shared-internals
     devDependencies:
       '@powersync/sql-js':
         specifier: 0.0.9
@@ -329,8 +332,8 @@ importers:
         specifier: 15.2.3
         version: 15.2.3(rollup@4.14.3)
       '@rollup/plugin-typescript':
-        specifier: ^11.1.6
-        version: 11.1.6(rollup@4.14.3)(tslib@2.8.1)(typescript@6.0.3)
+        specifier: ^12.3.0
+        version: 12.3.0(rollup@4.14.3)(tslib@2.8.1)(typescript@6.0.3)
       expo-file-system:
         specifier: ^19.0.21
         version: 19.0.21(expo@54.0.33(@babel/core@7.29.7)(react-native@0.84.1(@babel/core@7.29.7)(@react-native-community/cli@20.0.0(typescript@6.0.3))(@react-native/metro-config@0.83.1(@babel/core@7.29.7))(@types/react@19.2.14)(react@19.2.4))(react@19.2.4)(typescript@6.0.3))(react-native@0.84.1(@babel/core@7.29.7)(@react-native-community/cli@20.0.0(typescript@6.0.3))(@react-native/metro-config@0.83.1(@babel/core@7.29.7))(@types/react@19.2.14)(react@19.2.4))
@@ -346,6 +349,9 @@ importers:
 
   packages/capacitor:
     dependencies:
+      '@powersync/shared-internals':
+        specifier: workspace:*
+        version: link:../shared-internals
       '@powersync/web':
         specifier: workspace:^1.38.3
         version: link:../web
@@ -403,56 +409,16 @@ importers:
         version: 4.1.8(@types/node@25.9.1)(@vitest/browser-playwright@4.1.8)(@vitest/browser-preview@4.1.8)(jsdom@24.1.3)(vite@7.3.1(@types/node@25.9.1)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.48.0)(tsx@4.21.0)(yaml@2.9.0))
 
   packages/common:
-    dependencies:
-      event-iterator:
-        specifier: ^2.0.0
-        version: 2.0.0
     devDependencies:
       '@microsoft/api-extractor':
         specifier: 'catalog:'
         version: 7.58.7(@types/node@24.10.13)
-      '@rollup/plugin-commonjs':
-        specifier: 'catalog:'
-        version: 29.0.2(rollup@4.59.0)
-      '@rollup/plugin-inject':
-        specifier: 'catalog:'
-        version: 5.0.5(rollup@4.59.0)
-      '@rollup/plugin-json':
-        specifier: 'catalog:'
-        version: 6.1.0(rollup@4.59.0)
-      '@rollup/plugin-node-resolve':
-        specifier: 'catalog:'
-        version: 16.0.3(rollup@4.59.0)
       '@types/node':
         specifier: 'catalog:'
         version: 24.10.13
       '@types/uuid':
         specifier: 'catalog:'
         version: 9.0.8
-      buffer:
-        specifier: ^6.0.3
-        version: 6.0.3
-      cross-fetch:
-        specifier: ^4.1.0
-        version: 4.1.0(encoding@0.1.13)
-      estree-walker:
-        specifier: ^3.0.3
-        version: 3.0.3
-      magic-string:
-        specifier: ^0.30.21
-        version: 0.30.21
-      rollup:
-        specifier: 'catalog:'
-        version: 4.59.0
-      rollup-plugin-dts:
-        specifier: 'catalog:'
-        version: 6.3.0(rollup@4.59.0)(typescript@6.0.3)
-      rsocket-core:
-        specifier: 1.0.0-alpha.3
-        version: 1.0.0-alpha.3
-      rsocket-websocket-client:
-        specifier: 1.0.0-alpha.3
-        version: 1.0.0-alpha.3
 
   packages/drizzle-driver:
     dependencies:
@@ -536,6 +502,9 @@ importers:
       '@powersync/common':
         specifier: workspace:*
         version: link:../common
+      '@powersync/shared-internals':
+        specifier: workspace:*
+        version: link:../shared-internals
       comlink:
         specifier: 'catalog:'
         version: 4.4.2
@@ -582,6 +551,9 @@ importers:
       '@nuxt/kit':
         specifier: ^4.3.1
         version: 4.3.1(magicast@0.5.2)
+      '@powersync/shared-internals':
+        specifier: workspace:^1.0.0
+        version: link:../shared-internals
       '@tanstack/vue-table':
         specifier: ^8.21.3
         version: 8.21.3(vue@3.5.30(typescript@6.0.3))
@@ -661,6 +633,9 @@ importers:
       '@powersync/common':
         specifier: workspace:*
         version: link:../common
+      '@powersync/shared-internals':
+        specifier: workspace:*
+        version: link:../shared-internals
     devDependencies:
       '@op-engineering/op-sqlite':
         specifier: 'catalog:'
@@ -707,6 +682,9 @@ importers:
       '@powersync/drizzle-driver':
         specifier: workspace:*
         version: link:../drizzle-driver
+      '@powersync/shared-internals':
+        specifier: 'workspace:'
+        version: link:../shared-internals
       '@powersync/web':
         specifier: workspace:*
         version: link:../web
@@ -749,6 +727,9 @@ importers:
       '@powersync/react':
         specifier: workspace:*
         version: link:../react
+      '@powersync/shared-internals':
+        specifier: workspace:*
+        version: link:../shared-internals
     devDependencies:
       '@craftzdog/react-native-buffer':
         specifier: ^6.0.5
@@ -799,6 +780,58 @@ importers:
         specifier: 3.2.1
         version: 3.2.1
 
+  packages/shared-internals:
+    dependencies:
+      event-iterator:
+        specifier: ^2.0.0
+        version: 2.0.0
+    devDependencies:
+      '@powersync/common':
+        specifier: workspace:*
+        version: link:../common
+      '@rollup/plugin-commonjs':
+        specifier: 'catalog:'
+        version: 29.0.2(rollup@4.59.0)
+      '@rollup/plugin-inject':
+        specifier: 'catalog:'
+        version: 5.0.5(rollup@4.59.0)
+      '@rollup/plugin-json':
+        specifier: 'catalog:'
+        version: 6.1.0(rollup@4.59.0)
+      '@rollup/plugin-node-resolve':
+        specifier: 'catalog:'
+        version: 16.0.3(rollup@4.59.0)
+      '@types/node':
+        specifier: 'catalog:'
+        version: 24.10.13
+      '@types/uuid':
+        specifier: 'catalog:'
+        version: 9.0.8
+      buffer:
+        specifier: ^6.0.3
+        version: 6.0.3
+      cross-fetch:
+        specifier: ^4.1.0
+        version: 4.1.0(encoding@0.1.13)
+      estree-walker:
+        specifier: ^3.0.3
+        version: 3.0.3
+      magic-string:
+        specifier: ^0.30.21
+        version: 0.30.21
+      rollup:
+        specifier: 'catalog:'
+        version: 4.59.0
+      rollup-plugin-dts:
+        specifier: 'catalog:'
+        version: 6.3.0(rollup@4.59.0)(typescript@6.0.3)
+      rsocket-core:
+        specifier: 1.0.0-alpha.3
+        version: 1.0.0-alpha.3
+      rsocket-websocket-client:
+        specifier: 1.0.0-alpha.3
+        version: 1.0.0-alpha.3
+
   packages/tanstack-react-query:
     dependencies:
       '@powersync/common':
@@ -807,6 +840,9 @@ importers:
       '@powersync/react':
         specifier: workspace:*
         version: link:../react
+      '@powersync/shared-internals':
+        specifier: workspace:^1.0.0
+        version: link:../shared-internals
       '@tanstack/react-query':
         specifier: ^5.70.0
         version: 5.90.21(react@18.3.1)
@@ -835,6 +871,9 @@ importers:
       '@powersync/common':
         specifier: 'workspace:'
         version: link:../common
+      '@powersync/shared-internals':
+        specifier: 'workspace:'
+        version: link:../shared-internals
       '@tauri-apps/api':
         specifier: ^2.0.0
         version: 2.10.1
@@ -855,6 +894,10 @@ importers:
   packages/tauri/src: {}
 
   packages/vue:
+    dependencies:
+      '@powersync/shared-internals':
+        specifier: workspace:^1.0.0
+        version: link:../shared-internals
     devDependencies:
       '@powersync/common':
         specifier: workspace:*
@@ -877,6 +920,9 @@ importers:
       '@powersync/common':
         specifier: workspace:*
         version: link:../common
+      '@powersync/shared-internals':
+        specifier: workspace:*
+        version: link:../shared-internals
       comlink:
         specifier: 'catalog:'
         version: 4.4.2
@@ -929,9 +975,15 @@ importers:
       '@monaco-editor/react':
         specifier: ^4.7.0
         version: 4.7.0(monaco-editor@0.55.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@powersync/common':
+        specifier: workspace:*
+        version: link:../../packages/common
       '@powersync/react':
         specifier: workspace:*
         version: link:../../packages/react
+      '@powersync/shared-internals':
+        specifier: workspace:*
+        version: link:../../packages/shared-internals
       '@powersync/web':
         specifier: workspace:*
         version: link:../../packages/web
@@ -1002,9 +1054,6 @@ importers:
         specifier: ^4.3.5
         version: 4.3.6
     devDependencies:
-      '@powersync/common':
-        specifier: workspace:*
-        version: link:../../packages/common
       '@swc/core':
         specifier: ~1.6.0
         version: 1.6.13(@swc/helpers@0.5.19)
@@ -1053,6 +1102,9 @@ importers:
       '@powersync/capacitor':
         specifier: workspace:*
         version: link:../../packages/capacitor
+      '@powersync/common':
+        specifier: workspace:*
+        version: link:../../packages/common
       '@powersync/drizzle-driver':
         specifier: workspace:*
         version: link:../../packages/drizzle-driver
@@ -6473,19 +6525,6 @@ packages:
       rollup: ^2.0.0||^3.0.0||^4.0.0
     peerDependenciesMeta:
       rollup:
-        optional: true
-
-  '@rollup/plugin-typescript@11.1.6':
-    resolution: {integrity: sha512-R92yOmIACgYdJ7dJ97p4K69I8gg6IEHt8M7dUBxN3W6nrO8uUxX5ixl0yU/N3aZTi8WhPuICvOHXQvF6FaykAA==}
-    engines: {node: '>=14.0.0'}
-    peerDependencies:
-      rollup: ^2.14.0||^3.0.0||^4.0.0
-      tslib: '*'
-      typescript: '>=3.7.0'
-    peerDependenciesMeta:
-      rollup:
-        optional: true
-      tslib:
         optional: true
 
   '@rollup/plugin-typescript@12.3.0':
@@ -26174,10 +26213,10 @@ snapshots:
     optionalDependencies:
       rollup: 4.59.0
 
-  '@rollup/plugin-typescript@11.1.6(rollup@4.14.3)(tslib@2.8.1)(typescript@6.0.3)':
+  '@rollup/plugin-typescript@12.3.0(rollup@4.14.3)(tslib@2.8.1)(typescript@6.0.3)':
     dependencies:
-      '@rollup/pluginutils': 5.3.0(rollup@4.14.3)
-      resolve: 1.22.11
+      '@rollup/pluginutils': 5.4.0(rollup@4.14.3)
+      resolve: 1.22.12
       typescript: 6.0.3
     optionalDependencies:
       rollup: 4.14.3
@@ -26214,6 +26253,14 @@ snapshots:
   '@rollup/pluginutils@5.3.0(rollup@4.14.3)':
     dependencies:
       '@types/estree': 1.0.8
+      estree-walker: 2.0.2
+      picomatch: 4.0.4
+    optionalDependencies:
+      rollup: 4.14.3
+
+  '@rollup/pluginutils@5.4.0(rollup@4.14.3)':
+    dependencies:
+      '@types/estree': 1.0.9
       estree-walker: 2.0.2
       picomatch: 4.0.4
     optionalDependencies:

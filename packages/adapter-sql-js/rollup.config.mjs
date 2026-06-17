@@ -31,6 +31,6 @@ export default () => {
         ]
       })
     ],
-    external: ['@powersync/common']
+    external: ['@powersync/common', '@powersync/shared-internals']
   };
 };

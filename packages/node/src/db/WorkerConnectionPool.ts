@@ -12,10 +12,9 @@ import {
   DBLockOptions,
   LockContext,
   QueryResult,
-  Semaphore,
-  timeoutSignal,
   Transaction
 } from '@powersync/common';
+import { Semaphore, timeoutSignal } from '@powersync/shared-internals';
 import { Remote } from 'comlink';
 import { AsyncDatabase, AsyncDatabaseOpener } from './AsyncDatabase.js';
 import { RemoteConnection } from './RemoteConnection.js';

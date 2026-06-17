@@ -1,4 +1,4 @@
-import { AbstractPowerSyncDatabase, Schema, Table, column } from '@powersync/common';
+import { CommonPowerSyncDatabase, Schema, Table, column } from '@powersync/common';
 import { PowerSyncDatabase } from '@powersync/web';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
@@ -8,7 +8,7 @@ describe('Basic', { sequential: true }, () => {
     email: column.text
   });
 
-  let db: AbstractPowerSyncDatabase;
+  let db: CommonPowerSyncDatabase;
 
   beforeEach(() => {
     db = new PowerSyncDatabase({

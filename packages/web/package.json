@@ -67,10 +67,12 @@
   "license": "Apache-2.0",
   "peerDependencies": {
     "@journeyapps/wa-sqlite": "catalog:",
-    "@powersync/common": "workspace:^1.54.0"
+    "@powersync/common": "workspace:^1.54.0",
+    "@powersync/shared-internals": "workspace:^1.0.0"
   },
   "dependencies": {
     "@powersync/common": "workspace:*",
+    "@powersync/shared-internals": "workspace:*",
     "comlink": "catalog:",
     "commander": "^12.1.0"
   },

@@ -163,9 +163,10 @@ export interface TriggerCreationHooks {
 
 /**
  * Common interface for options used in creating a diff trigger.
+ *
+ * @alpha @experimental
  */
-
-interface BaseCreateDiffTriggerOptions {
+export interface BaseCreateDiffTriggerOptions {
   /**
    * PowerSync source table/view to trigger and track changes from.
    * This should be present in the PowerSync database's schema.
@@ -188,16 +189,18 @@ interface BaseCreateDiffTriggerOptions {
    * The row id is available in the `id` column.
    *
    * NB! The WHEN clauses here are added directly to the SQLite trigger creation SQL.
-   * Any user input strings here should be sanitized externally. The {@link when} string template function performs
-   * some basic sanitization, extra external sanitization is recommended.
+   * Any user input strings here should be sanitized externally. The {@link BaseCreateDiffTriggerOptions.when} string
+   * template function performs some basic sanitization, extra external sanitization is recommended.
    *
    * @example
+   * ```JavaScript
    * {
    *  'INSERT': sanitizeSQL`json_extract(NEW.data, '$.list_id') = ${sanitizeUUID(list.id)}`,
    *  'INSERT': `TRUE`,
    *  'UPDATE': sanitizeSQL`NEW.id = 'abcd' AND json_extract(NEW.data, '$.status') = 'active'`,
    *  'DELETE': sanitizeSQL`json_extract(OLD.data, '$.list_id') = 'abcd'`
    * }
+   * ```
    */
   when: Partial<Record<DiffTriggerOperation, string>>;
 
@@ -363,7 +366,6 @@ export interface TrackDiffOptions extends BaseCreateDiffTriggerOptions {
 
   /**
    * The minimum interval, in milliseconds, between {@link TrackDiffOptions.onChange} invocations.
-   *  @default {@link DEFAULT_WATCH_THROTTLE_MS}
    */
   throttleMs?: number;
 }
@@ -471,39 +473,4 @@ export interface TriggerManager {
    * ```
    */
   trackTableDiff(options: TrackDiffOptions): Promise<TriggerRemoveCallback>;
-}
-
-/**
- * @experimental
- * @internal
- * Manages claims on persisted SQLite triggers and destination tables to enable proper cleanup
- * when they are no longer actively in use.
- *
- * When using persisted triggers (especially for OPFS multi-tab scenarios), we need a reliable way to determine which resources are still actively in use across different connections/tabs so stale resources can be safely cleaned up without interfering with active triggers.
- *
- * A cleanup process runs
- * on database creation (and every 2 minutes) that:
- * 1. Queries for existing managed persisted resources
- * 2. Checks with the claim manager if any consumer is actively using those resources
- * 3. Deletes unused resources
- */
-
-export interface TriggerClaimManager {
-  /**
-   * Obtains or marks a claim on a certain identifier.
-   * @returns a callback to release the claim.
-   */
-  obtainClaim: (identifier: string) => Promise<() => Promise<void>>;
-  /**
-   * Checks if a claim is present for an identifier.
-   */
-  checkClaim: (identifier: string) => Promise<boolean>;
-}
-
-/**
- * @experimental
- * @internal
- */
-export interface TriggerManagerConfig {
-  claimManager: TriggerClaimManager;
 }

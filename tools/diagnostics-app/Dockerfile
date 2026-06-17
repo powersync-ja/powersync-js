@@ -4,8 +4,8 @@ WORKDIR /app
 COPY . /app
 RUN corepack enable
 
-RUN pnpm i --frozen-lockfile --filter ./packages/react --filter ./packages/common --filter ./packages/web --filter ./tools/diagnostics-app
-RUN pnpm run --filter ./packages/react --filter ./packages/common --filter ./packages/web build
+RUN pnpm i --frozen-lockfile --filter ./packages/react --filter ./packages/common --filter ./packages/shared-internals --filter ./packages/web --filter ./tools/diagnostics-app
+RUN pnpm run --filter ./packages/react --filter ./packages/common --filter ./packages/shared-internals --filter ./packages/web build
 RUN pnpm run --filter ./tools/diagnostics-app build
 
 # === PROD ===

@@ -18,7 +18,7 @@ export interface BaseObserverInterface<T extends BaseListener> {
 }
 
 /**
- * @internal
+ * @public
  */
 export class BaseObserver<T extends BaseListener = BaseListener> implements BaseObserverInterface<T> {
   protected listeners = new Set<Partial<T>>();

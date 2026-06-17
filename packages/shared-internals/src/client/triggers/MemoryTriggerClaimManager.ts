@@ -1,4 +1,4 @@
-import { TriggerClaimManager } from './TriggerManager.js';
+import { TriggerClaimManager } from './TriggerManagerImpl.js';
 
 const CLAIM_STORE = new Map<string, () => Promise<void>>();
 

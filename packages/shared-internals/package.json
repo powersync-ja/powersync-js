@@ -1,0 +1,78 @@
+{
+  "name": "@powersync/shared-internals",
+  "version": "1.0.0",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
+  "description": "Internal helpers used by PowerSync, not meant to be used in other contexts.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "node": {
+        "import": {
+          "types": "./lib/index.d.ts",
+          "default": "./dist/bundle.node.mjs"
+        },
+        "require": {
+          "types": "./dist/index.d.cts",
+          "require": "./dist/bundle.node.cjs"
+        }
+      },
+      "import": {
+        "types": "./lib/index.d.ts",
+        "default": "./dist/bundle.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "require": "./dist/bundle.cjs"
+      }
+    },
+    "./internal/sync_protocol": {
+      "types": "./legacy/sync_protocol.d.ts"
+    }
+  },
+  "author": "PowerSync",
+  "license": "Apache-2.0",
+  "files": [
+    "lib",
+    "dist",
+    "src",
+    "legacy"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/powersync-ja/powersync-js.git"
+  },
+  "bugs": {
+    "url": "https://github.com/powersync-ja/powersync-js/issues"
+  },
+  "homepage": "https://docs.powersync.com",
+  "scripts": {
+    "build": "tsc -b && rollup -c rollup.config.mjs",
+    "build:prod": "tsc -b && rollup -c rollup.config.mjs",
+    "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
+    "test": "vitest",
+    "test:exports": "attw --pack . --profile node16 --exclude-entrypoints internal/sync_protocol"
+  },
+  "dependencies": {
+    "event-iterator": "^2.0.0"
+  },
+  "devDependencies": {
+    "@powersync/common": "workspace:*",
+    "@rollup/plugin-commonjs": "catalog:",
+    "@rollup/plugin-inject": "catalog:",
+    "@rollup/plugin-json": "catalog:",
+    "@rollup/plugin-node-resolve": "catalog:",
+    "@types/node": "catalog:",
+    "@types/uuid": "catalog:",
+    "buffer": "^6.0.3",
+    "cross-fetch": "^4.1.0",
+    "estree-walker": "^3.0.3",
+    "magic-string": "^0.30.21",
+    "rollup": "catalog:",
+    "rollup-plugin-dts": "catalog:",
+    "rsocket-core": "1.0.0-alpha.3",
+    "rsocket-websocket-client": "1.0.0-alpha.3"
+  }
+}

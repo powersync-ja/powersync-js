@@ -39,8 +39,8 @@ function ArrowDown() {
 
 export function StatusPanel() {
   const status = useStatus();
-  const { connected, hasSynced, dataFlowStatus } = status;
-  const { uploading, downloading, uploadError, downloadError } = dataFlowStatus;
+  const { connected, hasSynced, downloading, dataFlowStatus } = status;
+  const { uploading, uploadError, downloadError } = dataFlowStatus;
 
   let label = 'Connecting…';
   let chipColor: keyof typeof chipStyles = 'warning';

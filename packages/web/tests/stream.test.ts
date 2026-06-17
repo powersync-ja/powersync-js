@@ -4,15 +4,15 @@ import {
   Schema,
   SyncOptions,
   SyncStreamConnectionMethod,
-  SyncStreamOptions,
   WASQLiteOpenFactory,
   WASQLiteVFS
 } from '@powersync/web';
 import { describe, expect, it, onTestFinished, vi } from 'vitest';
 import { TestConnector } from './utils/MockStreamOpenFactory.js';
 import { ConnectedDatabaseUtils, generateConnectedDatabase } from './utils/generateConnectedDatabase.js';
-import { BucketChecksum } from '@powersync/common/internal/sync_protocol';
+import { BucketChecksum } from '@powersync/shared-internals/internal/sync_protocol';
 import { defaultLogLevel, defaultTestLogger } from './utils/logger.js';
+import { SyncStreamOptions } from '@powersync/shared-internals';
 
 const UPLOAD_TIMEOUT_MS = 3000;
 
@@ -244,7 +244,7 @@ describe('Streaming', { sequential: true }, () => {
         buckets: [bucket('a', 2)]
       }
     });
-    await vi.waitFor(() => powersync.currentStatus.dataFlowStatus.downloading == true);
+    await vi.waitFor(() => powersync.currentStatus.downloading == true);
     remote.enqueueLine({
       data: {
         bucket: 'a',
@@ -260,7 +260,7 @@ describe('Streaming', { sequential: true }, () => {
       }
     });
     remote.enqueueLine({ checkpoint_complete: { last_op_id: '2' } });
-    await vi.waitFor(() => powersync.currentStatus.dataFlowStatus.downloading == false);
+    await vi.waitFor(() => powersync.currentStatus.downloading == false);
 
     console.log('has second sync, should update list');
     expect((await query.next()).value.rows._array).toStrictEqual([]);
