@@ -17,12 +17,11 @@ const logger = createConsoleLogger({ minLevel: LogLevels.debug });
 
 export const db = new PowerSyncDatabase({
   schema: AppSchema,
-  database: new WASQLiteOpenFactory({
+  database: {
     dbFilename: 'example.db',
     vfs: WASQLiteVFS.OPFSCoopSyncVFS,
-    logger,
-    logLevel: LogLevels.debug
-  }),
+    databaseWorkerLogLevel: LogLevels.debug
+  },
   logger
 });
 
@@ -64,7 +63,7 @@ export const SystemProvider = ({ children }: { children: React.ReactNode }) => {
 
     powerSync.init();
     const l = connector.registerListener({
-      initialized: () => {},
+      initialized: () => { },
       sessionStarted: () => {
         powerSync.connect(connector);
       }
