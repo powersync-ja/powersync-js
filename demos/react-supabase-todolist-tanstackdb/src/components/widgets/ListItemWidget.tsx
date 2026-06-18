@@ -19,18 +19,20 @@ import { usePowerSync } from '@powersync/react';
 import { createTransaction } from '@tanstack/db';
 import { PowerSyncTransactor } from '@tanstack/powersync-db-collection';
 import { useNavigate } from 'react-router-dom';
-import { listsCollection, todosCollection } from '../providers/SystemProvider';
+import { attachmentQueue, listsCollection, todosCollection } from '../providers/SystemProvider';
+import { attachmentFromSql } from '@powersync/web';
 
 export type ListItemWidgetProps = {
   id: string;
   title: string;
   description: string;
   localUri?: string | null;
+  photo_id?: string | null;
   selected?: boolean;
 };
 
 export const ListItemWidget: React.FC<ListItemWidgetProps> = React.memo((props) => {
-  const { id, title, description, localUri, selected } = props;
+  const { id, title, description, localUri, selected, photo_id } = props;
 
   const navigate = useNavigate();
 
@@ -67,12 +69,30 @@ export const ListItemWidget: React.FC<ListItemWidgetProps> = React.memo((props) 
     navigate(TODO_LISTS_ROUTE + '/' + id);
   }, [id]);
 
+  const deleteAttachment = React.useCallback(async () => {
+    console.warn("DELETE REquest for attachment", photo_id);
+    await attachmentQueue.deleteFileTanStack({
+
+      id: photo_id!,
+      updateHook: async (attachmentRecord) => {
+        // This should happen in the same transaction as creating the attachment
+        listsCollection.update(id, draft => {
+          draft.photo_id = null;
+        });
+
+      }
+    })
+  }, [photo_id, id]);
   return (
     <S.MainPaper elevation={1}>
       <ListItem
         disablePadding
         secondaryAction={
           <Box>
+            <button onClick={deleteAttachment} >
+
+              Delete attachment {photo_id}
+            </button>
             <IconButton edge="end" aria-label="delete" onClick={deleteList}>
               <DeleteIcon />
             </IconButton>

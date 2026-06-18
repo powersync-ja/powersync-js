@@ -21,18 +21,38 @@ export const LocalAttachmentStoage = new IndexDBFileSystemStorageAdapter('my-app
 export const RemoteAttachmentStorage = {
   async uploadFile(fileData: ArrayBuffer, attachment: AttachmentRecord) {
     // no-op for poc
+    console.warn('uploadFile', fileData, attachment);
   },
 
   async downloadFile(attachment: AttachmentRecord): Promise<ArrayBuffer> {
     // no-op for poc
+    console.warn('downloadFile', attachment);
     return new ArrayBuffer();
   },
 
   async deleteFile(attachment: AttachmentRecord) {
+    console.warn('deleteFile', attachment);
     // no-op for poc
   }
 };
 
+interface SaveFileTanStackOptions {
+  data: AttachmentData;
+  fileExtension: string;
+  mediaType?: string;
+  metaData?: string;
+  id?: string;
+  /**
+   * Note that this is called inside a synchronous TanStackDB transaction,
+   * any mutations made to other collections will be in the same transaction.
+   */
+  updateHook?: (attachment: AttachmentQueueRow) => Promise<void>;
+}
+
+interface DeleteFileTanStackOptions {
+  id: string;
+  updateHook?: (attachment: AttachmentQueueRow) => Promise<void>;
+}
 /**
  * This extends the default AttachmentQueue constructor params
  * FIXME(powersync) we should export this type from the common SDK.
@@ -76,20 +96,6 @@ export class TanStackDBAttachmentQueue extends AttachmentQueue {
     this.collection = params.attachmentsCollection;
   }
 
-  /**
-   * HACK: The AttachmentQueue should make this protected instead,
-   * in order for extensions to use it.
-   */
-  get _attachmentService(): AttachmentService {
-    // This is not protected, it's private and should be protected
-    return this['attachmentService'] as AttachmentService;
-  }
-
-  /**
-   * Saves a new attachment given the input data.
-   * Provides an updateHook which is called inside a TanStackDB transaction.
-   * Relational associataions with the provded attachment ID should be made in this hook.
-   */
   async saveFileTanStack({
     data,
     fileExtension,
@@ -97,16 +103,7 @@ export class TanStackDBAttachmentQueue extends AttachmentQueue {
     metaData,
     id,
     updateHook
-  }: {
-    data: AttachmentData;
-    fileExtension: string;
-    mediaType?: string;
-    metaData?: string;
-    id?: string;
-    // Note that this is called inside a synchronous TanStackDB transaction
-    // any mutations made to other collections, will be in the same transaction.
-    updateHook?: (attachment: AttachmentQueueRow) => Promise<void>;
-  }): Promise<AttachmentQueueRow> {
+  }: SaveFileTanStackOptions): Promise<AttachmentQueueRow> {
     const resolvedId = id ?? (await this.generateAttachmentId());
     const filename = `${resolvedId}.${fileExtension}`;
     const localUri = this.localStorage.getLocalUri(filename);
@@ -125,44 +122,59 @@ export class TanStackDBAttachmentQueue extends AttachmentQueue {
     };
 
     /**
-     * The use the attachmentService lock to prevent potential attachment queue race conditions.
-     * This specicifally prevents assuming a newly watched attachment record is one to download.
-     *  */
-    await this._attachmentService.withContext(async (ctx) => {
-      // Create a TanStackDB transaction context, the mutation will happen later
+     * We use the attachmentService lock to prevent attachment queue race conditions — specifically,
+     * it stops the watcher from treating a newly inserted attachment record as one that needs
+     * to be downloaded.
+     * */
+    await this.withAttachmentContext(async (ctx) => {
       const tanStackDBTransaction = createTransaction({
         autoCommit: false,
         mutationFn: async ({ transaction }) => {
-          // Now we should apply the actual operations.
-          // We can save the attachment using dedicated APIs
           await new PowerSyncTransactor({
             database: ctx.db
           }).applyTransaction(transaction);
-
-          // We don't need to explicitly use this here, the default transactor should
-          // be able to handle this (but it could be more future proof if we did support it later)
-          // await ctx.upsertAttachment(attachment, tx);
         }
       });
 
-      /**
-       * TODO, does the user want to have the attachment record peristed in this transaction or not?
-       * The implementation can be done according to the users's needs, devs should
-       * implement this saveFile override themselves, this is just an example.
-       *
-       * In this example, we write the attachment record first.
-       */
       tanStackDBTransaction.mutate(() => {
-        // save the attachment record
         this.collection.insert(attachment);
         // allow the user to associate values in this transaction
         updateHook?.(attachment);
       });
 
-      // Actually perform the transaction
       await tanStackDBTransaction.commit();
     });
 
     return attachment;
+  }
+
+  async deleteFileTanStack({ id, updateHook }: DeleteFileTanStackOptions): Promise<void> {
+    await this.withAttachmentContext(async (ctx) => {
+      const tanStackDBTransaction = createTransaction({
+        autoCommit: false,
+        mutationFn: async ({ transaction }) => {
+          await new PowerSyncTransactor({
+            database: ctx.db
+          }).applyTransaction(transaction);
+        }
+      });
+
+      tanStackDBTransaction.mutate(() => {
+        const attachment = this.collection.get(id);
+        if (!attachment) {
+          throw new Error(`Attachment with id ${id} not found`);
+        }
+
+        this.collection.update(id, (draft) => {
+          draft.state = AttachmentState.QUEUED_DELETE;
+          draft.has_synced = 0;
+        });
+
+        // allow the user to associate values in this transaction
+        updateHook?.(attachment);
+      });
+
+      await tanStackDBTransaction.commit();
+    });
   }
 }
