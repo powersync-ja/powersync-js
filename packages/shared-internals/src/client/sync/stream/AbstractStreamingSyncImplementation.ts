@@ -76,7 +76,7 @@ export interface StreamingSyncImplementationListener extends BaseListener {
   /**
    * Triggers whenever the status' members have changed in value
    */
-  statusChanged?: ((core: CoreSyncStatus | null, jsState: JavaScriptSyncState) => void) | undefined;
+  statusChanged?: ((status: SyncStatusSnapshot) => void) | undefined;
 }
 
 /**
@@ -282,16 +282,23 @@ The next upload iteration will be delayed.`
       this.streamingSync(controller.signal, options)
     ]);
 
-    // Return a promise that resolves when the connection status is updated to indicate that we're connected.
+    // Return a promise that resolves when the connection status is updated to indicate that we're connected. We do this
+    // by waiting for connecting to be true and then false again.
     return new Promise<void>((resolve) => {
+      var sawStartOfConnection = false;
+
       const disposer = this.registerListener({
-        statusChanged: (status, dataFlow) => {
-          if (dataFlow.downloadError != null) {
+        statusChanged: (snapshot) => {
+          if (snapshot.connecting) {
+            sawStartOfConnection = true;
+          }
+
+          if (snapshot.downloadError != null) {
             this.logger.log({
               level: LogLevels.warn,
               message: 'Initial connect attempt did not successfully connect to server'
             });
-          } else if (status && status.connecting) {
+          } else if (!sawStartOfConnection || snapshot.connecting) {
             // Still connecting.
             return;
           }
@@ -740,7 +747,7 @@ The next upload iteration will be delayed.`
     if (!this.syncStatus.isEqual(updated)) {
       this.syncStatus = updated;
       // Only trigger this is there was a change
-      this.iterateListeners((cb) => cb.statusChanged?.(core, updated.jsState));
+      this.iterateListeners((cb) => cb.statusChanged?.(updated));
     }
   }
 

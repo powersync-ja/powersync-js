@@ -149,8 +149,7 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
 
         const sync = this.generateStreamingImplementation();
         const onDispose = sync.registerListener({
-          statusChanged: (status, dataFlow) => {
-            const snapshot = new SyncStatusSnapshot(status, dataFlow);
+          statusChanged: (snapshot) => {
             this.syncStatus = snapshot;
             const json = snapshot.toJSON();
             this.ports.forEach((p) => p.clientProvider.statusChanged(json));
