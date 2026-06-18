@@ -7,6 +7,7 @@ import {
   ListItemButton,
   ListItemText,
   Paper,
+  Tooltip,
   styled
 } from '@mui/material';
 import React from 'react';
@@ -14,6 +15,7 @@ import React from 'react';
 import { TODO_LISTS_ROUTE } from '@/app/router';
 import RightIcon from '@mui/icons-material/ArrowRightAlt';
 import DeleteIcon from '@mui/icons-material/DeleteOutline';
+import HideImageOutlinedIcon from '@mui/icons-material/HideImageOutlined';
 import ListIcon from '@mui/icons-material/ListAltOutlined';
 import { usePowerSync } from '@powersync/react';
 import { createTransaction } from '@tanstack/db';
@@ -70,9 +72,7 @@ export const ListItemWidget: React.FC<ListItemWidgetProps> = React.memo((props) 
   }, [id]);
 
   const deleteAttachment = React.useCallback(async () => {
-    console.warn("DELETE REquest for attachment", photo_id);
     await attachmentQueue.deleteFileTanStack({
-
       id: photo_id!,
       updateHook: async (attachmentRecord) => {
         // This should happen in the same transaction as creating the attachment
@@ -88,11 +88,14 @@ export const ListItemWidget: React.FC<ListItemWidgetProps> = React.memo((props) 
       <ListItem
         disablePadding
         secondaryAction={
-          <Box>
-            <button onClick={deleteAttachment} >
-
-              Delete attachment {photo_id}
-            </button>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            {photo_id && (
+              <Tooltip title="Remove photo">
+                <IconButton edge="end" aria-label="remove photo" onClick={deleteAttachment}>
+                  <HideImageOutlinedIcon />
+                </IconButton>
+              </Tooltip>
+            )}
             <IconButton edge="end" aria-label="delete" onClick={deleteList}>
               <DeleteIcon />
             </IconButton>

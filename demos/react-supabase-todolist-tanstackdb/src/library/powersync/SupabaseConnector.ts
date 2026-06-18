@@ -12,6 +12,7 @@ import { Session, SupabaseClient, createClient } from '@supabase/supabase-js';
 export type SupabaseConfig = {
   supabaseUrl: string;
   supabaseAnonKey: string;
+  supabaseBucket: string;
   powersyncUrl: string;
 };
 
@@ -45,7 +46,8 @@ export class SupabaseConnector extends BaseObserver<SupabaseConnectorListener> i
     this.config = {
       supabaseUrl: import.meta.env.VITE_SUPABASE_URL,
       powersyncUrl: import.meta.env.VITE_POWERSYNC_URL,
-      supabaseAnonKey: import.meta.env.VITE_SUPABASE_ANON_KEY
+      supabaseAnonKey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+      supabaseBucket: import.meta.env.VITE_SUPABASE_BUCKET
     };
 
     this.client = createClient(this.config.supabaseUrl, this.config.supabaseAnonKey, {

@@ -4,8 +4,6 @@ import {
   AttachmentData,
   AttachmentErrorHandler,
   AttachmentQueue,
-  AttachmentRecord,
-  AttachmentService,
   AttachmentState,
   ILogger,
   IndexDBFileSystemStorageAdapter,
@@ -17,24 +15,6 @@ import { Collection, createTransaction } from '@tanstack/db';
 import { PowerSyncTransactor } from '@tanstack/powersync-db-collection';
 
 export const LocalAttachmentStoage = new IndexDBFileSystemStorageAdapter('my-app-files');
-
-export const RemoteAttachmentStorage = {
-  async uploadFile(fileData: ArrayBuffer, attachment: AttachmentRecord) {
-    // no-op for poc
-    console.warn('uploadFile', fileData, attachment);
-  },
-
-  async downloadFile(attachment: AttachmentRecord): Promise<ArrayBuffer> {
-    // no-op for poc
-    console.warn('downloadFile', attachment);
-    return new ArrayBuffer();
-  },
-
-  async deleteFile(attachment: AttachmentRecord) {
-    console.warn('deleteFile', attachment);
-    // no-op for poc
-  }
-};
 
 interface SaveFileTanStackOptions {
   data: AttachmentData;
