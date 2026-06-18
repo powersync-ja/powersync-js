@@ -201,8 +201,8 @@ export function useSyncStatus() {
 
     setCurrent(sync.syncStatus);
     const l = sync.registerListener({
-      statusChanged: (core, dataFlow) => {
-        setCurrent(new SyncStatusSnapshot(core, dataFlow));
+      statusChanged: (snapshot) => {
+        setCurrent(snapshot);
       }
     });
     return () => l?.();
