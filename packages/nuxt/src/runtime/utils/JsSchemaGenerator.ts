@@ -1,4 +1,4 @@
-import type { Column, ColumnsType, Schema, Table } from '@powersync/web';
+import type { BaseTable, Column, Schema } from '@powersync/web';
 
 export class JsSchemaGenerator {
   generate(schema: Schema): string {
@@ -7,7 +7,7 @@ export class JsSchemaGenerator {
     return this.generateTables(tables) + '\n\n' + this.generateAppSchema(tables);
   }
 
-  private generateTables(tables: Table<ColumnsType>[]): string {
+  private generateTables(tables: BaseTable[]): string {
     return tables.map((table) => this.generateTable(table.name, table.columns)).join('\n\n');
   }
 
@@ -25,7 +25,7 @@ export class JsSchemaGenerator {
     return `${column.name}: column.${column.type!.toLowerCase()}`;
   }
 
-  private generateAppSchema(tables: Table<ColumnsType>[]): string {
+  private generateAppSchema(tables: BaseTable[]): string {
     return `export const AppSchema = new Schema({
   ${tables.map((table) => table.name).join(',\n  ')}
 });

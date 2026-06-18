@@ -1,5 +1,5 @@
 import { IndexedColumn } from './IndexedColumn.js';
-import { Table } from './Table.js';
+import { BaseTable } from './Table.js';
 
 /**
  * @public
@@ -36,7 +36,7 @@ export class Index {
     return this.options.columns ?? [];
   }
 
-  toJSON(table: Table) {
+  toJSON(table: BaseTable) {
     return {
       name: this.name,
       columns: this.columns.map((c) => c.toJSON(table))

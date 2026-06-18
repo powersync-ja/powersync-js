@@ -1,8 +1,7 @@
-import { BaseColumnType, Column, ColumnsType, ColumnType, ExtractColumnValueType } from './Column.js';
+import { BaseColumnType, Column, ColumnsType, ExtractColumnValueType } from './Column.js';
 import { Index } from './Index.js';
 import { IndexedColumn } from './IndexedColumn.js';
 import { encodeTableOptions } from './internal.js';
-import { TableV2 } from './TableV2.js';
 
 /**
  * powersync-sqlite-core limits the number of column per table to 1999, due to internal SQLite limits.
@@ -56,16 +55,15 @@ export interface TableOptions extends SharedTableOptions {
 /**
  * @public
  */
-export type RowType<T extends TableV2<any>> = {
-  [K in keyof T['columnMap']]: ExtractColumnValueType<T['columnMap'][K]>;
-} & {
-  id: string;
-};
+export type RowType<T extends Table<any>> =
+  T extends Table<infer Columns>
+    ? { [K in keyof Columns]: ExtractColumnValueType<Columns[K]> } & { id: string }
+    : never;
 
 /**
  * @public
  */
-export type IndexShorthand = Record<string, string[]>;
+export type IndexShorthand = Record<string, (string | IndexedColumn)[]>;
 
 /**
  * @public
@@ -87,160 +85,10 @@ const DEFAULT_TABLE_OPTIONS = {
 const InvalidSQLCharacters = /["'%,.#\s[\]]/;
 
 /**
- * @public
+ * @internal
  */
-export class Table<Columns extends ColumnsType = ColumnsType> {
+export class BaseTable {
   protected options!: TableOptions;
-
-  protected _mappedColumns!: Columns;
-
-  static createLocalOnly(options: TableOptions) {
-    return new Table({ ...options, localOnly: true, insertOnly: false });
-  }
-
-  static createInsertOnly(options: TableOptions) {
-    return new Table({ ...options, localOnly: false, insertOnly: true });
-  }
-
-  /**
-   * Create a table.
-   * @deprecated This was only only included for TableV2 and is no longer necessary.
-   * Prefer to use new Table() directly.
-   *
-   * TODO remove in the next major release.
-   */
-  static createTable(name: string, table: Table) {
-    return new Table({
-      name,
-      columns: table.columns,
-      indexes: table.indexes,
-      localOnly: table.options.localOnly,
-      insertOnly: table.options.insertOnly,
-      viewName: table.options.viewName
-    });
-  }
-
-  /**
-   * Creates a new Table instance.
-   *
-   * This constructor supports two different versions:
-   * 1. New constructor: Using a Columns object and an optional TableV2Options object
-   * 2. Deprecated constructor: Using a TableOptions object (will be removed in the next major release)
-   *
-   * @param columns - Either a Columns object (for V2 syntax) or a TableOptions object (for V1 syntax)
-   * @param options - Optional configuration options for V2 syntax
-   *
-   * @example
-   * ```javascript
-   * // New Constructor
-   * const table = new Table(
-   *   {
-   *     name: column.text,
-   *     age: column.integer
-   *   },
-   *   { indexes: { nameIndex: ['name'] } }
-   * );
-   *```
-   *
-   *
-   * @example
-   * ```javascript
-   * // Deprecated Constructor
-   * const table = new Table({
-   *   name: 'users',
-   *   columns: [
-   *     new Column({ name: 'name', type: ColumnType.TEXT }),
-   *     new Column({ name: 'age', type: ColumnType.INTEGER })
-   *   ]
-   * });
-   *```
-   */
-  constructor(columns: Columns, options?: TableV2Options);
-  /**
-   * @deprecated This constructor will be removed in the next major release.
-   * Use the new constructor shown below instead as this does not show types.
-   * @example
-   * <caption>Use this instead</caption>
-   * ```javascript
-   *   const table = new Table(
-   *     {
-   *      name: column.text,
-   *      age: column.integer
-   *     },
-   *     { indexes: { nameIndex: ['name'] } }
-   *   );
-   *```
-   */
-  constructor(options: TableOptions);
-  constructor(optionsOrColumns: Columns | TableOptions, v2Options?: TableV2Options) {
-    if (this.isTableV1(optionsOrColumns)) {
-      this.initTableV1(optionsOrColumns);
-    } else {
-      this.initTableV2(optionsOrColumns, v2Options);
-    }
-  }
-
-  copyWithName(name: string): Table {
-    return new Table({
-      ...this.options,
-      name
-    });
-  }
-
-  private isTableV1(arg: TableOptions | Columns): arg is TableOptions {
-    return 'columns' in arg && Array.isArray(arg.columns);
-  }
-
-  private initTableV1(options: TableOptions) {
-    this.options = {
-      ...options,
-      indexes: options.indexes || []
-    };
-    this.applyDefaultOptions();
-  }
-
-  private initTableV2(columns: Columns, options?: TableV2Options) {
-    const convertedColumns = Object.entries(columns).map(
-      ([name, columnInfo]) => new Column({ name, type: columnInfo.type })
-    );
-
-    const convertedIndexes = Object.entries(options?.indexes ?? {}).map(
-      ([name, columnNames]) =>
-        new Index({
-          name,
-          columns: columnNames.map(
-            (name) =>
-              new IndexedColumn({
-                name: name.replace(/^-/, ''),
-                ascending: !name.startsWith('-')
-              })
-          )
-        })
-    );
-
-    this.options = {
-      name: '',
-      columns: convertedColumns,
-      indexes: convertedIndexes,
-      viewName: options?.viewName,
-      insertOnly: options?.insertOnly,
-      localOnly: options?.localOnly,
-      trackPrevious: options?.trackPrevious,
-      trackMetadata: options?.trackMetadata,
-      ignoreEmptyUpdates: options?.ignoreEmptyUpdates
-    };
-    this.applyDefaultOptions();
-
-    this._mappedColumns = columns;
-  }
-
-  private applyDefaultOptions() {
-    this.options.insertOnly ??= DEFAULT_TABLE_OPTIONS.insertOnly;
-    this.options.localOnly ??= DEFAULT_TABLE_OPTIONS.localOnly;
-    this.options.trackPrevious ??= DEFAULT_TABLE_OPTIONS.trackPrevious;
-    this.options.trackMetadata ??= DEFAULT_TABLE_OPTIONS.trackMetadata;
-    this.options.ignoreEmptyUpdates ??= DEFAULT_TABLE_OPTIONS.ignoreEmptyUpdates;
-  }
 
   get name() {
     return this.options.name;
@@ -256,16 +104,6 @@ export class Table<Columns extends ColumnsType = ColumnsType> {
 
   get columns() {
     return this.options.columns;
-  }
-
-  get columnMap(): Columns {
-    return (
-      this._mappedColumns ??
-      this.columns.reduce((hash: Record<string, BaseColumnType<any>>, column) => {
-        hash[column.name] = { type: column.type ?? ColumnType.TEXT };
-        return hash;
-      }, {} as Columns)
-    );
   }
 
   get indexes() {
@@ -373,5 +211,101 @@ export class Table<Columns extends ColumnsType = ColumnsType> {
       indexes: this.indexes.map((e) => e.toJSON(this)),
       ...encodeTableOptions(this)
     };
+  }
+}
+
+/**
+ * @public
+ */
+export class Table<Columns extends ColumnsType = ColumnsType> extends BaseTable {
+  protected _mappedColumns!: Columns;
+
+  static createLocalOnly<Columns extends ColumnsType = ColumnsType>(columns: Columns, options?: TableV2Options) {
+    return new Table(columns, { localOnly: true, insertOnly: false, ...options });
+  }
+
+  static createInsertOnly<Columns extends ColumnsType = ColumnsType>(columns: Columns, options?: TableV2Options) {
+    return new Table(columns, { localOnly: false, insertOnly: true, ...options });
+  }
+
+  /**
+   * Creates a new Table instance.
+   *
+   * This constructor supports two different versions:
+   * 1. New constructor: Using a Columns object and an optional TableV2Options object
+   * 2. Deprecated constructor: Using a TableOptions object (will be removed in the next major release)
+   *
+   * @param columns - A Columns object
+   * @param options - Optional configuration options for the table.
+   *
+   * @example
+   * ```javascript
+   * const table = new Table(
+   *   {
+   *     name: column.text,
+   *     age: column.integer
+   *   },
+   *   { indexes: { nameIndex: ['name'] } }
+   * );
+   *```
+   */
+  constructor(optionsOrColumns: Columns, v2Options?: TableV2Options) {
+    super();
+    this.initTableV2(optionsOrColumns, v2Options);
+  }
+
+  copyWithName(name: string): BaseTable {
+    return new CustomTable({ ...this.options, name });
+  }
+
+  private initTableV2(columns: Columns, options?: TableV2Options) {
+    const convertedColumns = Object.entries(columns).map(
+      ([name, columnInfo]) => new Column({ name, type: columnInfo.type })
+    );
+
+    const convertedIndexes = Object.entries(options?.indexes ?? {}).map(
+      ([name, columnNames]) =>
+        new Index({
+          name,
+          columns: columnNames.map((nameOrIndexedColumn) =>
+            typeof nameOrIndexedColumn === 'string'
+              ? new IndexedColumn({
+                  name: nameOrIndexedColumn.replace(/^-/, ''),
+                  ascending: !nameOrIndexedColumn.startsWith('-')
+                })
+              : nameOrIndexedColumn
+          )
+        })
+    );
+
+    this.options = {
+      name: '',
+      columns: convertedColumns,
+      indexes: convertedIndexes,
+      viewName: options?.viewName,
+      insertOnly: options?.insertOnly,
+      localOnly: options?.localOnly,
+      trackPrevious: options?.trackPrevious,
+      trackMetadata: options?.trackMetadata,
+      ignoreEmptyUpdates: options?.ignoreEmptyUpdates
+    };
+    this.applyDefaultOptions();
+
+    this._mappedColumns = columns;
+  }
+
+  private applyDefaultOptions() {
+    this.options.insertOnly ??= DEFAULT_TABLE_OPTIONS.insertOnly;
+    this.options.localOnly ??= DEFAULT_TABLE_OPTIONS.localOnly;
+    this.options.trackPrevious ??= DEFAULT_TABLE_OPTIONS.trackPrevious;
+    this.options.trackMetadata ??= DEFAULT_TABLE_OPTIONS.trackMetadata;
+    this.options.ignoreEmptyUpdates ??= DEFAULT_TABLE_OPTIONS.ignoreEmptyUpdates;
+  }
+}
+
+export class CustomTable extends BaseTable {
+  constructor(options: TableOptions) {
+    super();
+    this.options = options;
   }
 }

@@ -1,32 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { Table, TableV2Options } from '../../../src/db/schema/Table.js';
-import { column, Column, ColumnType } from '../../../src/db/schema/Column.js';
-import { Index } from '../../../src/db/schema/Index.js';
-import { IndexedColumn } from '../../../src/db/schema/IndexedColumn.js';
+import { column } from '../../../src/db/schema/Column.js';
 
 describe('Table', () => {
-  it('should create a table with V1 syntax', () => {
-    const table = new Table({
-      name: 'users',
-      columns: [
-        new Column({ name: 'name', type: ColumnType.TEXT }),
-        new Column({ name: 'age', type: ColumnType.INTEGER })
-      ],
-      indexes: [
-        new Index({
-          name: 'profile_id',
-          columns: [new IndexedColumn({ name: 'age' })]
-        })
-      ]
-    });
-
-    expect(table.name).toBe('users');
-    expect(table.columns.length).toBe(2);
-    expect(table.columns[0].name).toBe('name');
-    expect(table.columns[1].name).toBe('age');
-    expect(table.indexes[0].name).toBe('profile_id');
-  });
-
   it('should create a table with V2 syntax', () => {
     const table = new Table(
       {

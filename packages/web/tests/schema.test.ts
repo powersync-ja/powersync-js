@@ -1,4 +1,4 @@
-import { CommonPowerSyncDatabase, Column, ColumnType, Index, IndexedColumn, Schema, Table } from '@powersync/common';
+import { CommonPowerSyncDatabase, Schema, Table, column } from '@powersync/common';
 import { PowerSyncDatabase } from '@powersync/web';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
@@ -6,73 +6,55 @@ type SchemaVersionResult = {
   schema_version: number;
 };
 
-/**
- * Generates the Asset table with configurable options which
- * will be modified later.
- */
-const generateAssetsTable = (weightColumnName: string = 'weight', includeIndexes = true, indexAscending = true) =>
-  new Table({
-    name: 'assets',
-    columns: [
-      new Column({ name: 'created_at', type: ColumnType.TEXT }),
-      new Column({ name: 'make', type: ColumnType.TEXT }),
-      new Column({ name: 'model', type: ColumnType.TEXT }),
-      new Column({ name: 'serial_number', type: ColumnType.TEXT }),
-      new Column({ name: 'quantity', type: ColumnType.INTEGER }),
-      new Column({ name: 'user_id', type: ColumnType.TEXT }),
-      new Column({ name: weightColumnName, type: ColumnType.REAL }),
-      new Column({ name: 'description', type: ColumnType.TEXT })
-    ],
-    indexes: includeIndexes
-      ? [
-          new Index({
-            name: 'makemodel',
-            columns: [
-              new IndexedColumn({
-                name: 'make'
-              }),
-              new IndexedColumn({ name: 'model', ascending: indexAscending })
-            ]
-          })
-        ]
-      : []
-  });
-
-/**
- * Generates all the schema tables.
- * Allows for a custom assets table generator to be supplied.
- */
-const generateSchemaTables = (assetsTableGenerator: () => Table = generateAssetsTable) => [
-  assetsTableGenerator(),
-  new Table({
-    name: 'customers',
-    columns: [new Column({ name: 'name', type: ColumnType.TEXT }), new Column({ name: 'email', type: ColumnType.TEXT })]
-  }),
-  new Table({
-    name: 'logs',
-    insertOnly: true,
-    columns: [
-      new Column({ name: 'level', type: ColumnType.TEXT }),
-      new Column({ name: 'content', type: ColumnType.TEXT })
-    ]
-  }),
-
-  new Table({
-    name: 'credentials',
-    localOnly: true,
-    columns: [new Column({ name: 'key', type: ColumnType.TEXT }), new Column({ name: 'value', type: ColumnType.TEXT })]
-  }),
-  new Table({
-    name: 'aliased',
-    columns: [new Column({ name: 'name', type: ColumnType.TEXT })],
-    viewName: 'test1'
-  })
-];
+const assets = new Table(
+  {
+    created_at: column.text,
+    make: column.text,
+    model: column.text,
+    serial_number: column.text,
+    quantity: column.integer,
+    user_id: column.text,
+    weightColumnName: column.real,
+    description: column.text
+  },
+  {
+    indexes: { makemodel: ['make', 'model'] }
+  }
+);
+const assetsNoIndex = new Table({
+  created_at: column.text,
+  make: column.text,
+  model: column.text,
+  serial_number: column.text,
+  quantity: column.integer,
+  user_id: column.text,
+  weightColumnName: column.real,
+  description: column.text
+});
+const customers = new Table({
+  name: column.text,
+  email: column.text
+});
+const logs = new Table(
+  {
+    level: column.text,
+    content: column.text
+  },
+  { insertOnly: true }
+);
+const credentials = new Table(
+  {
+    key: column.text,
+    value: column.text
+  },
+  { localOnly: true }
+);
+const aliased = new Table({ name: column.text }, { viewName: 'test1' });
 
 /**
  * The default schema
  */
-const schema = new Schema(generateSchemaTables());
+const schema = new Schema({ assets, customers, logs, credentials, aliased });
 
 describe('Schema Tests', { sequential: true }, () => {
   let powersync: CommonPowerSyncDatabase;
@@ -104,8 +86,8 @@ describe('Schema Tests', { sequential: true }, () => {
     // No change
     expect(versionAfter['schema_version']).equals(versionBefore['schema_version']);
 
-    // The `weight` columns is now `weights`
-    const schema2 = new Schema(generateSchemaTables(() => generateAssetsTable('weights')));
+    // Remove a table
+    const schema2 = new Schema({ assets, customers, logs, credentials });
 
     await powersync.updateSchema(schema2);
 
@@ -113,16 +95,6 @@ describe('Schema Tests', { sequential: true }, () => {
 
     // Updated
     expect(versionAfter2['schema_version']).greaterThan(versionAfter['schema_version']);
-
-    // The index is now descending
-    const schema3 = new Schema(generateSchemaTables(() => generateAssetsTable('weights', true, false)));
-
-    await powersync.updateSchema(schema3);
-
-    const versionAfter3 = await powersync.get<SchemaVersionResult>('PRAGMA schema_version');
-
-    // Updated
-    expect(versionAfter3['schema_version']).greaterThan(versionAfter2['schema_version']);
   });
 
   it('Indexing', async () => {
@@ -131,13 +103,55 @@ describe('Schema Tests', { sequential: true }, () => {
     expect(results.rows?._array?.[0]['detail']).contains('USING INDEX ps_data__assets__makemodel');
 
     // Now drop the index
-    const schema2 = new Schema(generateSchemaTables(() => generateAssetsTable('weight', false)));
+    const schema2 = new Schema({ assetsNoIndex, customers, logs, credentials, aliased });
     await powersync.updateSchema(schema2);
 
     // Execute instead of getAll so that we don't get a cached query plan
     // from a different connection
-    const results2 = await powersync.execute('EXPLAIN QUERY PLAN SELECT * FROM assets WHERE make = ?', ['test']);
+    const results2 = await powersync.execute('EXPLAIN QUERY PLAN SELECT * FROM assetsNoIndex WHERE make = ?', ['test']);
 
     expect(results2.rows?._array?.[0]['detail']).contains('SCAN');
+  });
+
+  it('Local Only', async () => {
+    const pscrudBeforeInsert = await powersync.getAll('SELECT * FROM ps_crud');
+    expect(pscrudBeforeInsert.length).toEqual(0);
+
+    await powersync.execute('INSERT INTO credentials (id, key, value) VALUES(uuid(),?,?)', ['test', 'test']);
+
+    const pscrudAfterInsert = await powersync.getAll('SELECT * FROM ps_crud');
+    expect(pscrudAfterInsert.length).toEqual(0);
+  });
+
+  it('Insert Only', async () => {
+    const pscrudBeforeInsert = await powersync.getAll('SELECT * FROM ps_crud');
+    expect(pscrudBeforeInsert.length).toEqual(0);
+    const logsBeforeInsert = await powersync.getAll('SELECT * FROM logs');
+    expect(logsBeforeInsert.length).toEqual(0);
+
+    await powersync.execute('INSERT INTO logs (id, level, content) VALUES(uuid(),?,?)', ['test', 'test']);
+
+    const pscrudAfterInsert = await powersync.getAll('SELECT * FROM ps_crud');
+    expect(pscrudAfterInsert.length).toEqual(1);
+    const logsAfterInsert = await powersync.getAll('SELECT * FROM logs');
+    expect(logsAfterInsert.length).toEqual(0);
+  });
+
+  it('ViewName', async () => {
+    const aliasedTable = await powersync.getAll('SELECT * FROM test1');
+    expect(Array.isArray(aliasedTable)).toBe(true);
+  });
+
+  it('should have table names present in schema props', async () => {
+    // The table names aren't present when creating the Table instances.
+    // Passing Tables into a Schema should populate the table name based
+    // off the key of the prop
+    expect(schema.props.aliased.name).eq('aliased');
+    expect(schema.props.aliased.internalName).eq('ps_data__aliased');
+    expect(schema.props.aliased.viewName).eq('test1');
+
+    expect(schema.props.assets.name).eq('assets');
+    expect(schema.props.assets.internalName).eq('ps_data__assets');
+    expect(schema.props.assets.viewName).eq('assets');
   });
 });

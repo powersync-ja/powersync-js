@@ -1,5 +1,5 @@
 import { ColumnType } from './Column.js';
-import { Table } from './Table.js';
+import { BaseTable } from './Table.js';
 
 /**
  * @public
@@ -38,7 +38,7 @@ export class IndexedColumn {
     return this.options.ascending;
   }
 
-  toJSON(table: Table) {
+  toJSON(table: BaseTable) {
     return {
       name: this.name,
       ascending: this.ascending,
