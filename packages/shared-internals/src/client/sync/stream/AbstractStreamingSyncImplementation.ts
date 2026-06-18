@@ -285,7 +285,7 @@ The next upload iteration will be delayed.`
     // Return a promise that resolves when the connection status is updated to indicate that we're connected. We do this
     // by waiting for connecting to be true and then false again.
     return new Promise<void>((resolve) => {
-      var sawStartOfConnection = false;
+      let sawStartOfConnection = false;
 
       const disposer = this.registerListener({
         statusChanged: (snapshot) => {

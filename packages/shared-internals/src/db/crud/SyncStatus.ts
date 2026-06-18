@@ -13,7 +13,7 @@ import { SyncProgressImpl } from './SyncProgress.js';
 import { FULL_SYNC_PRIORITY } from '../../constants.js';
 
 /**
- * The {@link SyncStatus} subset not managed b the Rust client in {@link CoreSyncStatus}.
+ * The {@link SyncStatus} subset not managed by the Rust client in {@link CoreSyncStatus}.
  *
  * This includes the upload state and JS errors.
  */
