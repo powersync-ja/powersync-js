@@ -1,9 +1,9 @@
 import * as path from 'node:path';
 import { Worker } from 'node:worker_threads';
 
-import { LockContext, Schema } from '@powersync/common';
+import { LockContext, QueryResult, Schema, WatchOnChangeEvent } from '@powersync/common';
 import { randomUUID } from 'node:crypto';
-import { expect, test, vi } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 import { CrudEntry, CrudTransaction, PowerSyncDatabase } from '../lib/index.js';
 import { WorkerOpener } from '../src/db/options.js';
 import { AppSchema, databaseTest, tempDirectoryTest } from './utils.js';
@@ -246,6 +246,110 @@ databaseTest('clear raw tables', async ({ database }) => {
   expect(await database.getAll('SELECT * FROM lists')).toHaveLength(1);
   await database.disconnectAndClear();
   expect(await database.getAll('SELECT * FROM lists')).toHaveLength(0);
+});
+
+describe('onChangeWithAsyncGenerator', () => {
+  databaseTest('receives change events', async ({ database }) => {
+    const changes: WatchOnChangeEvent[] = [];
+    const abort = new AbortController();
+
+    const iterating = (async () => {
+      for await (const event of database.onChangeWithAsyncGenerator({
+        tables: ['todos'],
+        throttleMs: 0,
+        signal: abort.signal
+      })) {
+        changes.push(event);
+      }
+    })();
+
+    await database.execute('INSERT INTO todos (id, content) VALUES (uuid(), ?)', ['first']);
+    await expect.poll(() => changes).toHaveLength(1);
+    expect(changes[0].changedTables).toContain('ps_data__todos');
+
+    await database.execute('INSERT INTO todos (id, content) VALUES (uuid(), ?)', ['second']);
+    await expect.poll(() => changes).toHaveLength(2);
+
+    abort.abort();
+    await iterating;
+  });
+
+  databaseTest('clears listeners after break', async ({ database }) => {
+    await database.init();
+    expect((database.database as any).listeners).toHaveLength(1);
+
+    const first = (async () => {
+      for await (const event of database.onChangeWithAsyncGenerator({ tables: ['todos'], throttleMs: 0 })) {
+        return event;
+      }
+
+      throw new Error('Expected event');
+    })();
+
+    // Added listener for onChange
+    expect((database.database as any).listeners).toHaveLength(2);
+    await database.execute('INSERT INTO todos (id, content) VALUES (uuid(), ?)', ['first']);
+    await first;
+
+    // Removed listener after aborting.
+    await Promise.resolve();
+    expect((database.database as any).listeners).toHaveLength(1);
+  });
+});
+
+describe('watchWithAsyncGenerator', () => {
+  databaseTest('yields initial result and updates', async ({ database }) => {
+    const results: QueryResult[] = [];
+    const abort = new AbortController();
+
+    const iterating = (async () => {
+      for await (const result of database.watchWithAsyncGenerator('SELECT * FROM todos', [], {
+        throttleMs: 0,
+        signal: abort.signal
+      })) {
+        results.push(result);
+      }
+    })();
+
+    await expect.poll(() => results).toHaveLength(1);
+    expect(results[0].rows?.length).toBe(0);
+
+    await database.execute('INSERT INTO todos (id, content) VALUES (uuid(), ?)', ['first']);
+    await expect.poll(() => results).toHaveLength(2);
+    expect(results[1].rows?.length).toBe(1);
+
+    abort.abort();
+    await iterating;
+  });
+
+  databaseTest('stops delivering results after break', async ({ database }) => {
+    await database.init();
+    expect((database.database as any).listeners).toHaveLength(1);
+
+    const event = (async () => {
+      let isFirst = true;
+
+      for await (const event of database.watchWithAsyncGenerator('SELECT * FROM todos', [], { throttleMs: 0 })) {
+        if (isFirst) {
+          isFirst = false;
+          continue;
+        }
+
+        return event;
+      }
+
+      throw new Error('Expected two events');
+    })();
+
+    // Added listener for onChange
+    await expect.poll(() => (database.database as any).listeners).toHaveLength(2);
+    await database.execute('INSERT INTO todos (id, content) VALUES (uuid(), ?)', ['first']);
+    await event;
+
+    // Removed listener after returning.
+    await Promise.resolve();
+    expect((database.database as any).listeners).toHaveLength(1);
+  });
 });
 
 databaseTest('execute batch', async ({ database }) => {
