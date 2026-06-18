@@ -164,7 +164,7 @@ export class SyncStatusSnapshot implements SyncStatus {
    * Not all errors are serializable over a MessagePort. E.g. some `DomExceptions` fail to be passed across workers.
    * This explicitly serializes errors in the SyncStatus.
    */
-  protected serializeError(error?: Error) {
+  serializeError(error?: Error) {
     if (typeof error == 'undefined') {
       return undefined;
     }
