@@ -10,7 +10,7 @@
     "tauri": "tauri"
   },
   "dependencies": {
-    "@powersync/common": "^1.54.0",
+    "@powersync/common": "^1.55.0",
     "@powersync/tauri-plugin": "^0.0.4",
     "@powersync/react": "^1.10.0",
     "@tauri-apps/api": "^2.0.0",
