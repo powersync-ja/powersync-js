@@ -3,11 +3,10 @@ import { ProgressWithOperations, SyncProgress } from './SyncProgress.js';
 
 /**
  * @public
+ * @deprecated All fields are available on {@link SyncStatus} directly.
  */
-export type SyncDataFlowStatus = Partial<{
-  /**
-   * true if uploading changes.
-   */
+export interface SyncDataFlowStatus {
+  downloading: boolean;
   uploading: boolean;
   /**
    * Error during downloading (including connecting).
@@ -20,7 +19,7 @@ export type SyncDataFlowStatus = Partial<{
    * Cleared on the next successful upload.
    */
   uploadError?: Error;
-}>;
+}
 
 /**
  * @public
@@ -55,6 +54,30 @@ export interface SyncStatus {
   get downloading(): boolean;
 
   /**
+   * Whether the PowerSync SDK is currently uploading local mutations through the configured
+   * {@link PowerSyncBackendConnector}.
+   */
+  get uploading(): boolean;
+
+  /**
+   * An error that occurred during downloads (including connection establishment errors).
+   *
+   * A download error will be reported on all sync status entries until the next successful sync.
+   */
+  get downloadError(): Error | undefined;
+
+  /**
+   * Error during uploading.
+   * Cleared on the next successful upload.
+   */
+  get uploadError(): Error | undefined;
+
+  /**
+   * @deprecated All fields on {@link SyncDataFlowStatus} are available on {@link SyncStatus} directly.
+   */
+  get dataFlowStatus(): SyncDataFlowStatus;
+
+  /**
    * Time that a last sync has fully completed, if any.
    * This timestamp is reset to null after a restart of the PowerSync service.
    *
@@ -69,16 +92,6 @@ export interface SyncStatus {
    * or undefined when the state is still being loaded from the database.
    */
   get hasSynced(): boolean | undefined;
-
-  /**
-   * Provides the current data flow status regarding uploads and downloads.
-   *
-   * @returns An object containing:
-   * - downloading: True if actively downloading changes (only when connected is also true)
-   * - uploading: True if actively uploading changes
-   * Defaults to `{downloading: false, uploading: false}` if not specified.
-   */
-  get dataFlowStatus(): SyncDataFlowStatus;
 
   /**
    * All sync streams currently being tracked in teh database.
@@ -105,7 +118,7 @@ export interface SyncStatus {
    * A realtime progress report on how many operations have been downloaded and
    * how many are necessary in total to complete the next sync iteration.
    *
-   * This field is only set when {@link SyncDataFlowStatus#downloading} is also true.
+   * This field is only set when {@link SyncStatus#downloading} is also true.
    */
   get downloadProgress(): SyncProgress | null;
 

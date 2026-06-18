@@ -35,7 +35,7 @@ function describeSyncStatusStreamingTests(createConnectedDatabase: () => Promise
 
       powersync.registerListener({
         statusChanged: (status) => {
-          if (status.dataFlowStatus.downloadError) {
+          if (status.downloadError) {
             resolveDownloadError();
             receivedUploadError = true;
           }
@@ -75,7 +75,7 @@ function describeSyncStatusStreamingTests(createConnectedDatabase: () => Promise
 
       powersync.registerListener({
         statusChanged: (status) => {
-          if (status.dataFlowStatus.uploadError) {
+          if (status.uploadError) {
             resolveUploadError();
             receivedUploadError = true;
           } else if (receivedUploadError) {

@@ -102,7 +102,7 @@ export interface WatchOnChangeHandler {
 export interface PowerSyncDBListener extends BaseListener {
   initialized: () => void;
   schemaChanged: (schema: Schema) => void;
-  statusChanged?: ((status: SyncStatus) => void) | undefined;
+  statusChanged?: (status: SyncStatus) => void;
   closing: () => Promise<void> | void;
   closed: () => Promise<void> | void;
 }

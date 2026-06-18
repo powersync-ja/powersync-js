@@ -209,15 +209,8 @@ export function useSyncStatus() {
   }, [current]); // Re-run when current changes (triggered by sync recreation)
 
   // Return status with persisted error if available
-  if (current && lastConnectionError && !current.dataFlowStatus?.downloadError) {
-    // Use type assertion to preserve the full SyncStatus type after spread
-    return {
-      ...current,
-      dataFlowStatus: {
-        ...current.dataFlowStatus,
-        downloadError: lastConnectionError
-      }
-    } as typeof current;
+  if (current && lastConnectionError && !current.downloadError) {
+    return new SyncStatusSnapshot(current.core, { ...current.jsState, downloadError: lastConnectionError });
   }
 
   return current;

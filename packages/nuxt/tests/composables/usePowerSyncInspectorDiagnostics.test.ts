@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { usePowerSyncInspectorDiagnostics } from '../../src/runtime/composables/usePowerSyncInspectorDiagnostics';
 import { withPowerSyncSetup, openPowerSync } from '../utils';
+import { SyncStatus } from '@powersync/common';
 
 describe('usePowerSyncInspectorDiagnostics', () => {
   let powersync: ReturnType<typeof openPowerSync>;
@@ -15,39 +16,37 @@ describe('usePowerSyncInspectorDiagnostics', () => {
   });
 
   it('should update reactive state when sync status changes', async () => {
-    let statusChangedCallback: ((status: any) => void) | null = null;
-    
+    let statusChangedCallback: ((status: SyncStatus) => void) | undefined;
+
     vi.spyOn(powersync, 'registerListener').mockImplementation((listener) => {
       statusChangedCallback = listener.statusChanged;
       return () => {}; // Return unregister function
     });
-    
+
     const [result] = withPowerSyncSetup(() => usePowerSyncInspectorDiagnostics(), powersync);
-    
+
     await vi.waitFor(
       () => {
         expect(statusChangedCallback).not.toBeNull();
       },
       { timeout: 1000 }
     );
-    
+
     // Simulate status change
     const testDate = new Date();
     if (statusChangedCallback) {
       statusChangedCallback({
         hasSynced: true,
         connected: true,
-        dataFlowStatus: {
-          downloading: false,
-          uploading: false,
-          downloadError: null,
-          uploadError: null,
-          downloadProgress: null
-        },
+        downloading: false,
+        uploading: false,
+        downloadError: undefined,
+        uploadError: undefined,
+        downloadProgress: null,
         lastSyncedAt: testDate
-      });
+      } satisfies Partial<SyncStatus> as SyncStatus);
     }
-    
+
     await vi.waitFor(
       () => {
         expect(result.hasSynced.value).toBe(true);
@@ -64,9 +63,9 @@ describe('usePowerSyncInspectorDiagnostics', () => {
   it('should call refreshState on mount and query database', async () => {
     const getSpy = vi.spyOn(powersync, 'get');
     const getAllSpy = vi.spyOn(powersync, 'getAll');
-    
+
     const [result] = withPowerSyncSetup(() => usePowerSyncInspectorDiagnostics(), powersync);
-    
+
     // Wait for onMounted to execute and refreshState to run
     await vi.waitFor(
       () => {
@@ -75,12 +74,10 @@ describe('usePowerSyncInspectorDiagnostics', () => {
       },
       { timeout: 1000 }
     );
-    
+
     // Verify refreshState was called (it queries synced_at and bucket data)
     const getCalls = getSpy.mock.calls;
-    const hasSyncedAtQuery = getCalls.some(call => 
-      call[0]?.includes('powersync_last_synced_at')
-    );
+    const hasSyncedAtQuery = getCalls.some((call) => call[0]?.includes('powersync_last_synced_at'));
     expect(hasSyncedAtQuery).toBe(true);
   });
 
@@ -88,20 +85,11 @@ describe('usePowerSyncInspectorDiagnostics', () => {
     const diagnosticsDb = openPowerSync(true);
     const [result] = withPowerSyncSetup(() => usePowerSyncInspectorDiagnostics(), diagnosticsDb);
 
-    await vi.waitFor(
-      () => expect(result.uploadQueueStats.value).not.toBeNull(),
-      { timeout: 2000 }
-    );
+    await vi.waitFor(() => expect(result.uploadQueueStats.value).not.toBeNull(), { timeout: 2000 });
 
-    await diagnosticsDb.execute('INSERT INTO lists(id, name) VALUES (?, ?)', [
-      'onchange-test-1',
-      'OnChange',
-    ]);
+    await diagnosticsDb.execute('INSERT INTO lists(id, name) VALUES (?, ?)', ['onchange-test-1', 'OnChange']);
 
-    await vi.waitFor(
-      () => expect(result.uploadQueueCount.value).toBeGreaterThan(0),
-      { timeout: 2000 }
-    );
+    await vi.waitFor(() => expect(result.uploadQueueCount.value).toBeGreaterThan(0), { timeout: 2000 });
   });
 
   it('should compute totals from bucketRows correctly', async () => {
@@ -110,7 +98,7 @@ describe('usePowerSyncInspectorDiagnostics', () => {
     const diagnosticsDb = openPowerSync(true);
     const [result] = withPowerSyncSetup(() => usePowerSyncInspectorDiagnostics(), diagnosticsDb);
 
-    await new Promise(resolve => setTimeout(resolve, 300));
+    await new Promise((resolve) => setTimeout(resolve, 300));
 
     expect(result.totals.value.buckets).toBe(0);
     expect(result.totals.value.row_count).toBe(0);
@@ -121,15 +109,9 @@ describe('usePowerSyncInspectorDiagnostics', () => {
     const diagnosticsDb = openPowerSync(true);
     const [result] = withPowerSyncSetup(() => usePowerSyncInspectorDiagnostics(), diagnosticsDb);
 
-    await vi.waitFor(
-      () => expect(result.uploadQueueStats.value).not.toBeNull(),
-      { timeout: 2000 }
-    );
+    await vi.waitFor(() => expect(result.uploadQueueStats.value).not.toBeNull(), { timeout: 2000 });
 
-    await diagnosticsDb.execute('INSERT INTO lists(id, name) VALUES (?, ?)', [
-      'upload-test-1',
-      'Upload Test',
-    ]);
+    await diagnosticsDb.execute('INSERT INTO lists(id, name) VALUES (?, ?)', ['upload-test-1', 'Upload Test']);
 
     await vi.waitFor(
       () => {
@@ -144,12 +126,10 @@ describe('usePowerSyncInspectorDiagnostics', () => {
   });
 
   it('should handle error when diagnostic schema is not set up', async () => {
-    const getSpy = vi.spyOn(powersync, 'get').mockRejectedValue(
-      new Error('no such table: local_bucket_data')
-    );
-    
+    const getSpy = vi.spyOn(powersync, 'get').mockRejectedValue(new Error('no such table: local_bucket_data'));
+
     const [result] = withPowerSyncSetup(() => usePowerSyncInspectorDiagnostics(), powersync);
-    
+
     await vi.waitFor(
       () => {
         expect(result.isDiagnosticSchemaSetup.value).toBe(false);
@@ -160,7 +140,7 @@ describe('usePowerSyncInspectorDiagnostics', () => {
 
   it('should format bytes correctly', () => {
     const [result] = withPowerSyncSetup(() => usePowerSyncInspectorDiagnostics(), powersync);
-    
+
     expect(result.formatBytes(0)).toBe('0 Bytes');
     expect(result.formatBytes(1024)).toBe('1 KiB');
     expect(result.formatBytes(1024 * 1024)).toBe('1 MiB');

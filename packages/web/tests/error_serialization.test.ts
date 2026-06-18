@@ -34,10 +34,10 @@ describe('Error Serialization through MessagePorts', { sequential: true }, () =>
         }
       );
 
-      expect(database.currentStatus.dataFlowStatus?.downloadError).toBeDefined();
-      expect(database.currentStatus.dataFlowStatus?.downloadError?.name).toBe('Error');
-      expect(database.currentStatus.dataFlowStatus?.downloadError?.message).toBe('HTTP : "Unauthorized"\n');
-      expect(database.currentStatus.dataFlowStatus?.downloadError?.stack).toBeDefined();
+      expect(database.currentStatus?.downloadError).toBeDefined();
+      expect(database.currentStatus?.downloadError?.name).toBe('Error');
+      expect(database.currentStatus?.downloadError?.message).toBe('HTTP : "Unauthorized"\n');
+      expect(database.currentStatus?.downloadError?.stack).toBeDefined();
     }
   );
 });

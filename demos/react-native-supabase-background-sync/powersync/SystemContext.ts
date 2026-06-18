@@ -36,8 +36,8 @@ export class System {
     this.powersync.registerListener({
       statusChanged: (status) => {
         const hasSynced = Boolean(status.lastSyncedAt);
-        const downloading = status.dataFlowStatus?.downloading || false;
-        const uploading = status.dataFlowStatus?.uploading || false;
+        const downloading = status?.downloading || false;
+        const uploading = status?.uploading || false;
         console.log(
           '[PowerSync] Status changed:',
           hasSynced ? '✅ Synced' : '⏳ Not yet synced',
