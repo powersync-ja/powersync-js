@@ -3,7 +3,7 @@ import { Query } from 'drizzle-orm/sql/sql';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { PowerSyncSQLiteDatabase } from '../../src/sqlite/PowerSyncSQLiteDatabase.js';
 import { ContextProvider, PowerSyncSQLitePreparedQuery } from '../../src/sqlite/PowerSyncSQLitePreparedQuery.js';
-import { DrizzleSchema, drizzleUsers, getDrizzleDb, getPowerSyncDb } from '../setup/db.js';
+import { DrizzleRelations, drizzleUsers, getDrizzleDb, getPowerSyncDb } from '../setup/db.js';
 
 function toContextProvider(db: AbstractPowerSyncDatabase): ContextProvider {
   return {
@@ -13,7 +13,7 @@ function toContextProvider(db: AbstractPowerSyncDatabase): ContextProvider {
 }
 describe('PowerSyncSQLitePreparedQuery', () => {
   let powerSyncDb: AbstractPowerSyncDatabase;
-  let db: PowerSyncSQLiteDatabase<typeof DrizzleSchema>;
+  let db: PowerSyncSQLiteDatabase<typeof DrizzleRelations>;
   const loggerMock = { logQuery: () => {} };
 
   beforeEach(async () => {

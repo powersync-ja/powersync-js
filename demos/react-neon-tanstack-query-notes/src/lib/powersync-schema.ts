@@ -1,5 +1,5 @@
+import { defineRelations } from 'drizzle-orm';
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
-import { relations } from 'drizzle-orm';
 
 export const notes = sqliteTable('notes', {
   id: text().primaryKey(),
@@ -17,10 +17,23 @@ export const paragraphs = sqliteTable('paragraphs', {
   created_at: text().notNull(),
 });
 
-export const notesRelations = relations(notes, ({ many }) => ({
-  paragraphs: many(paragraphs),
-}));
-
 export const drizzleSchema = {
-  notes, paragraphs, notesRelations
+  notes,
+  paragraphs
 };
+
+export const drizzleRelations = defineRelations(drizzleSchema, (r) => ({
+  notes: {
+    paragraphs: r.many.paragraphs({
+      from: r.notes.id,
+      to: r.paragraphs.note_id
+    })
+  },
+  paragraphs: {
+    note: r.one.notes({
+      from: r.paragraphs.note_id,
+      to: r.notes.id,
+      optional: false
+    })
+  }
+}));

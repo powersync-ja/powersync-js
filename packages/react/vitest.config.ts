@@ -25,7 +25,11 @@ const config: ViteUserConfig = {
     isolate: true,
     browser: {
       enabled: true,
-      provider: playwright(),
+      provider: playwright(
+        process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
+          ? { launchOptions: { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH } }
+          : {}
+      ),
       headless: true,
       instances: [
         {

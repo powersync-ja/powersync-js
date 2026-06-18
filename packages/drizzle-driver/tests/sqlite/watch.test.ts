@@ -1,6 +1,6 @@
 import { AbstractPowerSyncDatabase, column, Schema, Table } from '@powersync/common';
 import { PowerSyncDatabase } from '@powersync/web';
-import { count, eq, relations, sql } from 'drizzle-orm';
+import { count, defineRelations, eq, sql } from 'drizzle-orm';
 import { integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as SUT from '../../src/sqlite/PowerSyncSQLiteDatabase.js';
@@ -52,18 +52,20 @@ const customers = sqliteTable('customers', {
   email: text('email')
 });
 
-export const customersRelations = relations(customers, ({ many }) => ({
-  assets: many(assets)
+const DrizzleRelations = defineRelations({ assets, customers }, (r) => ({
+  customers: {
+    assets: r.many.assets({
+      from: r.customers.id,
+      to: r.assets.customer_id
+    })
+  },
+  assets: {
+    customer: r.one.customers({
+      from: r.assets.customer_id,
+      to: r.customers.id
+    })
+  }
 }));
-
-export const assetsRelations = relations(assets, ({ one }) => ({
-  customer: one(customers, {
-    fields: [assets.customer_id],
-    references: [customers.id]
-  })
-}));
-
-const DrizzleSchema = { assets, customers, assetsRelations, customersRelations };
 
 /**
  * There seems to be an issue with Vitest browser mode's setTimeout and
@@ -77,7 +79,7 @@ const throttleDuration = 1000;
 
 describe('Watch Tests', () => {
   let powerSyncDb: AbstractPowerSyncDatabase;
-  let db: SUT.PowerSyncSQLiteDatabase<typeof DrizzleSchema>;
+  let db: SUT.PowerSyncSQLiteDatabase<typeof DrizzleRelations>;
 
   beforeEach(async () => {
     powerSyncDb = new PowerSyncDatabase({
@@ -86,7 +88,7 @@ describe('Watch Tests', () => {
       },
       schema: PsSchema
     });
-    db = SUT.wrapPowerSyncWithDrizzle(powerSyncDb, { schema: DrizzleSchema, logger: { logQuery: () => {} } });
+    db = SUT.wrapPowerSyncWithDrizzle(powerSyncDb, { relations: DrizzleRelations, logger: { logQuery: () => {} } });
 
     await powerSyncDb.init();
   });

@@ -1,5 +1,5 @@
 import { sqliteTable, text } from 'drizzle-orm/sqlite-core';
-import { eq, relations } from 'drizzle-orm';
+import { defineRelations, eq } from 'drizzle-orm';
 
 import { customDatabaseTest, databaseTest } from './utils.js';
 import { wrapPowerSyncWithDrizzle } from '@powersync/drizzle-driver';
@@ -17,27 +17,30 @@ export const drizzleTodos = sqliteTable('todos', {
   list_id: text('list_id')
 });
 
-export const listsRelations = relations(drizzleLists, ({ one, many }) => ({
-  todos: many(drizzleTodos)
-}));
-
-export const todosRelations = relations(drizzleTodos, ({ one, many }) => ({
-  list: one(drizzleLists, {
-    fields: [drizzleTodos.list_id],
-    references: [drizzleLists.id]
-  })
-}));
-
 export const drizzleSchema = {
   lists: drizzleLists,
-  todos: drizzleTodos,
-  listsRelations,
-  todosRelations
+  todos: drizzleTodos
 };
+
+export const drizzleRelations = defineRelations(drizzleSchema, (r) => ({
+  lists: {
+    todos: r.many.todos({
+      from: r.lists.id,
+      to: r.todos.list_id
+    })
+  },
+  todos: {
+    list: r.one.lists({
+      from: r.todos.list_id,
+      to: r.lists.id,
+      optional: false
+    })
+  }
+}));
 
 const setupDrizzle = async (database: PowerSyncDatabase) => {
   const db = wrapPowerSyncWithDrizzle(database, {
-    schema: drizzleSchema
+    relations: drizzleRelations
   });
 
   await db.insert(drizzleLists).values({ id: '1', name: 'list 1' });
@@ -199,10 +202,8 @@ customDatabaseTest({ database: { readWorkerCount: 2 } as any })(
     expect(result2[0].lists).toEqual({ id: '1', name: 'list 1' });
     expect(result2[0].todos).toEqual({ id: '33', content: 'Post content', list_id: '1' });
 
-    // Note: This case is not supported yet (drizzle 0.44.7), since it doesn't set
-    // queryMetadata for these queries
-    // const result3 = await db.query.lists.findMany();
-    // expect(result3).toEqual([{ id: '1', name: 'list 1' }]);
+    const result3 = await db.query.lists.findMany();
+    expect(result3).toEqual([{ id: '1', name: 'list 1' }]);
 
     completedRead.resolve();
 

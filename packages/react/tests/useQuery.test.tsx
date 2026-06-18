@@ -1,7 +1,7 @@
 import * as commonSdk from '@powersync/common';
 import { toCompilableQuery, wrapPowerSyncWithDrizzle } from '@powersync/drizzle-driver';
 import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
-import { eq } from 'drizzle-orm';
+import { defineRelations, eq } from 'drizzle-orm';
 import { sqliteTable, text } from 'drizzle-orm/sqlite-core';
 import pDefer from 'p-defer';
 import React, { useEffect } from 'react';
@@ -469,10 +469,10 @@ describe('useQuery', () => {
           name: text('name')
         });
 
+        const relations = defineRelations({ lists });
+
         const drizzleDb = wrapPowerSyncWithDrizzle(db, {
-          schema: {
-            lists
-          }
+          relations
         });
 
         let updateParameters = (params: string): void => {};
