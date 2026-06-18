@@ -8,12 +8,15 @@ overrides:
   'fast-xml-parser': '>=5.3.5'
   # To avoid https://github.com/advisories/GHSA-2w6w-674q-4c4q
   'handlebars': ^4.7.9
+  # To avoid https://github.com/advisories/GHSA-w7jw-789q-3m8p
+  'shell-quote': ^1.8.4
 
 catalog:
   '@journeyapps/wa-sqlite': ^1.5.0
+  '@microsoft/api-extractor': ^7.58.7
   '@nuxt/devtools-kit': ^3.2.3
   '@nuxt/devtools-ui-kit': ^3.2.3
-  '@nuxt/test-utils': ^4.0.0
+  '@nuxt/test-utils': ^4.0.3
   '@op-engineering/op-sqlite': ^15.2.2
   '@pnpm/workspace.find-packages': ^1000.0.55
   '@pnpm/workspace.read-manifest': ^1000.2.9
@@ -44,7 +47,10 @@ catalog:
   typescript: ^6.0.3
   uuid: ^11.1.0
   vite: ^7.3.1
-  vitest: ^3.2.4
+  vitest: ^4.1.8
+  '@vitest/browser-preview': ^4.1.8
+  '@vitest/browser': ^4.1.8
+  '@vitest/browser-playwright': ^4.1.8
 
 allowBuilds:
   '@journeyapps/wa-sqlite': true

@@ -24,7 +24,7 @@
     "@docusaurus/theme-classic": "^3.7.0",
     "@docusaurus/tsconfig": "3.7.0",
     "@docusaurus/types": "3.7.0",
-    "@types/node": "^20.17.12",
+    "@types/node": "catalog:",
     "docusaurus-plugin-typedoc": "^1.2.1",
     "typedoc": "~0.27.6",
     "typedoc-plugin-markdown": "~4.4.1",

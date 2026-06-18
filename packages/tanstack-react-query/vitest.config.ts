@@ -1,6 +1,7 @@
-import { defineConfig, UserConfigExport } from 'vitest/config';
+import { defineConfig, ViteUserConfig } from 'vitest/config';
+import { playwright } from '@vitest/browser-playwright';
 
-const config: UserConfigExport = {
+const config: ViteUserConfig = {
   // This is only needed for local tests to resolve the package name correctly
   worker: {
     format: 'es'
@@ -24,7 +25,7 @@ const config: UserConfigExport = {
        * Starts each test in a new iFrame
        */
       isolate: true,
-      provider: 'playwright',
+      provider: playwright(),
       headless: true,
       instances: [
         {

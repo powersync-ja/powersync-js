@@ -1,3 +1,6 @@
+/**
+ * @public
+ */
 export interface PowerSyncCredentials {
   endpoint: string;
   token: string;

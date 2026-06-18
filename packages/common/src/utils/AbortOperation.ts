@@ -2,6 +2,8 @@
  * Calls to Abortcontroller.abort(reason: any) will result in the
  * `reason` being thrown. This is not necessarily an error,
  *  but extends error for better logging purposes.
+ *
+ * @internal
  */
 export class AbortOperation extends Error {
   constructor(protected reason: string) {

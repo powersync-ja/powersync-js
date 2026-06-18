@@ -1,5 +1,14 @@
 # @powersync/common
 
+## 1.54.0
+
+### Minor Changes
+
+- 0ee8051: Allow watched attachment items to provide a media type for queued downloads.
+- 17869e7: Fix `createDiffTrigger` acquiring its own read lock before running setup, even when a `setupContext` was provided.
+  On platforms where read and write access share a single connection (e.g. web), this deadlocked when `createDiffTrigger` was called inside a write lock.
+- 93199a7: [Attachments] Added `withAttachmentContext` helper method which exposes an `AttachmentContext` for custom attachment logic.
+
 ## 1.53.2
 
 ### Patch Changes

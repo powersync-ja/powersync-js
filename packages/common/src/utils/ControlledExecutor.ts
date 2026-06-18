@@ -1,3 +1,6 @@
+/**
+ * @internal
+ */
 export interface ControlledExecutorOptions {
   /**
    * If throttling is enabled, it ensures only one task runs at a time,
@@ -7,6 +10,9 @@ export interface ControlledExecutorOptions {
   throttleEnabled?: boolean;
 }
 
+/**
+ * @internal
+ */
 export class ControlledExecutor<T> {
   private task: (param: T) => Promise<void> | void;
 

@@ -22,16 +22,26 @@ import {
 import { asyncNotifier } from '../../../utils/async.js';
 import { StreamingSyncRequestParameterType } from './JsonValue.js';
 
+/**
+ * @internal
+ */
 export enum LockType {
   CRUD = 'crud',
   SYNC = 'sync'
 }
 
+/**
+ * @public
+ */
 export enum SyncStreamConnectionMethod {
   HTTP = 'http',
   WEB_SOCKET = 'web-socket'
 }
 
+/**
+ * @deprecated Deprecated since {@link SyncClientImplementation.RUST} is the only option.
+ * @public
+ */
 export enum SyncClientImplementation {
   /**
    * This implementation offloads the sync line decoding and handling into the PowerSync
@@ -42,8 +52,8 @@ export enum SyncClientImplementation {
    * ## Compatibility warning
    *
    * The Rust sync client stores sync data in a format that is slightly different than the one used
-   * by the old JavaScript client. When adopting the {@link RUST} client on existing databases, the PowerSync SDK will
-   * migrate the format automatically.
+   * by the old JavaScript client. When adopting the {@link SyncClientImplementation.RUST} client on existing databases,
+   * the PowerSync SDK will migrate the format automatically.
    *
    * SDK versions supporting both the JavaScript and the Rust client support both formats with the JavaScript client
    * implementaiton. However, downgrading to an SDK version that only supports the JavaScript client would not be
@@ -54,11 +64,16 @@ export enum SyncClientImplementation {
 
 /**
  * The default {@link SyncClientImplementation} to use, {@link SyncClientImplementation.RUST}.
+ *
+ * @deprecated Deprecated since {@link SyncClientImplementation.RUST} is the only option.
+ * @public
  */
 export const DEFAULT_SYNC_CLIENT_IMPLEMENTATION = SyncClientImplementation.RUST;
 
 /**
  * Abstract Lock to be implemented by various JS environments
+ *
+ * @internal
  */
 export interface LockOptions<T> {
   callback: () => Promise<T>;
@@ -66,6 +81,9 @@ export interface LockOptions<T> {
   signal?: AbortSignal;
 }
 
+/**
+ * @internal
+ */
 export interface AbstractStreamingSyncImplementationOptions extends RequiredAdditionalConnectionOptions {
   adapter: BucketStorageAdapter;
   subscriptions: SubscribedStream[];
@@ -79,6 +97,9 @@ export interface AbstractStreamingSyncImplementationOptions extends RequiredAddi
   remote: AbstractRemote;
 }
 
+/**
+ * @internal
+ */
 export interface StreamingSyncImplementationListener extends BaseListener {
   /**
    * Triggered whenever a status update has been attempted to be made or
@@ -94,12 +115,17 @@ export interface StreamingSyncImplementationListener extends BaseListener {
 /**
  * Configurable options to be used when connecting to the PowerSync
  * backend instance.
+ *
+ * @public
  */
 export type PowerSyncConnectionOptions = Omit<InternalConnectionOptions, 'serializedSchema'>;
 
+/**
+ * @internal
+ */
 export interface InternalConnectionOptions extends BaseConnectionOptions, AdditionalConnectionOptions {}
 
-/** @internal */
+/** @public */
 export interface BaseConnectionOptions {
   /**
    * A set of metadata to be included in service logs.
@@ -161,6 +187,9 @@ export interface RequiredAdditionalConnectionOptions extends Required<Additional
   subscriptions: SubscribedStream[];
 }
 
+/**
+ * @internal
+ */
 export interface StreamingSyncImplementation
   extends BaseObserverInterface<StreamingSyncImplementationListener>, Disposable {
   /**
@@ -183,16 +212,31 @@ export interface StreamingSyncImplementation
   markConnectionMayHaveChanged(): void;
 }
 
+/**
+ * @internal
+ */
 export const DEFAULT_CRUD_UPLOAD_THROTTLE_MS = 1000;
+/**
+ * @internal
+ */
 export const DEFAULT_RETRY_DELAY_MS = 5000;
 
+/**
+ * @internal
+ */
 export const DEFAULT_STREAMING_SYNC_OPTIONS = {
   retryDelayMs: DEFAULT_RETRY_DELAY_MS,
   crudUploadThrottleMs: DEFAULT_CRUD_UPLOAD_THROTTLE_MS
 };
 
+/**
+ * @internal
+ */
 export type RequiredPowerSyncConnectionOptions = Required<BaseConnectionOptions>;
 
+/**
+ * @internal
+ */
 export const DEFAULT_STREAM_CONNECTION_OPTIONS: RequiredPowerSyncConnectionOptions = {
   appMetadata: {},
   connectionMethod: SyncStreamConnectionMethod.WEB_SOCKET,
@@ -203,11 +247,17 @@ export const DEFAULT_STREAM_CONNECTION_OPTIONS: RequiredPowerSyncConnectionOptio
   includeDefaultStreams: true
 };
 
+/**
+ * @internal
+ */
 export type SubscribedStream = {
   name: string;
   params: Record<string, any> | null;
 };
 
+/**
+ * @internal
+ */
 export abstract class AbstractStreamingSyncImplementation
   extends BaseObserver<StreamingSyncImplementationListener>
   implements StreamingSyncImplementation
@@ -570,7 +620,7 @@ The next upload iteration will be delayed.`);
   }
 
   /**
-   * Older versions of the JS SDK used to encode subkeys as JSON in {@link OplogEntry.toJSON}.
+   * Older versions of the JS SDK used to encode subkeys as JSON in `OplogEntry.toJSON`.
    * Because subkeys are always strings, this leads to quotes being added around them in `ps_oplog`.
    * While this is not a problem as long as it's done consistently, it causes issues when a database
    * created by the JS SDK is used with other SDKs, or (more likely) when the new Rust sync client
@@ -580,7 +630,7 @@ The next upload iteration will be delayed.`);
    * migration is only triggered when necessary (for now). The function returns whether the new format
    * should be used, so that the JS SDK is able to write to updated databases.
    *
-   * @param requireFixedKeyFormat Whether we require the new format or also support the old one.
+   * @param requireFixedKeyFormat - Whether we require the new format or also support the old one.
    *        The Rust client requires the new subkey format.
    * @returns Whether the database is now using the new, fixed subkey format.
    */

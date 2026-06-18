@@ -1,6 +1,6 @@
 {
   "name": "@powersync/common",
-  "version": "1.53.2",
+  "version": "1.54.0",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
@@ -76,6 +76,7 @@
     "rollup": "catalog:",
     "rollup-plugin-dts": "catalog:",
     "rsocket-core": "1.0.0-alpha.3",
-    "rsocket-websocket-client": "1.0.0-alpha.3"
+    "rsocket-websocket-client": "1.0.0-alpha.3",
+    "@microsoft/api-extractor": "catalog:"
   }
 }

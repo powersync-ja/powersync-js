@@ -17,7 +17,6 @@ import {
   Transaction
 } from '@powersync/common';
 import { Remote } from 'comlink';
-import { isBundledToCommonJs } from '../utils/modules.js';
 import { AsyncDatabase, AsyncDatabaseOpener } from './AsyncDatabase.js';
 import { RemoteConnection } from './RemoteConnection.js';
 import { NodeDatabaseImplementation, NodeSQLOpenOptions } from './options.js';
@@ -77,16 +76,10 @@ export class WorkerConnectionPool extends BaseObserver<DBAdapterListener> implem
     }
 
     const openWorker = async (isWriter: boolean) => {
-      const isCommonJsModule = isBundledToCommonJs;
-      let worker: Worker;
       const workerName = isWriter ? `write ${dbFilePath}` : `read ${dbFilePath}`;
 
       const workerFactory = this.options.openWorker ?? ((...args) => new Worker(...args));
-      if (isCommonJsModule) {
-        worker = workerFactory(path.resolve(__dirname, 'DefaultWorker.cjs'), { name: workerName });
-      } else {
-        worker = workerFactory(new URL('./DefaultWorker.js', import.meta.url), { name: workerName });
-      }
+      const worker = workerFactory(new URL('./DefaultWorker.js', import.meta.url), { name: workerName });
 
       const listeners = new WeakMap<EventListenerOrEventListenerObject, (e: any) => void>();
 

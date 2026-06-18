@@ -35,7 +35,7 @@ export * from './db/DBAdapter.js';
 export * from './db/schema/Column.js';
 export * from './db/schema/Index.js';
 export * from './db/schema/IndexedColumn.js';
-export { RawTableType, PendingStatementParameter, PendingStatement } from './db/schema/RawTable.js';
+export { PendingStatement, PendingStatementParameter, RawTableType } from './db/schema/RawTable.js';
 export * from './db/schema/Schema.js';
 export * from './db/schema/Table.js';
 export * from './db/schema/TableV2.js';

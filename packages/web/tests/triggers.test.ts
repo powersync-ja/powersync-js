@@ -190,6 +190,50 @@ describe('Triggers', () => {
     );
   });
 
+  it('should create a trigger inside an already-held write lock via setupContext', async () => {
+    const db = generateTestDb();
+
+    const destination = 'temp_setup_context_diff';
+
+    // Mirrors the on-demand sync path: the caller holds the write lock and passes
+    // its context in as setupContext. createDiffTrigger must not acquire any
+    // additional locks, since read and write access share a single connection
+    // queue on web — a nested lock request deadlocks against the held write lock.
+    const triggerCreated = db.writeLock(async (tx) =>
+      db.triggers.createDiffTrigger({
+        source: TEST_SCHEMA.props.customers.name,
+        destination,
+        when: {
+          [DiffTriggerOperation.INSERT]: 'TRUE'
+        },
+        setupContext: tx
+      })
+    );
+
+    const dispose = await Promise.race([
+      triggerCreated,
+      new Promise<never>((_, reject) =>
+        setTimeout(
+          () =>
+            reject(
+              new Error('Deadlock: createDiffTrigger requested a new lock while the setupContext write lock was held')
+            ),
+          5_000
+        )
+      )
+    ]);
+
+    onTestFinished(() => dispose());
+
+    // Sanity check that the trigger is functional
+    await db.execute("INSERT INTO customers (id, name) VALUES (uuid(), 'setup-context')");
+
+    await vi.waitFor(async () => {
+      const rows = await db.getAll(`SELECT * FROM ${destination}`);
+      expect(rows.length).toEqual(1);
+    });
+  });
+
   it('should report diff operations across clients (insert from client B observed by client A)', async () => {
     const openDB = (filename: string) =>
       generateTestDb({

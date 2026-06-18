@@ -1,6 +1,6 @@
 {
   "name": "@powersync/node",
-  "version": "0.18.7",
+  "version": "0.18.8",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
@@ -15,34 +15,24 @@
   ],
   "scripts": {
     "prepare:core": "node download_core.js",
-    "build": " pnpm prepare:core && tsc -b && rollup --config",
-    "build:prod": "pnpm prepare:core && tsc -b && rollup --config",
+    "build": " pnpm prepare:core && tsc -b",
+    "build:prod": "pnpm prepare:core && tsc -b",
     "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
     "watch": "tsc -b -w",
     "test": " pnpm prepare:core && vitest",
-    "test:exports": "attw --pack . --ignore-rules no-resolution"
+    "test:exports": "attw --pack . --ignore-rules no-resolution cjs-resolves-to-esm"
   },
   "type": "module",
   "exports": {
     ".": {
-      "import": {
-        "types": "./lib/index.d.ts",
-        "default": "./lib/index.js"
-      },
-      "require": {
-        "types": "./dist/bundle.d.cts",
-        "default": "./dist/bundle.cjs"
-      }
+      "types": "./lib/index.d.ts",
+      "import": "./lib/index.js",
+      "module-sync": "./lib/index.js"
     },
     "./worker.js": {
-      "import": {
-        "types": "./lib/worker.d.ts",
-        "default": "./lib/worker.js"
-      },
-      "require": {
-        "types": "./dist/worker.d.cts",
-        "default": "./dist/worker.cjs"
-      }
+      "types": "./lib/worker.d.ts",
+      "import": "./lib/worker.js",
+      "module-sync": "./lib/worker.js"
     },
     "./package.json": "./package.json"
   },
@@ -57,7 +47,7 @@
   },
   "homepage": "https://docs.powersync.com/",
   "peerDependencies": {
-    "@powersync/common": "workspace:^1.53.2",
+    "@powersync/common": "workspace:^1.54.0",
     "better-sqlite3": "12.x"
   },
   "peerDependenciesMeta": {
@@ -78,8 +68,6 @@
     "bson": "catalog:",
     "drizzle-orm": "catalog:",
     "js-logger": "catalog:",
-    "rollup": "catalog:",
-    "rollup-plugin-dts": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   },

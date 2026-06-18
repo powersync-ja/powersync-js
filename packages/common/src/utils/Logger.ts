@@ -4,6 +4,9 @@ export { GlobalLogger, ILogger, ILoggerOpts, ILogHandler, ILogLevel } from 'js-l
 
 const TypedLogger: ILogger = Logger as any;
 
+/**
+ * @public
+ */
 export const LogLevel = {
   TRACE: TypedLogger.TRACE,
   DEBUG: TypedLogger.DEBUG,
@@ -14,6 +17,9 @@ export const LogLevel = {
   OFF: TypedLogger.OFF
 };
 
+/**
+ * @public
+ */
 export interface CreateLoggerOptions {
   logLevel?: ILogLevel;
 }
@@ -25,6 +31,7 @@ export interface CreateLoggerOptions {
  * across all loggers created with `createLogger`. Adjusting settings on this
  * base logger affects all loggers derived from it unless explicitly overridden.
  *
+ * @public
  */
 export function createBaseLogger() {
   return Logger;
@@ -36,6 +43,8 @@ export function createBaseLogger() {
  * Named loggers allow specific modules or areas of your application to have
  * their own logging levels and behaviors. These loggers inherit configuration
  * from the base logger by default but can override settings independently.
+ *
+ * @public
  */
 export function createLogger(name: string, options: CreateLoggerOptions = {}): ILogger {
   const logger = Logger.get(name);

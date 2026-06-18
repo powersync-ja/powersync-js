@@ -6,11 +6,10 @@ import {
   createBaseLogger,
   createLogger,
   PowerSyncDatabase,
-  SyncClientImplementation,
-  SyncStreamConnectionMethod
+  SyncStreamConnectionMethod,
+  WorkerOpener
 } from '@powersync/node';
 import { exit } from 'node:process';
-import { WorkerOpener } from 'node_modules/@powersync/node/src/db/options.js';
 import { AppSchema, DemoConnector } from './powersync.js';
 import { enableUncidiDiagnostics } from './UndiciDiagnostics.js';
 
@@ -60,7 +59,6 @@ const main = async () => {
   console.log(await db.get('SELECT powersync_rs_version();'));
   await db.connect(new DemoConnector(), {
     connectionMethod: SyncStreamConnectionMethod.WEB_SOCKET,
-    clientImplementation: SyncClientImplementation.RUST,
     appMetadata: {
       app_version: process.env.npm_package_version || 'unknown'
     }

@@ -427,10 +427,12 @@ type WatchedAttachmentItem = {
   id: string;
   fileExtension: string;  // e.g., 'jpg', 'pdf'
   metaData?: string;
+  mediaType?: string;     // e.g., 'image/jpeg'
 } | {
   id: string;
   filename: string;       // e.g., 'document.pdf'
   metaData?: string;
+  mediaType?: string;     // e.g., 'application/pdf'
 };
 ```
 

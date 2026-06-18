@@ -1,5 +1,15 @@
 # @powersync/capacitor
 
+## 0.7.0
+
+### Minor Changes
+
+- befa2ae: Promote the Capacitor SDK from alpha to beta.
+
+### Patch Changes
+
+- @powersync/web@1.38.3
+
 ## 0.6.1
 
 ### Patch Changes

@@ -1,15 +1,68 @@
 import { AbstractPowerSyncDatabase } from '../client/AbstractPowerSyncDatabase.js';
 import { DEFAULT_WATCH_THROTTLE_MS } from '../client/watched/WatchedQuery.js';
 import { DifferentialWatchedQuery } from '../client/watched/processors/DifferentialQueryProcessor.js';
-import { ILogger } from '../utils/Logger.js';
 import { Transaction } from '../db/DBAdapter.js';
+import { ILogger } from '../utils/Logger.js';
+import { AttachmentContext } from './AttachmentContext.js';
+import { AttachmentErrorHandler } from './AttachmentErrorHandler.js';
+import { AttachmentService } from './AttachmentService.js';
 import { AttachmentData, LocalStorageAdapter } from './LocalStorageAdapter.js';
 import { RemoteStorageAdapter } from './RemoteStorageAdapter.js';
 import { ATTACHMENT_TABLE, AttachmentRecord, AttachmentState } from './Schema.js';
 import { SyncingService } from './SyncingService.js';
 import { WatchedAttachmentItem } from './WatchedAttachmentItem.js';
-import { AttachmentService } from './AttachmentService.js';
-import { AttachmentErrorHandler } from './AttachmentErrorHandler.js';
+
+/**
+ * Configuration options for {@link AttachmentQueue}.
+ *
+ * @experimental
+ * @alpha This is currently experimental and may change without a major version bump.
+ */
+export interface AttachmentQueueOptions {
+  /**
+   * PowerSync database instance
+   */
+  db: AbstractPowerSyncDatabase;
+  /**
+   * Remote storage adapter for upload/download operations
+   */
+  remoteStorage: RemoteStorageAdapter;
+  /**
+   * Local storage adapter for file persistence
+   */
+  localStorage: LocalStorageAdapter;
+  /**
+   * Callback for monitoring attachment changes in your data model
+   */
+  watchAttachments: (onUpdate: (attachment: WatchedAttachmentItem[]) => Promise<void>, signal: AbortSignal) => void;
+  /**
+   * Name of the table to store attachment records. Default: 'ps_attachment_queue'
+   */
+  tableName?: string;
+  /**
+   * Logger instance. Defaults to db.logger
+   */
+  logger?: ILogger;
+  /**
+   * Periodic polling interval in milliseconds for retrying failed uploads/downloads. Default: 30000
+   */
+  syncIntervalMs?: number;
+  /**
+   * Throttle duration in milliseconds for the reactive watch query that detects attachment changes. Prevents rapid-fire syncs during bulk changes. Default: 30
+   */
+  syncThrottleDuration?: number;
+  /**
+   * Whether to automatically download remote attachments. Default: true
+   */
+  downloadAttachments?: boolean;
+  /**
+   * Maximum archived attachments before cleanup. Default: 100
+   */
+  archivedCacheLimit?: number;
+
+  /** Handler for upload, download and delete errors */
+  errorHandler?: AttachmentErrorHandler;
+}
 
 /**
  * AttachmentQueue manages the lifecycle and synchronization of attachments
@@ -86,16 +139,6 @@ export class AttachmentQueue {
    * Creates a new AttachmentQueue instance.
    *
    * @param options - Configuration options
-   * @param options.db - PowerSync database instance
-   * @param options.remoteStorage - Remote storage adapter for upload/download operations
-   * @param options.localStorage - Local storage adapter for file persistence
-   * @param options.watchAttachments - Callback for monitoring attachment changes in your data model
-   * @param options.tableName - Name of the table to store attachment records. Default: 'ps_attachment_queue'
-   * @param options.logger - Logger instance. Defaults to db.logger
-   * @param options.syncIntervalMs - Periodic polling interval in milliseconds for retrying failed uploads/downloads. Default: 30000
-   * @param options.syncThrottleDuration - Throttle duration in milliseconds for the reactive watch query that detects attachment changes. Prevents rapid-fire syncs during bulk changes. Default: 30
-   * @param options.downloadAttachments - Whether to automatically download remote attachments. Default: true
-   * @param options.archivedCacheLimit - Maximum archived attachments before cleanup. Default: 100
    */
   constructor({
     db,
@@ -109,19 +152,7 @@ export class AttachmentQueue {
     downloadAttachments = true,
     archivedCacheLimit = 100,
     errorHandler
-  }: {
-    db: AbstractPowerSyncDatabase;
-    remoteStorage: RemoteStorageAdapter;
-    localStorage: LocalStorageAdapter;
-    watchAttachments: (onUpdate: (attachment: WatchedAttachmentItem[]) => Promise<void>, signal: AbortSignal) => void;
-    tableName?: string;
-    logger?: ILogger;
-    syncIntervalMs?: number;
-    syncThrottleDuration?: number;
-    downloadAttachments?: boolean;
-    archivedCacheLimit?: number;
-    errorHandler?: AttachmentErrorHandler;
-  }) {
+  }: AttachmentQueueOptions) {
     this.db = db;
     this.remoteStorage = remoteStorage;
     this.localStorage = localStorage;
@@ -228,6 +259,7 @@ export class AttachmentQueue {
               state: AttachmentState.QUEUED_DOWNLOAD,
               hasSynced: false,
               metaData: watchedAttachment.metaData,
+              mediaType: watchedAttachment.mediaType,
               timestamp: new Date().getTime()
             });
             continue;
@@ -322,16 +354,23 @@ export class AttachmentQueue {
   }
 
   /**
+   * Provides an {@link AttachmentContext} to a callback.
+   *
+   * The callback runs while the attachment queue mutex is held. Do not call
+   * other {@link AttachmentQueue} methods from within the callback, as they may
+   * attempt to acquire the same mutex and block indefinitely.
+   */
+  withAttachmentContext<T>(callback: (context: AttachmentContext) => Promise<T>): Promise<T> {
+    /**
+     * AttachmentService is internal and private in this class.
+     * We only need to expose its locking and context functionality for extending classes.
+     */
+    return this.attachmentService.withContext(callback);
+  }
+  /**
    * Saves a file to local storage and queues it for upload to remote storage.
    *
    * @param options - File save options
-   * @param options.data - The file data as ArrayBuffer, Blob, or base64 string
-   * @param options.fileExtension - File extension (e.g., 'jpg', 'pdf')
-   * @param options.mediaType - MIME type of the file (e.g., 'image/jpeg')
-   * @param options.metaData - Optional metadata to associate with the attachment
-   * @param options.id - Optional custom ID. If not provided, a UUID will be generated
-   * @param options.updateHook - Optional callback to execute additional database operations
-   *                             within the same transaction as the attachment creation
    * @returns Promise resolving to the created attachment record
    */
   async saveFile({
@@ -342,11 +381,30 @@ export class AttachmentQueue {
     id,
     updateHook
   }: {
+    /**
+     * The file data as ArrayBuffer, Blob, or base64 string
+     */
     data: AttachmentData;
+    /**
+     * File extension (e.g., 'jpg', 'pdf')
+     */
     fileExtension: string;
+    /**
+     * MIME type of the file (e.g., 'image/jpeg')
+     */
     mediaType?: string;
+    /**
+     * Optional metadata to associate with the attachment
+     */
     metaData?: string;
+    /**
+     * Optional custom ID. If not provided, a UUID will be generated
+     */
     id?: string;
+    /**
+     * Optional callback to execute additional database operations within the same transaction as the attachment
+     * creation.
+     */
     updateHook?: (transaction: Transaction, attachment: AttachmentRecord) => Promise<void>;
   }): Promise<AttachmentRecord> {
     const resolvedId = id ?? (await this.generateAttachmentId());
