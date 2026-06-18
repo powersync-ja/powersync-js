@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { usePowerSyncInspectorDiagnostics } from '../../src/runtime/composables/usePowerSyncInspectorDiagnostics';
 import { withPowerSyncSetup, openPowerSync } from '../utils';
-import { SyncStatus } from '@powersync/common';
+import { type SyncStatus } from '@powersync/common';
 
 describe('usePowerSyncInspectorDiagnostics', () => {
   let powersync: ReturnType<typeof openPowerSync>;
