@@ -355,7 +355,6 @@ export class AttachmentQueue {
       await this.localStorage.initialize();
 
       await this.syncingService.processAttachments(activeAttachments, {
-        withContext: (cb) => this.attachmentService.withContext(cb),
         isActive: () => !signal?.aborted
       });
 

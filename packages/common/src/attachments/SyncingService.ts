@@ -44,9 +44,6 @@ export class SyncingService {
    * end of the batch.
    *
    * @param attachments - Array of attachment records to process
-   * @param options.withContext - Briefly acquires the attachment-service mutex.
-   *                              Used to persist each row after its I/O completes
-   *                              and to run the delete-row transaction.
    * @param options.isActive - Polled between attachments; when it returns `false`
    *                           the loop exits early. Used by `stopSync` to interrupt
    *                           a running batch within one attachment's processing
@@ -54,12 +51,11 @@ export class SyncingService {
    */
   async processAttachments(
     attachments: AttachmentRecord[],
-    options: {
-      withContext: <T>(callback: (context: AttachmentContext) => Promise<T>) => Promise<T>;
+    options?: {
       isActive?: () => boolean;
     }
   ): Promise<void> {
-    const { withContext, isActive } = options;
+    const isActive = options?.isActive;
     this.logger.info(`Starting processAttachments with ${attachments.length} attachments`);
 
     for (const attachment of attachments) {
@@ -80,13 +76,13 @@ export class SyncingService {
           case AttachmentState.QUEUED_DELETE:
             // `deleteAttachment` needs a context (it removes the row in a
             // transaction); briefly re-acquire the mutex for just this row.
-            updated = await withContext((ctx) => this.deleteAttachment(attachment, ctx));
+            updated = await this.attachmentService.withContext((ctx) => this.deleteAttachment(attachment, ctx));
             break;
           default:
             continue;
         }
 
-        await withContext((ctx) => ctx.saveAttachments([updated]));
+        await this.attachmentService.withContext((ctx) => ctx.saveAttachments([updated]));
       } catch (error) {
         this.logger.warn(`Error during sync for ${attachment.id}`, error);
       }
