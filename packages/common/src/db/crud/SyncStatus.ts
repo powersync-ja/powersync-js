@@ -277,21 +277,20 @@ export class SyncStatus {
    * Not all errors are serializable over a MessagePort. E.g. some `DomExceptions` fail to be passed across workers.
    * This explicitly serializes errors in the SyncStatus.
    */
-  protected serializeError(error?: Error) {
+  protected serializeError(error?: Error): Error | undefined {
     if (typeof error == 'undefined') {
       return undefined;
     }
-    const serialized: { name: string; message: string; stack?: string; cause?: unknown } = {
+    const serialized: Error = {
       name: error.name,
       message: error.message,
       stack: error.stack
     };
     // `Error.cause` can be any value (the spec types it as unknown). Preserve it
     // so consumers reading uploadError/downloadError keep the failure context.
-    // Recurse for Error causes so the whole chain is flattened the same way
-    const cause = (error as { cause?: unknown }).cause;
-    if (typeof cause != 'undefined') {
-      serialized.cause = cause instanceof Error ? this.serializeError(cause) : cause;
+    // Recurse for Error causes so the whole chain is flattened the same way.
+    if (typeof error.cause != 'undefined') {
+      serialized.cause = error.cause instanceof Error ? this.serializeError(error.cause) : error.cause;
     }
     return serialized;
   }
