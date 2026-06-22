@@ -44,22 +44,21 @@ export class SyncingService {
    * end of the batch.
    *
    * @param attachments - Array of attachment records to process
-   * @param options.isActive - Polled between attachments; when it returns `false`
-   *                           the loop exits early. Used by `stopSync` to interrupt
-   *                           a running batch within one attachment's processing
-   *                           time.
+   * @param options.signal - Checked between attachments; once aborted the loop
+   *                         exits early. Used by `stopSync` to interrupt a running
+   *                         batch within one attachment's processing time.
    */
   async processAttachments(
     attachments: AttachmentRecord[],
     options?: {
-      isActive?: () => boolean;
+      signal?: AbortSignal;
     }
   ): Promise<void> {
-    const isActive = options?.isActive;
+    const signal = options?.signal;
     this.logger.info(`Starting processAttachments with ${attachments.length} attachments`);
 
     for (const attachment of attachments) {
-      if (isActive && !isActive()) {
+      if (signal?.aborted) {
         this.logger.info('Sync cancelled; stopping iteration early');
         return;
       }

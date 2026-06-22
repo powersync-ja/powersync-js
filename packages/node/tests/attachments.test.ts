@@ -712,4 +712,53 @@ describe('attachment queue', () => {
       await slowQueue.stopSync();
     }
   );
+
+  it(
+    'stopSync should release a sync call queued behind a stalled batch instead of leaving it hanging',
+    { timeout: 10000 },
+    async () => {
+      const firstDownloadStarted = deferred();
+      // Never resolved: the in-flight batch stays stuck holding the sync mutex.
+      const stalledGate = deferred<ArrayBuffer>();
+      const slowDownload = vi.fn().mockImplementation(() => {
+        firstDownloadStarted.resolve();
+        return stalledGate.promise;
+      });
+
+      const slowQueue = new AttachmentQueue({
+        db,
+        watchAttachments,
+        remoteStorage: { downloadFile: slowDownload, uploadFile: mockUploadFile, deleteFile: mockDeleteFile },
+        localStorage: mockLocalStorage,
+        syncIntervalMs: INTERVAL_MILLISECONDS,
+        archivedCacheLimit: 0
+      });
+
+      await slowQueue.startSync();
+
+      // Queue a download that hangs; this batch holds the sync mutex.
+      await db.execute('INSERT INTO users (id, name, email, photo_id) VALUES (uuid(), ?, ?, uuid())', [
+        'downloader',
+        'downloader@example.com'
+      ]);
+      await firstDownloadStarted.promise;
+
+      // A second sync call queues behind the stalled batch on `syncLoopMutex`.
+      let outcome: 'resolved' | 'rejected' | 'pending' = 'pending';
+      const queuedSync = slowQueue.syncStorage().then(
+        () => (outcome = 'resolved'),
+        () => (outcome = 'rejected')
+      );
+
+      // stopSync aborts the signal; the queued acquire must reject and be swallowed,
+      // so the queued call settles rather than waiting on the stalled batch forever.
+      await slowQueue.stopSync();
+      await new Promise((r) => setImmediate(r));
+      expect(outcome).toBe('resolved');
+
+      // Clean up: release the stalled download so the running batch can drain.
+      stalledGate.resolve(createMockJpegBuffer());
+      await queuedSync;
+    }
+  );
 });

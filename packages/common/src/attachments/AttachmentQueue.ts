@@ -347,21 +347,25 @@ export class AttachmentQueue {
    * Concurrent invocations are serialized via `syncLoopMutex`.
    */
   async syncStorage(): Promise<void> {
-    await this.syncLoopMutex.runExclusive(async () => {
-      const signal = this.syncAbortController?.signal;
+    const signal = this.syncAbortController?.signal;
+    if (signal?.aborted) return;
+
+    try {
+      await this.syncLoopMutex.runExclusive(async () => {
+        const activeAttachments = await this.attachmentService.withContext((ctx) => ctx.getActiveAttachments());
+        await this.localStorage.initialize();
+
+        await this.syncingService.processAttachments(activeAttachments, { signal });
+
+        if (signal?.aborted) return;
+
+        await this.attachmentService.withContext((ctx) => this.syncingService.deleteArchivedAttachments(ctx));
+      }, signal);
+    } catch (error) {
+      // A queued batch's acquire rejects when `stopSync` aborts — expected, not an error.
       if (signal?.aborted) return;
-
-      const activeAttachments = await this.attachmentService.withContext((ctx) => ctx.getActiveAttachments());
-      await this.localStorage.initialize();
-
-      await this.syncingService.processAttachments(activeAttachments, {
-        isActive: () => !signal?.aborted
-      });
-
-      if (signal?.aborted) return;
-
-      await this.attachmentService.withContext((ctx) => this.syncingService.deleteArchivedAttachments(ctx));
-    });
+      throw error;
+    }
   }
 
   /**
