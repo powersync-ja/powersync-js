@@ -44,9 +44,10 @@ export class SyncingService {
    * end of the batch.
    *
    * @param attachments - Array of attachment records to process
-   * @param options.signal - Checked between attachments; once aborted the loop
-   *                         exits early. Used by `stopSync` to interrupt a running
-   *                         batch within one attachment's processing time.
+   * @param options - Optional controls. Pass `signal` (an `AbortSignal`) to interrupt
+   *                  the batch: it is checked between attachments and, once aborted, the
+   *                  loop exits early — letting `stopSync` stop a running batch within
+   *                  one attachment's processing time.
    */
   async processAttachments(
     attachments: AttachmentRecord[],
