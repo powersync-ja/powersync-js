@@ -1,10 +1,10 @@
-import { LIST_TABLE } from "@/powersync/AppSchema";
-import * as BackgroundTask from "expo-background-task";
-import * as TaskManager from "expo-task-manager";
-import { AppState } from "react-native";
-import { system } from "@/powersync/SystemContext";
+import { LIST_TABLE } from '@/powersync/AppSchema';
+import * as BackgroundTask from 'expo-background-task';
+import * as TaskManager from 'expo-task-manager';
+import { AppState } from 'react-native';
+import { system } from '@/powersync/SystemContext';
 
-const BACKGROUND_SYNC_TASK = "background-powersync-task";
+const BACKGROUND_SYNC_TASK = 'background-powersync-task';
 const MINIMUM_INTERVAL = 15; // Run this task every 15 minutes
 
 TaskManager.defineTask(BACKGROUND_SYNC_TASK, async () => {
@@ -20,7 +20,7 @@ TaskManager.defineTask(BACKGROUND_SYNC_TASK, async () => {
       [await system.connector.userId()]
     );
 
-    console.log("[Background Task] Initializing PowerSync");
+    console.log('[Background Task] Initializing PowerSync');
 
     // Capture the previous lastSyncedAt BEFORE init so we can detect a sync that
     // completes during this background task run. `lastSyncedAt` is process-scoped
@@ -34,28 +34,25 @@ TaskManager.defineTask(BACKGROUND_SYNC_TASK, async () => {
 
     // Wait for a sync to complete during THIS background task run
     await new Promise<void>((resolve) => {
-      console.log("[Background Task] Waiting for sync to complete");
+      console.log('[Background Task] Waiting for sync to complete');
       const unregister = system.powersync.registerListener({
         statusChanged: (status) => {
           const syncedThisRun =
-            Boolean(status.lastSyncedAt) &&
-            previousSyncAt?.getTime() !== status.lastSyncedAt?.getTime();
-          const downloading = status.dataFlowStatus?.downloading || false;
-          const uploading = status.dataFlowStatus?.uploading || false;
+            Boolean(status.lastSyncedAt) && previousSyncAt?.getTime() !== status.lastSyncedAt?.getTime();
+          const downloading = status?.downloading || false;
+          const uploading = status?.uploading || false;
 
           // Resolve when a fresh sync has completed and no transfers are in flight
           if (syncedThisRun && !downloading && !uploading) {
-            console.log(
-              "[Background Task] Download complete"
-            );
+            console.log('[Background Task] Download complete');
             resolve();
             unregister();
           }
-        },
+        }
       });
     });
   } catch (error) {
-    console.error("[Background Task] Failed to execute the background task:", error);
+    console.error('[Background Task] Failed to execute the background task:', error);
     return BackgroundTask.BackgroundTaskResult.Failed;
   }
   return BackgroundTask.BackgroundTaskResult.Success;
@@ -68,23 +65,23 @@ export const initializeBackgroundTask = async (innerAppMountedPromise: Promise<v
   // Delay registering the task until the inner app is mounted
   await innerAppMountedPromise;
   // This listener will manage task registration and unregistration
-  AppState.addEventListener("change", async (nextAppState) => {
-    console.log("App state changed:", nextAppState);
+  AppState.addEventListener('change', async (nextAppState) => {
+    console.log('App state changed:', nextAppState);
 
-    if (nextAppState === "active") {
+    if (nextAppState === 'active') {
       // App is in the foreground, kill the background task
       const isTaskRegistered = await TaskManager.isTaskRegisteredAsync(BACKGROUND_SYNC_TASK);
       if (isTaskRegistered) {
-        console.log("App is active. Unregistering background task.");
+        console.log('App is active. Unregistering background task.');
         await BackgroundTask.unregisterTaskAsync(BACKGROUND_SYNC_TASK);
       }
-    } else if (nextAppState === "background") {
+    } else if (nextAppState === 'background') {
       // App is in the background, register the task to run
       const isTaskRegistered = await TaskManager.isTaskRegisteredAsync(BACKGROUND_SYNC_TASK);
       if (!isTaskRegistered) {
-        console.log("App is in background. Registering background task.");
+        console.log('App is in background. Registering background task.');
         await BackgroundTask.registerTaskAsync(BACKGROUND_SYNC_TASK, {
-          minimumInterval: MINIMUM_INTERVAL,
+          minimumInterval: MINIMUM_INTERVAL
         });
       }
     }
@@ -92,12 +89,12 @@ export const initializeBackgroundTask = async (innerAppMountedPromise: Promise<v
 
   // Run an initial check in case the app starts in the background (e.g., from a deep link)
   const initialAppState = AppState.currentState;
-  if (initialAppState === "background") {
+  if (initialAppState === 'background') {
     (async () => {
       const isTaskRegistered = await TaskManager.isTaskRegisteredAsync(BACKGROUND_SYNC_TASK);
       if (!isTaskRegistered) {
         await BackgroundTask.registerTaskAsync(BACKGROUND_SYNC_TASK, {
-          minimumInterval: MINIMUM_INTERVAL,
+          minimumInterval: MINIMUM_INTERVAL
         });
       }
     })();

@@ -779,7 +779,7 @@ export interface PowerSyncDBListener extends BaseListener {
     // (undocumented)
     schemaChanged: (schema: Schema) => void;
     // (undocumented)
-    statusChanged?: ((status: SyncStatus) => void) | undefined;
+    statusChanged?: (status: SyncStatus) => void;
 }
 
 // @public
@@ -930,12 +930,15 @@ export interface StandardWatchedQueryOptions<RowType> extends WatchedQueryOption
 // @public (undocumented)
 export type StreamingSyncRequestParameterType = JSONValue;
 
-// @public (undocumented)
-export type SyncDataFlowStatus = Partial<{
-    uploading: boolean;
+// @public @deprecated (undocumented)
+export interface SyncDataFlowStatus {
     downloadError?: Error;
+    // (undocumented)
+    downloading: boolean;
     uploadError?: Error;
-}>;
+    // (undocumented)
+    uploading: boolean;
+}
 
 // @public
 export interface SyncOptions {
@@ -968,7 +971,9 @@ export interface SyncProgress extends ProgressWithOperations {
 export interface SyncStatus {
     get connected(): boolean;
     get connecting(): boolean;
+    // @deprecated (undocumented)
     get dataFlowStatus(): SyncDataFlowStatus;
+    get downloadError(): Error | undefined;
     get downloading(): boolean;
     get downloadProgress(): SyncProgress | null;
     forStream(stream: SyncStreamDescription): SyncStreamStatus | undefined;
@@ -979,6 +984,8 @@ export interface SyncStatus {
     get priorityStatusEntries(): SyncPriorityStatus[] | undefined;
     statusForPriority(priority: number): SyncPriorityStatus | undefined;
     get syncStreams(): SyncStreamStatus[] | undefined;
+    get uploadError(): Error | undefined;
+    get uploading(): boolean;
 }
 
 // @public

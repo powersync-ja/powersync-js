@@ -12,18 +12,22 @@ import { SyncPriorityStatus as CoreSyncPriorityStatus } from '../../client/sync/
 import { SyncProgressImpl } from './SyncProgress.js';
 import { FULL_SYNC_PRIORITY } from '../../constants.js';
 
-export class SyncStatusSnapshot implements SyncStatus {
-  readonly dataFlowStatus: SyncDataFlowStatus;
+/**
+ * The {@link SyncStatus} subset not managed by the Rust client in {@link CoreSyncStatus}.
+ *
+ * This includes the upload state and JS errors.
+ */
+export interface JavaScriptSyncState {
+  uploading?: boolean;
+  downloadError?: Error;
+  uploadError?: Error;
+}
 
+export class SyncStatusSnapshot implements SyncStatus {
   constructor(
     readonly core: CoreSyncStatus | null,
-    dataFlow: SyncDataFlowStatus
-  ) {
-    this.dataFlowStatus = {
-      uploading: false,
-      ...dataFlow
-    };
-  }
+    readonly jsState: JavaScriptSyncState
+  ) {}
 
   get connected(): boolean {
     return this.core?.connected ?? false;
@@ -35,6 +39,27 @@ export class SyncStatusSnapshot implements SyncStatus {
 
   get downloading(): boolean {
     return this.core?.downloading != null;
+  }
+
+  get uploading(): boolean {
+    return this.jsState.uploading ?? false;
+  }
+
+  get downloadError(): Error | undefined {
+    return this.jsState.downloadError;
+  }
+
+  get uploadError(): Error | undefined {
+    return this.jsState.uploadError;
+  }
+
+  get dataFlowStatus(): SyncDataFlowStatus {
+    return {
+      downloading: this.downloading,
+      uploading: this.uploading,
+      downloadError: this.downloadError,
+      uploadError: this.uploadError
+    };
   }
 
   get lastSyncedAt(): Date | undefined {
@@ -101,19 +126,18 @@ export class SyncStatusSnapshot implements SyncStatus {
       return value;
     };
 
-    const options = { core: this.core, dataFlow: this.dataFlowStatus };
+    const options = { core: this.core, jsState: this.jsState };
     const otherStatus = status as unknown as SyncStatusSnapshot;
     const otherOptions = {
       core: otherStatus.core,
-      dataFlow: otherStatus.dataFlowStatus
+      jsState: otherStatus.jsState
     };
 
     return JSON.stringify(options, replacer) == JSON.stringify(otherOptions, replacer);
   }
 
   getMessage() {
-    const dataFlow = this.dataFlowStatus;
-    return `SyncStatus<connected: ${this.connected} connecting: ${this.connecting} lastSyncedAt: ${this.lastSyncedAt} hasSynced: ${this.hasSynced}. Downloading: ${this.downloading}. Uploading: ${dataFlow.uploading}. UploadError: ${dataFlow.uploadError}, DownloadError?: ${dataFlow.downloadError}>`;
+    return `SyncStatus<connected: ${this.connected} connecting: ${this.connecting} lastSyncedAt: ${this.lastSyncedAt} hasSynced: ${this.hasSynced}. Downloading: ${this.downloading}. Uploading: ${this.uploading}. UploadError: ${this.uploadError}, DownloadError?: ${this.downloadError}>`;
   }
 
   /**
@@ -125,9 +149,9 @@ export class SyncStatusSnapshot implements SyncStatus {
     return {
       core: this.core,
       dataFlow: {
-        ...this.dataFlowStatus,
-        uploadError: this.serializeError(this.dataFlowStatus.uploadError),
-        downloadError: this.serializeError(this.dataFlowStatus.downloadError)
+        uploading: this.uploading,
+        uploadError: this.serializeError(this.uploadError),
+        downloadError: this.serializeError(this.downloadError)
       }
     };
   }
@@ -136,7 +160,7 @@ export class SyncStatusSnapshot implements SyncStatus {
    * Not all errors are serializable over a MessagePort. E.g. some `DomExceptions` fail to be passed across workers.
    * This explicitly serializes errors in the SyncStatus.
    */
-  protected serializeError(error?: Error): Error | undefined {
+  serializeError(error?: Error) {
     if (typeof error == 'undefined') {
       return undefined;
     }
@@ -168,8 +192,9 @@ function priorityToJs(status: CoreSyncPriorityStatus): SyncPriorityStatus {
 }
 
 export interface SyncStatusJson {
+  // Note: When updating this, also update packages/tauri/src/database.rs
   core: CoreSyncStatus | null;
-  dataFlow: SyncDataFlowStatus;
+  dataFlow: JavaScriptSyncState;
 }
 
 class SyncStreamStatusView implements SyncStreamStatus {

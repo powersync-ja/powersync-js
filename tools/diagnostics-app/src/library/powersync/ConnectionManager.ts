@@ -201,23 +201,16 @@ export function useSyncStatus() {
 
     setCurrent(sync.syncStatus);
     const l = sync.registerListener({
-      statusChanged: (core, dataFlow) => {
-        setCurrent(new SyncStatusSnapshot(core, dataFlow));
+      statusChanged: (snapshot) => {
+        setCurrent(snapshot);
       }
     });
     return () => l?.();
   }, [current]); // Re-run when current changes (triggered by sync recreation)
 
   // Return status with persisted error if available
-  if (current && lastConnectionError && !current.dataFlowStatus?.downloadError) {
-    // Use type assertion to preserve the full SyncStatus type after spread
-    return {
-      ...current,
-      dataFlowStatus: {
-        ...current.dataFlowStatus,
-        downloadError: lastConnectionError
-      }
-    } as typeof current;
+  if (current && lastConnectionError && !current.downloadError) {
+    return new SyncStatusSnapshot(current.core, { ...current.jsState, downloadError: lastConnectionError });
   }
 
   return current;

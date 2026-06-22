@@ -139,8 +139,8 @@ impl Serialize for SerializableDataFlowStatus<'_> {
         S: Serializer,
     {
         let status = self.0;
-        // Note: This must match SyncDataFlowStatus in common/src/db/crud/SyncStatus.ts
-        let mut inner = serializer.serialize_struct("DataFlowOptions", 3)?;
+        // Note: This must match JavaScriptSyncState in common/src/db/crud/SyncStatus.ts
+        let mut inner = serializer.serialize_struct("JavaScriptSyncState", 3)?;
         inner.serialize_field("uploading", &status.is_uploading())?;
         inner.serialize_field(
             "downloadError",

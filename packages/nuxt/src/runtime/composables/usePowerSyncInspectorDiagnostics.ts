@@ -249,10 +249,10 @@ export function usePowerSyncInspectorDiagnostics(): UsePowerSyncInspectorDiagnos
   const isConnected = ref(syncStatus.value?.connected || false);
   const isSyncing = ref(false);
   const isDownloading = ref(syncStatus.value?.downloading || false);
-  const isUploading = ref(syncStatus.value?.dataFlowStatus.uploading || false);
+  const isUploading = ref(syncStatus.value?.uploading || false);
   const lastSyncedAt = ref<Date | null>(syncStatus.value?.lastSyncedAt || null);
-  const uploadError = ref(syncStatus.value?.dataFlowStatus.uploadError || null);
-  const downloadError = ref(syncStatus.value?.dataFlowStatus.downloadError || null);
+  const uploadError = ref(syncStatus.value?.uploadError || null);
+  const downloadError = ref(syncStatus.value?.downloadError || null);
   const downloadProgressDetails = ref(syncStatus.value?.downloadProgress || null);
   const bucketRows = ref<null | BucketRow[]>(null);
   const tableRows = ref<null | TableRow[]>(null);
@@ -344,10 +344,10 @@ export function usePowerSyncInspectorDiagnostics(): UsePowerSyncInspectorDiagnos
         hasSynced.value = !!newStatus.hasSynced;
         isConnected.value = !!newStatus.connected;
         isDownloading.value = !!newStatus.downloading;
-        isUploading.value = !!newStatus.dataFlowStatus.uploading;
+        isUploading.value = !!newStatus.uploading;
         lastSyncedAt.value = newStatus.lastSyncedAt || null;
-        uploadError.value = newStatus.dataFlowStatus.uploadError || null;
-        downloadError.value = newStatus.dataFlowStatus.downloadError || null;
+        uploadError.value = newStatus.uploadError || null;
+        downloadError.value = newStatus.downloadError || null;
         downloadProgressDetails.value = newStatus.downloadProgress || null;
 
         if (
@@ -357,7 +357,7 @@ export function usePowerSyncInspectorDiagnostics(): UsePowerSyncInspectorDiagnos
           hasSynced.value = newStatus?.priorityStatusEntries.every((entry) => entry.hasSynced) ?? false;
         }
 
-        if (newStatus?.downloading || newStatus?.dataFlowStatus.uploading) {
+        if (newStatus?.downloading || newStatus?.uploading) {
           isSyncing.value = true;
         } else {
           isSyncing.value = false;

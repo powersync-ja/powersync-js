@@ -166,9 +166,9 @@ export abstract class BasePowerSyncDatabase<Options extends BasePowerSyncDatabas
         return this.runExclusive(async () => {
           const sync = this.generateSyncStreamImplementation(connector, options);
           const onDispose = sync.registerListener({
-            statusChanged: (status, dataFlow) => {
-              this.currentStatus = new SyncStatusSnapshot(status, dataFlow);
-              this.iterateListeners((cb) => cb.statusChanged?.(this.currentStatus));
+            statusChanged: (snapshot) => {
+              this.currentStatus = snapshot;
+              this.iterateListeners((cb) => cb.statusChanged?.(snapshot));
             }
           });
           await sync.waitForReady();
@@ -334,7 +334,7 @@ export abstract class BasePowerSyncDatabase<Options extends BasePowerSyncDatabas
     const result = await this.database.get<{ r: string }>('SELECT powersync_offline_sync_status() as r');
     const parsed = JSON.parse(result.r) as CoreSyncStatus;
 
-    const updatedStatus = new SyncStatusSnapshot(parsed, this.currentStatus.dataFlowStatus);
+    const updatedStatus = new SyncStatusSnapshot(parsed, this.currentStatus.jsState);
 
     if (!updatedStatus.isEqual(this.currentStatus)) {
       this.currentStatus = updatedStatus;

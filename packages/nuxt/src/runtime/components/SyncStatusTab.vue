@@ -54,7 +54,7 @@
           <div flex="~ col gap-2">
             <span text="sm gray-500">Upload Progress</span>
             <div flex="~ items-center gap-2">
-              <span v-if="syncStatus?.dataFlowStatus.uploading">upload in progress...</span>
+              <span v-if="syncStatus?.uploading">upload in progress...</span>
               <span v-else text="sm gray-400">No active upload</span>
             </div>
           </div>
