@@ -1,5 +1,15 @@
 # @powersync/common
 
+## 1.55.0
+
+### Minor Changes
+
+- 123fb41: [Attachments] Extracted `AttachmentQueue` constructor options to an options interface named `AttachmentQueueOptions`.
+
+### Patch Changes
+
+- d8d2fd0: Remove `event-iterator` dependency.
+
 ## 1.54.0
 
 ### Minor Changes

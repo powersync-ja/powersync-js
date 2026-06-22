@@ -1,4 +1,3 @@
-import { EventIterator } from 'event-iterator';
 import Logger, { ILogger } from 'js-logger';
 import {
   BatchedUpdateNotification,
@@ -14,7 +13,7 @@ import { UploadQueueStats } from '../db/crud/UploadQueueStatus.js';
 import { Schema } from '../db/schema/Schema.js';
 import { BaseObserver } from '../utils/BaseObserver.js';
 import { ControlledExecutor } from '../utils/ControlledExecutor.js';
-import { throttleTrailing } from '../utils/async.js';
+import { EventQueue, throttleTrailing } from '../utils/async.js';
 import {
   ConnectionManager,
   CreateSyncImplementationOptions,
@@ -47,6 +46,7 @@ import { DEFAULT_WATCH_THROTTLE_MS, WatchCompatibleQuery } from './watched/Watch
 import { OnChangeQueryProcessor } from './watched/processors/OnChangeQueryProcessor.js';
 import { WatchedQueryComparator } from './watched/processors/comparators.js';
 import { Mutex } from '../utils/mutex.js';
+import { symbolAsyncIterator } from '../utils/compatibility.js';
 
 /**
  * @public
@@ -762,7 +762,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * @returns A transaction of CRUD operations to upload, or null if there are none
    */
   async getNextCrudTransaction(): Promise<CrudTransaction | null> {
-    const iterator = this.getCrudTransactions()[Symbol.asyncIterator]();
+    const iterator = this.getCrudTransactions()[symbolAsyncIterator]();
     return (await iterator.next()).value;
   }
 
@@ -799,7 +799,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    */
   getCrudTransactions(): AsyncIterable<CrudTransaction, null> {
     return {
-      [Symbol.asyncIterator]: () => {
+      [symbolAsyncIterator]: () => {
         let lastCrudItemId = -1;
         const sql = `
 WITH RECURSIVE crud_entries AS (
@@ -1193,22 +1193,18 @@ SELECT * FROM crud_entries;
    * @returns An AsyncIterable that yields QueryResults whenever the data changes
    */
   watchWithAsyncGenerator(sql: string, parameters?: any[], options?: SQLWatchOptions): AsyncIterable<QueryResult> {
-    return new EventIterator<QueryResult>((eventOptions) => {
+    return EventQueue.queueBasedAsyncIterable((queue, abort) => {
       const handler: WatchHandler = {
         onResult: (result) => {
-          eventOptions.push(result);
+          queue.notify(result);
         },
         onError: (error) => {
-          eventOptions.fail(error);
+          queue.notifyError(error);
         }
       };
 
-      this.watchWithCallback(sql, parameters, handler, options);
-
-      options?.signal?.addEventListener('abort', () => {
-        eventOptions.stop();
-      });
-    });
+      this.watchWithCallback(sql, parameters, handler, { ...options, signal: abort });
+    }, options?.signal);
   }
 
   /**
@@ -1353,34 +1349,27 @@ SELECT * FROM crud_entries;
    * This is preferred over {@link AbstractPowerSyncDatabase.watchWithAsyncGenerator} when multiple queries need to be
    * performed together when data is changed.
    *
-   * Note: do not declare this as `async *onChange` as it will not work in React Native.
-   *
    * @param options - Options for configuring watch behavior
    * @returns An AsyncIterable that yields change events whenever the specified tables change
    */
+  // Note: do not declare this as `async *onChange` as it will not work in React Native.
   onChangeWithAsyncGenerator(options?: SQLWatchOptions): AsyncIterable<WatchOnChangeEvent> {
-    const resolvedOptions = options ?? {};
-
-    return new EventIterator<WatchOnChangeEvent>((eventOptions) => {
-      const dispose = this.onChangeWithCallback(
+    return EventQueue.queueBasedAsyncIterable((queue, abort) => {
+      this.onChangeWithCallback(
         {
           onChange: (event): void => {
-            eventOptions.push(event);
+            queue.notify(event);
           },
           onError: (error) => {
-            eventOptions.fail(error);
+            queue.notifyError(error);
           }
         },
-        options
+        { ...options, signal: abort }
       );
 
-      resolvedOptions.signal?.addEventListener('abort', () => {
-        eventOptions.stop();
-        // Maybe fail?
-      });
-
-      return () => dispose();
-    });
+      // Note: We don't have to track the dispose function returned by onChangeWithCallback, it cleans up
+      // after the abort signal completes.
+    }, options?.signal);
   }
 
   private handleTableChanges(
