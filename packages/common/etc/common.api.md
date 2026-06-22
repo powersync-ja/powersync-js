@@ -1924,11 +1924,7 @@ export class SyncStatus {
     // (undocumented)
     protected options: SyncStatusOptions;
     get priorityStatusEntries(): SyncPriorityStatus[];
-    protected serializeError(error?: Error): {
-        name: string;
-        message: string;
-        stack: string | undefined;
-    } | undefined;
+    protected serializeError(error?: Error): Error | undefined;
     statusForPriority(priority: number): SyncPriorityStatus;
     get syncStreams(): SyncStreamStatus[] | undefined;
     // Warning: (ae-incompatible-release-tags) The symbol "toJSON" is marked as @public, but its signature references "SyncStatusOptions" which is marked as @internal
