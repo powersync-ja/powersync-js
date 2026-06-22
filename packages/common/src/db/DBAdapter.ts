@@ -90,12 +90,12 @@ export abstract class LockContext implements SqlExecutor, DBGetUtils {
   /**
    * How the connection has been opened.
    *
-   * `writer` indicates that the lock context is capable of writing to the database.
+   * `readWrite` indicates that the lock context is capable of writing to the database.
    * `queryOnly` indicates that the lock context has been opened in a readwrite mode, but a `PRAGMA query_only = TRUE`
    * disabled writes.
    * `readOnly` indicates that the lock context has been opened by passing `SQLITE_OPEN_READONLY` to `sqlite3_open_v2`.
    */
-  abstract get connectionType(): 'writer' | 'queryOnly' | 'readOnly' | undefined;
+  abstract get connectionType(): 'readWrite' | 'queryOnly' | 'readOnly';
 
   abstract executeRaw<T>(query: string, params?: any[] | undefined): Promise<RawQueryResult>;
 

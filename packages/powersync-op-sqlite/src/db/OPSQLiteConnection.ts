@@ -42,7 +42,7 @@ export class OPSQLiteConnection extends LockContext {
   }
 
   get connectionType() {
-    return this.options.readonly ? 'queryOnly' : 'writer';
+    return this.options.readonly ? 'queryOnly' : 'readWrite';
   }
 
   addTableUpdate(update: OPSQLiteUpdateNotification) {

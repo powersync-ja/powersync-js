@@ -194,8 +194,8 @@ class ClientLockContext extends LockContext {
     this.#token = token;
   }
 
-  get connectionType() {
-    return undefined;
+  get connectionType(): 'readWrite' {
+    return 'readWrite';
   }
 
   /**

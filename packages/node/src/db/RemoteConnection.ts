@@ -31,7 +31,7 @@ export class RemoteConnection extends LockContext {
   }
 
   public get connectionType() {
-    return this.readonly ? 'readOnly' : 'writer';
+    return this.readonly ? 'readOnly' : 'readWrite';
   }
 
   /**

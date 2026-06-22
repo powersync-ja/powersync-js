@@ -53,7 +53,7 @@ export class RustDatabaseAdapter extends DBAdapter {
     const handle = (connection as any).CreatedHandle as number;
 
     try {
-      return await fn(new RustLockContext(handle));
+      return await fn(new RustLockContext(handle, write ? 'readWrite' : 'readOnly'));
     } finally {
       await await powersyncCommand({ CloseHandle: handle });
     }
@@ -65,12 +65,11 @@ export class RustDatabaseAdapter extends DBAdapter {
 }
 
 class RustLockContext extends LockContext {
-  constructor(readonly handle: number) {
+  constructor(
+    readonly handle: number,
+    readonly connectionType: 'readWrite' | 'readOnly'
+  ) {
     super();
-  }
-
-  get connectionType(): undefined {
-    return undefined;
   }
 
   private async executeInner(query: string, params: any[]) {

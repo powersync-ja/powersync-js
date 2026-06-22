@@ -66,8 +66,8 @@ class QuickSqliteContext extends LockContext {
     super();
   }
 
-  get connectionType() {
-    return undefined;
+  get connectionType(): 'readWrite' {
+    return 'readWrite';
   }
 
   async execute<T>(query: string, params?: any[]): Promise<QueryResult<T>> {
