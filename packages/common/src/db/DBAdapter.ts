@@ -67,7 +67,7 @@ export interface SqlExecutor {
    *
    * @param sql - The SQL query to execute
    * @param parameters - Optional array of parameters to bind to the query
-   * @returns The {@link QueryResult} with a {@link RawResultSet} representing each row as an array.
+   * @returns The {@link RawQueryResult} representing each row as an array.
    */
   executeRaw: (query: string, params?: any[] | undefined) => Promise<RawQueryResult>;
 

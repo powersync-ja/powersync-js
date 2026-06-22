@@ -207,6 +207,12 @@ export interface BasePowerSyncDatabaseOptions {
     schema: Schema;
 }
 
+// @public
+export interface BaseQueryResult {
+    insertId?: number;
+    rowsAffected?: number;
+}
+
 // @alpha
 export interface BaseTriggerDiffRecord<TOperationId extends string | number = number> {
     id: string;
@@ -414,11 +420,11 @@ export abstract class DBAdapter extends BaseObserver<DBAdapterListener> implemen
     // (undocumented)
     abstract close(): void | Promise<void>;
     // (undocumented)
-    execute(query: string, params?: any[]): Promise<QueryResult>;
+    execute<T>(query: string, params?: any[]): Promise<QueryResult<T>>;
     // (undocumented)
-    executeBatch(query: string, params?: any[][]): Promise<QueryResult>;
+    executeBatch(query: string, params?: any[][]): Promise<QueryResult<never>>;
     // (undocumented)
-    executeRaw(query: string, params?: any[]): Promise<QueryResult<RawResultSet>>;
+    executeRaw(query: string, params?: any[]): Promise<RawQueryResult>;
     // (undocumented)
     get<T>(sql: string, parameters?: any[]): Promise<T>;
     // (undocumented)
@@ -639,11 +645,11 @@ export interface LocalStorageAdapter {
 export abstract class LockContext implements SqlExecutor, DBGetUtils {
     abstract get connectionType(): 'writer' | 'queryOnly' | 'readOnly' | undefined;
     // (undocumented)
-    execute(query: string, params?: any[] | undefined): Promise<QueryResult>;
+    execute<T = SqliteRecord>(query: string, params?: any[] | undefined): Promise<QueryResult<T>>;
     // (undocumented)
-    executeBatch(query: string, params?: any[][]): Promise<QueryResult>;
+    executeBatch(query: string, params?: any[][]): Promise<QueryResult<never>>;
     // (undocumented)
-    abstract executeRaw(query: string, params?: any[] | undefined): Promise<QueryResult<RawResultSet>>;
+    abstract executeRaw<T>(query: string, params?: any[] | undefined): Promise<RawQueryResult>;
     // (undocumented)
     get<T>(sql: string, parameters?: any[]): Promise<T>;
     // (undocumented)
@@ -769,14 +775,22 @@ export interface Query<RowType> {
 export type QueryParam = string | number | boolean | null | undefined | bigint | Uint8Array;
 
 // @public
-export type QueryResult<Rows extends RawResultSet = ResultSet> = {
-    insertId?: number;
-    rowsAffected?: number;
-    rows?: Rows;
-};
+export interface QueryResult<T = SqliteRecord> extends BaseQueryResult, Iterable<T, undefined> {
+    array: T[];
+    rows?: ResultSet;
+}
 
 // @public
-export interface RawResultSet {
+export function queryResultFromMapped<T>(base: BaseQueryResult, rows?: T[]): QueryResult<T>;
+
+// @public
+export function queryResultFromRaw<T>(raw: RawQueryResult): QueryResult<T>;
+
+// @public
+export function queryResultWithoutRows(result: BaseQueryResult): QueryResult<never>;
+
+// @public
+export interface RawQueryResult extends BaseQueryResult {
     columnNames: string[];
     rawRows: SqliteValue[][];
 }
@@ -795,18 +809,12 @@ export interface RemoteStorageAdapter {
 }
 
 // @public
-export class ResultSet implements RawResultSet {
-    constructor(resultSet: RawResultSet);
+export interface ResultSet {
     // @deprecated (undocumented)
     get _array(): any[];
-    // (undocumented)
-    columnNames: string[];
-    // (undocumented)
+    // @deprecated (undocumented)
     item<T>(idx: number): T;
     get length(): number;
-    mapped<T>(): T[];
-    // (undocumented)
-    rawRows: SqliteValue[][];
 }
 
 // @public (undocumented)
@@ -852,10 +860,13 @@ export type SchemaTableType<S extends SchemaType> = {
 
 // @public (undocumented)
 export interface SqlExecutor {
-    execute: (query: string, params?: any[] | undefined) => Promise<QueryResult>;
-    executeBatch: (query: string, params?: any[][]) => Promise<QueryResult>;
-    executeRaw: (query: string, params?: any[] | undefined) => Promise<QueryResult<RawResultSet>>;
+    execute: <T = SqliteRecord>(query: string, params?: any[] | undefined) => Promise<QueryResult<T>>;
+    executeBatch: (query: string, params?: any[][]) => Promise<QueryResult<never>>;
+    executeRaw: (query: string, params?: any[] | undefined) => Promise<RawQueryResult>;
 }
+
+// @public
+export type SqliteRecord = Record<string, SqliteValue>;
 
 // @public
 export type SqliteValue = string | number | bigint | number[] | Uint8Array | null;
@@ -1133,8 +1144,8 @@ export interface TrackPreviousOptions {
 
 // @public (undocumented)
 export interface Transaction extends LockContext {
-    commit: () => Promise<QueryResult>;
-    rollback: () => Promise<QueryResult>;
+    commit: () => Promise<void>;
+    rollback: () => Promise<void>;
 }
 
 // @alpha
