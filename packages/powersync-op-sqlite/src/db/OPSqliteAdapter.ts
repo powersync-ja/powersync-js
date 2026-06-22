@@ -1,5 +1,5 @@
 import { getDylibPath, open, type DB } from '@op-engineering/op-sqlite';
-import { DBAdapter, DBLockOptions } from '@powersync/common';
+import { DBAdapter, DBLockOptions, QueryResult } from '@powersync/common';
 import { timeoutSignal, Semaphore } from '@powersync/shared-internals';
 import { Platform } from 'react-native';
 import { OPSQLiteConnection } from './OPSQLiteConnection';
@@ -221,5 +221,11 @@ export class OPSQLiteDBAdapter extends DBAdapter {
     } finally {
       release();
     }
+  }
+
+  executeBatch(query: string, params?: any[][]): Promise<QueryResult<never>> {
+    // We need to override this because we don't support executeBatch in connection contexts / transactions, only when
+    // called directly on the adapter.
+    return this.writeLock((conn) => conn.executeNativeBatch(query, params));
   }
 }

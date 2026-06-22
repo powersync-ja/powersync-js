@@ -117,6 +117,22 @@ export function registerBaseTests() {
       ]);
     });
 
+    it('executeRaw', async () => {
+      const { id, name, age, networth } = generateUserInfo();
+      await db.execute('INSERT INTO users (id, name, age, networth) VALUES(?, ?, ?, ?)', [id, name, age, networth]);
+
+      const {rawRows, columnNames} = await db.executeRaw('SELECT name, age, networth FROM users WHERE id = ?', [id]);
+
+      expect(columnNames).to.eql(['name','age', 'networth']);
+      expect(rawRows).to.eql([
+        [
+          name,
+          age,
+          networth
+        ]
+      ]);
+    });
+
     it('Failed insert', async () => {
       const { name, networth } = generateUserInfo();
       let errorThrown = false;

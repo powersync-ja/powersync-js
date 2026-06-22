@@ -1129,8 +1129,8 @@ importers:
         specifier: ^1.0.2
         version: 1.0.2
       '@op-engineering/op-sqlite':
-        specifier: ^15.2.7
-        version: 15.2.7(react-native@0.84.1(@babel/core@7.29.0)(@react-native-community/cli@20.0.0(typescript@6.0.3))(@react-native/metro-config@0.83.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4))(react@19.2.4)
+        specifier: 'catalog:'
+        version: 17.0.0(react-native@0.84.1(@babel/core@7.29.0)(@react-native-community/cli@20.0.0(typescript@6.0.3))(@react-native/metro-config@0.83.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4))(react@19.2.4)
       '@powersync/common':
         specifier: workspace:*
         version: link:../../packages/common
@@ -4579,12 +4579,6 @@ packages:
     peerDependenciesMeta:
       rolldown:
         optional: true
-
-  '@op-engineering/op-sqlite@15.2.7':
-    resolution: {integrity: sha512-rXpzEt6FL0syAHa2QqBaB7DhhXwxEOs05cTIhv0RI+iur66XcuM73SpUSD8gnh8opHJu+Hw6Nu3IM4EDWxEdng==}
-    peerDependencies:
-      react: '*'
-      react-native: '*'
 
   '@op-engineering/op-sqlite@17.0.0':
     resolution: {integrity: sha512-S7KfrUee7H8oTgfAQzPYouS1sXl24w/oTLBP8xOqh0rOXjY2W2WlVfbaqzrxMWLhnCrj+oHj7Rsv8gEDDUiETg==}
@@ -23647,11 +23641,6 @@ snapshots:
       - vue-tsc
       - yaml
 
-  '@op-engineering/op-sqlite@15.2.7(react-native@0.84.1(@babel/core@7.29.0)(@react-native-community/cli@20.0.0(typescript@6.0.3))(@react-native/metro-config@0.83.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4))(react@19.2.4)':
-    dependencies:
-      react: 19.2.4
-      react-native: 0.84.1(@babel/core@7.29.0)(@react-native-community/cli@20.0.0(typescript@6.0.3))(@react-native/metro-config@0.83.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4)
-
   '@op-engineering/op-sqlite@17.0.0(react-native@0.83.1(@babel/core@7.29.7)(@react-native-community/cli@20.0.0(typescript@6.0.3))(@react-native/metro-config@0.83.1(@babel/core@7.29.7))(@types/react@19.2.14)(react@19.2.4))(react@19.2.4)':
     dependencies:
       react: 19.2.4
@@ -23661,7 +23650,6 @@ snapshots:
     dependencies:
       react: 19.2.4
       react-native: 0.84.1(@babel/core@7.29.0)(@react-native-community/cli@20.0.0(typescript@6.0.3))(@react-native/metro-config@0.83.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4)
-    optional: true
 
   '@op-engineering/op-sqlite@17.0.0(react-native@0.84.1(@babel/core@7.29.7)(@react-native-community/cli@20.0.0(typescript@6.0.3))(@react-native/metro-config@0.83.1(@babel/core@7.29.7))(@types/react@18.3.1)(react@18.3.1))(react@18.3.1)':
     dependencies:
