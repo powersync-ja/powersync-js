@@ -171,8 +171,8 @@ export class WorkerConnectionPool extends DBAdapter {
       try {
         return await fn(item);
       } finally {
-        const { rows: serializedUpdates } = await item.executeRaw("SELECT powersync_update_hooks('get');", []);
-        const updates = JSON.parse(serializedUpdates!.rawRows[0][0] as string) as string[];
+        const { rawRows: serializedUpdates } = await item.executeRaw("SELECT powersync_update_hooks('get');", []);
+        const updates = JSON.parse(serializedUpdates[0][0] as string) as string[];
 
         if (updates.length > 0) {
           const event: BatchedUpdateNotification = {

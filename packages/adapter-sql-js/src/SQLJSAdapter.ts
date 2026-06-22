@@ -11,8 +11,9 @@ import {
   QueryResult,
   SQLOpenFactory,
   SQLOpenOptions,
-  RawResultSet,
-  SqliteValue
+  SqliteValue,
+  RawQueryResult,
+  queryResultWithoutRows
 } from '@powersync/common';
 import { Mutex, timeoutSignal, ControlledExecutor } from '@powersync/shared-internals';
 // This uses a pure JS version which avoids the need for WebAssembly, which is not supported in React Native.
@@ -176,11 +177,10 @@ class SqlJsLockContext extends LockContext {
     return undefined;
   }
 
-  async executeRaw(query: string, params?: any[]): Promise<QueryResult<RawResultSet>> {
+  async executeRaw(query: string, params?: any[]): Promise<RawQueryResult> {
     const db = this.db;
     const statement = db.prepare(query);
     const rawResults: SqliteValue[][] = [];
-    let columnNames: string[] | null = null;
 
     try {
       if (params) {
@@ -194,17 +194,15 @@ class SqlJsLockContext extends LockContext {
         rowsAffected: db.getRowsModified(),
         // `lastInsertId` is not available in the original version of SQL.js or its types, but it's available in the fork we use.
         insertId: (db as any).lastInsertId(),
-        rows: {
-          columnNames: statement.getColumnNames(),
-          rawRows: rawResults
-        }
+        columnNames: statement.getColumnNames(),
+        rawRows: rawResults
       };
     } finally {
       statement.free();
     }
   }
 
-  async executeBatch(query: string, params: any[][] = []): Promise<QueryResult> {
+  async executeBatch(query: string, params: any[][] = []): Promise<QueryResult<never>> {
     let totalRowsAffected = 0;
     const db = this.db;
 
@@ -215,9 +213,9 @@ class SqlJsLockContext extends LockContext {
         totalRowsAffected += db.getRowsModified();
       }
 
-      return {
+      return queryResultWithoutRows({
         rowsAffected: totalRowsAffected
-      };
+      });
     } finally {
       stmt.free();
     }

@@ -17,7 +17,7 @@ catalog:
   '@nuxt/devtools-kit': ^3.2.3
   '@nuxt/devtools-ui-kit': ^3.2.3
   '@nuxt/test-utils': ^4.0.3
-  '@op-engineering/op-sqlite': ^15.2.2
+  '@op-engineering/op-sqlite': ^17.0.0
   '@pnpm/workspace.find-packages': ^1000.0.55
   '@pnpm/workspace.read-manifest': ^1000.2.9
   '@rollup/plugin-alias': ^5.1.0

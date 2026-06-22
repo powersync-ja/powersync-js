@@ -7,8 +7,9 @@ import {
   DBLockOptions,
   LockContext,
   QueryResult,
-  RawResultSet,
-  ResultSet
+  queryResultFromMapped,
+  queryResultWithoutRows,
+  RawQueryResult
 } from '@powersync/web';
 import { Mutex, timeoutSignal } from '@powersync/shared-internals';
 import { PowerSyncCore } from '../plugin/PowerSyncCore.js';
@@ -17,7 +18,7 @@ import { CapacitorSQLiteOpenFactoryOptions, DEFAULT_SQLITE_OPTIONS } from './Cap
 /**
  * Monitors the execution time of a query and logs it to the performance timeline.
  */
-async function monitorQuery(sql: string, executor: () => Promise<QueryResult>): Promise<QueryResult> {
+async function monitorQuery<T>(sql: string, executor: () => Promise<QueryResult<T>>): Promise<QueryResult<T>> {
   const start = performance.now();
   try {
     const r = await executor();
@@ -160,49 +161,17 @@ export class CapacitorSQLiteAdapter extends DBAdapter {
   }
 
   protected generateLockContext(db: SQLiteDBConnection): LockContext {
-    function asResultSet(rows: any[]): ResultSet {
-      let cachedColumnNames: string[] | undefined;
-      let cachedRawRows: any[][];
-
-      return {
-        get columnNames() {
-          if (cachedColumnNames == null) {
-            cachedColumnNames = rows.length > 0 ? Object.keys(rows[0]) : [];
-          }
-
-          return cachedColumnNames;
-        },
-        get rawRows() {
-          if (cachedRawRows == null) {
-            cachedRawRows = rows.map(Object.values);
-          }
-          return cachedRawRows;
-        },
-        length: rows.length,
-        _array: rows,
-        mapped: function <T>(): T[] {
-          return rows;
-        },
-        item: function <T>(idx: number): T {
-          return rows[idx];
-        }
-      };
-    }
-
-    const _query = async (query: string, params: any[] = []): Promise<QueryResult> => {
+    const _query = async <T>(query: string, params: any[] = []): Promise<QueryResult<T>> => {
       const mappedParams = mapSQLiteParameterValues({
         platform: Capacitor.getPlatform(),
         values: params
       });
       const result = await db.query(query, mappedParams);
       const arrayResult = result.values ?? [];
-      return {
-        rowsAffected: 0,
-        rows: asResultSet(arrayResult)
-      };
+      return queryResultFromMapped({ rowsAffected: 0 }, arrayResult);
     };
 
-    const _execute = async (query: string, params: any[] = []): Promise<QueryResult> => {
+    const _execute = async <T>(query: string, params: any[] = []): Promise<QueryResult<T>> => {
       const platform = Capacitor.getPlatform();
 
       if (
@@ -221,25 +190,20 @@ export class CapacitorSQLiteAdapter extends DBAdapter {
 
       if (platform == 'android') {
         const result = await db.executeSet([{ statement: query, values: mappedParams }], false);
-        return {
-          insertId: result.changes?.lastId,
-          rowsAffected: result.changes?.changes ?? 0,
-          rows: new ResultSet({ columnNames: [], rawRows: [] })
-        };
+        return queryResultWithoutRows({ insertId: result.changes?.lastId, rowsAffected: result.changes?.changes ?? 0 });
       }
 
       // iOS (and other platforms): use run("all")
       const result = await db.run(query, mappedParams, false, 'all');
       const resultSet = result.changes?.values ?? [];
-      return {
-        insertId: result.changes?.lastId,
-        rowsAffected: result.changes?.changes ?? 0,
-        rows: asResultSet(resultSet)
-      };
+      return queryResultFromMapped(
+        { insertId: result.changes?.lastId, rowsAffected: result.changes?.changes ?? 0 },
+        resultSet
+      );
     };
 
     const execute = this.options.debugMode
-      ? (sql: string, params?: any[]) => monitorQuery(sql, () => _execute(sql, params))
+      ? <T>(sql: string, params?: any[]) => monitorQuery(sql, () => _execute<T>(sql, params))
       : _execute;
 
     const executeQuery = this.options.debugMode
@@ -251,20 +215,20 @@ export class CapacitorSQLiteAdapter extends DBAdapter {
       return result.rows?._array ?? ([] as T[]);
     };
 
-    const getOptional = async <T>(query: string, params?: any[]): Promise<T | null> => {
-      const results = await getAll<T>(query, params);
-      return results.length > 0 ? results[0] : null;
+    const executeRaw = async (query: string, params?: any[]): Promise<RawQueryResult> => {
+      // This is a workaround, we don't support multiple columns of the same name
+      const { insertId, rowsAffected, rows } = await execute(query, params);
+      const mappedRows = rows?._array;
+
+      return {
+        insertId,
+        rowsAffected,
+        columnNames: mappedRows && mappedRows.length ? Object.keys(mappedRows[0]) : [],
+        rawRows: mappedRows?.map((row) => Object.values(row)) ?? []
+      };
     };
 
-    const get = async <T>(query: string, params?: any[]): Promise<T> => {
-      const result = await getOptional<T>(query, params);
-      if (!result) {
-        throw new Error(`No results for query: ${query}`);
-      }
-      return result;
-    };
-
-    const executeBatch = async (query: string, params: any[][] = []): Promise<QueryResult> => {
+    const executeBatch = async (query: string, params: any[][] = []): Promise<QueryResult<never>> => {
       const platform = Capacitor.getPlatform();
       let result = await db.executeSet(
         params.map((param) => ({
@@ -277,10 +241,10 @@ export class CapacitorSQLiteAdapter extends DBAdapter {
         false
       );
 
-      return {
+      return queryResultWithoutRows({
         rowsAffected: result.changes?.changes ?? 0,
         insertId: result.changes?.lastId
-      };
+      });
     };
 
     class CapacitorLockContext extends LockContext {
@@ -292,23 +256,15 @@ export class CapacitorSQLiteAdapter extends DBAdapter {
         return getAll(sql, parameters);
       }
 
-      getOptional<T>(sql: string, parameters?: any[]): Promise<T | null> {
-        return getOptional(sql, parameters);
+      execute<T>(query: string, params?: any[] | undefined): Promise<QueryResult<T>> {
+        return execute<T>(query, params);
       }
 
-      get<T>(sql: string, parameters?: any[]): Promise<T> {
-        return get(sql, parameters);
+      executeRaw(query: string, params?: any[] | undefined): Promise<RawQueryResult> {
+        return executeRaw(query, params);
       }
 
-      execute(query: string, params?: any[] | undefined): Promise<QueryResult> {
-        return execute(query, params);
-      }
-
-      executeRaw(query: string, params?: any[] | undefined): Promise<QueryResult<RawResultSet>> {
-        return execute(query, params);
-      }
-
-      executeBatch(query: string, params?: any[][]): Promise<QueryResult> {
+      executeBatch(query: string, params?: any[][]): Promise<QueryResult<never>> {
         return executeBatch(query, params);
       }
     }

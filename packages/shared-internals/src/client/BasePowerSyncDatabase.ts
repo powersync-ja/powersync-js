@@ -30,7 +30,8 @@ import {
   WatchHandler,
   WatchOnChangeEvent,
   WatchOnChangeHandler,
-  BaseObserver
+  BaseObserver,
+  SqliteRecord
 } from '@powersync/common';
 import { BucketStorageAdapter, PSInternalTable } from './sync/bucket/BucketStorageAdapter.js';
 import { SyncStatusSnapshot } from '../db/crud/SyncStatus.js';
@@ -542,8 +543,8 @@ SELECT * FROM crud_entries;
     });
   }
 
-  async execute(sql: string, parameters?: any[]) {
-    return this.writeLock((tx) => tx.execute(sql, parameters));
+  async execute<T = SqliteRecord>(sql: string, parameters?: any[]) {
+    return this.writeLock((tx) => tx.execute<T>(sql, parameters));
   }
 
   async executeRaw(sql: string, parameters?: any[]) {
@@ -676,7 +677,7 @@ SELECT * FROM crud_entries;
             sql: sql,
             parameters: parameters ?? []
           }),
-          execute: () => this.executeReadOnly(sql, parameters)
+          execute: () => this.executeReadOnly<SqliteRecord>(sql, parameters)
         },
         reportFetching: false,
         throttleMs: options?.throttleMs ?? DEFAULT_WATCH_THROTTLE_MS,
@@ -852,8 +853,8 @@ SELECT * FROM crud_entries;
     }
   }
 
-  private async executeReadOnly(sql: string, params?: any[]) {
+  private async executeReadOnly<T>(sql: string, params?: any[]) {
     await this.waitForReady();
-    return this.database.readLock((tx) => tx.execute(sql, params));
+    return this.database.readLock((tx) => tx.execute<T>(sql, params));
   }
 }

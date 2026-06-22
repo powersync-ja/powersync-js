@@ -1,4 +1,4 @@
-import { QueryResult, RawResultSet } from '@powersync/common';
+import { QueryResult, RawQueryResult } from '@powersync/common';
 import { NodeDatabaseImplementation } from './options.js';
 
 export interface AsyncDatabaseOpenOptions {
@@ -12,7 +12,7 @@ export interface AsyncDatabaseOpener {
 }
 
 export interface AsyncDatabase {
-  executeRaw: (query: string, params: any[]) => Promise<QueryResult<RawResultSet>>;
+  executeRaw: (query: string, params: any[]) => Promise<RawQueryResult>;
   executeBatch: (query: string, params: any[][]) => Promise<QueryResult<never>>;
   close: () => Promise<void>;
 }

@@ -4,7 +4,8 @@ import {
   BatchedUpdateNotification,
   LockContext,
   QueryResult,
-  RawResultSet,
+  queryResultWithoutRows,
+  RawQueryResult,
   SqliteValue
 } from '@powersync/common';
 
@@ -64,27 +65,24 @@ export class OPSQLiteConnection extends LockContext {
     return this.DB.close();
   }
 
-  async executeRaw(query: string, params?: any[]): Promise<QueryResult<RawResultSet>> {
-    const { insertId, rowsAffected, columnNames, rawRows } = await this.DB.execute(query, params);
+  async executeRaw(query: string, params?: any[]): Promise<RawQueryResult> {
+    const { insertId, rowsAffected, columnNames, rawRows } = await this.DB.executeRaw(query, params);
     return {
       insertId: insertId,
       rowsAffected: rowsAffected,
-      rows: columnNames &&
-        rawRows && {
-          columnNames,
-          rawRows: rawRows as SqliteValue[][]
-        }
+      columnNames,
+      rawRows: rawRows as SqliteValue[][]
     };
   }
 
-  async executeBatch(query: string, params: any[][] = []): Promise<QueryResult> {
+  async executeBatch(query: string, params: any[][] = []): Promise<QueryResult<never>> {
     const tuple: SQLBatchTuple[] = [[query, params[0]]];
     params.slice(1).forEach((p) => tuple.push([query, p]));
 
     const result = await this.DB.executeBatch(tuple);
-    return {
+    return queryResultWithoutRows({
       rowsAffected: result.rowsAffected ?? 0
-    };
+    });
   }
 
   async refreshSchema() {

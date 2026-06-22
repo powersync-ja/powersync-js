@@ -1,8 +1,10 @@
-import { DBAdapter, DBLockOptions, LockContext, QueryResult, RawResultSet } from '@powersync/common';
+import { DBAdapter, DBLockOptions, LockContext, RawQueryResult } from '@powersync/common';
 import { Mutex } from '@powersync/shared-internals';
 
-const MOCK_QUERY_RESPONSE: QueryResult<never> = {
-  rowsAffected: 0
+const MOCK_QUERY_RESPONSE: RawQueryResult = {
+  rowsAffected: 0,
+  columnNames: [],
+  rawRows: []
 };
 
 /**
@@ -40,7 +42,7 @@ class StubLockContext extends LockContext {
     return undefined;
   }
 
-  async executeRaw(): Promise<QueryResult<RawResultSet>> {
+  async executeRaw(): Promise<RawQueryResult> {
     return MOCK_QUERY_RESPONSE;
   }
 }

@@ -1,4 +1,11 @@
-import { DBAdapter, DBLockOptions, LockContext, QueryResult, RawResultSet } from '@powersync/common';
+import {
+  DBAdapter,
+  DBLockOptions,
+  LockContext,
+  QueryResult,
+  queryResultWithoutRows,
+  RawQueryResult
+} from '@powersync/common';
 import { ExecuteBatchResult, ExecuteSqlResult, powersyncCommand } from './command';
 
 /**
@@ -85,20 +92,18 @@ class RustLockContext extends LockContext {
     };
   }
 
-  async executeRaw(query: string, params?: any[] | undefined): Promise<QueryResult<RawResultSet>> {
+  async executeRaw(query: string, params?: any[] | undefined): Promise<RawQueryResult> {
     const { rows, insertId, rowsAffected, columnNames } = await this.executeInner(query, params ?? []);
 
     return {
       rowsAffected,
       insertId,
-      rows: {
-        columnNames,
-        rawRows: rows
-      }
+      columnNames,
+      rawRows: rows
     };
   }
 
-  async executeBatch(query: string, params?: any[][]): Promise<QueryResult> {
+  async executeBatch(query: string, params?: any[][]): Promise<QueryResult<never>> {
     const result = await powersyncCommand({
       ExecuteBatch: {
         connection: this.handle,
@@ -107,6 +112,6 @@ class RustLockContext extends LockContext {
       }
     });
     const batchResult = (result as any).ExecuteBatchResult as ExecuteBatchResult;
-    return { insertId: batchResult.last_insert_rowid, rowsAffected: batchResult.changes };
+    return queryResultWithoutRows({ insertId: batchResult.last_insert_rowid, rowsAffected: batchResult.changes });
   }
 }

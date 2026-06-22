@@ -3,7 +3,7 @@ import { threadId } from 'node:worker_threads';
 
 import { AsyncDatabase, AsyncDatabaseOpenOptions } from './AsyncDatabase.js';
 import { PowerSyncWorkerOptions } from './SqliteWorker.js';
-import { QueryResult, RawResultSet, SqliteValue } from '@powersync/common';
+import { QueryResult, queryResultWithoutRows, RawQueryResult, SqliteValue } from '@powersync/common';
 
 class BlockingNodeDatabase implements AsyncDatabase {
   private readonly db: DatabaseSync;
@@ -18,20 +18,18 @@ class BlockingNodeDatabase implements AsyncDatabase {
     this.db.close();
   }
 
-  async executeRaw(query: string, params: any[]): Promise<QueryResult<RawResultSet>> {
+  async executeRaw(query: string, params: any[]): Promise<RawQueryResult> {
     const stmt = this.db.prepare(query);
     (stmt as any).setReturnArrays(true); // Missing in @types/node, https://nodejs.org/api/sqlite.html#statementsetreturnarraysenabled
 
     const rows = stmt.all(...params) as any as SqliteValue[][];
     return {
-      rows: {
-        rawRows: rows,
-        columnNames: stmt.columns().map((c) => c.name!)
-      }
+      rawRows: rows,
+      columnNames: stmt.columns().map((c) => c.name!)
     };
   }
 
-  async executeBatch(query: string, params: any[][]) {
+  async executeBatch(query: string, params: any[][]): Promise<QueryResult<never>> {
     params = params ?? [];
 
     let rowsAffected = 0;
@@ -42,7 +40,7 @@ class BlockingNodeDatabase implements AsyncDatabase {
       rowsAffected += info.changes as number;
     }
 
-    return { rowsAffected };
+    return queryResultWithoutRows({ rowsAffected });
   }
 }
 

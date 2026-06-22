@@ -1,4 +1,4 @@
-import { QueryResult, LockContext, RawResultSet } from '@powersync/common';
+import { QueryResult, LockContext, RawQueryResult } from '@powersync/common';
 import { releaseProxy, Remote } from 'comlink';
 import { Worker } from 'node:worker_threads';
 import { AsyncDatabase, AsyncDatabaseOpener } from './AsyncDatabase.js';
@@ -71,13 +71,13 @@ export class RemoteConnection extends LockContext {
     });
   }
 
-  executeBatch(query: string, params: any[][] = []): Promise<QueryResult> {
+  executeBatch(query: string, params: any[][] = []): Promise<QueryResult<never>> {
     return this.withRemote(async () => {
       return await this.database.executeBatch(query, params ?? []);
     });
   }
 
-  executeRaw(query: string, params?: any[] | undefined): Promise<QueryResult<RawResultSet>> {
+  executeRaw(query: string, params?: any[] | undefined): Promise<RawQueryResult> {
     return this.withRemote(async () => {
       return await this.database.executeRaw(query, params ?? []);
     });

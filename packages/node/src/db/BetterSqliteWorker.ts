@@ -2,7 +2,7 @@ import type { Database } from 'better-sqlite3';
 import { AsyncDatabase, AsyncDatabaseOpenOptions } from './AsyncDatabase.js';
 import { PowerSyncWorkerOptions } from './SqliteWorker.js';
 import { threadId } from 'node:worker_threads';
-import { QueryResult, RawResultSet, SqliteValue } from '@powersync/common';
+import { QueryResult, queryResultWithoutRows, RawQueryResult, SqliteValue } from '@powersync/common';
 
 class BlockingAsyncDatabase implements AsyncDatabase {
   private readonly db: Database;
@@ -17,28 +17,28 @@ class BlockingAsyncDatabase implements AsyncDatabase {
     this.db.close();
   }
 
-  async executeRaw(query: string, params: any[]): Promise<QueryResult<RawResultSet>> {
+  async executeRaw(query: string, params: any[]): Promise<RawQueryResult> {
     const stmt = this.db.prepare(query);
     if (stmt.reader) {
       stmt.raw();
       const rows = stmt.all(params);
       return {
         rowsAffected: 0,
-        rows: {
-          columnNames: stmt.columns().map((c) => c.name),
-          rawRows: rows as SqliteValue[][]
-        }
+        columnNames: stmt.columns().map((c) => c.name),
+        rawRows: rows as SqliteValue[][]
       };
     } else {
       const info = stmt.run(params);
       return {
         rowsAffected: info.changes,
-        insertId: Number(info.lastInsertRowid)
+        insertId: Number(info.lastInsertRowid),
+        rawRows: [],
+        columnNames: []
       };
     }
   }
 
-  async executeBatch(query: string, params: any[][]) {
+  async executeBatch(query: string, params: any[][]): Promise<QueryResult<never>> {
     params = params ?? [];
 
     let rowsAffected = 0;
@@ -49,7 +49,7 @@ class BlockingAsyncDatabase implements AsyncDatabase {
       rowsAffected += info.changes;
     }
 
-    return { rowsAffected };
+    return queryResultWithoutRows({ rowsAffected });
   }
 }
 

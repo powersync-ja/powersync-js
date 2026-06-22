@@ -1,4 +1,4 @@
-import { DBAdapter, DBGetUtils, LockContext, QueryResult, SqlExecutor, Transaction } from '../db/DBAdapter.js';
+import { DBAdapter, DBGetUtils, LockContext, SqlExecutor, Transaction } from '../db/DBAdapter.js';
 import { SyncStatus } from '../db/crud/SyncStatus.js';
 import { Schema } from '../db/schema/Schema.js';
 import { BaseListener, BaseObserverInterface } from '../utils/BaseObserver.js';
@@ -15,6 +15,7 @@ import { CrudTransaction } from './sync/bucket/CrudTransaction.js';
 import { ArrayQueryDefinition, Query } from './Query.js';
 import { WatchCompatibleQuery } from './watched/WatchedQuery.js';
 import { Mutex } from '../utils/mutex.js';
+import { QueryResult } from '../db/QueryResult.js';
 
 /**
  * @public

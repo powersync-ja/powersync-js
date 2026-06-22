@@ -1,6 +1,6 @@
 import { LogLevels, PowerSyncLogger } from '@powersync/common';
 import { ConcurrentSqliteConnection, ConnectionLeaseToken } from './ConcurrentConnection.js';
-import { RawQueryResult } from './RawSqliteConnection.js';
+import { RawWebResult } from './RawSqliteConnection.js';
 
 export interface DatabaseServerOptions {
   inner: ConcurrentSqliteConnection;
@@ -136,9 +136,9 @@ export class DatabaseServer {
         try {
           if (lease.write) {
             // Collect update hooks invoked while the client had the write connection.
-            const { resultSet } = await lease.lease.use((conn) => conn.execute(`SELECT powersync_update_hooks('get')`));
-            if (resultSet) {
-              const updatedTables: string[] = JSON.parse(resultSet.rawRows[0][0] as string);
+            const { rawRows } = await lease.lease.use((conn) => conn.execute(`SELECT powersync_update_hooks('get')`));
+            if (rawRows.length) {
+              const updatedTables: string[] = JSON.parse(rawRows[0][0] as string);
               if (updatedTables.length) {
                 this.#updateBroadcastChannel.postMessage(updatedTables);
                 this.#pushTableUpdateToClients(updatedTables);
@@ -193,8 +193,8 @@ export interface ClientConnectionView {
    * give other clients access to the database afterwards.
    */
   requestAccess(write: boolean, timeoutMs?: number): Promise<string>;
-  execute(token: string, sql: string, params: any[] | undefined): Promise<RawQueryResult>;
-  executeBatch(token: string, sql: string, params: any[][]): Promise<RawQueryResult[]>;
+  execute(token: string, sql: string, params: any[] | undefined): Promise<RawWebResult>;
+  executeBatch(token: string, sql: string, params: any[][]): Promise<RawWebResult[]>;
   completeAccess(token: string): Promise<void>;
 
   /**
