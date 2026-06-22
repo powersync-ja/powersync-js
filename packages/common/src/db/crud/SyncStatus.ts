@@ -234,11 +234,7 @@ export class SyncStatus {
      */
     const replacer = (_: string, value: any) => {
       if (value instanceof Error) {
-        return {
-          name: value.name,
-          message: value.message,
-          stack: value.stack
-        };
+        return this.serializeError(value);
       }
       return value;
     };
@@ -285,11 +281,19 @@ export class SyncStatus {
     if (typeof error == 'undefined') {
       return undefined;
     }
-    return {
+    const serialized: { name: string; message: string; stack?: string; cause?: unknown } = {
       name: error.name,
       message: error.message,
       stack: error.stack
     };
+    // `Error.cause` can be any value (the spec types it as unknown). Preserve it
+    // so consumers reading uploadError/downloadError keep the failure context.
+    // Recurse for Error causes so the whole chain is flattened the same way
+    const cause = (error as { cause?: unknown }).cause;
+    if (typeof cause != 'undefined') {
+      serialized.cause = cause instanceof Error ? this.serializeError(cause) : cause;
+    }
+    return serialized;
   }
 
   private static comparePriorities(a: SyncPriorityStatus, b: SyncPriorityStatus) {
