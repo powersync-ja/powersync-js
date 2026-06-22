@@ -15,4 +15,4 @@ Rename `AbstractPowerSyncDatabase` to `CommonPowerSyncDatabase`, make it a TypeS
 
 `SyncStatus` is no longer constructable in user code.
 
-Remove `DataFlowStatus.downloading`. Use `SyncStatus.downloading` instead.
+Deprecate `DataFlowStatus`. Use fields on `SyncStatus` directly instead.

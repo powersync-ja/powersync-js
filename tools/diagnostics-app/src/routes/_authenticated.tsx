@@ -146,7 +146,7 @@ function AppSidebar() {
 
 function AuthenticatedLayout() {
   const syncStatus = useSyncStatus();
-  const syncError = useMemo(() => syncStatus?.dataFlowStatus?.downloadError, [syncStatus]);
+  const syncError = useMemo(() => syncStatus?.downloadError, [syncStatus]);
   const { title } = useNavigationPanel();
 
   return (
@@ -162,10 +162,7 @@ function AuthenticatedLayout() {
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">
               <ArrowUp
-                className={cn(
-                  'h-5 w-5 -mr-2.5',
-                  syncStatus?.dataFlowStatus.uploading ? 'text-primary' : 'text-muted-foreground'
-                )}
+                className={cn('h-5 w-5 -mr-2.5', syncStatus?.uploading ? 'text-primary' : 'text-muted-foreground')}
               />
               <ArrowDown
                 className={cn('h-5 w-5', syncStatus?.downloading ? 'text-primary' : 'text-muted-foreground')}

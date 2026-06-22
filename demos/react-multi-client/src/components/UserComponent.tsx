@@ -201,12 +201,12 @@ export const UserComponent: React.FC<UserComponentProps> = (props) => {
   const className = useMemo(() => {
     return [
       status.downloading ? DOWNLOADING_CSS_CLASS : '',
-      status.dataFlowStatus.uploading ? UPLOADING_CSS_CLASS : '',
+      status.uploading ? UPLOADING_CSS_CLASS : '',
       showOnline ? TOGGLE_ONLINE_CSS_CLASS : ''
     ]
       .join(' ')
       .trim();
-  }, [status.downloading, status.dataFlowStatus.uploading, showOnline]);
+  }, [status.downloading, status.uploading, showOnline]);
 
   return (
     <div className={className}>

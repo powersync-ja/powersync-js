@@ -142,7 +142,7 @@ export class AttachmentQueue {
    * processing don't take this lock and proceed in parallel via the
    * `AttachmentService` mutex, which is acquired only briefly per row.
    */
-  private syncLoopMutex = new Mutex();
+  private syncLoopMutex: Mutex;
 
   /**
    * Aborted by `stopSync()` to interrupt an in-flight batch within one
@@ -169,6 +169,7 @@ export class AttachmentQueue {
     errorHandler
   }: AttachmentQueueOptions) {
     this.db = db;
+    this.syncLoopMutex = db.createMutex();
     this.remoteStorage = remoteStorage;
     this.localStorage = localStorage;
     this.watchAttachments = watchAttachments;

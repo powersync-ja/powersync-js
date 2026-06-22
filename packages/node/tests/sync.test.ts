@@ -169,7 +169,7 @@ function defineSyncTests(bson: boolean) {
     const database = await syncService.createDatabase();
     database.registerListener({
       statusChanged(status) {
-        expect(status.dataFlowStatus.uploading).toBeFalsy();
+        expect(status.uploading).toBeFalsy();
       }
     });
 
@@ -557,7 +557,7 @@ function defineSyncTests(bson: boolean) {
 
     const connector = new TestConnector();
     database.connect(connector, { ...options, retryDelayMs: 10_000, crudUploadThrottleMs: 100 });
-    await database.waitForStatus((s) => s.dataFlowStatus.downloadError != null);
+    await database.waitForStatus((s) => s.downloadError != null);
 
     // We'll never connect due to the error, but we should still try to upload once.
     expect(connector.uploadDataInvocations).toStrictEqual(1);
@@ -593,11 +593,11 @@ function defineSyncTests(bson: boolean) {
       },
       { ...options, retryDelayMs: 100, crudUploadThrottleMs: 100 }
     );
-    await database.waitForStatus((s) => s.dataFlowStatus.downloadError != null);
+    await database.waitForStatus((s) => s.downloadError != null);
 
     // Because we start a crud upload on connect, there should have been a call.
     expect(attemptedUploads).toStrictEqual(1);
-    expect(database.currentStatus.dataFlowStatus.uploadError).toMatchObject({ name: 'Error' });
+    expect(database.currentStatus.uploadError).toMatchObject({ name: 'Error' });
 
     // Currently, we don't retry crud uploads if we're not connected. We might revisit that in the future, but either
     // way we definitely want to retry if there's a new CRUD entry.
@@ -1048,8 +1048,8 @@ async function waitForProgress(
   forPriorities: [number, [number, number]][] = []
 ) {
   await waitForSyncStatus(database, (status) => {
-    if (status.dataFlowStatus.downloadError != null) {
-      throw `Unexpected sync error: ${status.dataFlowStatus.downloadError}`;
+    if (status.downloadError != null) {
+      throw `Unexpected sync error: ${status.downloadError}`;
     }
 
     const progress = status.downloadProgress;
