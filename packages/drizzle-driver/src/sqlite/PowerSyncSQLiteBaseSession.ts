@@ -75,10 +75,10 @@ export class PowerSyncSQLiteBaseSession<
     );
   }
 
-  transaction<T>(
-    _transaction: (tx: PowerSyncSQLiteTransaction<TFullSchema, TSchema>) => T,
-    _config: PowerSyncSQLiteTransactionConfig = {}
-  ): T {
+  async transaction<T>(
+    _transaction: (tx: SQLiteTransaction<'async', QueryResult, TFullSchema, TSchema>) => Promise<T>,
+    _config?: PowerSyncSQLiteTransactionConfig
+  ): Promise<T> {
     throw new Error('Nested transactions are not supported');
   }
 }

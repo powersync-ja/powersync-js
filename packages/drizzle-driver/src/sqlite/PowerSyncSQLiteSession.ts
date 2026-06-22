@@ -1,4 +1,4 @@
-import { AbstractPowerSyncDatabase, LockContext } from '@powersync/common';
+import { AbstractPowerSyncDatabase, QueryResult, Transaction } from '@powersync/common';
 import { entityKind } from 'drizzle-orm/entity';
 import type { RelationalSchemaConfig, TablesRelationalConfig } from 'drizzle-orm/relations';
 import type { SQLiteAsyncDialect } from 'drizzle-orm/sqlite-core/dialect';
@@ -8,6 +8,7 @@ import {
   PowerSyncSQLiteTransaction,
   PowerSyncSQLiteTransactionConfig
 } from './PowerSyncSQLiteBaseSession.js';
+import { SQLiteTransaction } from 'drizzle-orm/sqlite-core';
 
 export class PowerSyncSQLiteSession<
   TFullSchema extends Record<string, unknown>,
@@ -35,47 +36,36 @@ export class PowerSyncSQLiteSession<
   }
 
   transaction<T>(
-    transaction: (tx: PowerSyncSQLiteTransaction<TFullSchema, TSchema>) => T,
-    config: PowerSyncSQLiteTransactionConfig = {}
-  ): T {
-    const { accessMode = 'read write' } = config;
-
-    if (accessMode === 'read only') {
-      return this.client.readLock(async (ctx) => this.internalTransaction(ctx, transaction, config)) as T;
-    }
-
-    return this.client.writeLock(async (ctx) => this.internalTransaction(ctx, transaction, config)) as T;
-  }
-
-  protected async internalTransaction<T>(
-    connection: LockContext,
-    fn: (tx: PowerSyncSQLiteTransaction<TFullSchema, TSchema>) => T,
-    config: PowerSyncSQLiteTransactionConfig = {}
+    transaction: (tx: SQLiteTransaction<'async', QueryResult, TFullSchema, TSchema>) => Promise<T>,
+    config?: PowerSyncSQLiteTransactionConfig
   ): Promise<T> {
-    const tx = new PowerSyncSQLiteTransaction<TFullSchema, TSchema>(
-      'async',
-      (this as any).dialect,
-      new PowerSyncSQLiteBaseSession(
-        {
-          // We already have a fixed context here. We need to use it for both "read" and "write" operations.
-          useReadContext: (callback) => callback(connection),
-          useWriteContext: (callback) => callback(connection)
-        },
-        this.dialect,
-        this.schema,
-        this.options
-      ),
-      this.schema
-    );
+    const invokeCallback = async (powerSyncTx: Transaction): Promise<T> => {
+      const tx = new PowerSyncSQLiteTransaction<TFullSchema, TSchema>(
+        'async',
+        (this as any).dialect,
+        new PowerSyncSQLiteBaseSession(
+          {
+            // We already have a fixed context here. We need to use it for both "read" and "write" operations.
+            useReadContext: (callback) => callback(powerSyncTx),
+            useWriteContext: (callback) => callback(powerSyncTx)
+          },
+          this.dialect,
+          this.schema,
+          this.options
+        ),
+        this.schema
+      );
 
-    await connection.execute(`begin${config?.behavior ? ' ' + config.behavior : ''}`);
-    try {
-      const result = await fn(tx);
-      await connection.execute(`commit`);
-      return result;
-    } catch (err) {
-      await connection.execute(`rollback`);
-      throw err;
+      return await transaction(tx);
+    };
+
+    // Note: Drizzle also supports specifying a transaction behavior (like BEGIN IMMEDIATE or BEGIN EXCLUSIVE).
+    // We deliberately ignore that here and use the transaction implementation from the SDK. The reason is that on some
+    // VFS implementations on the web, BEGIN IMMEDIATE is the only option and it's not enabled by default here.
+    if (config?.accessMode === 'read only') {
+      return this.client.readTransaction(invokeCallback);
+    } else {
+      return this.client.writeTransaction(invokeCallback);
     }
   }
 }
