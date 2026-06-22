@@ -50,7 +50,7 @@ describe('usePowerSyncQueries bug fixes', () => {
       }
     });
 
-  describe('Bug 1: streamsHaveSynced in final useMemo deps', () => {
+  describe('usePowerSyncQueries ', () => {
     it('updated returned streamsHaveSynced once a waitForStream stream syncs', async () => {
       const stableQueries = [
         {
@@ -76,10 +76,8 @@ describe('usePowerSyncQueries bug fixes', () => {
 
       unmount();
     });
-  });
 
-  describe('Bug 2: first table-resolution race loses first-sync data', () => {
-    it('reflects rows written while table resolution is still on the slow path', async () => {
+    it('picks up rows written before the source tables finished resolving', async () => {
       let releaseResolve!: () => void;
       const resolveGate = new Promise<void>((resolve) => {
         releaseResolve = resolve;

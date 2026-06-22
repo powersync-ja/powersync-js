@@ -149,7 +149,7 @@ function useQueryCore<
     queryClient
   );
 
-  const isSuspense = useQueryFn === Tanstack.useSuspenseQuery;
+  const isSuspense = (useQueryFn as unknown) === Tanstack.useSuspenseQuery;
   const resolvedQueryFn = query ? powerSyncQueryFn : resolvedOptions.queryFn;
   const queryFn = streamsHaveSynced || isSuspense ? resolvedQueryFn : Tanstack.skipToken;
 
