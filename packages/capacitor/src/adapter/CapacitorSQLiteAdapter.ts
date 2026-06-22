@@ -190,7 +190,10 @@ export class CapacitorSQLiteAdapter extends DBAdapter {
 
       if (platform == 'android') {
         const result = await db.executeSet([{ statement: query, values: mappedParams }], false);
-        return queryResultWithoutRows({ insertId: result.changes?.lastId, rowsAffected: result.changes?.changes ?? 0 });
+        return queryResultFromMapped(
+          { insertId: result.changes?.lastId, rowsAffected: result.changes?.changes ?? 0 },
+          []
+        );
       }
 
       // iOS (and other platforms): use run("all")
