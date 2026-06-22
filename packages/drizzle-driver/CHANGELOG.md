@@ -1,5 +1,14 @@
 # @powersync/drizzle-driver
 
+## 0.7.4
+
+### Patch Changes
+
+- 17e23df: Use PowerSync transaction APIs instead of manual BEGIN and COMMIT statements
+- Updated dependencies [1c6e980]
+- Updated dependencies [17e23df]
+  - @powersync/common@1.56.0
+
 ## 0.7.3
 
 ### Patch Changes
