@@ -32,7 +32,7 @@ class TestPowerSyncDatabase extends AbstractPowerSyncDatabase {
   }
 
   get database() {
-    return {
+    const mockedContext = {
       get: vi.fn().mockResolvedValue({
         version: '0.4.10',
         r: JSON.stringify({
@@ -46,8 +46,11 @@ class TestPowerSyncDatabase extends AbstractPowerSyncDatabase {
       getAll: vi.fn().mockResolvedValue([]),
       execute: vi.fn(),
       refreshSchema: vi.fn(),
-      writeLock: vi.fn()
+      writeLock: vi.fn(),
+      writeTransaction: vi.fn().mockImplementation((cb) => cb(mockedContext))
     } as any;
+
+    return mockedContext;
   }
   // Expose protected method for testing
   public testResolvedConnectionOptions(options?: any) {
