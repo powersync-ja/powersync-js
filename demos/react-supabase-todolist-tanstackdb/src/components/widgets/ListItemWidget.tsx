@@ -21,8 +21,8 @@ import { usePowerSync } from '@powersync/react';
 import { createTransaction } from '@tanstack/db';
 import { PowerSyncTransactor } from '@tanstack/powersync-db-collection';
 import { useNavigate } from 'react-router-dom';
-import { attachmentQueue, listsCollection, todosCollection } from '../providers/SystemProvider';
-import { attachmentFromSql } from '@powersync/web';
+import { useAttachments } from '../providers/AttachmentsProvider';
+import { listsCollection, todosCollection } from '../providers/SystemProvider';
 
 export type ListItemWidgetProps = {
   id: string;
@@ -37,59 +37,77 @@ export const ListItemWidget: React.FC<ListItemWidgetProps> = React.memo((props) 
   const { id, title, description, localUri, selected, photo_id } = props;
 
   const navigate = useNavigate();
+  const attachments = useAttachments();
 
   const powerSync = usePowerSync();
 
-  const deleteList = React.useCallback(async () => {
-    // Create a transaction that won't auto-commit
-    const batchTx = createTransaction({
-      autoCommit: false,
-      mutationFn: async ({ transaction }) => {
-        // Use PowerSyncTransactor to apply the transaction to PowerSync
-        await new PowerSyncTransactor({ database: powerSync }).applyTransaction(transaction);
+  const deleteListAndTodos = React.useCallback(() => {
+    listsCollection.delete(id);
+    todosCollection.forEach((todo) => {
+      if (todo.list_id === id) {
+        todosCollection.delete(todo.id);
       }
     });
+  }, [id]);
 
-    // Perform multiple operations in the transaction
-    batchTx.mutate(() => {
-      listsCollection.delete(id);
-      todosCollection.forEach((todo) => {
-        if (todo.list_id === id) {
-          todosCollection.delete(todo.id);
+  const deleteList = React.useCallback(async () => {
+    if (attachments && photo_id) {
+      await attachments.queue.deleteFileTanStack({
+        id: photo_id,
+        updateHook: async () => {
+          // This happens in the same transaction as queueing the attachment delete
+          deleteListAndTodos();
         }
       });
-    });
+    } else {
 
-    // Commit the transaction
-    await batchTx.commit();
+      // Create a transaction that won't auto-commit
+      const batchTx = createTransaction({
+        autoCommit: false,
+        mutationFn: async ({ transaction }) => {
+          // Use PowerSyncTransactor to apply the transaction to PowerSync
+          await new PowerSyncTransactor({ database: powerSync }).applyTransaction(transaction);
+        }
+      });
 
-    // Wait for the changes to be persisted
-    await batchTx.isPersisted.promise;
-  }, [id]);
+      // Perform multiple operations in the transaction
+      batchTx.mutate(() => {
+        deleteListAndTodos();
+      });
+
+      // Commit the transaction
+      await batchTx.commit();
+
+      // Wait for the changes to be persisted
+      await batchTx.isPersisted.promise;
+    }
+  }, [attachments, photo_id, powerSync, deleteListAndTodos]);
 
   const openList = React.useCallback(() => {
     navigate(TODO_LISTS_ROUTE + '/' + id);
   }, [id]);
 
   const deleteAttachment = React.useCallback(async () => {
-    await attachmentQueue.deleteFileTanStack({
+    if (!attachments) {
+      return;
+    }
+    await attachments.queue.deleteFileTanStack({
       id: photo_id!,
-      updateHook: async (attachmentRecord) => {
+      updateHook: async () => {
         // This should happen in the same transaction as creating the attachment
-        listsCollection.update(id, draft => {
+        listsCollection.update(id, (draft) => {
           draft.photo_id = null;
         });
-
       }
-    })
-  }, [photo_id, id]);
+    });
+  }, [attachments, photo_id, id]);
   return (
     <S.MainPaper elevation={1}>
       <ListItem
         disablePadding
         secondaryAction={
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            {photo_id && (
+            {attachments && photo_id && (
               <Tooltip title="Remove photo">
                 <IconButton edge="end" aria-label="remove photo" onClick={deleteAttachment}>
                   <HideImageOutlinedIcon />
@@ -116,8 +134,12 @@ export const ListItemWidget: React.FC<ListItemWidgetProps> = React.memo((props) 
             secondary={
               <>
                 {description}
-                <br />
-                local_uri: {localUri ?? 'none'}
+                {attachments && (
+                  <>
+                    <br />
+                    local_uri: {localUri ?? 'none'}
+                  </>
+                )}
               </>
             }
           />

@@ -1,6 +1,7 @@
 import { List } from '@mui/material';
 import { count, eq, sum, useLiveQuery } from '@tanstack/react-db';
-import { attachmentsCollection, listsCollection, todosCollection } from '../providers/SystemProvider';
+import { attachmentsCollection } from '../providers/AttachmentsProvider';
+import { listsCollection, todosCollection } from '../providers/SystemProvider';
 import { ListItemWidget } from './ListItemWidget';
 
 export type TodoListsWidgetProps = {

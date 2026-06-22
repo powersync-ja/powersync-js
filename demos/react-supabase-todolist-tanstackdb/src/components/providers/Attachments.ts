@@ -44,7 +44,7 @@ type TanStackDBAttachmentQueueParams = {
    * In order to have the same relational data be set in a single transaction.
    * This also allows for joining both TanStackDB collections.
    */
-  attachmentsCollection: Collection<AttachmentQueueRow>;
+  attachmentsCollection: Collection<AttachmentQueueRow, string>;
   remoteStorage: RemoteStorageAdapter;
   localStorage: LocalStorageAdapter;
   watchAttachments: (onUpdate: (attachment: WatchedAttachmentItem[]) => Promise<void>, signal: AbortSignal) => void;
@@ -68,7 +68,7 @@ type AttachmentQueueRow = (typeof AppSchema)['types']['attachments'];
  */
 export class TanStackDBAttachmentQueue extends AttachmentQueue {
   readonly powersync: AbstractPowerSyncDatabase;
-  readonly collection: Collection<AttachmentQueueRow>;
+  readonly collection: Collection<AttachmentQueueRow, string>;
 
   constructor(params: TanStackDBAttachmentQueueParams) {
     super(params);

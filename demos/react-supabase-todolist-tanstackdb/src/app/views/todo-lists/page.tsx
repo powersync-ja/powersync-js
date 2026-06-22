@@ -1,5 +1,6 @@
 import { NavigationPage } from '@/components/navigation/NavigationPage';
-import { attachmentQueue, listsCollection, useSupabase } from '@/components/providers/SystemProvider';
+import { useAttachments } from '@/components/providers/AttachmentsProvider';
+import { listsCollection, useSupabase } from '@/components/providers/SystemProvider';
 import { GuardBySync } from '@/components/widgets/GuardBySync';
 import { SearchBarWidget } from '@/components/widgets/SearchBarWidget';
 import { TodoListsWidget } from '@/components/widgets/TodoListsWidget';
@@ -20,6 +21,7 @@ import React from 'react';
 
 export default function TodoListsPage() {
   const supabase = useSupabase();
+  const attachments = useAttachments();
 
   const [showPrompt, setShowPrompt] = React.useState(false);
   const nameInputRef = React.createRef<HTMLInputElement>();
@@ -31,21 +33,34 @@ export default function TodoListsPage() {
       throw new Error(`Could not create new lists, no userID found`);
     }
 
-    await attachmentQueue.saveFileTanStack({
-      // This is just random file data for this poc, this could be an image from a camera etc
-      data: btoa(crypto.randomUUID()),
-      fileExtension: 'jpg',
-      updateHook: async (attachmentRecord) => {
-        // This should happen in the same transaction as creating the attachment
-        listsCollection.insert({
-          id: crypto.randomUUID(),
-          name,
-          created_at: new Date(),
-          owner_id: userID,
-          photo_id: attachmentRecord.id // make the association for related data
-        });
-      }
-    });
+    if (attachments) {
+      // Attachments are enabled: create the list together with a photo attachment
+      // in a single transaction, associating them via `photo_id`.
+      await attachments.queue.saveFileTanStack({
+        // This is just random file data for this poc, this could be an image from a camera etc
+        data: btoa(crypto.randomUUID()),
+        fileExtension: 'jpg',
+        updateHook: async (attachmentRecord) => {
+          // This should happen in the same transaction as creating the attachment
+          listsCollection.insert({
+            id: crypto.randomUUID(),
+            name,
+            created_at: new Date(),
+            owner_id: userID,
+            photo_id: attachmentRecord.id // make the association for related data
+          });
+        }
+      });
+    } else {
+      // No attachments configured: create the list on its own.
+      await listsCollection.insert({
+        id: crypto.randomUUID(),
+        name,
+        created_at: new Date(),
+        owner_id: userID,
+        photo_id: null
+      }).isPersisted.promise;
+    }
   };
 
   return (
