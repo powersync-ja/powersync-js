@@ -105,9 +105,9 @@ export abstract class LockContext implements SqlExecutor, DBGetUtils {
   }
 
   async getOptional<T>(sql: string, parameters?: any[]): Promise<T | null> {
-    const { rows } = await this.execute(sql, parameters);
-    if (rows && rows.length > 0) {
-      return rows.item(0);
+    const { array } = await this.execute<T>(sql, parameters);
+    if (array.length > 0) {
+      return array[0];
     }
 
     return null;

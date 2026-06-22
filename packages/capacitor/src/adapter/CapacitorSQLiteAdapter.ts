@@ -215,6 +215,19 @@ export class CapacitorSQLiteAdapter extends DBAdapter {
       return result.rows?._array ?? ([] as T[]);
     };
 
+    const getOptional = async <T>(query: string, params?: any[]): Promise<T | null> => {
+      const results = await getAll<T>(query, params);
+      return results.length > 0 ? results[0] : null;
+    };
+
+    const get = async <T>(query: string, params?: any[]): Promise<T> => {
+      const result = await getOptional<T>(query, params);
+      if (!result) {
+        throw new Error(`No results for query: ${query}`);
+      }
+      return result;
+    };
+
     const executeRaw = async (query: string, params?: any[]): Promise<RawQueryResult> => {
       // This is a workaround, we don't support multiple columns of the same name
       const { insertId, rowsAffected, rows } = await execute(query, params);
@@ -254,6 +267,14 @@ export class CapacitorSQLiteAdapter extends DBAdapter {
 
       getAll<T>(sql: string, parameters?: any[]): Promise<T[]> {
         return getAll(sql, parameters);
+      }
+
+      get<T>(sql: string, parameters?: any[]): Promise<T> {
+        return get(sql, parameters);
+      }
+
+      getOptional<T>(sql: string, parameters?: any[]): Promise<T | null> {
+        return getOptional(sql, parameters);
       }
 
       execute<T>(query: string, params?: any[] | undefined): Promise<QueryResult<T>> {

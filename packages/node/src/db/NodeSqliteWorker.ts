@@ -1,7 +1,7 @@
 import type { DatabaseSync } from 'node:sqlite';
 import { threadId } from 'node:worker_threads';
 
-import { AsyncDatabase, AsyncDatabaseOpenOptions } from './AsyncDatabase.js';
+import { AsyncDatabase, AsyncDatabaseOpenOptions, MappedQueryResult } from './AsyncDatabase.js';
 import { PowerSyncWorkerOptions } from './SqliteWorker.js';
 import { QueryResult, queryResultWithoutRows, RawQueryResult, SqliteValue } from '@powersync/common';
 
@@ -16,6 +16,15 @@ class BlockingNodeDatabase implements AsyncDatabase {
 
   async close() {
     this.db.close();
+  }
+
+  async execute(query: string, params: any[]): Promise<MappedQueryResult> {
+    const stmt = this.db.prepare(query);
+    const rows = stmt.all(...params);
+    return {
+      rowsAffected: 0,
+      rows
+    };
   }
 
   async executeRaw(query: string, params: any[]): Promise<RawQueryResult> {

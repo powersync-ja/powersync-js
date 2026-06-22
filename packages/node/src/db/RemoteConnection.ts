@@ -1,4 +1,4 @@
-import { QueryResult, LockContext, RawQueryResult } from '@powersync/common';
+import { QueryResult, LockContext, RawQueryResult, SqliteRecord, queryResultFromMapped } from '@powersync/common';
 import { releaseProxy, Remote } from 'comlink';
 import { Worker } from 'node:worker_threads';
 import { AsyncDatabase, AsyncDatabaseOpener } from './AsyncDatabase.js';
@@ -68,6 +68,13 @@ export class RemoteConnection extends LockContext {
 
           return completePromise(() => reject(e));
         });
+    });
+  }
+
+  execute<T = SqliteRecord>(query: string, params?: any[] | undefined): Promise<QueryResult<T>> {
+    return this.withRemote(async () => {
+      const results = await this.database.execute(query, params ?? []);
+      return queryResultFromMapped(results, results.rows as T[] | undefined);
     });
   }
 
