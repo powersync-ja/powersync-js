@@ -246,8 +246,8 @@ const status = useStatus();
   <div v-if="!status.hasSynced">Waiting for initial sync to complete.</div>
   <div v-else>
     <div>Connected: {{ status.connected }}, last synced at: {{ status.lastSyncedAt }}</div>
-    <div v-if="status.dataFlowStatus.uploading">Uploading...</div>
-    <div v-if="status.dataFlowStatus.downloading">Downloading...</div>
+    <div v-if="status.uploading">Uploading...</div>
+    <div v-if="status.downloading">Downloading...</div>
   </div>
 </template>
 ```

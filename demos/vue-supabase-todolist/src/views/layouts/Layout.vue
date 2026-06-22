@@ -5,12 +5,12 @@
     <v-spacer />
     <div class="d-flex">
       <v-icon
-        :color="syncStatus.dataFlowStatus.uploading ? 'primary' : 'inherit'"
+        :color="syncStatus.uploading ? 'primary' : 'inherit'"
         class="mr-n2 pa-0"
         icon="mdi-arrow-up"
       />
 
-      <v-icon :color="syncStatus.dataFlowStatus.downloading ? 'primary' : 'inherit'" icon="mdi-arrow-down" />
+      <v-icon :color="syncStatus.downloading ? 'primary' : 'inherit'" icon="mdi-arrow-down" />
       <v-icon :icon="syncStatus.connected ? 'mdi-wifi' : 'mdi-wifi-strength-off'" />
     </div>
   </v-app-bar>
