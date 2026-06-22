@@ -385,7 +385,7 @@ describe('Lock Usage Tests', () => {
   describe('Transaction operations', () => {
     lockUsageTest(
       'should use writeTransaction for read-write transaction (default)',
-      async ({ db, readLockSpy, readTransactionSpy, writeTransactionSpy }) => {
+      async ({ db, readTransactionSpy, writeTransactionSpy }) => {
         await db.transaction(async (tx) => {
           await tx.insert(drizzleUsers).values({ id: '2', name: 'Bob' });
         });
