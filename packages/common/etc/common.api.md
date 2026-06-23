@@ -1876,7 +1876,9 @@ export class SyncingService {
     deleteArchivedAttachments(context: AttachmentContext): Promise<boolean>;
     deleteAttachment(attachment: AttachmentRecord, context: AttachmentContext): Promise<AttachmentRecord>;
     downloadAttachment(attachment: AttachmentRecord): Promise<AttachmentRecord>;
-    processAttachments(attachments: AttachmentRecord[], context: AttachmentContext): Promise<void>;
+    processAttachments(attachments: AttachmentRecord[], options?: {
+        signal?: AbortSignal;
+    }): Promise<void>;
     uploadAttachment(attachment: AttachmentRecord): Promise<AttachmentRecord>;
 }
 
