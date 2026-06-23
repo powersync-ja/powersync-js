@@ -1,4 +1,4 @@
-import { BaseColumnType, Column, ColumnsType, ExtractColumnValueType } from './Column.js';
+import { Column, ColumnsType, ExtractColumnValueType } from './Column.js';
 import { Index } from './Index.js';
 import { IndexedColumn } from './IndexedColumn.js';
 import { encodeTableOptions } from './internal.js';
@@ -43,7 +43,7 @@ export interface TrackPreviousOptions {
 /**
  * @public
  */
-export interface TableOptions extends SharedTableOptions {
+export interface ResolvedTableOptions extends SharedTableOptions {
   /**
    * The synced table name, matching sync rules
    */
@@ -68,8 +68,7 @@ export type IndexShorthand = Record<string, (string | IndexedColumn)[]>;
 /**
  * @public
  */
-
-export interface TableV2Options extends SharedTableOptions {
+export interface TableOptions extends SharedTableOptions {
   indexes?: IndexShorthand;
 }
 
@@ -85,10 +84,16 @@ const DEFAULT_TABLE_OPTIONS = {
 const InvalidSQLCharacters = /["'%,.#\s[\]]/;
 
 /**
- * @internal
+ * A resolved table in the PowerSync schema, with all columns, index definitions and options.
+ *
+ * When constructing tables for your schema, consider using {@link Table} instead.
+ *
+ * @public
  */
-export class BaseTable {
-  protected options!: TableOptions;
+export class ResolvedTable {
+  constructor(readonly options: ResolvedTableOptions) {
+    this.applyDefaultOptions();
+  }
 
   get name() {
     return this.options.name;
@@ -212,19 +217,31 @@ export class BaseTable {
       ...encodeTableOptions(this)
     };
   }
+
+  private applyDefaultOptions() {
+    this.options.insertOnly ??= DEFAULT_TABLE_OPTIONS.insertOnly;
+    this.options.localOnly ??= DEFAULT_TABLE_OPTIONS.localOnly;
+    this.options.trackPrevious ??= DEFAULT_TABLE_OPTIONS.trackPrevious;
+    this.options.trackMetadata ??= DEFAULT_TABLE_OPTIONS.trackMetadata;
+    this.options.ignoreEmptyUpdates ??= DEFAULT_TABLE_OPTIONS.ignoreEmptyUpdates;
+  }
 }
 
 /**
+ * A table with a statically-typed `Columns` record structure.
+ *
+ * This is the recommended way to declare tables in PowerSync schemas.
+ *
  * @public
  */
-export class Table<Columns extends ColumnsType = ColumnsType> extends BaseTable {
+export class Table<Columns extends ColumnsType = ColumnsType> extends ResolvedTable {
   protected _mappedColumns!: Columns;
 
-  static createLocalOnly<Columns extends ColumnsType = ColumnsType>(columns: Columns, options?: TableV2Options) {
+  static createLocalOnly<Columns extends ColumnsType = ColumnsType>(columns: Columns, options?: TableOptions) {
     return new Table(columns, { localOnly: true, insertOnly: false, ...options });
   }
 
-  static createInsertOnly<Columns extends ColumnsType = ColumnsType>(columns: Columns, options?: TableV2Options) {
+  static createInsertOnly<Columns extends ColumnsType = ColumnsType>(columns: Columns, options?: TableOptions) {
     return new Table(columns, { localOnly: false, insertOnly: true, ...options });
   }
 
@@ -249,16 +266,19 @@ export class Table<Columns extends ColumnsType = ColumnsType> extends BaseTable 
    * );
    *```
    */
-  constructor(optionsOrColumns: Columns, v2Options?: TableV2Options) {
-    super();
-    this.initTableV2(optionsOrColumns, v2Options);
+  constructor(columns: Columns, options?: TableOptions) {
+    super(Table.optionsFromColumns<Columns>(columns, options));
+    this._mappedColumns = columns;
   }
 
-  copyWithName(name: string): BaseTable {
-    return new CustomTable({ ...this.options, name });
+  copyWithName(name: string): ResolvedTable {
+    return new ResolvedTable({ ...this.options, name });
   }
 
-  private initTableV2(columns: Columns, options?: TableV2Options) {
+  private static optionsFromColumns<Columns extends ColumnsType>(
+    columns: Columns,
+    options?: TableOptions
+  ): ResolvedTableOptions {
     const convertedColumns = Object.entries(columns).map(
       ([name, columnInfo]) => new Column({ name, type: columnInfo.type })
     );
@@ -278,7 +298,7 @@ export class Table<Columns extends ColumnsType = ColumnsType> extends BaseTable 
         })
     );
 
-    this.options = {
+    return {
       name: '',
       columns: convertedColumns,
       indexes: convertedIndexes,
@@ -289,23 +309,5 @@ export class Table<Columns extends ColumnsType = ColumnsType> extends BaseTable 
       trackMetadata: options?.trackMetadata,
       ignoreEmptyUpdates: options?.ignoreEmptyUpdates
     };
-    this.applyDefaultOptions();
-
-    this._mappedColumns = columns;
-  }
-
-  private applyDefaultOptions() {
-    this.options.insertOnly ??= DEFAULT_TABLE_OPTIONS.insertOnly;
-    this.options.localOnly ??= DEFAULT_TABLE_OPTIONS.localOnly;
-    this.options.trackPrevious ??= DEFAULT_TABLE_OPTIONS.trackPrevious;
-    this.options.trackMetadata ??= DEFAULT_TABLE_OPTIONS.trackMetadata;
-    this.options.ignoreEmptyUpdates ??= DEFAULT_TABLE_OPTIONS.ignoreEmptyUpdates;
-  }
-}
-
-export class CustomTable extends BaseTable {
-  constructor(options: TableOptions) {
-    super();
-    this.options = options;
   }
 }

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Table, TableV2Options } from '../../../src/db/schema/Table.js';
+import { Table, TableOptions } from '../../../src/db/schema/Table.js';
 import { column } from '../../../src/db/schema/Column.js';
 
 describe('Table', () => {
@@ -107,7 +107,7 @@ describe('Table', () => {
   });
 
   it('should handle options', () => {
-    function createTable(options: TableV2Options) {
+    function createTable(options: TableOptions) {
       return new Table({ name: column.text }, options);
     }
 

@@ -1,4 +1,4 @@
-import { Column, ColumnsType, ColumnType, Table, TableOptions, column, TableV2Options } from '@powersync/common';
+import { ColumnsType, Table, column, TableOptions } from '@powersync/common';
 
 export const ATTACHMENT_TABLE = 'attachments';
 
@@ -20,7 +20,7 @@ export enum AttachmentState {
   ARCHIVED = 4 // Attachment has been orphaned, i.e. the associated record has been deleted
 }
 
-export interface AttachmentTableOptions extends Omit<TableV2Options, 'name' | 'columns'> {
+export interface AttachmentTableOptions extends Omit<TableOptions, 'name' | 'columns'> {
   name?: string;
   additionalColumns?: ColumnsType;
 }
