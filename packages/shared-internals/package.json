@@ -9,24 +9,13 @@
   "type": "module",
   "exports": {
     ".": {
-      "node": {
-        "import": {
-          "types": "./lib/index.d.ts",
-          "default": "./dist/bundle.node.mjs"
-        },
-        "require": {
-          "types": "./dist/index.d.cts",
-          "require": "./dist/bundle.node.cjs"
-        }
-      },
-      "import": {
-        "types": "./lib/index.d.ts",
-        "default": "./dist/bundle.mjs"
-      },
-      "require": {
-        "types": "./dist/index.d.cts",
-        "require": "./dist/bundle.cjs"
-      }
+      "types": "./lib/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./websockets": {
+      "types": "./lib/client/sync/stream/WebSocketSupport.d.ts",
+      "node": "./dist/websockets.node.mjs",
+      "default": "./dist/websockets.mjs"
     },
     "./internal/sync_protocol": {
       "types": "./legacy/sync_protocol.d.ts"
@@ -53,7 +42,8 @@
     "build:prod": "tsc -b && rollup -c rollup.config.mjs",
     "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
     "test": "vitest",
-    "test:exports": "attw --pack . --profile node16 --exclude-entrypoints internal/sync_protocol"
+    "test:exports": "attw --pack . --profile node16 --exclude-entrypoints internal/sync_protocol",
+    "postversion": "node tool/update_version.js"
   },
   "devDependencies": {
     "@powersync/common": "workspace:*",

@@ -3,6 +3,7 @@ import * as os from 'node:os';
 import { AbstractRemote, FetchOptions, RemoteConnector } from '@powersync/shared-internals';
 import { Dispatcher, EnvHttpProxyAgent, getGlobalDispatcher, ProxyAgent, WebSocket as UndiciWebSocket } from 'undici';
 import { PowerSyncLogger } from '@powersync/common';
+import type { WebSocketSyncStreamPlatform, WebSocketSupport } from '@powersync/shared-internals/websockets';
 
 export const STREAMING_POST_TIMEOUT_MS = 30_000;
 
@@ -49,7 +50,17 @@ export class NodeRemote extends AbstractRemote {
     return this.fetchImpl(resource, request);
   }
 
-  protected createSocket(url: string): globalThis.WebSocket {
+  protected async loadWebSocketSupport(platform: WebSocketSyncStreamPlatform): Promise<WebSocketSupport> {
+    if (!websockets) {
+      websockets = import('@powersync/shared-internals/websockets').then(
+        (module) => new module.WebSocketSupport(platform)
+      );
+    }
+
+    return await websockets;
+  }
+
+  createSocket(url: string): globalThis.WebSocket {
     // Create dedicated dispatcher for this WebSocket
     const baseDispatcher = this.getWebsocketDispatcher(url);
 
@@ -105,3 +116,5 @@ function getProxyForProtocol(protocol: string): string | undefined {
     process.env[`ALL_PROXY`]
   );
 }
+
+let websockets: Promise<WebSocketSupport> | undefined;

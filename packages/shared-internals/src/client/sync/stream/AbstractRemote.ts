@@ -1,5 +1,4 @@
 import { type fetch } from 'cross-fetch';
-import PACKAGE from '../../../../package.json' with { type: 'json' };
 import { FetchStrategy, PowerSyncCredentials, LogLevels, PowerSyncLogger } from '@powersync/common';
 
 import { AbortOperation } from '../../../utils/AbortOperation.js';
@@ -7,10 +6,10 @@ import {
   doneResult,
   extractBsonObjects,
   extractJsonLines,
-  SimpleAsyncIterator,
-  valueResult
+  SimpleAsyncIterator
 } from '../../../utils/stream_transform.js';
-import { webSocketSyncStream } from './WebSocketSupport.js';
+import { WebSocketSupport, WebSocketSyncStreamPlatform } from './WebSocketSupport.js';
+import { EventQueue } from '../../../utils/async.js';
 
 /**
  * @internal
@@ -21,7 +20,14 @@ export type RemoteConnector = {
 };
 
 const POWERSYNC_TRAILING_SLASH_MATCH = /\/+$/;
-const POWERSYNC_JS_VERSION = PACKAGE.version;
+// Note: A postversion script will make Changesets keep this constant up-to-date.
+const POWERSYNC_JS_VERSION = 'unset';
+
+const webSocketPlatform: WebSocketSyncStreamPlatform = {
+  LogLevels,
+  EventQueue,
+  AbortOperation
+};
 
 /**
  * @internal
@@ -66,6 +72,7 @@ export interface PreparedRequest {
   url: string;
   headers: Record<string, string>;
   userAgent: string;
+  path: string;
 }
 
 /**
@@ -162,7 +169,8 @@ export abstract class AbstractRemote {
         Authorization: `Token ${credentials.token}`,
         'x-user-agent': userAgent
       },
-      userAgent
+      userAgent,
+      path
     };
   }
 
@@ -204,12 +212,34 @@ export abstract class AbstractRemote {
   }
 
   /**
+   * Loads `@powersync/shared-internals/websockets`.
+   *
+   * We prefer to load that as a lazy module with a dynamic `import()` expressions on most platforms. An exception is
+   * React Native, where WebSocket support is preferred and we want to load this directly.
+   */
+  protected abstract loadWebSocketSupport(platform: WebSocketSyncStreamPlatform): Promise<WebSocketSupport>;
+
+  /**
    * Returns a data stream of sync line data, fetched via RSocket-over-WebSocket.
    *
    * The only mechanism to abort the returned stream is to use the abort signal in {@link SocketSyncStreamOptions}.
    */
   async socketStreamRaw(options: SocketSyncStreamOptions): Promise<SimpleAsyncIterator<Uint8Array>> {
-    return await webSocketSyncStream(this, options, await this.buildRequest(options.path));
+    const support = await this.loadWebSocketSupport(webSocketPlatform);
+
+    const request = await this.buildRequest(options.path);
+    request.url = request.url.replace(/^https?:\/\//, function (match) {
+      return match === 'https://' ? 'wss://' : 'ws://';
+    });
+    const { fetchStrategy = FetchStrategy.Buffered, abortSignal, data } = options;
+
+    return await support.webSocketSyncStream({
+      remote: this,
+      buffered: fetchStrategy == FetchStrategy.Buffered,
+      abortSignal,
+      requestPayload: data,
+      request
+    });
   }
 
   /**

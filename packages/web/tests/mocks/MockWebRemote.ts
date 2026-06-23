@@ -1,11 +1,5 @@
 import { PowerSyncLogger } from '@powersync/common';
-import {
-  AbstractRemote,
-  FetchImplementation,
-  FetchOptions,
-  RemoteConnector,
-  SocketSyncStreamOptions
-} from '@powersync/shared-internals';
+import { AbstractRemote, FetchOptions, RemoteConnector, SocketSyncStreamOptions } from '@powersync/shared-internals';
 
 import { SimpleAsyncIterator } from '@powersync/shared-internals';
 import { type BSON } from 'bson';
@@ -102,6 +96,10 @@ export class WebRemote extends AbstractRemote {
     const { BSON } = await import('bson');
     this._bson = BSON;
     return this._bson;
+  }
+
+  protected loadWebSocketSupport(): Promise<never> {
+    throw new Error('Mocked WebRemote does not support WebSockets');
   }
 
   /**

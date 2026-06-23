@@ -6,33 +6,26 @@ import { dts } from 'rollup-plugin-dts';
 import MagicString from 'magic-string';
 import { walk } from 'estree-walker';
 
-function defineBuild(isNode) {
+function defineWebSocketBuild(isNode) {
   const suffix = isNode ? '.node' : '';
   const plugins = [
     [
       json(),
       nodeResolve({ preferBuiltins: false, browser: true }),
       commonjs({}),
+      checkNoIllegalAsyncIteratorUse(),
       inject({
         Buffer: isNode ? ['node:buffer', 'Buffer'] : ['buffer/', 'Buffer']
       })
     ]
   ];
-  if (!isNode) {
-    plugins.push(checkNoIllegalAsyncIteratorUse());
-  }
 
   return {
-    input: 'lib/index.js',
+    input: 'lib/client/sync/stream/WebSocketSupport.js',
     output: [
       {
-        file: `dist/bundle${suffix}.mjs`,
+        file: `dist/websockets${suffix}.mjs`,
         format: 'esm',
-        sourcemap: true
-      },
-      {
-        file: `dist/bundle${suffix}.cjs`,
-        format: 'cjs',
         sourcemap: true
       }
     ],
@@ -45,12 +38,20 @@ function defineBuild(isNode) {
  */
 export default () => {
   return [
-    defineBuild(false),
-    defineBuild(true),
+    defineWebSocketBuild(false),
+    defineWebSocketBuild(true),
+    // Run a no-emit build to verify we're not using Symbol.asyncIterator without fallbacks in our sources and
+    // dependencies.
     {
-      input: './lib/index.d.ts',
-      output: [{ file: 'dist/index.d.cts', format: 'cjs' }],
-      plugins: [dts()]
+      input: 'lib/index.js',
+      output: [
+        {
+          file: `dist/unused.js`,
+          format: 'esm'
+        }
+      ],
+      plugins: [checkNoIllegalAsyncIteratorUse(), noEmit()],
+      external: ['@powersync/common']
     }
   ];
 };
@@ -63,6 +64,17 @@ function checkNoIllegalAsyncIteratorUse() {
 
       if (code.includes('Symbol.asyncIterator')) {
         throw new Error(`${id} is not allowed to use Symbol.asyncIterator. Import compatibility.ts instead.`);
+      }
+    }
+  };
+}
+
+function noEmit() {
+  return {
+    name: 'noEmit',
+    generateBundle(_, bundle) {
+      for (const file in bundle) {
+        delete bundle[file];
       }
     }
   };

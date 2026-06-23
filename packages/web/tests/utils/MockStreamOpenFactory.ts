@@ -90,8 +90,8 @@ export class MockRemote extends AbstractRemote {
     return new Response(stream).body!;
   }
 
-  async socketStreamRaw<T>(): Promise<never> {
-    throw 'Unsupported: Socket streams are not currently supported in tests';
+  protected loadWebSocketSupport(): Promise<never> {
+    throw new Error('Mocked WebRemote does not support WebSockets');
   }
 
   async fetchStream(options: SyncStreamOptions): Promise<SimpleAsyncIterator<Uint8Array | string>> {

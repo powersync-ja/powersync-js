@@ -6,6 +6,7 @@ import { TextDecoder } from 'text-encoding';
 
 // @ts-expect-error
 import { fetch } from 'react-native-fetch-api';
+import { WebSocketSupport, WebSocketSyncStreamPlatform } from '@powersync/shared-internals/websockets';
 
 export const STREAMING_POST_TIMEOUT_MS = 30_000;
 
@@ -52,6 +53,10 @@ export class ReactNativeRemote extends AbstractRemote {
     }
   }
 
+  protected loadWebSocketSupport(platform: WebSocketSyncStreamPlatform): Promise<WebSocketSupport> {
+    return Promise.resolve((websockets ??= new WebSocketSupport(platform)));
+  }
+
   getUserAgent(): string {
     return [
       super.getUserAgent(),
@@ -70,3 +75,5 @@ export class ReactNativeRemote extends AbstractRemote {
     return false;
   }
 }
+
+let websockets: WebSocketSupport | undefined;
