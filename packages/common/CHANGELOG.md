@@ -1,5 +1,15 @@
 # @powersync/common
 
+## 1.56.0
+
+### Minor Changes
+
+- 1c6e980: [Fix] Preserve `Error.cause` when serializing sync status errors, so the full cause chain on `uploadError` and `downloadError` reaches `statusChanged` listeners.
+
+### Patch Changes
+
+- 17e23df: Invoke `powersync_replace_schema` in a transaction.
+
 ## 1.55.0
 
 ### Minor Changes

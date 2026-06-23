@@ -28,7 +28,7 @@
     "@journeyapps/wa-sqlite": "^1.7.0",
     "@powersync/capacitor": "^0.7.0",
     "@powersync/react": "^1.10.0",
-    "@powersync/web": "^1.38.4",
+    "@powersync/web": "^1.38.5",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.23.0"
