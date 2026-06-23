@@ -27,6 +27,8 @@ export interface AttachmentTableOptions extends Omit<TableOptions, 'name' | 'col
 
 export class AttachmentTable extends Table {
   constructor(options?: AttachmentTableOptions) {
+    const { additionalColumns = {}, ...tableOptions } = options ?? {};
+
     super(
       {
         filename: column.text,
@@ -35,11 +37,11 @@ export class AttachmentTable extends Table {
         size: column.integer,
         media_type: column.text,
         state: column.integer,
-        ...options?.additionalColumns
+        ...additionalColumns
       },
       {
         name: ATTACHMENT_TABLE,
-        ...options,
+        ...tableOptions,
         localOnly: true,
         insertOnly: false
       }
