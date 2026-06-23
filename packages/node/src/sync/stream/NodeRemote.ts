@@ -36,9 +36,11 @@ export class NodeRemote extends AbstractRemote {
     this.fetchImpl =
       options?.customFetch ??
       ((resource, init) => {
+        const dispatcher = options?.dispatcher ?? defaultFetchDispatcher();
+
         return fetch(resource, {
           // @ts-expect-error
-          dispatcher: fetchDispatcher,
+          dispatcher,
           ...init
         });
       });
