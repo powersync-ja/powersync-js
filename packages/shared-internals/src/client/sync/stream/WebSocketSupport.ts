@@ -25,6 +25,10 @@ const SOCKET_TIMEOUT_MS = 30_000;
 // significantly. Therefore this is longer than the socket timeout.
 const KEEP_ALIVE_LIFETIME_MS = 90_000;
 
+/**
+ * Symbols from the main module used in WebSockets too. We're passing those from the main module to avoid bundling them
+ * again.
+ */
 export interface WebSocketSyncStreamPlatform {
   LogLevels: typeof LogLevels;
   EventQueue: typeof EventQueue;

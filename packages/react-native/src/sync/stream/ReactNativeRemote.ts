@@ -10,10 +10,15 @@ import { WebSocketSupport, WebSocketSyncStreamPlatform } from '@powersync/shared
 
 export const STREAMING_POST_TIMEOUT_MS = 30_000;
 
+export interface ReactNativeRemoteOptions {
+  fetchImplementation?: typeof fetch;
+}
+
 export class ReactNativeRemote extends AbstractRemote {
   constructor(
     protected connector: RemoteConnector,
-    logger: PowerSyncLogger
+    logger: PowerSyncLogger,
+    readonly options?: ReactNativeRemoteOptions
   ) {
     super(connector, logger);
   }
@@ -47,6 +52,10 @@ export class ReactNativeRemote extends AbstractRemote {
     try {
       // Directly import the fetch implementation from react-native-fetch-api. This removes the requirement for the
       // global `fetch` to be overridden by a polyfill.
+      if (this.options?.fetchImplementation) {
+        return await this.options.fetchImplementation(options.resource, options.request);
+      }
+
       return await fetch(options.resource, options.request);
     } finally {
       clearTimeout(timeout as any);

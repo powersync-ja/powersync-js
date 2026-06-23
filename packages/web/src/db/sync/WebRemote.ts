@@ -18,12 +18,11 @@ export class WebRemote extends AbstractRemote {
 
   protected async loadWebSocketSupport(platform: WebSocketSyncStreamPlatform): Promise<WebSocketSupport> {
     if (!websockets) {
-      websockets = import('@powersync/shared-internals/websockets').then(
-        (module) => new module.WebSocketSupport(platform)
-      );
+      const module = await import('@powersync/shared-internals/websockets');
+      websockets = new module.WebSocketSupport(platform);
     }
 
-    return await websockets;
+    return websockets;
   }
 
   getUserAgent(): string {
@@ -37,4 +36,4 @@ export class WebRemote extends AbstractRemote {
   }
 }
 
-let websockets: Promise<WebSocketSupport> | undefined;
+let websockets: WebSocketSupport | undefined;
