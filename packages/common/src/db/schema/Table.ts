@@ -248,11 +248,7 @@ export class Table<Columns extends ColumnsType = ColumnsType> extends ResolvedTa
   /**
    * Creates a new Table instance.
    *
-   * This constructor supports two different versions:
-   * 1. New constructor: Using a Columns object and an optional TableV2Options object
-   * 2. Deprecated constructor: Using a TableOptions object (will be removed in the next major release)
-   *
-   * @param columns - A Columns object
+   * @param columns - A Columns object (a record of column names to column types).
    * @param options - Optional configuration options for the table.
    *
    * @example

@@ -1,4 +1,5 @@
 ---
+'@powersync/attachments': major
 '@powersync/react-native': major
 '@powersync/common': major
 '@powersync/web': major
