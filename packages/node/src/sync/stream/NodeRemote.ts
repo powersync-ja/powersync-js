@@ -11,7 +11,7 @@ export interface NodeRemoteOptions {
   /**
    * @internal Only meant to be used for tests.
    */
-  customFetch: typeof fetch;
+  customFetch?: typeof fetch;
 
   /**
    * Optional custom dispatcher for HTTP or WEB_SOCKET connections.
@@ -54,12 +54,12 @@ export class NodeRemote extends AbstractRemote {
 
   protected async loadWebSocketSupport(platform: WebSocketSyncStreamPlatform): Promise<WebSocketSupport> {
     if (!websockets) {
-      websockets = import('@powersync/shared-internals/websockets').then(
-        (module) => new module.WebSocketSupport(platform)
-      );
+      // loadWebSocketSupport being called concurrently is safe, the import resolves to the same module in that case.
+      const module = await import('@powersync/shared-internals/websockets');
+      websockets = new module.WebSocketSupport(platform);
     }
 
-    return await websockets;
+    return websockets;
   }
 
   createSocket(url: string): globalThis.WebSocket {
@@ -119,4 +119,4 @@ function getProxyForProtocol(protocol: string): string | undefined {
   );
 }
 
-let websockets: Promise<WebSocketSupport> | undefined;
+let websockets: WebSocketSupport | undefined;

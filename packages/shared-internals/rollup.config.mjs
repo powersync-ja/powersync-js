@@ -38,6 +38,9 @@ function defineWebSocketBuild(isNode) {
  */
 export default () => {
   return [
+    // RSocket only contains CJS builds for Node.js. To support ESM and to ensure we support Web/React Native as well,
+    // we bundle and transform parts of the SDK using RSocket. The rest of the SDK consists of unbundled direct tsc
+    // outputs.
     defineWebSocketBuild(false),
     defineWebSocketBuild(true),
     // Run a no-emit build to verify we're not using Symbol.asyncIterator without fallbacks in our sources and

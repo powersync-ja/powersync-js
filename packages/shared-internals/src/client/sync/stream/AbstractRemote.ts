@@ -20,8 +20,8 @@ export type RemoteConnector = {
 };
 
 const POWERSYNC_TRAILING_SLASH_MATCH = /\/+$/;
-// Note: A postversion script will make Changesets keep this constant up-to-date.
-const POWERSYNC_JS_VERSION = 'unset';
+// Note: A postversion script will make Changesets keep this constant up to date with the version in package.json.
+const POWERSYNC_JS_VERSION = 'unset before initial release';
 
 const webSocketPlatform: WebSocketSyncStreamPlatform = {
   LogLevels,

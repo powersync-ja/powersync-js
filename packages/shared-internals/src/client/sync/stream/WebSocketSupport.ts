@@ -65,9 +65,6 @@ export class WebSocketSupport {
     }
 
     const syncQueueRequestSize = buffered ? 10 : 1;
-    const url = request.url.replace(/^https?:\/\//, function (match) {
-      return match === 'https://' ? 'wss://' : 'ws://';
-    });
 
     // While we're connecting (a process that can't be aborted in RSocket), the WebSocket instance to close if we wanted
     // to abort the connection.
@@ -145,7 +142,7 @@ export class WebSocketSupport {
 
     const connector = new RSocketConnector({
       transport: new WebsocketClientTransport({
-        url,
+        url: request.url,
         wsCreator: (url) => {
           const socket = (pendingSocket = remote.createSocket(url));
 

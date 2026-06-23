@@ -18,6 +18,7 @@ export class WebRemote extends AbstractRemote {
 
   protected async loadWebSocketSupport(platform: WebSocketSyncStreamPlatform): Promise<WebSocketSupport> {
     if (!websockets) {
+      // loadWebSocketSupport being called concurrently is safe, the import resolves to the same module in that case.
       const module = await import('@powersync/shared-internals/websockets');
       websockets = new module.WebSocketSupport(platform);
     }

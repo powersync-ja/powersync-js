@@ -24,7 +24,7 @@ export class ReactNativeRemote extends AbstractRemote {
   }
 
   protected async fetch(options: FetchOptions): Promise<Response> {
-    let timeout: unknown;
+    let timeout: ReturnType<typeof setTimeout> | null = null;
     if (options.expectStreamingResponse) {
       // @ts-expect-error https://github.com/react-native-community/fetch#enable-text-streaming
       options.request.reactNative = {
@@ -58,7 +58,7 @@ export class ReactNativeRemote extends AbstractRemote {
 
       return await fetch(options.resource, options.request);
     } finally {
-      clearTimeout(timeout as any);
+      if (timeout != null) clearTimeout(timeout);
     }
   }
 
