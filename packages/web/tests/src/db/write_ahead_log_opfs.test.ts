@@ -38,9 +38,9 @@ test('supports concurrent reads', async () => {
 
 test('can update schema', async () => {
   const db = generateTestDb({
-    database: new WASQLiteOpenFactory({
-      dbFilename: 'replace-schema.sqlite',
-      vfs: WASQLiteVFS.OPFSWriteAheadVFS
+    factory: new WASQLiteOpenFactory({
+      open: { dbFilename: 'replace-schema.sqlite', vfs: WASQLiteVFS.OPFSWriteAheadVFS },
+      logger: defaultTestLogger
     }),
     schema: TEST_SCHEMA
   });
