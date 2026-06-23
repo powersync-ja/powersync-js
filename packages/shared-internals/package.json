@@ -42,7 +42,7 @@
     "build:prod": "tsc -b && rollup -c rollup.config.mjs",
     "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
     "test": "vitest",
-    "test:exports": "attw --pack . --profile node16 --exclude-entrypoints internal/sync_protocol",
+    "test:exports": "attw --pack . --profile node16 --exclude-entrypoints internal/sync_protocol --ignore-rules cjs-resolves-to-esm",
     "postversion": "node tool/update_version.js"
   },
   "devDependencies": {
