@@ -10,6 +10,7 @@ import {
 } from '../../../utils/stream_transform.js';
 import { WebSocketSupport, WebSocketSyncStreamPlatform } from './WebSocketSupport.js';
 import { EventQueue } from '../../../utils/async.js';
+import { POWERSYNC_JS_VERSION } from '../../../version.js';
 
 /**
  * @internal
@@ -20,8 +21,6 @@ export type RemoteConnector = {
 };
 
 const POWERSYNC_TRAILING_SLASH_MATCH = /\/+$/;
-// Note: A postversion script will make Changesets keep this constant up to date with the version in package.json.
-const POWERSYNC_JS_VERSION = 'unset before initial release';
 
 const webSocketPlatform: WebSocketSyncStreamPlatform = {
   LogLevels,
