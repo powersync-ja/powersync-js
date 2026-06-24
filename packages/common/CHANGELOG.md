@@ -1,5 +1,15 @@
 # @powersync/common
 
+## 1.57.0
+
+### Minor Changes
+
+- 115d736: [Attachments] Added `AttachmentTableRecord` type, which describes the attachment table's row type.
+
+### Patch Changes
+
+- bd0bc41: AttachmentQueue: release the mutex per attachment, persist incrementally, and let `stopSync` interrupt mid-batch so foreground `saveFile` / `deleteFile` aren't blocked behind in-flight uploads or downloads.
+
 ## 1.56.0
 
 ### Minor Changes

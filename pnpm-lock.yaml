@@ -460,7 +460,7 @@ importers:
   packages/drizzle-driver:
     dependencies:
       '@powersync/common':
-        specifier: workspace:^1.56.0
+        specifier: workspace:^1.57.0
         version: link:../common
       tslib:
         specifier: ^2.8.1
@@ -500,7 +500,7 @@ importers:
   packages/kysely-driver:
     dependencies:
       '@powersync/common':
-        specifier: workspace:^1.56.0
+        specifier: workspace:^1.57.0
         version: link:../common
       kysely:
         specifier: 'catalog:'
