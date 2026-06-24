@@ -172,7 +172,7 @@ export function createMockSyncServiceTest(bson: boolean) {
           ...options,
           database: dbOptions,
           remoteOptions: {
-            fetchImplementation: inMemoryFetch
+            customFetch: inMemoryFetch
           }
         });
 

@@ -48,9 +48,6 @@ export interface SyncOptions {
   crudUploadThrottleMs?: number;
 }
 
-// TODO: This should not be part of SyncOptions. Remove the WebSocket options from @powersync/common into a separate
-// package and make this an option only available when creating a custom remote.
-
 /**
  * @public
  */
