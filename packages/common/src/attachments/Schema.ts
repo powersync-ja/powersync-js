@@ -66,7 +66,10 @@ export enum AttachmentState {
  */
 export interface AttachmentTableOptions extends Omit<TableV2Options, 'name' | 'columns'> {}
 
-const ATTACHMENT_TABLE_COLUMNS = {
+/**
+ * @alpha
+ */
+export const ATTACHMENT_TABLE_COLUMNS = {
   filename: column.text,
   local_uri: column.text,
   timestamp: column.integer,
