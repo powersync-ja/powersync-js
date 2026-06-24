@@ -179,9 +179,7 @@ export class PowerSyncTauriDatabase extends BasePowerSyncDatabase<TauriPowerSync
     this.tableUpdateListener = await listen<string[]>(`table-updates:${event_key}`, (event) => {
       const adapter = this.database;
       if (adapter instanceof RustDatabaseAdapter) {
-        adapter.iterateListeners((l) =>
-          l.tablesUpdated?.({ tables: event.payload, rawUpdates: [], groupedUpdates: {} })
-        );
+        adapter.iterateListeners((l) => l.tablesUpdated?.({ tables: event.payload }));
       }
     });
     this.syncStatusListener = await listen<SyncStatusJson>(`sync-status:${event_key}`, (event) => {

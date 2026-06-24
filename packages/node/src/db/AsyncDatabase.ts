@@ -1,12 +1,9 @@
-import { QueryResult } from '@powersync/common';
+import { BaseQueryResult, QueryResult, RawQueryResult } from '@powersync/common';
 import { NodeDatabaseImplementation } from './options.js';
 
-export type ProxiedQueryResult = Omit<QueryResult, 'rows'> & {
-  rows?: {
-    _array: any[];
-    length: number;
-  };
-};
+export interface MappedQueryResult extends BaseQueryResult {
+  rows?: unknown[];
+}
 
 export interface AsyncDatabaseOpenOptions {
   path: string;
@@ -19,8 +16,8 @@ export interface AsyncDatabaseOpener {
 }
 
 export interface AsyncDatabase {
-  execute: (query: string, params: any[]) => Promise<ProxiedQueryResult>;
-  executeRaw: (query: string, params: any[]) => Promise<any[][]>;
-  executeBatch: (query: string, params: any[][]) => Promise<ProxiedQueryResult>;
+  execute: (query: string, params: any[]) => Promise<MappedQueryResult>;
+  executeRaw: (query: string, params: any[]) => Promise<RawQueryResult>;
+  executeBatch: (query: string, params: any[][]) => Promise<QueryResult<never>>;
   close: () => Promise<void>;
 }

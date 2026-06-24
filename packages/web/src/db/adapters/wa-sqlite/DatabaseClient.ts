@@ -1,18 +1,17 @@
 import {
-  BaseObserver,
   QueryResult,
   LockContext,
   DBLockOptions,
-  DBAdapterListener,
-  ConnectionPool,
   SqlExecutor,
-  DBGetUtilsDefaultMixin,
   BatchedUpdateNotification,
-  SQLOpenOptions
+  SQLOpenOptions,
+  DBAdapter,
+  RawQueryResult,
+  queryResultWithoutRows,
+  BaseQueryResult
 } from '@powersync/common';
 import { SharedConnectionWorker, WebDBAdapterConfiguration } from '../WebDBAdapter.js';
 import { ClientConnectionView } from './DatabaseServer.js';
-import { RawQueryResult } from './RawSqliteConnection.js';
 import * as Comlink from 'comlink';
 import type { ConnectToMultiDatabaseServerOptions } from '../../../worker/db/MultiDatabaseServer.js';
 import { ConnectionClosedError } from '@powersync/shared-internals';
@@ -44,10 +43,7 @@ export interface ClientOptions {
 /**
  * A single-connection {@link ConnectionPool} implementation based on a worker connection.
  */
-export class DatabaseClient<Config extends SQLOpenOptions = WebDBAdapterConfiguration>
-  extends BaseObserver<DBAdapterListener>
-  implements ConnectionPool
-{
+export class DatabaseClient<Config extends SQLOpenOptions = WebDBAdapterConfiguration> extends DBAdapter {
   #connection: ConnectionState;
   #shareConnectionAbortController = new AbortController();
   #receiveTableUpdates: MessagePort;
@@ -70,9 +66,7 @@ export class DatabaseClient<Config extends SQLOpenOptions = WebDBAdapterConfigur
     port2.onmessage = (event) => {
       const tables = event.data as string[];
       const notification: BatchedUpdateNotification = {
-        tables,
-        groupedUpdates: {},
-        rawUpdates: []
+        tables
       };
       this.iterateListeners((l) => {
         l.tablesUpdated && l.tablesUpdated(notification);
@@ -185,18 +179,23 @@ export class DatabaseClient<Config extends SQLOpenOptions = WebDBAdapterConfigur
 }
 
 /**
- * A {@link SqlExecutor} implemented by sending commands to a worker.
+ * A {@link LockContext} implemented by sending commands to a worker.
  *
  * While an instance is active, it has exclusive access to the underlying database connection (as represented by its
  * token).
  */
-class ClientSqlExecutor implements SqlExecutor {
+class ClientLockContext extends LockContext {
   readonly #connection: ConnectionState;
   readonly #token: string;
 
   constructor(connection: ConnectionState, token: string) {
+    super();
     this.#connection = connection;
     this.#token = token;
+  }
+
+  get connectionType(): 'readWrite' {
+    return 'readWrite';
   }
 
   /**
@@ -223,37 +222,8 @@ class ClientSqlExecutor implements SqlExecutor {
     }
   }
 
-  async execute(query: string, params?: any[] | undefined): Promise<QueryResult> {
-    const rs = await this.#executeOnWorker(query, params);
-    let rows: QueryResult['rows'] | undefined;
-    if (rs.resultSet) {
-      const resultSet = rs.resultSet;
-
-      function rowToJavaScriptObject(row: any[]): Record<string, any> {
-        const obj: Record<string, any> = {};
-        resultSet.columns.forEach((key, idx) => (obj[key] = row[idx]));
-        return obj;
-      }
-
-      const mapped = resultSet.rows.map(rowToJavaScriptObject);
-
-      rows = {
-        _array: mapped,
-        length: mapped.length,
-        item: (idx: number) => mapped[idx]
-      };
-    }
-
-    return {
-      rowsAffected: rs.changes,
-      insertId: rs.lastInsertRowId,
-      rows
-    };
-  }
-
-  async executeRaw(query: string, params?: any[] | undefined): Promise<any[][]> {
-    const rs = await this.#executeOnWorker(query, params);
-    return rs.resultSet?.rows ?? [];
+  async executeRaw(query: string, params?: any[] | undefined): Promise<RawQueryResult> {
+    return await this.#executeOnWorker(query, params);
   }
 
   async #executeOnWorker(query: string, params: any[] | undefined): Promise<RawQueryResult> {
@@ -263,22 +233,20 @@ class ClientSqlExecutor implements SqlExecutor {
     );
   }
 
-  async executeBatch(query: string, params: any[][] = []): Promise<QueryResult> {
+  async executeBatch(query: string, params: any[][] = []): Promise<QueryResult<never>> {
     const results = await this.maybeTrace(
       (c) => c.executeBatch(this.#token, query, params),
       () => `${query} (batch of ${params.length})`
     );
-    const result: QueryResult = { insertId: undefined, rowsAffected: 0 };
+    const result: BaseQueryResult = { insertId: undefined, rowsAffected: 0 };
     for (const source of results) {
-      result.insertId = source.lastInsertRowId;
-      result.rowsAffected += source.changes;
+      result.insertId = source.insertId;
+      result.rowsAffected = (result.rowsAffected ?? 0) + source.rowsAffected;
     }
 
-    return result;
+    return queryResultWithoutRows(result);
   }
 }
-
-class ClientLockContext extends DBGetUtilsDefaultMixin(ClientSqlExecutor) implements LockContext {}
 
 interface ConnectionState {
   connection: ClientConnectionView;

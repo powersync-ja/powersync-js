@@ -22,6 +22,7 @@ export { ProgressWithOperations, SyncProgress } from './db/crud/SyncProgress.js'
 export * from './db/crud/SyncStatus.js';
 export * from './db/crud/UploadQueueStatus.js';
 export * from './db/DBAdapter.js';
+export * from './db/QueryResult.js';
 export * from './db/schema/Column.js';
 export * from './db/schema/Index.js';
 export * from './db/schema/IndexedColumn.js';

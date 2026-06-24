@@ -2,13 +2,12 @@ import { DB, SQLBatchTuple, UpdateHookOperation } from '@op-engineering/op-sqlit
 import {
   BaseObserver,
   BatchedUpdateNotification,
-  DBAdapterListener,
-  DBGetUtilsDefaultMixin,
   LockContext,
   QueryResult,
-  RowUpdateType,
-  SqlExecutor,
-  UpdateNotification
+  queryResultFromMapped,
+  queryResultWithoutRows,
+  RawQueryResult,
+  SqliteValue
 } from '@powersync/common';
 
 export type OPSQLiteConnectionOptions = {
@@ -23,17 +22,18 @@ export type OPSQLiteUpdateNotification = {
   rowId: number;
 };
 
-class OPSQLiteExecutor extends BaseObserver<DBAdapterListener> implements Omit<SqlExecutor, 'executeBatch'> {
+export class OPSQLiteConnection extends LockContext {
   protected DB: DB;
-  private updateBuffer: UpdateNotification[];
+  private updateBuffer: Set<string>;
+  readonly tableUpdateDispatcher = new BaseObserver();
 
   constructor(protected options: OPSQLiteConnectionOptions) {
     super();
     this.DB = options.baseDB;
-    this.updateBuffer = [];
+    this.updateBuffer = new Set();
 
     this.DB.rollbackHook(() => {
-      this.updateBuffer = [];
+      this.updateBuffer = new Set();
     });
 
     this.DB.updateHook((update) => {
@@ -41,84 +41,57 @@ class OPSQLiteExecutor extends BaseObserver<DBAdapterListener> implements Omit<S
     });
   }
 
-  addTableUpdate(update: OPSQLiteUpdateNotification) {
-    let opType: RowUpdateType;
-    switch (update.operation) {
-      case 'INSERT':
-        opType = RowUpdateType.SQLITE_INSERT;
-        break;
-      case 'DELETE':
-        opType = RowUpdateType.SQLITE_DELETE;
-        break;
-      case 'UPDATE':
-        opType = RowUpdateType.SQLITE_UPDATE;
-        break;
-    }
+  get connectionType() {
+    return this.options.readonly ? 'queryOnly' : 'readWrite';
+  }
 
-    this.updateBuffer.push({
-      table: update.table,
-      opType,
-      rowId: update.rowId
-    });
+  addTableUpdate(update: OPSQLiteUpdateNotification) {
+    this.updateBuffer.add(update.table);
   }
 
   flushUpdates() {
-    if (!this.updateBuffer.length) {
+    if (!this.updateBuffer.size) {
       return;
     }
 
-    const groupedUpdates = this.updateBuffer.reduce((grouping: Record<string, UpdateNotification[]>, update) => {
-      const { table } = update;
-      const updateGroup = grouping[table] || (grouping[table] = []);
-      updateGroup.push(update);
-      return grouping;
-    }, {});
-
     const batchedUpdate: BatchedUpdateNotification = {
-      groupedUpdates,
-      rawUpdates: this.updateBuffer,
-      tables: Object.keys(groupedUpdates)
+      tables: Array.from(this.updateBuffer)
     };
 
-    this.updateBuffer = [];
-    this.iterateListeners((l) => l.tablesUpdated?.(batchedUpdate));
+    this.updateBuffer = new Set();
+    this.tableUpdateDispatcher.iterateListeners((l) => l.tablesUpdated?.(batchedUpdate));
   }
 
   close() {
     return this.DB.close();
   }
 
-  async execute(query: string, params?: any[]): Promise<QueryResult> {
+  async execute<T>(query: string, params?: any[]): Promise<QueryResult<T>> {
     const res = await this.DB.execute(query, params);
+    return queryResultFromMapped(res, res.rows as T[]);
+  }
+
+  async executeRaw(query: string, params?: any[]): Promise<RawQueryResult> {
+    const { insertId, rowsAffected, columnNames, rawRows } = await this.DB.executeRaw(query, params);
     return {
-      insertId: res.insertId,
-      rowsAffected: res.rowsAffected,
-      rows: {
-        _array: res.rows ?? [],
-        length: res.rows?.length ?? 0,
-        item: (index: number) => res.rows?.[index]
-      }
+      insertId: insertId,
+      rowsAffected: rowsAffected,
+      columnNames,
+      rawRows: (rawRows ?? []) as SqliteValue[][]
     };
   }
 
-  async executeRaw(query: string, params?: any[]): Promise<any[][]> {
-    return await this.DB.executeRaw(query, params);
-  }
-
-  async executeNativeBatch(query: string, params: any[][] = []): Promise<QueryResult> {
+  // NOTE: Do not override executeBatch here. OP-sqlite starts a transaction in executeBatch, so we can't use it if
+  // we're already in a transaction. To be safe, we only call this method from the OPSqliteAdapter class overriding
+  // executeBatch when called on the adapter directly (not within readLock / writeLock).
+  async executeNativeBatch(query: string, params: any[][] = []): Promise<QueryResult<never>> {
     const tuple: SQLBatchTuple[] = [[query, params[0]]];
     params.slice(1).forEach((p) => tuple.push([query, p]));
 
     const result = await this.DB.executeBatch(tuple);
-    return {
+    return queryResultWithoutRows({
       rowsAffected: result.rowsAffected ?? 0
-    };
-  }
-}
-
-export class OPSQLiteConnection extends DBGetUtilsDefaultMixin(OPSQLiteExecutor) implements LockContext {
-  get connectionType() {
-    return this.options.readonly ? 'queryOnly' : 'writer';
+    });
   }
 
   async refreshSchema() {

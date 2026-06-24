@@ -2,17 +2,15 @@ import { Factory as WaSqliteFactory, SQLITE_ROW } from '@journeyapps/wa-sqlite';
 
 import { DEFAULT_MODULE_FACTORIES, WASQLiteModuleFactory, WASQLiteVFS } from './vfs.js';
 import { TemporaryStorageOption } from '../options.js';
+import { RawQueryResult, SqliteValue } from '@powersync/common';
 
-export interface RawResultSet {
-  columns: string[];
-  rows: SQLiteCompatibleType[][];
+export interface RawWebResult extends Required<RawQueryResult> {
+  autocommit: boolean;
 }
 
-export interface RawQueryResult {
-  changes: number;
-  lastInsertRowId: number;
-  autocommit: boolean;
-  resultSet: RawResultSet | undefined;
+export interface RawResultSet {
+  columnNames: string[];
+  rawRows: SqliteValue[][];
 }
 
 /**
@@ -105,12 +103,12 @@ export class RawSqliteConnection {
     return this.requireSqlite().get_autocommit(this.db) != 0;
   }
 
-  async execute(sql: string, bindings?: any[]): Promise<RawQueryResult> {
+  async execute(sql: string, bindings?: any[]): Promise<RawWebResult> {
     const resultSet = await this.executeSingleStatementRaw(sql, bindings);
     return this.wrapQueryResults(this.requireSqlite(), resultSet);
   }
 
-  async executeBatch(sql: string, bindings: any[][]): Promise<RawQueryResult[]> {
+  async executeBatch(sql: string, bindings: any[][]): Promise<RawWebResult[]> {
     const results = [];
     const api = this.requireSqlite();
     for await (const stmt of api.statements(this.db, sql)) {
@@ -128,21 +126,22 @@ export class RawSqliteConnection {
     return results;
   }
 
-  private wrapQueryResults(api: SQLiteAPI, rs: RawResultSet | undefined): RawQueryResult {
+  private wrapQueryResults(api: SQLiteAPI, { rawRows, columnNames }: RawResultSet): RawWebResult {
     return {
-      changes: api.changes(this.db),
-      lastInsertRowId: api.last_insert_id(this.db),
+      rowsAffected: api.changes(this.db),
+      insertId: api.last_insert_id(this.db),
       autocommit: api.get_autocommit(this.db) != 0,
-      resultSet: rs
+      rawRows,
+      columnNames
     };
   }
 
   /**
    * This executes a single statement using SQLite3 and returns the results as a {@link RawResultSet}.
    */
-  private async executeSingleStatementRaw(sql: string, bindings?: any[]): Promise<RawResultSet | undefined> {
+  private async executeSingleStatementRaw(sql: string, bindings?: any[]): Promise<RawResultSet> {
     const results = await this.executeRaw(sql, bindings);
-    return results.length ? results[0] : undefined;
+    return results.length ? results[0] : { columnNames: [], rawRows: [] };
   }
 
   async executeRaw(sql: string, bindings?: any[]): Promise<RawResultSet[]> {
@@ -152,7 +151,7 @@ export class RawSqliteConnection {
       let columns;
 
       const rs = await this.stepThroughStatement(api, stmt, bindings ?? [], columns);
-      columns = rs.columns;
+      columns = rs.columnNames;
       if (columns.length) {
         results.push(rs);
       }
@@ -194,7 +193,7 @@ export class RawSqliteConnection {
     }
 
     knownColumns ??= api.column_names(stmt);
-    return { columns: knownColumns, rows };
+    return { columnNames: knownColumns, rawRows: rows };
   }
 
   async close() {

@@ -40,8 +40,8 @@ export class TimedPowerSyncDatabase extends WebPowerSyncDatabase {
     return this.timed(() => super.execute(sql, parameters));
   }
 
-  async execute(sql: string, parameters?: any[]) {
-    return this.timedOperation(OperationType.EXECUTE, () => super.execute(sql, parameters));
+  async execute<T>(sql: string, parameters?: any[]) {
+    return this.timedOperation(OperationType.EXECUTE, () => super.execute<T>(sql, parameters));
   }
 
   async getAll<T>(sql: string, parameters?: any[]): Promise<T[]> {

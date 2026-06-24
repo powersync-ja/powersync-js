@@ -1,9 +1,6 @@
 import {
   BaseObserver,
-  ConnectionPool,
   DBAdapter,
-  DBAdapterDefaultMixin,
-  DBAdapterListener,
   DBLockOptions,
   LockContext,
   PowerSyncBackendConnector,
@@ -571,7 +568,7 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
     const syncParams = this.syncParams;
     const sharedSync = this;
 
-    class ReconnectPool extends BaseObserver<DBAdapterListener> implements ConnectionPool {
+    return new (class extends DBAdapter {
       private connectionState:
         | null
         | DatabaseClient<ResolvedWebSQLOpenOptions>
@@ -640,10 +637,7 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
       async refreshSchema(): Promise<void> {
         // Not used by sync client.
       }
-    }
-
-    const Adapter = DBAdapterDefaultMixin(ReconnectPool);
-    return new Adapter();
+    })();
   }
 }
 
