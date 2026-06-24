@@ -18,8 +18,8 @@
   ],
   "exports": {
     ".": {
-      "types": "./lib/src/index.d.ts",
-      "default": "./lib/src/index.js"
+      "types": "./lib/index.d.ts",
+      "default": "./lib/index.js"
     },
     "./umd": {
       "types": "./lib/src/index.d.ts",

@@ -11,7 +11,7 @@ const __dirname = path.dirname(__filename);
 
 export default () => {
   return {
-    entry: path.join(__dirname, './lib/src/index.js'),
+    entry: path.join(__dirname, './lib/index.js'),
     output: {
       filename: 'index.umd.js',
       path: path.join(__dirname, 'dist'),

@@ -10,8 +10,8 @@ const __dirname = path.dirname(__filename);
 export default () => {
   return {
     entry: {
-      SharedSyncImplementation: path.join(__dirname, './lib/src/worker/sync/SharedSyncImplementation.worker.js'),
-      WASQLiteDB: path.join(__dirname, './lib/src/worker/db/WASQLiteDB.worker.js')
+      SharedSyncImplementation: path.join(__dirname, './lib/worker/sync/SharedSyncImplementation.worker.js'),
+      WASQLiteDB: path.join(__dirname, './lib/worker/db/WASQLiteDB.worker.js')
     },
     experiments: {
       topLevelAwait: true // Enable top-level await in Webpack
