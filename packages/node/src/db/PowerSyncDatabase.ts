@@ -26,7 +26,7 @@ export type NodePowerSyncDatabaseOptions = BasePowerSyncDatabaseOptions &
     /**
      * Options to override how the SDK will connect to the sync service.
      */
-    remoteOptions?: Partial<NodeRemoteOptions>;
+    remoteOptions?: NodeRemoteOptions;
   };
 
 class NodePowerSyncDatabase extends BasePowerSyncDatabase<NodePowerSyncDatabaseOptions> {
