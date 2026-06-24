@@ -26,7 +26,7 @@ if (isSharedWorker) {
       const { service, port } = event.data;
       if (service === 'database') {
         Comlink.expose(exposedDatabaseFunctions, port);
-      } else {
+      } else if (service === 'sync') {
         new WorkerClient(sharedSyncImplementation, port);
       }
     };
