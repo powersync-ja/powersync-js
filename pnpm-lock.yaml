@@ -49,8 +49,8 @@ catalogs:
       specifier: ^5.0.7
       version: 5.0.7
     '@rollup/plugin-terser':
-      specifier: ^0.4.4
-      version: 0.4.4
+      specifier: ^1.0.0
+      version: 1.0.0
     '@rollup/plugin-typescript':
       specifier: ^12.1.4
       version: 12.3.0
@@ -81,6 +81,9 @@ catalogs:
     eslint-plugin-prettier:
       specifier: ^5.5.4
       version: 5.5.5
+    estree-walker:
+      specifier: ^3.0.3
+      version: 3.0.3
     glob:
       specifier: ^11.0.0
       version: 11.1.0
@@ -90,6 +93,9 @@ catalogs:
     kysely:
       specifier: ^0.28.0
       version: 0.28.11
+    magic-string:
+      specifier: ^0.30.21
+      version: 0.30.21
     p-defer:
       specifier: ^4.0.1
       version: 4.0.1
@@ -757,7 +763,7 @@ importers:
         version: 5.0.7(rollup@4.59.0)
       '@rollup/plugin-terser':
         specifier: 'catalog:'
-        version: 0.4.4(rollup@4.59.0)
+        version: 1.0.0(rollup@4.59.0)
       '@types/react':
         specifier: ^19.1.1
         version: 19.2.14
@@ -810,10 +816,10 @@ importers:
         specifier: ^4.1.0
         version: 4.1.0(encoding@0.1.13)
       estree-walker:
-        specifier: ^3.0.3
+        specifier: 'catalog:'
         version: 3.0.3
       magic-string:
-        specifier: ^0.30.21
+        specifier: 'catalog:'
         version: 0.30.21
       rollup:
         specifier: 'catalog:'
@@ -929,18 +935,33 @@ importers:
       '@journeyapps/wa-sqlite':
         specifier: ^1.7.0
         version: 1.7.0
+      '@rollup/plugin-node-resolve':
+        specifier: 'catalog:'
+        version: 16.0.3(rollup@4.59.0)
+      '@rollup/plugin-terser':
+        specifier: 'catalog:'
+        version: 1.0.0(rollup@4.59.0)
       '@types/uuid':
         specifier: 'catalog:'
         version: 9.0.8
       bson:
         specifier: 'catalog:'
         version: 6.10.4
+      estree-walker:
+        specifier: 'catalog:'
+        version: 3.0.3
       glob:
         specifier: 'catalog:'
         version: 11.1.0
+      magic-string:
+        specifier: 'catalog:'
+        version: 0.30.21
       p-defer:
         specifier: 'catalog:'
         version: 4.0.1
+      rollup:
+        specifier: 'catalog:'
+        version: 4.59.0
       source-map-loader:
         specifier: ^5.0.0
         version: 5.0.0(webpack@5.105.2)
@@ -6521,6 +6542,15 @@ packages:
   '@rollup/plugin-terser@0.4.4':
     resolution: {integrity: sha512-XHeJC5Bgvs8LfukDwWZp7yeqin6ns8RTl2B9avbejt6tZqsqvVoWI7ZTQrcNsfKEDWBTnTxM8nMDkO2IFFbd0A==}
     engines: {node: '>=14.0.0'}
+    peerDependencies:
+      rollup: ^2.0.0||^3.0.0||^4.0.0
+    peerDependenciesMeta:
+      rollup:
+        optional: true
+
+  '@rollup/plugin-terser@1.0.0':
+    resolution: {integrity: sha512-FnCxhTBx6bMOYQrar6C8h3scPt8/JwIzw3+AJ2K++6guogH5fYaIFia+zZuhqv0eo1RN7W1Pz630SyvLbDjhtQ==}
+    engines: {node: '>=20.0.0'}
     peerDependencies:
       rollup: ^2.0.0||^3.0.0||^4.0.0
     peerDependenciesMeta:
@@ -15961,6 +15991,10 @@ packages:
 
   serialize-javascript@6.0.2:
     resolution: {integrity: sha512-Saa1xPByTTq2gdeFZYLLo+RFE35NHZkAbqZeWNd3BpzppeVisAqpDjcp8dyf6uIvEqJRd46jemmyA4iFIeVk8g==}
+
+  serialize-javascript@7.0.6:
+    resolution: {integrity: sha512-ATTK5Q4gFVg0YDp1my2vqygyvhcklD/UV5GIlYHooGTn/NogJqIzpetkD6E5kmuVULqz/S9inUL25XcAgDRJQg==}
+    engines: {node: '>=20.0.0'}
 
   seroval-plugins@1.5.0:
     resolution: {integrity: sha512-EAHqADIQondwRZIdeW2I636zgsODzoBDwb3PT/+7TLDWyw1Dy/Xv7iGUIEXXav7usHDE9HVhOU61irI3EnyyHA==}
@@ -26210,6 +26244,14 @@ snapshots:
     optionalDependencies:
       rollup: 4.59.0
 
+  '@rollup/plugin-terser@1.0.0(rollup@4.59.0)':
+    dependencies:
+      serialize-javascript: 7.0.6
+      smob: 1.6.1
+      terser: 5.48.0
+    optionalDependencies:
+      rollup: 4.59.0
+
   '@rollup/plugin-typescript@12.3.0(rollup@4.14.3)(tslib@2.8.1)(typescript@6.0.3)':
     dependencies:
       '@rollup/pluginutils': 5.4.0(rollup@4.14.3)
@@ -31177,7 +31219,7 @@ snapshots:
 
   estree-walker@3.0.3:
     dependencies:
-      '@types/estree': 1.0.8
+      '@types/estree': 1.0.9
 
   esutils@2.0.3: {}
 
@@ -38187,6 +38229,8 @@ snapshots:
   serialize-javascript@6.0.2:
     dependencies:
       randombytes: 2.1.0
+
+  serialize-javascript@7.0.6: {}
 
   seroval-plugins@1.5.0(seroval@1.5.0):
     dependencies:
