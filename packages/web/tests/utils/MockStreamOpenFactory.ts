@@ -51,9 +51,10 @@ export class MockRemote extends AbstractRemote {
     });
   }
 
-  post(path: string, data: any, headers?: Record<string, string> | undefined): Promise<any> {
-    throw new Error('Method not implemented.');
+  protected fetch(): Promise<Response> {
+    throw new Error('Not implemented');
   }
+
   async get(path: string, headers?: Record<string, string> | undefined): Promise<any> {
     // mock a response for write checkpoint API
     if (path.includes('checkpoint')) {
@@ -62,12 +63,7 @@ export class MockRemote extends AbstractRemote {
     throw new Error('Not implemented');
   }
 
-  async postStreaming(
-    path: string,
-    data: any,
-    headers?: Record<string, string>,
-    signal?: AbortSignal
-  ): Promise<ReadableStream> {
+  async postStreaming(path: string, data: any, signal?: AbortSignal): Promise<ReadableStream> {
     const stream = new ReadableStream({
       start: (controller) => {
         this.streamController = controller;
@@ -94,12 +90,12 @@ export class MockRemote extends AbstractRemote {
     return new Response(stream).body!;
   }
 
-  async socketStreamRaw<T>(): Promise<never> {
-    throw 'Unsupported: Socket streams are not currently supported in tests';
+  protected loadWebSocketSupport(): Promise<never> {
+    throw new Error('Mocked WebRemote does not support WebSockets');
   }
 
   async fetchStream(options: SyncStreamOptions): Promise<SimpleAsyncIterator<Uint8Array | string>> {
-    const mockResponse = await this.postStreaming(options.path, options.data, options.headers, options.abortSignal);
+    const mockResponse = await this.postStreaming(options.path, options.data, options.abortSignal);
     const mockReader = mockResponse.getReader();
     options.abortSignal?.addEventListener('abort', async () => {
       try {
