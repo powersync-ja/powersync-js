@@ -1,4 +1,4 @@
-import { column, Column, ColumnType, Schema, Table, UpdateType } from '@powersync/common';
+import { column, Schema, Table, UpdateType } from '@powersync/common';
 import pDefer from 'p-defer';
 import { v4 as uuid } from 'uuid';
 import { describe, expect, it } from 'vitest';

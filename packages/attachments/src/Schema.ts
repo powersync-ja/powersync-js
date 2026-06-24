@@ -1,4 +1,4 @@
-import { Column, ColumnType, ResolvedTable, ResolvedTableOptions, Table } from '@powersync/common';
+import { Column, ColumnType, ResolvedTable, ResolvedTableOptions } from '@powersync/common';
 
 export const ATTACHMENT_TABLE = 'attachments';
 
