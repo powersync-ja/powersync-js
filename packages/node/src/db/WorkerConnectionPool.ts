@@ -4,11 +4,8 @@ import * as path from 'node:path';
 import { Worker } from 'node:worker_threads';
 
 import {
-  BaseObserver,
   BatchedUpdateNotification,
-  ConnectionPool,
-  DBAdapterDefaultMixin,
-  DBAdapterListener,
+  DBAdapter,
   DBLockOptions,
   LockContext,
   QueryResult,
@@ -35,7 +32,7 @@ const defaultDatabaseImplementation: NodeDatabaseImplementation = {
 /**
  * Adapter for better-sqlite3
  */
-export class WorkerConnectionPool extends BaseObserver<DBAdapterListener> implements ConnectionPool {
+export class WorkerConnectionPool extends DBAdapter {
   private readonly options: NodeSQLOpenOptions;
   public readonly name: string;
 
@@ -119,7 +116,7 @@ export class WorkerConnectionPool extends BaseObserver<DBAdapterListener> implem
         implementation: this.options.implementation ?? defaultDatabaseImplementation
       })) as Remote<AsyncDatabase>;
       if (isWriter) {
-        await database.execute("SELECT powersync_update_hooks('install');", []);
+        await database.executeRaw("SELECT powersync_update_hooks('install');", []);
       }
 
       const connection = new RemoteConnection(worker, comlink, database, !isWriter);
@@ -174,14 +171,12 @@ export class WorkerConnectionPool extends BaseObserver<DBAdapterListener> implem
       try {
         return await fn(item);
       } finally {
-        const serializedUpdates = await item.executeRaw("SELECT powersync_update_hooks('get');", []);
+        const { rawRows: serializedUpdates } = await item.executeRaw("SELECT powersync_update_hooks('get');", []);
         const updates = JSON.parse(serializedUpdates[0][0] as string) as string[];
 
         if (updates.length > 0) {
           const event: BatchedUpdateNotification = {
-            tables: updates,
-            groupedUpdates: {},
-            rawUpdates: []
+            tables: updates
           };
           this.iterateListeners((cb) => cb.tablesUpdated?.(event));
         }
@@ -202,5 +197,3 @@ export class WorkerConnectionPool extends BaseObserver<DBAdapterListener> implem
     }
   }
 }
-
-export class WorkerPoolDatabaseAdapter extends DBAdapterDefaultMixin(WorkerConnectionPool) {}

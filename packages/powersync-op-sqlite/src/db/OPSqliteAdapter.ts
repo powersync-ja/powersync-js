@@ -1,14 +1,5 @@
 import { getDylibPath, open, type DB } from '@op-engineering/op-sqlite';
-import {
-  BaseObserver,
-  ConnectionPool,
-  DBAdapter,
-  DBAdapterDefaultMixin,
-  DBAdapterListener,
-  DBLockOptions,
-  QueryResult,
-  Transaction
-} from '@powersync/common';
+import { DBAdapter, DBLockOptions, QueryResult } from '@powersync/common';
 import { timeoutSignal, Semaphore } from '@powersync/shared-internals';
 import { Platform } from 'react-native';
 import { OPSQLiteConnection } from './OPSQLiteConnection';
@@ -25,7 +16,7 @@ export type OPSQLiteAdapterOptions = {
 
 const READ_CONNECTIONS = 5;
 
-class OPSQLiteConnectionPool extends BaseObserver<DBAdapterListener> implements ConnectionPool {
+export class OPSQLiteDBAdapter extends DBAdapter {
   name: string;
 
   protected initialized: Promise<void>;
@@ -83,7 +74,7 @@ class OPSQLiteConnectionPool extends BaseObserver<DBAdapterListener> implements 
     }
 
     // Changes should only occur in the write connection
-    underlyingWriteConnection.registerListener({
+    underlyingWriteConnection.tableUpdateDispatcher.registerListener({
       tablesUpdated: (notification) => this.iterateListeners((cb) => cb.tablesUpdated?.(notification))
     });
 
@@ -231,12 +222,10 @@ class OPSQLiteConnectionPool extends BaseObserver<DBAdapterListener> implements 
       release();
     }
   }
-}
 
-export class OPSQLiteDBAdapter extends DBAdapterDefaultMixin(OPSQLiteConnectionPool) implements DBAdapter {
-  async executeBatch(query: string, params: any[][] = []): Promise<QueryResult> {
-    return await this.writeLock(async (tx) => {
-      return await (tx as OPSQLiteConnection).executeNativeBatch(query, params);
-    });
+  executeBatch(query: string, params?: any[][]): Promise<QueryResult<never>> {
+    // We need to override this because we don't support executeBatch in connection contexts / transactions, only when
+    // called directly on the adapter.
+    return this.writeLock((conn) => conn.executeNativeBatch(query, params));
   }
 }

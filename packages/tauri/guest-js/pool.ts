@@ -1,15 +1,12 @@
 import {
-  BaseObserver,
-  ConnectionPool,
-  DBAdapterDefaultMixin,
-  DBAdapterListener,
-  DBGetUtilsDefaultMixin,
+  DBAdapter,
   DBLockOptions,
   LockContext,
   QueryResult,
-  SqlExecutor
+  queryResultWithoutRows,
+  RawQueryResult
 } from '@powersync/common';
-import { ExecuteBatchResult, ExecuteSqlResult, powersyncCommand, SqliteValue } from './command';
+import { ExecuteBatchResult, ExecuteSqlResult, powersyncCommand } from './command';
 
 /**
  *  A handle identfier that is set by an outer context after constructing the rust database instance.
@@ -18,7 +15,10 @@ export interface LateHandle {
   handle: number;
 }
 
-class RustDatabase extends BaseObserver<DBAdapterListener> implements ConnectionPool {
+/**
+ * A SQLite connection pool backed by the PowerSync Rust SDK.
+ */
+export class RustDatabaseAdapter extends DBAdapter {
   name: string;
 
   constructor(
@@ -53,7 +53,7 @@ class RustDatabase extends BaseObserver<DBAdapterListener> implements Connection
     const handle = (connection as any).CreatedHandle as number;
 
     try {
-      return await fn(new RustLockContext(handle));
+      return await fn(new RustLockContext(handle, write ? 'readWrite' : 'readOnly'));
     } finally {
       await await powersyncCommand({ CloseHandle: handle });
     }
@@ -64,13 +64,13 @@ class RustDatabase extends BaseObserver<DBAdapterListener> implements Connection
   }
 }
 
-/**
- * A SQLite connection pool backed by the PowerSync Rust SDK.
- */
-export class RustDatabaseAdapter extends DBAdapterDefaultMixin(RustDatabase) {}
-
-class RustSqlExecutor implements SqlExecutor {
-  constructor(readonly handle: number) {}
+class RustLockContext extends LockContext {
+  constructor(
+    readonly handle: number,
+    readonly connectionType: 'readWrite' | 'readOnly'
+  ) {
+    super();
+  }
 
   private async executeInner(query: string, params: any[]) {
     const result = await powersyncCommand({
@@ -91,37 +91,18 @@ class RustSqlExecutor implements SqlExecutor {
     };
   }
 
-  async execute(query: string, params?: any[] | undefined): Promise<QueryResult> {
-    const { rows, columnNames, insertId, rowsAffected } = await this.executeInner(query, params ?? []);
-    const mappedRows = rows.map((row) => {
-      const names = columnNames;
-      const record: Record<string, SqliteValue> = {};
-      for (let i = 0; i < names.length; i++) {
-        record[names[i]] = row[i];
-      }
-
-      return record;
-    });
+  async executeRaw(query: string, params?: any[] | undefined): Promise<RawQueryResult> {
+    const { rows, insertId, rowsAffected, columnNames } = await this.executeInner(query, params ?? []);
 
     return {
-      insertId,
       rowsAffected,
-      rows: {
-        _array: mappedRows,
-        length: mappedRows.length,
-        item(idx) {
-          return mappedRows[idx];
-        }
-      }
+      insertId,
+      columnNames,
+      rawRows: rows
     };
   }
 
-  async executeRaw(query: string, params?: any[] | undefined): Promise<any[][]> {
-    const { rows } = await this.executeInner(query, params ?? []);
-    return rows ?? [];
-  }
-
-  async executeBatch(query: string, params?: any[][]): Promise<QueryResult> {
+  async executeBatch(query: string, params?: any[][]): Promise<QueryResult<never>> {
     const result = await powersyncCommand({
       ExecuteBatch: {
         connection: this.handle,
@@ -130,8 +111,6 @@ class RustSqlExecutor implements SqlExecutor {
       }
     });
     const batchResult = (result as any).ExecuteBatchResult as ExecuteBatchResult;
-    return { insertId: batchResult.last_insert_rowid, rowsAffected: batchResult.changes };
+    return queryResultWithoutRows({ insertId: batchResult.last_insert_rowid, rowsAffected: batchResult.changes });
   }
 }
-
-class RustLockContext extends DBGetUtilsDefaultMixin(RustSqlExecutor) {}

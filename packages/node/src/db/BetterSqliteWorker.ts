@@ -1,7 +1,8 @@
 import type { Database } from 'better-sqlite3';
-import { AsyncDatabase, AsyncDatabaseOpenOptions } from './AsyncDatabase.js';
+import { AsyncDatabase, AsyncDatabaseOpenOptions, MappedQueryResult } from './AsyncDatabase.js';
 import { PowerSyncWorkerOptions } from './SqliteWorker.js';
 import { threadId } from 'node:worker_threads';
+import { QueryResult, queryResultWithoutRows, RawQueryResult, SqliteValue } from '@powersync/common';
 
 class BlockingAsyncDatabase implements AsyncDatabase {
   private readonly db: Database;
@@ -16,16 +17,13 @@ class BlockingAsyncDatabase implements AsyncDatabase {
     this.db.close();
   }
 
-  async execute(query: string, params: any[]) {
+  async execute(query: string, params: any[]): Promise<MappedQueryResult> {
     const stmt = this.db.prepare(query);
     if (stmt.reader) {
       const rows = stmt.all(params);
       return {
         rowsAffected: 0,
-        rows: {
-          _array: rows,
-          length: rows.length
-        }
+        rows
       };
     } else {
       const info = stmt.run(params);
@@ -36,18 +34,28 @@ class BlockingAsyncDatabase implements AsyncDatabase {
     }
   }
 
-  async executeRaw(query: string, params: any[]) {
+  async executeRaw(query: string, params: any[]): Promise<RawQueryResult> {
     const stmt = this.db.prepare(query);
-
     if (stmt.reader) {
-      return stmt.raw().all(params) as any[][];
+      stmt.raw();
+      const rows = stmt.all(params);
+      return {
+        rowsAffected: 0,
+        columnNames: stmt.columns().map((c) => c.name),
+        rawRows: rows as SqliteValue[][]
+      };
     } else {
-      stmt.raw().run(params);
-      return [];
+      const info = stmt.run(params);
+      return {
+        rowsAffected: info.changes,
+        insertId: Number(info.lastInsertRowid),
+        rawRows: [],
+        columnNames: []
+      };
     }
   }
 
-  async executeBatch(query: string, params: any[][]) {
+  async executeBatch(query: string, params: any[][]): Promise<QueryResult<never>> {
     params = params ?? [];
 
     let rowsAffected = 0;
@@ -58,7 +66,7 @@ class BlockingAsyncDatabase implements AsyncDatabase {
       rowsAffected += info.changes;
     }
 
-    return { rowsAffected };
+    return queryResultWithoutRows({ rowsAffected });
   }
 }
 
