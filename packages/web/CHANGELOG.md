@@ -1,5 +1,21 @@
 # @powersync/web
 
+## 1.38.5
+
+### Patch Changes
+
+- Updated dependencies [1c6e980]
+- Updated dependencies [17e23df]
+  - @powersync/common@1.56.0
+
+## 1.38.4
+
+### Patch Changes
+
+- Updated dependencies [123fb41]
+- Updated dependencies [d8d2fd0]
+  - @powersync/common@1.55.0
+
 ## 1.38.3
 
 ### Patch Changes

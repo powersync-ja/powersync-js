@@ -1,6 +1,7 @@
 import { AbstractPowerSyncDatabase } from '../client/AbstractPowerSyncDatabase.js';
 import { DEFAULT_WATCH_THROTTLE_MS } from '../client/watched/WatchedQuery.js';
 import { DifferentialWatchedQuery } from '../client/watched/processors/DifferentialQueryProcessor.js';
+import { Mutex } from '../utils/mutex.js';
 import { Transaction } from '../db/DBAdapter.js';
 import { ILogger } from '../utils/Logger.js';
 import { AttachmentContext } from './AttachmentContext.js';
@@ -13,6 +14,58 @@ import { SyncingService } from './SyncingService.js';
 import { WatchedAttachmentItem } from './WatchedAttachmentItem.js';
 
 /**
+ * Configuration options for {@link AttachmentQueue}.
+ *
+ * @experimental
+ * @alpha This is currently experimental and may change without a major version bump.
+ */
+export interface AttachmentQueueOptions {
+  /**
+   * PowerSync database instance
+   */
+  db: AbstractPowerSyncDatabase;
+  /**
+   * Remote storage adapter for upload/download operations
+   */
+  remoteStorage: RemoteStorageAdapter;
+  /**
+   * Local storage adapter for file persistence
+   */
+  localStorage: LocalStorageAdapter;
+  /**
+   * Callback for monitoring attachment changes in your data model
+   */
+  watchAttachments: (onUpdate: (attachment: WatchedAttachmentItem[]) => Promise<void>, signal: AbortSignal) => void;
+  /**
+   * Name of the table to store attachment records. Default: 'ps_attachment_queue'
+   */
+  tableName?: string;
+  /**
+   * Logger instance. Defaults to db.logger
+   */
+  logger?: ILogger;
+  /**
+   * Periodic polling interval in milliseconds for retrying failed uploads/downloads. Default: 30000
+   */
+  syncIntervalMs?: number;
+  /**
+   * Throttle duration in milliseconds for the reactive watch query that detects attachment changes. Prevents rapid-fire syncs during bulk changes. Default: 30
+   */
+  syncThrottleDuration?: number;
+  /**
+   * Whether to automatically download remote attachments. Default: true
+   */
+  downloadAttachments?: boolean;
+  /**
+   * Maximum archived attachments before cleanup. Default: 100
+   */
+  archivedCacheLimit?: number;
+
+  /** Handler for upload, download and delete errors */
+  errorHandler?: AttachmentErrorHandler;
+}
+
+/**
  * AttachmentQueue manages the lifecycle and synchronization of attachments
  * between local and remote storage.
  * Provides automatic synchronization, upload/download queuing, attachment monitoring,
@@ -21,7 +74,7 @@ import { WatchedAttachmentItem } from './WatchedAttachmentItem.js';
  * @experimental
  * @alpha This is currently experimental and may change without a major version bump.
  */
-export class AttachmentQueue implements AttachmentQueue {
+export class AttachmentQueue {
   /** Timer for periodic synchronization operations */
   private periodicSyncTimer?: ReturnType<typeof setInterval>;
 
@@ -84,6 +137,21 @@ export class AttachmentQueue implements AttachmentQueue {
   private watchAttachmentsAbortController!: AbortController;
 
   /**
+   * Serializes concurrent `syncStorage()` triggers (periodic timer, watch-onDiff,
+   * status-changed). Held across the whole batch, but only contended by other
+   * sync triggers — foreground `saveFile` / `deleteFile` / watched-attachment
+   * processing don't take this lock and proceed in parallel via the
+   * `AttachmentService` mutex, which is acquired only briefly per row.
+   */
+  private syncLoopMutex = new Mutex();
+
+  /**
+   * Aborted by `stopSync()` to interrupt an in-flight batch within one
+   * attachment's processing time. Polled between rows by `SyncingService`.
+   */
+  private syncAbortController?: AbortController;
+
+  /**
    * Creates a new AttachmentQueue instance.
    *
    * @param options - Configuration options
@@ -100,49 +168,7 @@ export class AttachmentQueue implements AttachmentQueue {
     downloadAttachments = true,
     archivedCacheLimit = 100,
     errorHandler
-  }: {
-    /**
-     * PowerSync database instance
-     */
-    db: AbstractPowerSyncDatabase;
-    /**
-     * Remote storage adapter for upload/download operations
-     */
-    remoteStorage: RemoteStorageAdapter;
-    /**
-     * Local storage adapter for file persistence
-     */
-    localStorage: LocalStorageAdapter;
-    /**
-     * Callback for monitoring attachment changes in your data model
-     */
-    watchAttachments: (onUpdate: (attachment: WatchedAttachmentItem[]) => Promise<void>, signal: AbortSignal) => void;
-    /**
-     * Name of the table to store attachment records. Default: 'ps_attachment_queue'
-     */
-    tableName?: string;
-    /**
-     * Logger instance. Defaults to db.logger
-     */
-    logger?: ILogger;
-    /**
-     * Periodic polling interval in milliseconds for retrying failed uploads/downloads. Default: 30000
-     */
-    syncIntervalMs?: number;
-    /**
-     * Throttle duration in milliseconds for the reactive watch query that detects attachment changes. Prevents rapid-fire syncs during bulk changes. Default: 30
-     */
-    syncThrottleDuration?: number;
-    /**
-     * Whether to automatically download remote attachments. Default: true
-     */
-    downloadAttachments?: boolean;
-    /**
-     * Maximum archived attachments before cleanup. Default: 100
-     */
-    archivedCacheLimit?: number;
-    errorHandler?: AttachmentErrorHandler;
-  }) {
+  }: AttachmentQueueOptions) {
     this.db = db;
     this.remoteStorage = remoteStorage;
     this.localStorage = localStorage;
@@ -184,6 +210,8 @@ export class AttachmentQueue implements AttachmentQueue {
    */
   async startSync(): Promise<void> {
     await this.stopSync();
+
+    this.syncAbortController = new AbortController();
 
     this.watchActiveAttachments = this.attachmentService.watchActiveAttachments({
       throttleMs: this.syncThrottleDuration
@@ -315,24 +343,45 @@ export class AttachmentQueue implements AttachmentQueue {
    *
    * This is called automatically at regular intervals when sync is started,
    * but can also be called manually to trigger an immediate sync.
+   *
+   * Concurrent invocations are serialized via `syncLoopMutex`.
    */
   async syncStorage(): Promise<void> {
-    await this.attachmentService.withContext(async (ctx) => {
-      const activeAttachments = await ctx.getActiveAttachments();
-      await this.localStorage.initialize();
-      await this.syncingService.processAttachments(activeAttachments, ctx);
-      await this.syncingService.deleteArchivedAttachments(ctx);
-    });
+    const signal = this.syncAbortController?.signal;
+    if (signal?.aborted) return;
+
+    try {
+      await this.syncLoopMutex.runExclusive(async () => {
+        const activeAttachments = await this.attachmentService.withContext((ctx) => ctx.getActiveAttachments());
+        await this.localStorage.initialize();
+
+        await this.syncingService.processAttachments(activeAttachments, { signal });
+
+        if (signal?.aborted) return;
+
+        await this.attachmentService.withContext((ctx) => this.syncingService.deleteArchivedAttachments(ctx));
+      }, signal);
+    } catch (error) {
+      // A queued batch's acquire rejects when `stopSync` aborts — expected, not an error.
+      if (signal?.aborted) return;
+      throw error;
+    }
   }
 
   /**
    * Stops the attachment synchronization process.
    *
-   * Clears the periodic sync timer and closes all active attachment watchers.
+   * Clears the periodic sync timer, closes all active attachment watchers, and
+   * aborts any in-flight `syncStorage()` call so it exits within one
+   * attachment's processing time instead of running the batch to completion.
    */
   async stopSync(): Promise<void> {
     clearInterval(this.periodicSyncTimer);
     this.periodicSyncTimer = undefined;
+    if (this.syncAbortController) {
+      this.syncAbortController.abort();
+      this.syncAbortController = undefined;
+    }
     if (this.watchActiveAttachments) await this.watchActiveAttachments.close();
     if (this.watchAttachmentsAbortController) {
       this.watchAttachmentsAbortController.abort();

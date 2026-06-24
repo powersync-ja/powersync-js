@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest';
 import { generateTestDb } from '../../utils/testDb.js';
-import { WASQLiteOpenFactory, WASQLiteVFS } from '@powersync/web';
+import { Schema, WASQLiteOpenFactory, WASQLiteVFS } from '@powersync/web';
 import { TEST_SCHEMA } from '../../utils/test-schema.js';
 
 test('supports concurrent reads', async () => {
@@ -29,4 +29,17 @@ test('supports concurrent reads', async () => {
       await Promise.all([ctx1.execute('SELECT 1'), ctx2.execute('SELECT 2')]);
     });
   });
+});
+
+test('can update schema', async () => {
+  const db = generateTestDb({
+    database: new WASQLiteOpenFactory({
+      dbFilename: 'replace-schema.sqlite',
+      vfs: WASQLiteVFS.OPFSWriteAheadVFS
+    }),
+    schema: TEST_SCHEMA
+  });
+
+  await db.init();
+  await db.updateSchema(new Schema({}));
 });

@@ -408,20 +408,8 @@ export interface AttachmentErrorHandler {
 export function attachmentFromSql(row: any): AttachmentRecord;
 
 // @alpha
-export class AttachmentQueue implements AttachmentQueue {
-    constructor(input: {
-        db: AbstractPowerSyncDatabase;
-        remoteStorage: RemoteStorageAdapter;
-        localStorage: LocalStorageAdapter;
-        watchAttachments: (onUpdate: (attachment: WatchedAttachmentItem[]) => Promise<void>, signal: AbortSignal) => void;
-        tableName?: string;
-        logger?: ILogger;
-        syncIntervalMs?: number;
-        syncThrottleDuration?: number;
-        downloadAttachments?: boolean;
-        archivedCacheLimit?: number;
-        errorHandler?: AttachmentErrorHandler;
-    });
+export class AttachmentQueue {
+    constructor(input: AttachmentQueueOptions);
     readonly archivedCacheLimit: number;
     // (undocumented)
     clearQueue(): Promise<void>;
@@ -453,6 +441,21 @@ export class AttachmentQueue implements AttachmentQueue {
     readonly tableName: string;
     verifyAttachments(): Promise<void>;
     withAttachmentContext<T>(callback: (context: AttachmentContext) => Promise<T>): Promise<T>;
+}
+
+// @alpha
+export interface AttachmentQueueOptions {
+    archivedCacheLimit?: number;
+    db: AbstractPowerSyncDatabase;
+    downloadAttachments?: boolean;
+    errorHandler?: AttachmentErrorHandler;
+    localStorage: LocalStorageAdapter;
+    logger?: ILogger;
+    remoteStorage: RemoteStorageAdapter;
+    syncIntervalMs?: number;
+    syncThrottleDuration?: number;
+    tableName?: string;
+    watchAttachments: (onUpdate: (attachment: WatchedAttachmentItem[]) => Promise<void>, signal: AbortSignal) => void;
 }
 
 // @alpha
@@ -1873,7 +1876,9 @@ export class SyncingService {
     deleteArchivedAttachments(context: AttachmentContext): Promise<boolean>;
     deleteAttachment(attachment: AttachmentRecord, context: AttachmentContext): Promise<AttachmentRecord>;
     downloadAttachment(attachment: AttachmentRecord): Promise<AttachmentRecord>;
-    processAttachments(attachments: AttachmentRecord[], context: AttachmentContext): Promise<void>;
+    processAttachments(attachments: AttachmentRecord[], options?: {
+        signal?: AbortSignal;
+    }): Promise<void>;
     uploadAttachment(attachment: AttachmentRecord): Promise<AttachmentRecord>;
 }
 
@@ -1921,11 +1926,7 @@ export class SyncStatus {
     // (undocumented)
     protected options: SyncStatusOptions;
     get priorityStatusEntries(): SyncPriorityStatus[];
-    protected serializeError(error?: Error): {
-        name: string;
-        message: string;
-        stack: string | undefined;
-    } | undefined;
+    protected serializeError(error?: Error): Error | undefined;
     statusForPriority(priority: number): SyncPriorityStatus;
     get syncStreams(): SyncStreamStatus[] | undefined;
     // Warning: (ae-incompatible-release-tags) The symbol "toJSON" is marked as @public, but its signature references "SyncStatusOptions" which is marked as @internal
