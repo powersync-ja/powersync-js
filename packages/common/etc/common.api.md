@@ -1876,7 +1876,9 @@ export class SyncingService {
     deleteArchivedAttachments(context: AttachmentContext): Promise<boolean>;
     deleteAttachment(attachment: AttachmentRecord, context: AttachmentContext): Promise<AttachmentRecord>;
     downloadAttachment(attachment: AttachmentRecord): Promise<AttachmentRecord>;
-    processAttachments(attachments: AttachmentRecord[], context: AttachmentContext): Promise<void>;
+    processAttachments(attachments: AttachmentRecord[], options?: {
+        signal?: AbortSignal;
+    }): Promise<void>;
     uploadAttachment(attachment: AttachmentRecord): Promise<AttachmentRecord>;
 }
 
@@ -1924,11 +1926,7 @@ export class SyncStatus {
     // (undocumented)
     protected options: SyncStatusOptions;
     get priorityStatusEntries(): SyncPriorityStatus[];
-    protected serializeError(error?: Error): {
-        name: string;
-        message: string;
-        stack: string | undefined;
-    } | undefined;
+    protected serializeError(error?: Error): Error | undefined;
     statusForPriority(priority: number): SyncPriorityStatus;
     get syncStreams(): SyncStreamStatus[] | undefined;
     // Warning: (ae-incompatible-release-tags) The symbol "toJSON" is marked as @public, but its signature references "SyncStatusOptions" which is marked as @internal
