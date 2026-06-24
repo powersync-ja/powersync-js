@@ -1,5 +1,25 @@
 # @powersync/common
 
+## 1.57.0
+
+### Minor Changes
+
+- 115d736: [Attachments] Added `AttachmentTableRecord` type, which describes the attachment table's row type.
+
+### Patch Changes
+
+- bd0bc41: AttachmentQueue: release the mutex per attachment, persist incrementally, and let `stopSync` interrupt mid-batch so foreground `saveFile` / `deleteFile` aren't blocked behind in-flight uploads or downloads.
+
+## 1.56.0
+
+### Minor Changes
+
+- 1c6e980: [Fix] Preserve `Error.cause` when serializing sync status errors, so the full cause chain on `uploadError` and `downloadError` reaches `statusChanged` listeners.
+
+### Patch Changes
+
+- 17e23df: Invoke `powersync_replace_schema` in a transaction.
+
 ## 1.55.0
 
 ### Minor Changes

@@ -1,5 +1,5 @@
 import { column } from '../db/schema/Column.js';
-import { Table } from '../db/schema/Table.js';
+import { RowType, Table } from '../db/schema/Table.js';
 import { TableV2Options } from '../db/schema/Table.js';
 
 /**
@@ -67,29 +67,38 @@ export enum AttachmentState {
 export interface AttachmentTableOptions extends Omit<TableV2Options, 'name' | 'columns'> {}
 
 /**
+ * @alpha
+ */
+export const ATTACHMENT_TABLE_COLUMNS = {
+  filename: column.text,
+  local_uri: column.text,
+  timestamp: column.integer,
+  size: column.integer,
+  media_type: column.text,
+  state: column.integer, // Corresponds to AttachmentState
+  has_synced: column.integer,
+  meta_data: column.text
+};
+
+/**
  * AttachmentTable defines the schema for the attachment queue table.
  *
  * @alpha
  */
-export class AttachmentTable extends Table {
+export class AttachmentTable extends Table<typeof ATTACHMENT_TABLE_COLUMNS> {
   constructor(options?: AttachmentTableOptions) {
-    super(
-      {
-        filename: column.text,
-        local_uri: column.text,
-        timestamp: column.integer,
-        size: column.integer,
-        media_type: column.text,
-        state: column.integer, // Corresponds to AttachmentState
-        has_synced: column.integer,
-        meta_data: column.text
-      },
-      {
-        ...options,
-        viewName: options?.viewName ?? ATTACHMENT_TABLE,
-        localOnly: true,
-        insertOnly: false
-      }
-    );
+    super(ATTACHMENT_TABLE_COLUMNS, {
+      ...options,
+      viewName: options?.viewName ?? ATTACHMENT_TABLE,
+      localOnly: true,
+      insertOnly: false
+    });
   }
 }
+
+/**
+ * AttachmentTableRecord represents the row type of the attachment table.
+ *
+ * @alpha
+ */
+export type AttachmentTableRecord = RowType<AttachmentTable>;

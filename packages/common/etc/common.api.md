@@ -373,6 +373,18 @@ export interface ArrayQueryDefinition<RowType = unknown> {
 // @alpha
 export const ATTACHMENT_TABLE = "attachments";
 
+// @alpha (undocumented)
+export const ATTACHMENT_TABLE_COLUMNS: {
+    filename: BaseColumnType<string | null>;
+    local_uri: BaseColumnType<string | null>;
+    timestamp: BaseColumnType<number | null>;
+    size: BaseColumnType<number | null>;
+    media_type: BaseColumnType<string | null>;
+    state: BaseColumnType<number | null>;
+    has_synced: BaseColumnType<number | null>;
+    meta_data: BaseColumnType<string | null>;
+};
+
 // @alpha
 export class AttachmentContext {
     constructor(db: AbstractPowerSyncDatabase, tableName: string | undefined, logger: ILogger, archivedCacheLimit: number);
@@ -506,13 +518,16 @@ export enum AttachmentState {
 }
 
 // @alpha
-export class AttachmentTable extends Table {
+export class AttachmentTable extends Table<typeof ATTACHMENT_TABLE_COLUMNS> {
     constructor(options?: AttachmentTableOptions);
 }
 
 // @alpha (undocumented)
 export interface AttachmentTableOptions extends Omit<TableV2Options, 'name' | 'columns'> {
 }
+
+// @alpha
+export type AttachmentTableRecord = RowType<AttachmentTable>;
 
 // @public (undocumented)
 export type BaseColumnType<T extends number | string | null> = {
@@ -1876,7 +1891,9 @@ export class SyncingService {
     deleteArchivedAttachments(context: AttachmentContext): Promise<boolean>;
     deleteAttachment(attachment: AttachmentRecord, context: AttachmentContext): Promise<AttachmentRecord>;
     downloadAttachment(attachment: AttachmentRecord): Promise<AttachmentRecord>;
-    processAttachments(attachments: AttachmentRecord[], context: AttachmentContext): Promise<void>;
+    processAttachments(attachments: AttachmentRecord[], options?: {
+        signal?: AbortSignal;
+    }): Promise<void>;
     uploadAttachment(attachment: AttachmentRecord): Promise<AttachmentRecord>;
 }
 
@@ -1924,11 +1941,7 @@ export class SyncStatus {
     // (undocumented)
     protected options: SyncStatusOptions;
     get priorityStatusEntries(): SyncPriorityStatus[];
-    protected serializeError(error?: Error): {
-        name: string;
-        message: string;
-        stack: string | undefined;
-    } | undefined;
+    protected serializeError(error?: Error): Error | undefined;
     statusForPriority(priority: number): SyncPriorityStatus;
     get syncStreams(): SyncStreamStatus[] | undefined;
     // Warning: (ae-incompatible-release-tags) The symbol "toJSON" is marked as @public, but its signature references "SyncStatusOptions" which is marked as @internal

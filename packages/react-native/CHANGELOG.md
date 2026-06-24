@@ -1,5 +1,23 @@
 # @powersync/react-native
 
+## 1.35.7
+
+### Patch Changes
+
+- Updated dependencies [115d736]
+- Updated dependencies [bd0bc41]
+  - @powersync/common@1.57.0
+  - @powersync/react@1.10.0
+
+## 1.35.6
+
+### Patch Changes
+
+- Updated dependencies [1c6e980]
+- Updated dependencies [17e23df]
+  - @powersync/common@1.56.0
+  - @powersync/react@1.10.0
+
 ## 1.35.5
 
 ### Patch Changes

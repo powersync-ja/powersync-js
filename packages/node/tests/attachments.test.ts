@@ -118,6 +118,16 @@ async function* watchAttachmentsTable(): AsyncGenerator<AttachmentRecord[]> {
   }
 }
 
+function deferred<T = void>() {
+  let resolve!: (v: T) => void;
+  let reject!: (e: unknown) => void;
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+  return { promise, resolve, reject };
+}
+
 async function waitForMatchCondition(
   iteratorGenerator: () => AsyncGenerator<AttachmentRecord[]>,
   predicate: (attachments: AttachmentRecord[]) => boolean,
@@ -548,4 +558,207 @@ describe('attachment queue', () => {
     expect(mockErrorHandler).toHaveBeenCalledOnce();
     expect(mockDownloadFile).toHaveBeenCalledTimes(2);
   });
+
+  it(
+    'stopSync should interrupt an in-flight batch without waiting for the current network call',
+    { timeout: 10000 },
+    async () => {
+      const firstDownloadStarted = deferred();
+      const firstDownloadGate = deferred<ArrayBuffer>();
+      const slowDownload = vi.fn().mockImplementation(() => {
+        firstDownloadStarted.resolve();
+        return firstDownloadGate.promise;
+      });
+
+      const slowQueue = new AttachmentQueue({
+        db,
+        watchAttachments,
+        remoteStorage: { downloadFile: slowDownload, uploadFile: mockUploadFile, deleteFile: mockDeleteFile },
+        localStorage: mockLocalStorage,
+        syncIntervalMs: INTERVAL_MILLISECONDS,
+        archivedCacheLimit: 0
+      });
+
+      await slowQueue.startSync();
+
+      // Queue three downloads.
+      for (let i = 0; i < 3; i++) {
+        await db.execute('INSERT INTO users (id, name, email, photo_id) VALUES (uuid(), ?, ?, uuid())', [
+          `user${i}`,
+          `user${i}@example.com`
+        ]);
+      }
+
+      // Wait until the first download is actually in flight.
+      await firstDownloadStarted.promise;
+
+      // stopSync must return promptly even though a download is stuck.
+      const stopStart = Date.now();
+      await slowQueue.stopSync();
+      expect(Date.now() - stopStart).toBeLessThan(500);
+
+      // Release the stuck download so the worker can observe the abort and exit cleanly.
+      firstDownloadGate.resolve(createMockJpegBuffer());
+
+      // Give the loop a tick to notice the abort. No further downloads should be attempted.
+      await new Promise((r) => setImmediate(r));
+      expect(slowDownload).toHaveBeenCalledTimes(1);
+    }
+  );
+
+  it(
+    'attachments queue should commit per-attachment, not at end of batch',
+    { timeout: 10000 },
+    async () => {
+      const gates: Array<ReturnType<typeof deferred<ArrayBuffer>>> = [deferred<ArrayBuffer>(), deferred<ArrayBuffer>()];
+      const downloadIds: string[] = [];
+      const slowDownload = vi.fn().mockImplementation((attachment: AttachmentRecord) => {
+        const idx = downloadIds.length;
+        downloadIds.push(attachment.id);
+        return gates[idx]?.promise ?? Promise.resolve(createMockJpegBuffer());
+      });
+
+      const slowQueue = new AttachmentQueue({
+        db,
+        watchAttachments,
+        remoteStorage: { downloadFile: slowDownload, uploadFile: mockUploadFile, deleteFile: mockDeleteFile },
+        localStorage: mockLocalStorage,
+        syncIntervalMs: INTERVAL_MILLISECONDS,
+        archivedCacheLimit: 0
+      });
+
+      await slowQueue.startSync();
+
+      // Queue two downloads.
+      for (let i = 0; i < 2; i++) {
+        await db.execute('INSERT INTO users (id, name, email, photo_id) VALUES (uuid(), ?, ?, uuid())', [
+          `user${i}`,
+          `user${i}@example.com`
+        ]);
+      }
+
+      // Wait until the first download is in flight.
+      await waitForMatchCondition(
+        () => watchAttachmentsTable(),
+        () => slowDownload.mock.calls.length >= 1,
+        5
+      );
+
+      // Resolve only the first download. The second is still pending.
+      gates[0].resolve(createMockJpegBuffer());
+
+      // The first attachment must transition to SYNCED while the second is still
+      // QUEUED_DOWNLOAD — i.e. the commit happened mid-batch, not at the end.
+      await waitForMatchCondition(
+        () => watchAttachmentsTable(),
+        (rows) => {
+          const first = rows.find((r) => r.id === downloadIds[0]);
+          const others = rows.filter((r) => r.id !== downloadIds[0]);
+          return (
+            first?.state === AttachmentState.SYNCED &&
+            others.some((r) => r.state === AttachmentState.QUEUED_DOWNLOAD)
+          );
+        },
+        5
+      );
+
+      // Clean up: release the second so the worker drains and stopSync finishes.
+      gates[1].resolve(createMockJpegBuffer());
+      await slowQueue.stopSync();
+    }
+  );
+
+  it(
+    'saveFile should not be blocked by an in-flight sync batch',
+    { timeout: 10000 },
+    async () => {
+      const downloadStarted = deferred();
+      const downloadGate = deferred<ArrayBuffer>();
+      const slowDownload = vi.fn().mockImplementation(() => {
+        downloadStarted.resolve();
+        return downloadGate.promise;
+      });
+
+      const slowQueue = new AttachmentQueue({
+        db,
+        watchAttachments,
+        remoteStorage: { downloadFile: slowDownload, uploadFile: mockUploadFile, deleteFile: mockDeleteFile },
+        localStorage: mockLocalStorage,
+        syncIntervalMs: INTERVAL_MILLISECONDS,
+        archivedCacheLimit: 0
+      });
+
+      await slowQueue.startSync();
+
+      // Queue a download that will hang.
+      await db.execute('INSERT INTO users (id, name, email, photo_id) VALUES (uuid(), ?, ?, uuid())', [
+        'downloader',
+        'downloader@example.com'
+      ]);
+
+      await downloadStarted.promise;
+
+      // saveFile must complete promptly even while a download is in flight.
+      const saveStart = Date.now();
+      const saved = await slowQueue.saveFile({
+        data: new Uint8Array(10).fill(7).buffer,
+        fileExtension: 'jpg'
+      });
+      expect(Date.now() - saveStart).toBeLessThan(500);
+      expect(saved.state).toBe(AttachmentState.QUEUED_UPLOAD);
+
+      // Clean up.
+      downloadGate.resolve(createMockJpegBuffer());
+      await slowQueue.stopSync();
+    }
+  );
+
+  it(
+    'stopSync should release a sync call queued behind a stalled batch instead of leaving it hanging',
+    { timeout: 10000 },
+    async () => {
+      const firstDownloadStarted = deferred();
+      // Never resolved: the in-flight batch stays stuck holding the sync mutex.
+      const stalledGate = deferred<ArrayBuffer>();
+      const slowDownload = vi.fn().mockImplementation(() => {
+        firstDownloadStarted.resolve();
+        return stalledGate.promise;
+      });
+
+      const slowQueue = new AttachmentQueue({
+        db,
+        watchAttachments,
+        remoteStorage: { downloadFile: slowDownload, uploadFile: mockUploadFile, deleteFile: mockDeleteFile },
+        localStorage: mockLocalStorage,
+        syncIntervalMs: INTERVAL_MILLISECONDS,
+        archivedCacheLimit: 0
+      });
+
+      await slowQueue.startSync();
+
+      // Queue a download that hangs; this batch holds the sync mutex.
+      await db.execute('INSERT INTO users (id, name, email, photo_id) VALUES (uuid(), ?, ?, uuid())', [
+        'downloader',
+        'downloader@example.com'
+      ]);
+      await firstDownloadStarted.promise;
+
+      // A second sync call queues behind the stalled batch on `syncLoopMutex`.
+      let outcome: 'resolved' | 'rejected' | 'pending' = 'pending';
+      const queuedSync = slowQueue.syncStorage().then(
+        () => (outcome = 'resolved'),
+        () => (outcome = 'rejected')
+      );
+
+      // stopSync aborts the signal; the queued acquire must reject and be swallowed,
+      // so the queued call settles rather than waiting on the stalled batch forever.
+      await slowQueue.stopSync();
+      await new Promise((r) => setImmediate(r));
+      expect(outcome).toBe('resolved');
+
+      // Clean up: release the stalled download so the running batch can drain.
+      stalledGate.resolve(createMockJpegBuffer());
+      await queuedSync;
+    }
+  );
 });
