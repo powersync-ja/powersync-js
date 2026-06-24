@@ -1,5 +1,25 @@
 # @powersync/common
 
+## 1.56.0
+
+### Minor Changes
+
+- 1c6e980: [Fix] Preserve `Error.cause` when serializing sync status errors, so the full cause chain on `uploadError` and `downloadError` reaches `statusChanged` listeners.
+
+### Patch Changes
+
+- 17e23df: Invoke `powersync_replace_schema` in a transaction.
+
+## 1.55.0
+
+### Minor Changes
+
+- 123fb41: [Attachments] Extracted `AttachmentQueue` constructor options to an options interface named `AttachmentQueueOptions`.
+
+### Patch Changes
+
+- d8d2fd0: Remove `event-iterator` dependency.
+
 ## 1.54.0
 
 ### Minor Changes

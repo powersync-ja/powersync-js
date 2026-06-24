@@ -1,5 +1,25 @@
 # @powersync/node
 
+## 0.19.1
+
+### Patch Changes
+
+- Updated dependencies [1c6e980]
+- Updated dependencies [17e23df]
+  - @powersync/common@1.56.0
+
+## 0.19.0
+
+### Minor Changes
+
+- 693af13: Potentially breaking change: Remove CommonJS builds. The SDK can still be imported via `require()`, but some build tools might not handle this correctly.
+
+### Patch Changes
+
+- Updated dependencies [123fb41]
+- Updated dependencies [d8d2fd0]
+  - @powersync/common@1.55.0
+
 ## 0.18.8
 
 ### Patch Changes
