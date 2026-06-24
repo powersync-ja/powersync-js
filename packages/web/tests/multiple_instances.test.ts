@@ -1,11 +1,4 @@
-import {
-  CommonPowerSyncDatabase,
-  createConsoleLogger,
-  DBAdapterDefaultMixin,
-  LogLevels,
-  LogRecord,
-  PowerSyncLogger
-} from '@powersync/common';
+import { CommonPowerSyncDatabase, createConsoleLogger, LogLevels, LogRecord, PowerSyncLogger } from '@powersync/common';
 import * as Comlink from 'comlink';
 import { beforeAll, describe, expect, it, onTestFinished, vi } from 'vitest';
 import { WebDBAdapter } from '../src/db/adapters/WebDBAdapter.js';
@@ -189,10 +182,8 @@ describe('Multiple Instances', { sequential: true }, () => {
     // Should be true initially
     expect(isAutoCommit).true;
 
-    const DatabaseClientAsAdapter = DBAdapterDefaultMixin(DatabaseClient);
-
     // Now we'll simulate the locked connections which are used by the shared sync worker
-    const initialClient = new DatabaseClientAsAdapter(
+    const initialClient = new DatabaseClient(
       {
         connection: initialSharedConnection,
         remoteCanCloseUnexpectedly: true,
@@ -239,7 +230,7 @@ describe('Multiple Instances', { sequential: true }, () => {
     expect(await subsequentSharedConnection.debugIsAutoCommit()).false;
 
     // Allows us to simulate a new locked shared connection.
-    const subsequentClient = new DatabaseClientAsAdapter(
+    const subsequentClient = new DatabaseClient(
       {
         connection: subsequentSharedConnection,
         remoteCanCloseUnexpectedly: true,

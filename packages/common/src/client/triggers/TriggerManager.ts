@@ -267,7 +267,9 @@ export interface WithDiffOptions {
  * @experimental @alpha
  * Context for the `onChange` handler provided to {@link TriggerManager#trackTableDiff}.
  */
-export interface TriggerDiffHandlerContext extends LockContext {
+export interface TriggerDiffHandlerContext {
+  context: LockContext;
+
   /**
    * The name of the temporary destination table created by the trigger.
    */

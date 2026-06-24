@@ -1,16 +1,10 @@
-import {
-  BaseObserver,
-  DBAdapterListener,
-  DBAdapter,
-  DBLockOptions,
-  LockContext,
-  QueryResult,
-  Transaction
-} from '@powersync/common';
-import { Mutex, timeoutSignal } from '@powersync/shared-internals';
+import { DBAdapter, DBLockOptions, LockContext, RawQueryResult } from '@powersync/common';
+import { Mutex } from '@powersync/shared-internals';
 
-const MOCK_QUERY_RESPONSE: QueryResult = {
-  rowsAffected: 0
+const MOCK_QUERY_RESPONSE: RawQueryResult = {
+  rowsAffected: 0,
+  columnNames: [],
+  rawRows: []
 };
 
 /**
@@ -18,7 +12,7 @@ const MOCK_QUERY_RESPONSE: QueryResult = {
  * This adapter will return empty results for queries, which will allow
  * server rendered views to initially generate scaffolding components
  */
-export class SSRDBAdapter extends BaseObserver<DBAdapterListener> implements DBAdapter {
+export class SSRDBAdapter extends DBAdapter {
   name: string;
   readMutex: Mutex;
   writeMutex: Mutex;
@@ -33,61 +27,22 @@ export class SSRDBAdapter extends BaseObserver<DBAdapterListener> implements DBA
   close() {}
 
   async readLock<T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions) {
-    return this.readMutex.runExclusive(() => fn(this), timeoutSignal(options?.timeoutMs));
-  }
-
-  async readTransaction<T>(fn: (tx: Transaction) => Promise<T>, options?: DBLockOptions) {
-    return this.readLock(() => fn(this.generateMockTransactionContext()), options);
+    return fn(new StubLockContext());
   }
 
   async writeLock<T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions) {
-    return this.writeMutex.runExclusive(() => fn(this), timeoutSignal(options?.timeoutMs));
-  }
-
-  async writeTransaction<T>(fn: (tx: Transaction) => Promise<T>, options?: DBLockOptions) {
-    return this.writeLock(() => fn(this.generateMockTransactionContext()), options);
-  }
-
-  async execute(query: string, params?: any[]): Promise<QueryResult> {
-    return this.writeMutex.runExclusive(async () => MOCK_QUERY_RESPONSE);
-  }
-
-  async executeRaw(query: string, params?: any[]): Promise<any[][]> {
-    return this.writeMutex.runExclusive(async () => []);
-  }
-
-  async executeBatch(query: string, params?: any[][]): Promise<QueryResult> {
-    return this.writeMutex.runExclusive(async () => MOCK_QUERY_RESPONSE);
-  }
-
-  async getAll<T>(sql: string, parameters?: any[]): Promise<T[]> {
-    return [];
-  }
-
-  async getOptional<T>(sql: string, parameters?: any[] | undefined): Promise<T | null> {
-    return null;
-  }
-
-  async get<T>(sql: string, parameters?: any[] | undefined): Promise<T> {
-    throw new Error(`No values are returned in SSR mode`);
-  }
-
-  /**
-   * Generates a mock context for use in read/write transactions.
-   * `this` already mocks most of the API, commit and rollback mocks
-   *  are added here
-   */
-  private generateMockTransactionContext(): Transaction {
-    return {
-      ...this,
-      commit: async () => {
-        return MOCK_QUERY_RESPONSE;
-      },
-      rollback: async () => {
-        return MOCK_QUERY_RESPONSE;
-      }
-    };
+    return fn(new StubLockContext());
   }
 
   async refreshSchema(): Promise<void> {}
+}
+
+class StubLockContext extends LockContext {
+  get connectionType(): 'readWrite' {
+    return 'readWrite';
+  }
+
+  async executeRaw(): Promise<RawQueryResult> {
+    return MOCK_QUERY_RESPONSE;
+  }
 }

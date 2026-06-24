@@ -3,7 +3,7 @@ PODS:
   - hermes-engine (250829098.0.9):
     - hermes-engine/Pre-built (= 250829098.0.9)
   - hermes-engine/Pre-built (250829098.0.9)
-  - op-sqlite (15.2.7):
+  - op-sqlite (17.0.0):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -25,7 +25,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - powersync-op-sqlite (0.9.5):
+  - powersync-op-sqlite (0.9.10):
     - hermes-engine
     - powersync-sqlite-core (~> 0.4.12)
     - RCTRequired
@@ -2106,8 +2106,8 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   FBLazyVector: e97c19a5a442429d1988f182a1940fb08df514da
   hermes-engine: b5555460cb791d3acfd49f24b91800b2a048aff2
-  op-sqlite: 9ad0095f12c88397bccd86e912a018049eb1caf5
-  powersync-op-sqlite: ded3f2cca36ca661f2f2ac2b8b2fb33306dee2ae
+  op-sqlite: 0bea36e790ffedd5a9ade44768fba06175304229
+  powersync-op-sqlite: d86f647192e4d6608a2af11c8fe8d4d9b5fb5b46
   powersync-sqlite-core: 116ecf3391859445f1477f8c230914e04d9874e7
   RCTDeprecation: af44b104091a34482596cd9bd7e8d90c4e9b4bd7
   RCTRequired: bb77b070f75f53398ce43c0aaaa58337cebe2bf6
@@ -2179,7 +2179,7 @@ SPEC CHECKSUMS:
   React-utils: 8d888b379f0808bfabaea03d85f9e8dd9b8548da
   React-webperformancenativemodule: c10016db7f1bb1153060d4aa9f7dbde2c88c845d
   ReactAppDependencyProvider: e96e93b493d8d86eeaee3e590ba0be53f6abe46f
-  ReactCodegen: 190b409cd854eac9fd7e1ab0254c8eda3fb8b983
+  ReactCodegen: d8ea744149cb52385a4042aef8c1c8304ba24446
   ReactCommon: 07572bf9e687c8a52fbe4a3641e9e3a1a477c78e
   ReactNativeDependencies: ec77c2f367814afd0649b49561313382d61355d1
   Yoga: c0b3f2c7e8d3e327e450223a2414ca3fa296b9a2

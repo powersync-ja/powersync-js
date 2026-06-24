@@ -1,10 +1,4 @@
-import {
-  ConnectionPool,
-  DBAdapterDefaultMixin,
-  DBAdapterListener,
-  DBLockOptions,
-  LockContext
-} from '@powersync/common';
+import { DBAdapter, DBAdapterListener, DBLockOptions, LockContext } from '@powersync/common';
 import { Mutex, Semaphore, UnlockFn } from '@powersync/shared-internals';
 import { SharedConnectionWorker, WebDBAdapter, WebDBAdapterConfiguration } from './WebDBAdapter.js';
 import { DatabaseClient } from './wa-sqlite/DatabaseClient.js';
@@ -14,7 +8,7 @@ type PendingListener = { listener: Partial<DBAdapterListener>; closeAfterRegiste
 /**
  * A connection pool implementation delegating to another pool opened asynchronnously.
  */
-class AsyncConnectionPool implements ConnectionPool {
+export class AsyncDbAdapter extends DBAdapter {
   protected readonly state: Promise<PoolState>;
   protected resolvedWriter?: DatabaseClient;
 
@@ -24,6 +18,7 @@ class AsyncConnectionPool implements ConnectionPool {
     inner: Promise<PoolConnection>,
     readonly name: string
   ) {
+    super();
     this.state = inner.then((client) => {
       for (const pending of this.pendingListeners) {
         pending.closeAfterRegisteredOnResolvedPool = client.writer.registerListener(pending.listener);
@@ -78,6 +73,19 @@ class AsyncConnectionPool implements ConnectionPool {
         }
       };
     }
+  }
+
+  async shareConnection(): Promise<SharedConnectionWorker> {
+    const state = await this.state;
+    return state.writer.shareConnection();
+  }
+
+  getConfiguration(): WebDBAdapterConfiguration {
+    if (this.resolvedWriter) {
+      return this.resolvedWriter.getConfiguration();
+    }
+
+    throw new Error('AsyncDbAdapter.getConfiguration() can only be called after initializing it.');
   }
 }
 
@@ -187,19 +195,4 @@ function readWritePoolState(writer: DatabaseClient, readers: DatabaseClient[]): 
       await Promise.all(readers.map((r) => r.refreshSchema()));
     }
   };
-}
-
-export class AsyncDbAdapter extends DBAdapterDefaultMixin(AsyncConnectionPool) implements WebDBAdapter {
-  async shareConnection(): Promise<SharedConnectionWorker> {
-    const state = await this.state;
-    return state.writer.shareConnection();
-  }
-
-  getConfiguration(): WebDBAdapterConfiguration {
-    if (this.resolvedWriter) {
-      return this.resolvedWriter.getConfiguration();
-    }
-
-    throw new Error('AsyncDbAdapter.getConfiguration() can only be called after initializing it.');
-  }
 }

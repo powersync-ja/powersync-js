@@ -2,15 +2,14 @@ import { CapacitorSQLite, SQLiteConnection, SQLiteDBConnection } from '@capacito
 import { Capacitor } from '@capacitor/core';
 
 import {
-  BaseObserver,
   BatchedUpdateNotification,
-  ConnectionPool,
   DBAdapter,
-  DBAdapterDefaultMixin,
-  DBAdapterListener,
   DBLockOptions,
   LockContext,
-  QueryResult
+  QueryResult,
+  queryResultFromMapped,
+  queryResultWithoutRows,
+  RawQueryResult
 } from '@powersync/web';
 import { Mutex, timeoutSignal } from '@powersync/shared-internals';
 import { PowerSyncCore } from '../plugin/PowerSyncCore.js';
@@ -19,7 +18,7 @@ import { CapacitorSQLiteOpenFactoryOptions, DEFAULT_SQLITE_OPTIONS } from './Cap
 /**
  * Monitors the execution time of a query and logs it to the performance timeline.
  */
-async function monitorQuery(sql: string, executor: () => Promise<QueryResult>): Promise<QueryResult> {
+async function monitorQuery<T>(sql: string, executor: () => Promise<QueryResult<T>>): Promise<QueryResult<T>> {
   const start = performance.now();
   try {
     const r = await executor();
@@ -71,7 +70,13 @@ function mapSQLiteParameterValues({ platform, values }: { platform: string; valu
   });
 }
 
-class CapacitorConnectionPool extends BaseObserver<DBAdapterListener> implements ConnectionPool {
+/**
+ * An implementation of {@link DBAdapter} using the Capacitor Community SQLite [plugin](https://github.com/capacitor-community/sqlite).
+ *
+ * @experimental
+ * @alpha This is currently experimental and may change without a major version bump.
+ */
+export class CapacitorSQLiteAdapter extends DBAdapter {
   protected _writeConnection: SQLiteDBConnection | null;
   protected _readConnection: SQLiteDBConnection | null;
   protected initializedPromise: Promise<void>;
@@ -156,24 +161,17 @@ class CapacitorConnectionPool extends BaseObserver<DBAdapterListener> implements
   }
 
   protected generateLockContext(db: SQLiteDBConnection): LockContext {
-    const _query = async (query: string, params: any[] = []) => {
+    const _query = async <T>(query: string, params: any[] = []): Promise<QueryResult<T>> => {
       const mappedParams = mapSQLiteParameterValues({
         platform: Capacitor.getPlatform(),
         values: params
       });
       const result = await db.query(query, mappedParams);
       const arrayResult = result.values ?? [];
-      return {
-        rowsAffected: 0,
-        rows: {
-          _array: arrayResult,
-          length: arrayResult.length,
-          item: (idx: number) => arrayResult[idx]
-        }
-      };
+      return queryResultFromMapped({ rowsAffected: 0 }, arrayResult);
     };
 
-    const _execute = async (query: string, params: any[] = []): Promise<QueryResult> => {
+    const _execute = async <T>(query: string, params: any[] = []): Promise<QueryResult<T>> => {
       const platform = Capacitor.getPlatform();
 
       if (
@@ -192,33 +190,23 @@ class CapacitorConnectionPool extends BaseObserver<DBAdapterListener> implements
 
       if (platform == 'android') {
         const result = await db.executeSet([{ statement: query, values: mappedParams }], false);
-        return {
-          insertId: result.changes?.lastId,
-          rowsAffected: result.changes?.changes ?? 0,
-          rows: {
-            _array: [],
-            length: 0,
-            item: () => null
-          }
-        };
+        return queryResultFromMapped(
+          { insertId: result.changes?.lastId, rowsAffected: result.changes?.changes ?? 0 },
+          []
+        );
       }
 
       // iOS (and other platforms): use run("all")
       const result = await db.run(query, mappedParams, false, 'all');
       const resultSet = result.changes?.values ?? [];
-      return {
-        insertId: result.changes?.lastId,
-        rowsAffected: result.changes?.changes ?? 0,
-        rows: {
-          _array: resultSet,
-          length: resultSet.length,
-          item: (idx) => resultSet[idx]
-        }
-      };
+      return queryResultFromMapped(
+        { insertId: result.changes?.lastId, rowsAffected: result.changes?.changes ?? 0 },
+        resultSet
+      );
     };
 
     const execute = this.options.debugMode
-      ? (sql: string, params?: any[]) => monitorQuery(sql, () => _execute(sql, params))
+      ? <T>(sql: string, params?: any[]) => monitorQuery(sql, () => _execute<T>(sql, params))
       : _execute;
 
     const executeQuery = this.options.debugMode
@@ -243,13 +231,20 @@ class CapacitorConnectionPool extends BaseObserver<DBAdapterListener> implements
       return result;
     };
 
-    const executeRaw = async (query: string, params?: any[]): Promise<any[][]> => {
+    const executeRaw = async (query: string, params?: any[]): Promise<RawQueryResult> => {
       // This is a workaround, we don't support multiple columns of the same name
-      const results = await execute(query, params);
-      return results.rows?._array.map((row) => Object.values(row)) ?? [];
+      const { insertId, rowsAffected, rows } = await execute(query, params);
+      const mappedRows = rows?._array;
+
+      return {
+        insertId,
+        rowsAffected,
+        columnNames: mappedRows && mappedRows.length ? Object.keys(mappedRows[0]) : [],
+        rawRows: mappedRows?.map((row) => Object.values(row)) ?? []
+      };
     };
 
-    const executeBatch = async (query: string, params: any[][] = []): Promise<QueryResult> => {
+    const executeBatch = async (query: string, params: any[][] = []): Promise<QueryResult<never>> => {
       const platform = Capacitor.getPlatform();
       let result = await db.executeSet(
         params.map((param) => ({
@@ -262,20 +257,43 @@ class CapacitorConnectionPool extends BaseObserver<DBAdapterListener> implements
         false
       );
 
-      return {
+      return queryResultWithoutRows({
         rowsAffected: result.changes?.changes ?? 0,
         insertId: result.changes?.lastId
-      };
+      });
     };
 
-    return {
-      getAll,
-      getOptional,
-      get,
-      executeRaw,
-      execute,
-      executeBatch
-    };
+    class CapacitorLockContext extends LockContext {
+      get connectionType(): 'readWrite' {
+        return 'readWrite';
+      }
+
+      getAll<T>(sql: string, parameters?: any[]): Promise<T[]> {
+        return getAll(sql, parameters);
+      }
+
+      get<T>(sql: string, parameters?: any[]): Promise<T> {
+        return get(sql, parameters);
+      }
+
+      getOptional<T>(sql: string, parameters?: any[]): Promise<T | null> {
+        return getOptional(sql, parameters);
+      }
+
+      execute<T>(query: string, params?: any[] | undefined): Promise<QueryResult<T>> {
+        return execute<T>(query, params);
+      }
+
+      executeRaw(query: string, params?: any[] | undefined): Promise<RawQueryResult> {
+        return executeRaw(query, params);
+      }
+
+      executeBatch(query: string, params?: any[][]): Promise<QueryResult<never>> {
+        return executeBatch(query, params);
+      }
+    }
+
+    return new CapacitorLockContext();
   }
 
   readLock<T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions): Promise<T> {
@@ -297,9 +315,7 @@ class CapacitorConnectionPool extends BaseObserver<DBAdapterListener> implements
         throw new Error('Could not fetch table updates');
       }
       const notification: BatchedUpdateNotification = {
-        rawUpdates: [],
-        tables: JSON.parse(jsonUpdates.table_name),
-        groupedUpdates: {}
+        tables: JSON.parse(jsonUpdates.table_name)
       };
       this.iterateListeners((l) => l.tablesUpdated?.(notification));
       return result;
@@ -316,11 +332,3 @@ class CapacitorConnectionPool extends BaseObserver<DBAdapterListener> implements
     });
   }
 }
-
-/**
- * An implementation of {@link DBAdapter} using the Capacitor Community SQLite [plugin](https://github.com/capacitor-community/sqlite).
- *
- * @experimental
- * @alpha This is currently experimental and may change without a major version bump.
- */
-export class CapacitorSQLiteAdapter extends DBAdapterDefaultMixin(CapacitorConnectionPool) {}

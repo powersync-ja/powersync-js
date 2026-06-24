@@ -1,13 +1,13 @@
-import { DBGetUtilsDefaultMixin, QueryResult, SqlExecutor, LockContext } from '@powersync/common';
+import { QueryResult, LockContext, RawQueryResult, SqliteRecord, queryResultFromMapped } from '@powersync/common';
 import { releaseProxy, Remote } from 'comlink';
 import { Worker } from 'node:worker_threads';
-import { AsyncDatabase, AsyncDatabaseOpener, ProxiedQueryResult } from './AsyncDatabase.js';
+import { AsyncDatabase, AsyncDatabaseOpener } from './AsyncDatabase.js';
 import { ConnectionClosedError } from '@powersync/shared-internals';
 
 /**
  * A PowerSync database connection implemented with RPC calls to a background worker.
  */
-class BaseRemoteConnection implements SqlExecutor {
+export class RemoteConnection extends LockContext {
   private readonly worker: Worker;
   private readonly comlink: Remote<AsyncDatabaseOpener>;
   private readonly database: Remote<AsyncDatabase>;
@@ -20,6 +20,7 @@ class BaseRemoteConnection implements SqlExecutor {
     database: Remote<AsyncDatabase>,
     private readonly readonly: boolean
   ) {
+    super();
     this.worker = worker;
     this.comlink = comlink;
     this.database = database;
@@ -30,7 +31,7 @@ class BaseRemoteConnection implements SqlExecutor {
   }
 
   public get connectionType() {
-    return this.readonly ? 'readOnly' : 'writer';
+    return this.readonly ? 'readOnly' : 'readWrite';
   }
 
   /**
@@ -70,28 +71,27 @@ class BaseRemoteConnection implements SqlExecutor {
     });
   }
 
-  executeBatch(query: string, params: any[][] = []): Promise<QueryResult> {
+  execute<T = SqliteRecord>(query: string, params?: any[] | undefined): Promise<QueryResult<T>> {
     return this.withRemote(async () => {
-      const result = await this.database.executeBatch(query, params ?? []);
-      return BaseRemoteConnection.wrapQueryResult(result);
+      const results = await this.database.execute(query, params ?? []);
+      return queryResultFromMapped(results, results.rows as T[] | undefined);
     });
   }
 
-  execute(query: string, params?: any[] | undefined): Promise<QueryResult> {
+  executeBatch(query: string, params: any[][] = []): Promise<QueryResult<never>> {
     return this.withRemote(async () => {
-      const result = await this.database.execute(query, params ?? []);
-      return BaseRemoteConnection.wrapQueryResult(result);
+      return await this.database.executeBatch(query, params ?? []);
     });
   }
 
-  executeRaw(query: string, params?: any[] | undefined): Promise<any[][]> {
+  executeRaw(query: string, params?: any[] | undefined): Promise<RawQueryResult> {
     return this.withRemote(async () => {
       return await this.database.executeRaw(query, params ?? []);
     });
   }
 
   async refreshSchema() {
-    await this.execute("pragma table_info('sqlite_master')");
+    await this.executeRaw("pragma table_info('sqlite_master')");
   }
 
   async close() {
@@ -100,21 +100,4 @@ class BaseRemoteConnection implements SqlExecutor {
     this.comlink[releaseProxy]();
     await this.worker.terminate();
   }
-
-  static wrapQueryResult(result: ProxiedQueryResult): QueryResult {
-    let rows: QueryResult['rows'] | undefined = undefined;
-    if (result.rows) {
-      rows = {
-        ...result.rows,
-        item: (idx) => result.rows?._array[idx]
-      } satisfies QueryResult['rows'];
-    }
-
-    return {
-      ...result,
-      rows
-    };
-  }
 }
-
-export class RemoteConnection extends DBGetUtilsDefaultMixin(BaseRemoteConnection) implements LockContext {}

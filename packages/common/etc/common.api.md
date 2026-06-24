@@ -33,6 +33,18 @@ export interface ArrayQueryDefinition<RowType = unknown> {
 // @alpha
 export const ATTACHMENT_TABLE = "attachments";
 
+// @alpha (undocumented)
+export const ATTACHMENT_TABLE_COLUMNS: {
+    filename: BaseColumnType<string | null>;
+    local_uri: BaseColumnType<string | null>;
+    timestamp: BaseColumnType<number | null>;
+    size: BaseColumnType<number | null>;
+    media_type: BaseColumnType<string | null>;
+    state: BaseColumnType<number | null>;
+    has_synced: BaseColumnType<number | null>;
+    meta_data: BaseColumnType<string | null>;
+};
+
 // @alpha
 export class AttachmentContext {
     constructor(db: CommonPowerSyncDatabase, tableName: string | undefined, logger: PowerSyncLogger, archivedCacheLimit: number);
@@ -155,13 +167,16 @@ export enum AttachmentState {
 }
 
 // @alpha
-export class AttachmentTable extends Table {
+export class AttachmentTable extends Table<typeof ATTACHMENT_TABLE_COLUMNS> {
     constructor(options?: AttachmentTableOptions);
 }
 
 // @alpha (undocumented)
-export interface AttachmentTableOptions extends Omit<TableOptions, 'name' | 'columns'> {
+export interface AttachmentTableOptions extends Omit<TableV2Options, 'name' | 'columns'> {
 }
+
+// @alpha
+export type AttachmentTableRecord = RowType<AttachmentTable>;
 
 // @public (undocumented)
 export type BaseColumnType<T extends number | string | null> = {
@@ -569,7 +584,7 @@ export class Index {
     // (undocumented)
     protected options: IndexOptions;
     // (undocumented)
-    toJSON(table: ResolvedTable): {
+    toJSON(table: Table): {
         name: string;
         columns: {
             name: string;
@@ -599,7 +614,7 @@ export class IndexedColumn {
     // (undocumented)
     protected options: IndexColumnOptions;
     // (undocumented)
-    toJSON(table: ResolvedTable): {
+    toJSON(table: Table): {
         name: string;
         ascending: boolean | undefined;
         type: ColumnType;
@@ -615,7 +630,7 @@ export interface IndexOptions {
 }
 
 // @public (undocumented)
-export type IndexShorthand = Record<string, (string | IndexedColumn)[]>;
+export type IndexShorthand = Record<string, string[]>;
 
 // @public
 export type ListenerCounts<Listener extends BaseListener> = Partial<Record<keyof Listener, number>> & {
@@ -643,6 +658,7 @@ export interface LocalStorageAdapter {
 
 // @public (undocumented)
 export abstract class LockContext implements SqlExecutor, DBGetUtils {
+    abstract get connectionType(): 'readWrite' | 'queryOnly' | 'readOnly';
     // (undocumented)
     execute<T = SqliteRecord>(query: string, params?: any[] | undefined): Promise<QueryResult<T>>;
     // (undocumented)
@@ -808,73 +824,6 @@ export interface RemoteStorageAdapter {
 }
 
 // @public
-export class ResolvedTable {
-    constructor(options: ResolvedTableOptions);
-    // (undocumented)
-    get columns(): Column[];
-    // (undocumented)
-    get ignoreEmptyUpdates(): boolean;
-    // (undocumented)
-    get indexes(): Index[];
-    // (undocumented)
-    get insertOnly(): boolean;
-    // (undocumented)
-    get internalName(): string;
-    // (undocumented)
-    get localOnly(): boolean;
-    // (undocumented)
-    get name(): string;
-    // (undocumented)
-    readonly options: ResolvedTableOptions;
-    // (undocumented)
-    toJSON(): {
-        local_only: boolean | undefined;
-        insert_only: boolean | undefined;
-        include_old: any;
-        include_old_only_when_changed: boolean;
-        include_metadata: boolean | undefined;
-        ignore_empty_update: boolean | undefined;
-        name: string;
-        view_name: string;
-        columns: {
-            name: string;
-            type: ColumnType | undefined;
-        }[];
-        indexes: {
-            name: string;
-            columns: {
-                name: string;
-                ascending: boolean | undefined;
-                type: ColumnType;
-            }[];
-        }[];
-    };
-    // (undocumented)
-    get trackMetadata(): boolean;
-    // (undocumented)
-    get trackPrevious(): boolean | TrackPreviousOptions;
-    // (undocumented)
-    validate(): void;
-    // (undocumented)
-    get validName(): boolean;
-    // (undocumented)
-    get viewName(): string;
-    // (undocumented)
-    get viewNameOverride(): string | undefined;
-}
-
-// Warning: (ae-forgotten-export) The symbol "SharedTableOptions" needs to be exported by the entry point index.d.ts
-//
-// @public (undocumented)
-export interface ResolvedTableOptions extends SharedTableOptions {
-    // (undocumented)
-    columns: Column[];
-    // (undocumented)
-    indexes?: Index[];
-    name: string;
-}
-
-// @public
 export interface ResultSet {
     // @deprecated (undocumented)
     get _array(): any[];
@@ -884,11 +833,11 @@ export interface ResultSet {
 }
 
 // @public (undocumented)
-export type RowType<T extends Table<any>> = T extends Table<infer Columns> ? {
-    [K in keyof Columns]: ExtractColumnValueType<Columns[K]>;
+export type RowType<T extends TableV2<any>> = {
+    [K in keyof T['columnMap']]: ExtractColumnValueType<T['columnMap'][K]>;
 } & {
     id: string;
-} : never;
+};
 
 // @alpha
 export function sanitizeSQL(strings: TemplateStringsArray, ...values: any[]): string;
@@ -900,7 +849,7 @@ export function sanitizeUUID(uuid: string): string;
 //
 // @public
 export class Schema<S extends SchemaType = SchemaType> {
-    constructor(tables: ResolvedTable[] | S);
+    constructor(tables: Table[] | S);
     // (undocumented)
     readonly props: S;
     // Warning: (ae-forgotten-export) The symbol "RawTable" needs to be exported by the entry point index.d.ts
@@ -909,7 +858,7 @@ export class Schema<S extends SchemaType = SchemaType> {
     readonly rawTables: RawTable[];
     static rawTableToJson(table: RawTable): unknown;
     // (undocumented)
-    readonly tables: ResolvedTable[];
+    readonly tables: Table[];
     // (undocumented)
     toJSON(): unknown;
     // (undocumented)
@@ -939,6 +888,8 @@ export type SqliteValue = string | number | bigint | number[] | Uint8Array | nul
 
 // @public (undocumented)
 export interface SQLOnChangeOptions {
+    // @deprecated (undocumented)
+    rawTableNames?: boolean;
     // (undocumented)
     signal?: AbortSignal;
     // (undocumented)
@@ -1089,23 +1040,85 @@ export interface SyncSubscriptionDescription extends SyncStreamDescription {
     lastSyncedAt: Date | null;
 }
 
-// @public
-export class Table<Columns extends ColumnsType = ColumnsType> extends ResolvedTable {
-    constructor(columns: Columns, options?: TableOptions);
+// @public (undocumented)
+export class Table<Columns extends ColumnsType = ColumnsType> {
+    constructor(columns: Columns, options?: TableV2Options);
+    // @deprecated
+    constructor(options: TableOptions);
     // (undocumented)
-    copyWithName(name: string): ResolvedTable;
+    get columnMap(): Columns;
     // (undocumented)
-    static createInsertOnly<Columns extends ColumnsType = ColumnsType>(columns: Columns, options?: TableOptions): Table<Columns>;
+    get columns(): Column[];
     // (undocumented)
-    static createLocalOnly<Columns extends ColumnsType = ColumnsType>(columns: Columns, options?: TableOptions): Table<Columns>;
+    copyWithName(name: string): Table;
+    // (undocumented)
+    static createInsertOnly(options: TableOptions): Table<ColumnsType>;
+    // (undocumented)
+    static createLocalOnly(options: TableOptions): Table<ColumnsType>;
+    // @deprecated
+    static createTable(name: string, table: Table): Table<ColumnsType>;
+    // (undocumented)
+    get ignoreEmptyUpdates(): boolean;
+    // (undocumented)
+    get indexes(): Index[];
+    // (undocumented)
+    get insertOnly(): boolean;
+    // (undocumented)
+    get internalName(): string;
+    // (undocumented)
+    get localOnly(): boolean;
     // (undocumented)
     protected _mappedColumns: Columns;
+    // (undocumented)
+    get name(): string;
+    // (undocumented)
+    protected options: TableOptions;
+    // (undocumented)
+    toJSON(): {
+        local_only: boolean | undefined;
+        insert_only: boolean | undefined;
+        include_old: any;
+        include_old_only_when_changed: boolean;
+        include_metadata: boolean | undefined;
+        ignore_empty_update: boolean | undefined;
+        name: string;
+        view_name: string;
+        columns: {
+            name: string;
+            type: ColumnType | undefined;
+        }[];
+        indexes: {
+            name: string;
+            columns: {
+                name: string;
+                ascending: boolean | undefined;
+                type: ColumnType;
+            }[];
+        }[];
+    };
+    // (undocumented)
+    get trackMetadata(): boolean;
+    // (undocumented)
+    get trackPrevious(): boolean | TrackPreviousOptions;
+    // (undocumented)
+    validate(): void;
+    // (undocumented)
+    get validName(): boolean;
+    // (undocumented)
+    get viewName(): string;
+    // (undocumented)
+    get viewNameOverride(): string | undefined;
 }
 
+// Warning: (ae-forgotten-export) The symbol "SharedTableOptions" needs to be exported by the entry point index.d.ts
+//
 // @public (undocumented)
 export interface TableOptions extends SharedTableOptions {
     // (undocumented)
-    indexes?: IndexShorthand;
+    columns: Column[];
+    // (undocumented)
+    indexes?: Index[];
+    name: string;
 }
 
 // @public
@@ -1120,6 +1133,16 @@ export interface TableOrRawTableOptions {
     trackMetadata?: boolean;
     // (undocumented)
     trackPrevious?: boolean | TrackPreviousOptions;
+}
+
+// @public @deprecated
+export class TableV2<Columns extends ColumnsType = ColumnsType> extends Table<Columns> {
+}
+
+// @public (undocumented)
+export interface TableV2Options extends SharedTableOptions {
+    // (undocumented)
+    indexes?: IndexShorthand;
 }
 
 // @alpha
@@ -1350,6 +1373,8 @@ export interface WatchOnChangeEvent {
 export interface WatchOnChangeHandler {
     // (undocumented)
     onChange: (event: WatchOnChangeEvent) => Promise<void> | void;
+    // (undocumented)
+    onError?: (error: Error) => void;
 }
 
 // @alpha
