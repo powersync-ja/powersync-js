@@ -1,4 +1,4 @@
-import { Column, ColumnType, Schema, Table, UpdateType } from '@powersync/common';
+import { column, Schema, Table, UpdateType } from '@powersync/common';
 import pDefer from 'p-defer';
 import { v4 as uuid } from 'uuid';
 import { describe, expect, it } from 'vitest';
@@ -177,16 +177,15 @@ describe('CRUD Tests', { sequential: true }, () => {
         dbFilename: 'test.db' + uuid(),
         enableMultiTabs: false
       },
-      schema: new Schema([
-        new Table({
-          name: 'logs',
-          insertOnly: true,
-          columns: [
-            new Column({ name: 'level', type: ColumnType.TEXT }),
-            new Column({ name: 'content', type: ColumnType.TEXT })
-          ]
-        })
-      ])
+      schema: new Schema({
+        logs: new Table(
+          {
+            level: column.text,
+            content: column.text
+          },
+          { insertOnly: true }
+        )
+      })
     });
 
     expect(await powersync.getAll('SELECT * FROM ps_crud')).empty;
