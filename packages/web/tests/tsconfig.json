@@ -1,0 +1,15 @@
+{
+  "extends": "../../../tsconfig.tests.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "strict": true,
+    "strictNullChecks": true,
+    "lib": ["DOM", "ESNext", "WebWorker"],
+  },
+  "include": ["."],
+  "references": [
+    {
+      "path": "../"
+    }
+  ]
+}

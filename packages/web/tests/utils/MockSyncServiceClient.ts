@@ -62,25 +62,17 @@ export interface MockSyncService {
  * just to access the mock service, without interfering with the normal sync implementation.
  *
  * @param identifier - The database identifier (used to construct the worker name)
- * @param workerUrl - Optional custom worker URL. If not provided, uses the default shared sync worker.
  * @returns The mock sync service interface, or null if not available
  */
-export async function getMockSyncServiceFromWorker(
-  identifier: string,
-  workerUrl?: string | URL
-): Promise<MockSyncService | null> {
+export async function getMockSyncServiceFromWorker(identifier: string): Promise<MockSyncService | null> {
   // Create a separate SharedWorker connection to the same shared sync worker
   // This connection is only used to access the mock service
   // Note the URL and identifier should match in order for the correct worker to be used
-  const worker = workerUrl
-    ? new SharedWorker(typeof workerUrl === 'string' ? workerUrl : workerUrl.href, {
-        name: `shared-sync-${identifier}`
-      })
-    : new SharedWorker(new URL('../../lib/src/worker/sync/SharedSyncImplementation.worker.js', import.meta.url), {
-        /* @vite-ignore */
-        name: `shared-sync-${identifier}`,
-        type: 'module'
-      });
+  const worker = new SharedWorker(new URL('../../lib/worker/worker.js', import.meta.url), {
+    /* @vite-ignore */
+    name: `shared-powersync-${identifier}`,
+    type: 'module'
+  });
 
   const port = worker.port;
   port.start();
