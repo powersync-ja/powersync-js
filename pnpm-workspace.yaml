@@ -26,8 +26,10 @@ catalog:
   '@rollup/plugin-json': ^6.1.0
   '@rollup/plugin-node-resolve': ^16.0.3
   '@rollup/plugin-replace': ^5.0.7
-  '@rollup/plugin-terser': ^0.4.4
+  '@rollup/plugin-terser': ^1.0.0
   '@rollup/plugin-typescript': ^12.1.4
+  'estree-walker': ^3.0.3
+  'magic-string': ^0.30.21
   '@types/node': ^24.0.0
   '@types/uuid': ^9.0.6
   bson: ^6.10.4

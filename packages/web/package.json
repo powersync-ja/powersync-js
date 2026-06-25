@@ -2,10 +2,10 @@
   "name": "@powersync/web",
   "version": "1.38.5",
   "description": "PowerSync Web SDK",
-  "main": "lib/src/index.js",
-  "module": "lib/src/index.js",
+  "main": "lib/index.js",
+  "module": "lib/index.js",
   "type": "module",
-  "types": "lib/src/index.d.ts",
+  "types": "lib/index.d.ts",
   "bin": {
     "powersync-web": "bin/powersync.cjs"
   },
@@ -18,22 +18,14 @@
   ],
   "exports": {
     ".": {
-      "types": "./lib/src/index.d.ts",
-      "default": "./lib/src/index.js"
+      "types": "./lib/index.d.ts",
+      "react-native-web": "./dist/index.react_native_web.js",
+      "react-native": "./dist/index.react_native_web.js",
+      "default": "./lib/index.js"
     },
-    "./umd": {
-      "types": "./lib/src/index.d.ts",
-      "default": "./dist/index.umd.js"
-    },
-    "./umd/worker/db": {
-      "types": "./lib/src/index.d.ts",
-      "import": "./dist/worker/WASQLiteDB.umd.js",
-      "require": "./dist/worker/WASQLiteDB.umd.js"
-    },
-    "./umd/worker/sync": {
-      "types": "./lib/src/index.d.ts",
-      "import": "./dist/worker/SharedSyncImplementation.umd.js",
-      "require": "./dist/worker/SharedSyncImplementation.umd.js"
+    "./bundled_worker": {
+      "types": "./lib/worker/worker.d.ts",
+      "default": "./dist/worker/worker.js"
     }
   },
   "repository": "https://github.com/powersync-ja/powersync-js",
@@ -47,10 +39,8 @@
   "homepage": "https://docs.powersync.com",
   "scripts": {
     "build:tsc": "tsc --build",
-    "build:webpack-main": "webpack",
-    "build:webpack-workers": "webpack --config webpack.workers.config.js",
-    "build": "pnpm run build:tsc && pnpm run build:webpack-main && pnpm run build:webpack-workers",
-    "build:prod": "pnpm run build:tsc --sourceMap false && pnpm run build:webpack-main && pnpm run build:webpack-workers",
+    "build": "pnpm run build:tsc && rollup --config",
+    "build:prod": "pnpm run build",
     "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
     "watch": "tsc --build -w",
     "test": "pnpm build && vitest",
@@ -83,11 +73,12 @@
     "glob": "catalog:",
     "p-defer": "catalog:",
     "source-map-loader": "^5.0.0",
-    "terser-webpack-plugin": "^5.3.9",
     "uuid": "catalog:",
     "vite": "catalog:",
-    "webpack": "^5.90.1",
-    "webpack-cli": "^5.1.4",
-    "webpack-node-externals": "^3.0.0"
+    "rollup": "catalog:",
+    "@rollup/plugin-node-resolve": "catalog:",
+    "@rollup/plugin-terser": "catalog:",
+    "estree-walker": "catalog:",
+    "magic-string": "catalog:"
   }
 }
