@@ -3,26 +3,19 @@
   "version": "0.7.4",
   "description": "Drizzle driver for PowerSync",
   "type": "module",
-  "main": "dist/index.cjs",
+  "main": "lib/src/index.js",
   "module": "lib/src/index.js",
   "types": "lib/src/index.d.ts",
   "exports": {
     ".": {
-      "import": {
-        "types": "./lib/src/index.d.ts",
-        "default": "./lib/src/index.js"
-      },
-      "require": {
-        "types": "./dist/index.d.cts",
-        "default": "./dist/index.cjs"
-      }
+      "types": "./lib/src/index.d.ts",
+      "default": "./lib/src/index.js"
     }
   },
   "author": "PowerSync",
   "license": "Apache-2.0",
   "files": [
     "lib",
-    "dist",
     "src"
   ],
   "repository": "https://github.com/powersync-ja/powersync-js",

@@ -18,31 +18,22 @@
   "description": "React Native file system storage adapters for PowerSync attachments",
   "type": "module",
   "main": "./dist/index.cjs",
-  "module": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "exports": {
     ".": {
-      "import": {
-        "default": "./lib/index.js",
-        "types": "./lib/index.d.ts"
-      },
-      "require": {
-        "default": "./dist/index.cjs",
-        "types": "./dist/index.d.cts"
-      }
+      "types": "./lib/index.d.ts",
+      "default": "./lib/index.js"
     }
   },
   "files": [
     "lib",
-    "dist",
     "src"
   ],
   "scripts": {
     "build": "tsc -b && rollup --config",
     "build:prod": "tsc -b --sourceMap false && rollup --config",
     "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
-    "watch": "tsc -b -w",
-    "test:exports": "attw --pack ."
+    "watch": "tsc -b -w"
   },
   "peerDependencies": {
     "@powersync/common": "workspace:^1.56.0",
