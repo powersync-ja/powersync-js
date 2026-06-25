@@ -7,7 +7,6 @@ import { OpenWorkerConnection } from '../db/adapters/wa-sqlite/DatabaseClient.js
 import { SharedWorkerConnectionRequest } from './SharedWorkerConnectionRequest.js';
 import { WorkerClient } from './sync/WorkerClient.js';
 
-const sharedSyncImplementation = new SharedSyncImplementation();
 const server = new MultiDatabaseServer(createConsoleLogger({ prefix: 'db-worker', minLevel: LogLevels.trace }));
 
 const exposedDatabaseFunctions: OpenWorkerConnection = {
@@ -16,6 +15,8 @@ const exposedDatabaseFunctions: OpenWorkerConnection = {
 };
 
 if (isSharedWorker) {
+  const sharedSyncImplementation = new SharedSyncImplementation();
+
   // A shared worker can either be an IndexedDB-VFS database server or a shared sync coordinator.
   // To be able to know what service a client is connecting to, we let clients send an inner MessagePort through the
   // top-level port along with a tag describing what they need.
