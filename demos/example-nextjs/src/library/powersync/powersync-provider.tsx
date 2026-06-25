@@ -18,13 +18,13 @@ function getDB(): PowerSyncDatabase {
       logger,
       open: {
         dbFilename: 'powersync-nextjs.db',
-        worker: '/@powersync/worker/WASQLiteDB.umd.js',
+        worker: '/@powersync/worker.js',
         databaseWorkerLogLevel: LogLevels.debug,
         disableSSRWarning: true
       }
     }),
     schema: AppSchema,
-    sync: { worker: '/@powersync/worker/SharedSyncImplementation.umd.js' },
+    sync: { worker: '/@powersync/worker.js' },
     logger
   });
 

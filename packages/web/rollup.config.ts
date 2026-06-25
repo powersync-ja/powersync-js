@@ -4,32 +4,85 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import type { RollupOptions, Plugin } from 'rollup';
 import type { Node } from 'estree-walker';
-import { asyncWalk } from 'estree-walker';
+import { asyncWalk, walk } from 'estree-walker';
 import MagicString from 'magic-string';
 
 import nodeResolve from '@rollup/plugin-node-resolve';
 import terser from '@rollup/plugin-terser';
 
-function bundleWorker(minified: boolean): RollupOptions {
-  const plugins = [nodeResolve({ preferBuiltins: false, browser: true }), includeUriBundles()];
-  if (minified) {
-    plugins.push(terser());
+const workerFileUri: Plugin = {
+  // In non-modular workers, the script URL is always globalThis.location.href.
+  name: 'workerFileUrl',
+  resolveFileUrl({ relativePath }) {
+    return `new URL('${relativePath}', globalThis.location.href)`;
   }
+};
 
-  const name = minified ? 'powersync.min.worker.js' : 'powersync.worker.js';
+function bundleWorker(): RollupOptions {
+  const plugins = [nodeResolve({ preferBuiltins: false, browser: true }), includeUriBundles(), workerFileUri, terser()];
+
   return {
     input: 'lib/worker/worker.js',
     output: {
-      file: `dist/${name}`,
-      format: 'iife',
-      sourcemap: true,
-      inlineDynamicImports: true
+      dir: `dist/worker/`,
+      format: 'esm',
+      sourcemap: true
     },
     plugins
   };
 }
 
-const options: RollupOptions[] = [bundleWorker(false), bundleWorker(true)];
+function bundledModuleForReactNativeWeb(): RollupOptions {
+  return {
+    input: 'lib/index.js',
+    output: {
+      file: 'dist/index.react_native_web.js',
+      format: 'esm',
+      sourcemap: true
+    },
+    external: ['@powersync/common', '@powersync/shared-internals', 'comlink'],
+    plugins: disableDefaultWorkers()
+  };
+}
+
+const options: RollupOptions[] = [bundledModuleForReactNativeWeb(), bundleWorker()];
+
+function disableDefaultWorkers(): Plugin {
+  return {
+    name: 'disableSpawnDefaultPowerSyncWorker',
+    transform(code, id) {
+      if (!code.includes('function spawnDefaultPowerSyncWorker')) return;
+
+      // In the build for React Native web, import.meta.url must not appear anywhere in the bundled output as Metro does
+      // not generate ESM modules.
+      // For details, see the comment on spawnDefaultPowerSyncWorker in src/worker/client.ts.
+      const ms = new MagicString(code);
+
+      const ast = this.parse(code);
+      walk(ast, {
+        enter(node) {
+          if (node.type === 'FunctionDeclaration' && node.id.name === 'spawnDefaultPowerSyncWorker') {
+            const body = node.body;
+            ms.overwrite(
+              (body as any).start,
+              (body as any).end,
+              `{
+  throw new Error('You are using the React Native web build of the PowerSync SDK, which requires custom worker URLs. Please see the documentation at https://docs.powersync.com/client-sdks/frameworks/react-native-web-support for details.');
+}
+`
+            );
+            this.skip();
+          }
+        }
+      });
+
+      return {
+        code: ms.toString(),
+        map: ms.generateMap()
+      };
+    }
+  };
+}
 
 // Plugin that replaces `new URL(x, import.meta.url)` with a resolved asset URL.
 //
@@ -67,9 +120,6 @@ function includeUriBundles(): Plugin {
 
   return {
     name: 'includeUriBundles',
-    resolveFileUrl({ relativePath }) {
-      return `new URL('${relativePath}', globalThis.location.href)`;
-    },
     async transform(code, id) {
       if (!code.includes('import.meta.url')) return;
 
@@ -95,13 +145,6 @@ function includeUriBundles(): Plugin {
             const start = (node as any).start as number;
             const end = (node as any).end as number;
             ms.overwrite(start, end, `import.meta.ROLLUP_FILE_URL_OBJ_${referenceId}`);
-            this.skip();
-          } else if (isImportMetaUrl(node)) {
-            // In non-modular workers, the script URL is always globalThis.location.href.
-            ms ??= new MagicString(code);
-            const start = (node as any).start as number;
-            const end = (node as any).end as number;
-            ms.overwrite(start, end, 'globalThis.location.href');
             this.skip();
           }
         }

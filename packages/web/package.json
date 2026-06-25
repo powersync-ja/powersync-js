@@ -2,10 +2,10 @@
   "name": "@powersync/web",
   "version": "1.38.5",
   "description": "PowerSync Web SDK",
-  "main": "lib/src/index.js",
-  "module": "lib/src/index.js",
+  "main": "lib/index.js",
+  "module": "lib/index.js",
   "type": "module",
-  "types": "lib/src/index.d.ts",
+  "types": "lib/index.d.ts",
   "bin": {
     "powersync-web": "bin/powersync.cjs"
   },
@@ -19,12 +19,13 @@
   "exports": {
     ".": {
       "types": "./lib/index.d.ts",
+      "react-native-web": "./dist/index.react_native_web.js",
+      "react-native": "./dist/index.react_native_web.js",
       "default": "./lib/index.js"
     },
     "./bundled_worker": {
       "types": "./lib/worker/worker.d.ts",
-      "development": "./dist/powersync.worker.js",
-      "default": "./dist/powersync.min.worker.js"
+      "default": "./dist/worker/worker.js"
     }
   },
   "repository": "https://github.com/powersync-ja/powersync-js",
