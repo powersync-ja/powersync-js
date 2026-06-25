@@ -1,4 +1,4 @@
-import { Column, ColumnType, Table, TableOptions } from '@powersync/common';
+import { Column, ColumnType, ResolvedTable, ResolvedTableOptions } from '@powersync/common';
 
 export const ATTACHMENT_TABLE = 'attachments';
 
@@ -20,12 +20,12 @@ export enum AttachmentState {
   ARCHIVED = 4 // Attachment has been orphaned, i.e. the associated record has been deleted
 }
 
-export interface AttachmentTableOptions extends Omit<TableOptions, 'name' | 'columns'> {
+export interface AttachmentTableOptions extends Omit<ResolvedTableOptions, 'name' | 'columns'> {
   name?: string;
   additionalColumns?: Column[];
 }
 
-export class AttachmentTable extends Table {
+export class AttachmentTable extends ResolvedTable {
   constructor(options?: AttachmentTableOptions) {
     super({
       ...options,

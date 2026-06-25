@@ -29,7 +29,6 @@ export * from './db/schema/IndexedColumn.js';
 export { PendingStatement, PendingStatementParameter, RawTableType } from './db/schema/RawTable.js';
 export * from './db/schema/Schema.js';
 export * from './db/schema/Table.js';
-export * from './db/schema/TableV2.js';
 
 export * from './client/Query.js';
 export * from './client/triggers/sanitizeSQL.js';

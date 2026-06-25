@@ -1,12 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { Table, TableV2Options } from '../../../src/db/schema/Table.js';
+import { ResolvedTable, Table, TableOptions } from '../../../src/db/schema/Table.js';
 import { column, Column, ColumnType } from '../../../src/db/schema/Column.js';
 import { Index } from '../../../src/db/schema/Index.js';
 import { IndexedColumn } from '../../../src/db/schema/IndexedColumn.js';
 
 describe('Table', () => {
-  it('should create a table with V1 syntax', () => {
-    const table = new Table({
+  it('can create ResolvedTable', () => {
+    const table = new ResolvedTable({
       name: 'users',
       columns: [
         new Column({ name: 'name', type: ColumnType.TEXT }),
@@ -131,7 +131,7 @@ describe('Table', () => {
   });
 
   it('should handle options', () => {
-    function createTable(options: TableV2Options) {
+    function createTable(options: TableOptions) {
       return new Table({ name: column.text }, options);
     }
 

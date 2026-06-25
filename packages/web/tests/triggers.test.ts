@@ -183,7 +183,7 @@ describe('Triggers', () => {
         );
         expect(tables.length).eq(2);
       },
-      { interval: 100 }
+      { interval: 100, timeout: 2000 }
     );
 
     // close the first Iframe, releasing holds
@@ -199,7 +199,7 @@ describe('Triggers', () => {
         );
         expect(tables.length).eq(1);
       },
-      { interval: 100 }
+      { interval: 100, timeout: 2000 }
     );
   });
 

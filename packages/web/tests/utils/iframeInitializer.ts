@@ -3,7 +3,7 @@ import {
   LogLevels,
   Schema,
   SyncStreamConnectionMethod,
-  TableV2,
+  Table,
   column,
   createConsoleLogger
 } from '@powersync/common';
@@ -38,7 +38,7 @@ export async function setupPowerSyncInIframe(
 
     // Create a simple schema for testing
     const schema = new Schema({
-      customers: new TableV2({
+      customers: new Table({
         name: column.text,
         email: column.text
       })
