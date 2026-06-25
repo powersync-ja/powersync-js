@@ -1,4 +1,4 @@
-import { CommonPowerSyncDatabase, Column, ColumnType, Schema, Table } from '@powersync/web';
+import { CommonPowerSyncDatabase, Column, ColumnType, Schema, ResolvedTable } from '@powersync/web';
 import type { SyncDataBucketJSON } from '@powersync/shared-internals/internal/sync_protocol';
 import { AppSchema } from './AppSchema';
 import { JsSchemaGenerator } from './JsSchemaGenerator';
@@ -123,7 +123,7 @@ export class DynamicSchemaManager {
     const tables = [...base.tables];
 
     for (const [key, value] of Object.entries(this.tables)) {
-      const table = new Table({
+      const table = new ResolvedTable({
         name: key,
         columns: Object.entries(value).map(
           ([cname, ctype]) =>

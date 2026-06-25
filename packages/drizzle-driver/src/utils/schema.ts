@@ -5,7 +5,7 @@ import {
   SchemaTableType,
   Table,
   type BaseColumnType,
-  type TableV2Options
+  type TableOptions
 } from '@powersync/common';
 import { entityKind, InferSelectModel, isTable, Relations, type Casing } from 'drizzle-orm';
 import { CasingCache } from 'drizzle-orm/casing';
@@ -31,7 +31,7 @@ export type Expand<T> = T extends infer O ? { [K in keyof O]: O[K] } : never;
 
 export function toPowerSyncTable<T extends SQLiteTableWithColumns<any>>(
   table: T,
-  options?: Omit<TableV2Options, 'indexes'> & { casingCache?: CasingCache }
+  options?: Omit<TableOptions, 'indexes'> & { casingCache?: CasingCache }
 ): Table<Expand<ExtractPowerSyncColumns<T>>> {
   const { columns: drizzleColumns, indexes: drizzleIndexes } = getTableConfig(table);
   const { casingCache } = options ?? {};
@@ -94,7 +94,7 @@ function mapDrizzleColumnToType(drizzleColumn: SQLiteColumn<any, object>): BaseC
   }
 }
 
-export type DrizzleTablePowerSyncOptions = Omit<TableV2Options, 'indexes'>;
+export type DrizzleTablePowerSyncOptions = Omit<TableOptions, 'indexes'>;
 
 export type DrizzleTableWithPowerSyncOptions = {
   tableDefinition: SQLiteTableWithColumns<any>;

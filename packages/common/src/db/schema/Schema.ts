@@ -1,6 +1,6 @@
 import { encodeTableOptions } from './internal.js';
 import { RawTable, RawTableType } from './RawTable.js';
-import { RowType, Table } from './Table.js';
+import { ResolvedTable, RowType, Table } from './Table.js';
 
 type SchemaType = Record<string, Table<any>>;
 
@@ -22,10 +22,10 @@ export class Schema<S extends SchemaType = SchemaType> {
   */
   readonly types!: SchemaTableType<S>;
   readonly props!: S;
-  readonly tables: Table[];
+  readonly tables: ResolvedTable[];
   readonly rawTables: RawTable[];
 
-  constructor(tables: Table[] | S) {
+  constructor(tables: ResolvedTable[] | S) {
     if (Array.isArray(tables)) {
       /*
         We need to validate that the tables have a name here because a user could pass in an array

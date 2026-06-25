@@ -1,4 +1,4 @@
-import { Column, ColumnType, Schema, Table } from '@powersync/web';
+import { column, Schema, Table } from '@powersync/web';
 
 export const TABLE_NAME = 'pebbles';
 export const MAX_PEBBLES = 5;
@@ -19,29 +19,24 @@ export interface PebbleDef {
   user_id: string;
 }
 
-export const AppSchema = new Schema([
-  new Table({
-    name: TABLE_NAME,
-    columns: [
-      new Column({ name: 'shape', type: ColumnType.TEXT }),
-      new Column({ name: 'created_at', type: ColumnType.TEXT }),
-      new Column({ name: 'user_id', type: ColumnType.TEXT })
-    ]
+export const AppSchema = new Schema({
+  [TABLE_NAME]: new Table({
+    shape: column.text,
+    created_at: column.text,
+    user_id: column.text
   }),
-  new Table({
-    name: 'operations',
-    columns: [
-      new Column({ name: 'operation', type: ColumnType.TEXT }),
-      new Column({ name: 'created_at', type: ColumnType.TEXT }),
-      new Column({ name: 'user_id', type: ColumnType.TEXT })
-    ]
+  operations: new Table({
+    operation: column.text,
+    created_at: column.text,
+    user_id: column.text
   }),
-  new Table({
-    name: 'settings',
-    localOnly: true,
-    columns: [new Column({ name: 'initialized', type: ColumnType.INTEGER })]
-  })
-]);
+  settings: new Table(
+    {
+      initialized: column.integer
+    },
+    { localOnly: true }
+  )
+});
 
 export function randomPebbleShape(): Shape {
   const colors = Object.values(Shape);

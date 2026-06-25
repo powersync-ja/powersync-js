@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { Schema } from '../../../src/db/schema/Schema.js';
-import { Table } from '../../../src/db/schema/Table.js';
+import { ResolvedTable, Table } from '../../../src/db/schema/Table.js';
 import { column, ColumnType, Column } from '../../../src/db/schema/Column.js';
 
 describe('Schema', () => {
@@ -10,12 +10,12 @@ describe('Schema', () => {
     expect(() => new Schema([table1, table2])).toThrow();
   });
 
-  it('should create a schema with an array of tables using the old syntax', () => {
-    const table1 = new Table({
+  it('should create a schema with an array of tables using ResolvedTable', () => {
+    const table1 = new ResolvedTable({
       name: 'table1',
       columns: [new Column({ name: 'name', type: ColumnType.TEXT })]
     });
-    const table2 = new Table({
+    const table2 = new ResolvedTable({
       name: 'table2',
       columns: [new Column({ name: 'age', type: ColumnType.INTEGER })]
     });

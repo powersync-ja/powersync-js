@@ -1,4 +1,4 @@
-import { CommonPowerSyncDatabase, Column, ColumnType, Index, IndexedColumn, Schema, Table } from '@powersync/common';
+import { CommonPowerSyncDatabase, IndexedColumn, Schema, Table, column } from '@powersync/common';
 import { PowerSyncDatabase } from '@powersync/web';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
@@ -10,69 +10,61 @@ type SchemaVersionResult = {
  * Generates the Asset table with configurable options which
  * will be modified later.
  */
-const generateAssetsTable = (weightColumnName: string = 'weight', includeIndexes = true, indexAscending = true) =>
-  new Table({
-    name: 'assets',
-    columns: [
-      new Column({ name: 'created_at', type: ColumnType.TEXT }),
-      new Column({ name: 'make', type: ColumnType.TEXT }),
-      new Column({ name: 'model', type: ColumnType.TEXT }),
-      new Column({ name: 'serial_number', type: ColumnType.TEXT }),
-      new Column({ name: 'quantity', type: ColumnType.INTEGER }),
-      new Column({ name: 'user_id', type: ColumnType.TEXT }),
-      new Column({ name: weightColumnName, type: ColumnType.REAL }),
-      new Column({ name: 'description', type: ColumnType.TEXT })
-    ],
-    indexes: includeIndexes
-      ? [
-          new Index({
-            name: 'makemodel',
-            columns: [
-              new IndexedColumn({
-                name: 'make'
-              }),
-              new IndexedColumn({ name: 'model', ascending: indexAscending })
-            ]
-          })
-        ]
-      : []
-  });
+const generateAssetsTable = (weightColumnName: string = 'weight', includeIndexes = true, indexAscending = true) => {
+  return new Table(
+    {
+      created_at: column.text,
+      make: column.text,
+      model: column.text,
+      serial_number: column.text,
+      quantity: column.integer,
+      user_id: column.text,
+      [weightColumnName]: column.real,
+      description: column.text
+    },
+    {
+      indexes: includeIndexes
+        ? {
+            makemodel: ['make', new IndexedColumn({ name: 'model', ascending: indexAscending })]
+          }
+        : {}
+    }
+  );
+};
 
 /**
  * Generates all the schema tables.
  * Allows for a custom assets table generator to be supplied.
  */
-const generateSchemaTables = (assetsTableGenerator: () => Table = generateAssetsTable) => [
-  assetsTableGenerator(),
-  new Table({
-    name: 'customers',
-    columns: [new Column({ name: 'name', type: ColumnType.TEXT }), new Column({ name: 'email', type: ColumnType.TEXT })]
-  }),
-  new Table({
-    name: 'logs',
-    insertOnly: true,
-    columns: [
-      new Column({ name: 'level', type: ColumnType.TEXT }),
-      new Column({ name: 'content', type: ColumnType.TEXT })
-    ]
-  }),
-
-  new Table({
-    name: 'credentials',
-    localOnly: true,
-    columns: [new Column({ name: 'key', type: ColumnType.TEXT }), new Column({ name: 'value', type: ColumnType.TEXT })]
-  }),
-  new Table({
-    name: 'aliased',
-    columns: [new Column({ name: 'name', type: ColumnType.TEXT })],
-    viewName: 'test1'
-  })
-];
+const generateSchema = (assetsTableGenerator: () => Table = generateAssetsTable) => {
+  return new Schema({
+    assets: assetsTableGenerator(),
+    customers: new Table({
+      name: column.text,
+      email: column.text
+    }),
+    logs: new Table(
+      {
+        level: column.text,
+        content: column.text
+      },
+      { insertOnly: true }
+    ),
+    credentials: new Table(
+      {
+        key: column.text,
+        value: column.text
+      },
+      { localOnly: true }
+    ),
+    aliased: new Table({ name: column.text }, { viewName: 'test1' })
+  });
+};
 
 /**
  * The default schema
  */
-const schema = new Schema(generateSchemaTables());
+const schema = generateSchema();
 
 describe('Schema Tests', { sequential: true }, () => {
   let powersync: CommonPowerSyncDatabase;
@@ -105,7 +97,7 @@ describe('Schema Tests', { sequential: true }, () => {
     expect(versionAfter['schema_version']).equals(versionBefore['schema_version']);
 
     // The `weight` columns is now `weights`
-    const schema2 = new Schema(generateSchemaTables(() => generateAssetsTable('weights')));
+    const schema2 = generateSchema(() => generateAssetsTable('weights'));
 
     await powersync.updateSchema(schema2);
 
@@ -115,7 +107,7 @@ describe('Schema Tests', { sequential: true }, () => {
     expect(versionAfter2['schema_version']).greaterThan(versionAfter['schema_version']);
 
     // The index is now descending
-    const schema3 = new Schema(generateSchemaTables(() => generateAssetsTable('weights', true, false)));
+    const schema3 = generateSchema(() => generateAssetsTable('weights', true, false));
 
     await powersync.updateSchema(schema3);
 
@@ -131,7 +123,7 @@ describe('Schema Tests', { sequential: true }, () => {
     expect(results.rows?._array?.[0]['detail']).contains('USING INDEX ps_data__assets__makemodel');
 
     // Now drop the index
-    const schema2 = new Schema(generateSchemaTables(() => generateAssetsTable('weight', false)));
+    const schema2 = generateSchema(() => generateAssetsTable('weight', false));
     await powersync.updateSchema(schema2);
 
     // Execute instead of getAll so that we don't get a cached query plan

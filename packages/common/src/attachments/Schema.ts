@@ -1,6 +1,6 @@
 import { column } from '../db/schema/Column.js';
 import { Table } from '../db/schema/Table.js';
-import { TableV2Options } from '../db/schema/Table.js';
+import { TableOptions } from '../db/schema/Table.js';
 
 /**
  * The default name of the local table storing attachment data.
@@ -64,7 +64,7 @@ export enum AttachmentState {
 /**
  * @alpha
  */
-export interface AttachmentTableOptions extends Omit<TableV2Options, 'name' | 'columns'> {}
+export interface AttachmentTableOptions extends Omit<TableOptions, 'name' | 'columns'> {}
 
 /**
  * AttachmentTable defines the schema for the attachment queue table.

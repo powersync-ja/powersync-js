@@ -160,7 +160,7 @@ export class AttachmentTable extends Table {
 }
 
 // @alpha (undocumented)
-export interface AttachmentTableOptions extends Omit<TableV2Options, 'name' | 'columns'> {
+export interface AttachmentTableOptions extends Omit<TableOptions, 'name' | 'columns'> {
 }
 
 // @public (undocumented)
@@ -569,7 +569,7 @@ export class Index {
     // (undocumented)
     protected options: IndexOptions;
     // (undocumented)
-    toJSON(table: Table): {
+    toJSON(table: ResolvedTable): {
         name: string;
         columns: {
             name: string;
@@ -599,7 +599,7 @@ export class IndexedColumn {
     // (undocumented)
     protected options: IndexColumnOptions;
     // (undocumented)
-    toJSON(table: Table): {
+    toJSON(table: ResolvedTable): {
         name: string;
         ascending: boolean | undefined;
         type: ColumnType;
@@ -615,7 +615,7 @@ export interface IndexOptions {
 }
 
 // @public (undocumented)
-export type IndexShorthand = Record<string, string[]>;
+export type IndexShorthand = Record<string, (string | IndexedColumn)[]>;
 
 // @public
 export type ListenerCounts<Listener extends BaseListener> = Partial<Record<keyof Listener, number>> & {
@@ -809,6 +809,73 @@ export interface RemoteStorageAdapter {
 }
 
 // @public
+export class ResolvedTable {
+    constructor(options: ResolvedTableOptions);
+    // (undocumented)
+    get columns(): Column[];
+    // (undocumented)
+    get ignoreEmptyUpdates(): boolean;
+    // (undocumented)
+    get indexes(): Index[];
+    // (undocumented)
+    get insertOnly(): boolean;
+    // (undocumented)
+    get internalName(): string;
+    // (undocumented)
+    get localOnly(): boolean;
+    // (undocumented)
+    get name(): string;
+    // (undocumented)
+    readonly options: ResolvedTableOptions;
+    // (undocumented)
+    toJSON(): {
+        local_only: boolean | undefined;
+        insert_only: boolean | undefined;
+        include_old: any;
+        include_old_only_when_changed: boolean;
+        include_metadata: boolean | undefined;
+        ignore_empty_update: boolean | undefined;
+        name: string;
+        view_name: string;
+        columns: {
+            name: string;
+            type: ColumnType | undefined;
+        }[];
+        indexes: {
+            name: string;
+            columns: {
+                name: string;
+                ascending: boolean | undefined;
+                type: ColumnType;
+            }[];
+        }[];
+    };
+    // (undocumented)
+    get trackMetadata(): boolean;
+    // (undocumented)
+    get trackPrevious(): boolean | TrackPreviousOptions;
+    // (undocumented)
+    validate(): void;
+    // (undocumented)
+    get validName(): boolean;
+    // (undocumented)
+    get viewName(): string;
+    // (undocumented)
+    get viewNameOverride(): string | undefined;
+}
+
+// Warning: (ae-forgotten-export) The symbol "SharedTableOptions" needs to be exported by the entry point index.d.ts
+//
+// @public (undocumented)
+export interface ResolvedTableOptions extends SharedTableOptions {
+    // (undocumented)
+    columns: Column[];
+    // (undocumented)
+    indexes?: Index[];
+    name: string;
+}
+
+// @public
 export interface ResultSet {
     // @deprecated (undocumented)
     get _array(): any[];
@@ -818,11 +885,11 @@ export interface ResultSet {
 }
 
 // @public (undocumented)
-export type RowType<T extends TableV2<any>> = {
-    [K in keyof T['columnMap']]: ExtractColumnValueType<T['columnMap'][K]>;
+export type RowType<T extends Table<any>> = T extends Table<infer Columns> ? {
+    [K in keyof Columns]: ExtractColumnValueType<Columns[K]>;
 } & {
     id: string;
-};
+} : never;
 
 // @alpha
 export function sanitizeSQL(strings: TemplateStringsArray, ...values: any[]): string;
@@ -834,7 +901,7 @@ export function sanitizeUUID(uuid: string): string;
 //
 // @public
 export class Schema<S extends SchemaType = SchemaType> {
-    constructor(tables: Table[] | S);
+    constructor(tables: ResolvedTable[] | S);
     // (undocumented)
     readonly props: S;
     // Warning: (ae-forgotten-export) The symbol "RawTable" needs to be exported by the entry point index.d.ts
@@ -843,7 +910,7 @@ export class Schema<S extends SchemaType = SchemaType> {
     readonly rawTables: RawTable[];
     static rawTableToJson(table: RawTable): unknown;
     // (undocumented)
-    readonly tables: Table[];
+    readonly tables: ResolvedTable[];
     // (undocumented)
     toJSON(): unknown;
     // (undocumented)
@@ -1025,85 +1092,23 @@ export interface SyncSubscriptionDescription extends SyncStreamDescription {
     lastSyncedAt: Date | null;
 }
 
-// @public (undocumented)
-export class Table<Columns extends ColumnsType = ColumnsType> {
-    constructor(columns: Columns, options?: TableV2Options);
-    // @deprecated
-    constructor(options: TableOptions);
+// @public
+export class Table<Columns extends ColumnsType = ColumnsType> extends ResolvedTable {
+    constructor(columns: Columns, options?: TableOptions);
     // (undocumented)
-    get columnMap(): Columns;
+    copyWithName(name: string): ResolvedTable;
     // (undocumented)
-    get columns(): Column[];
+    static createInsertOnly<Columns extends ColumnsType = ColumnsType>(columns: Columns, options?: TableOptions): Table<Columns>;
     // (undocumented)
-    copyWithName(name: string): Table;
-    // (undocumented)
-    static createInsertOnly(options: TableOptions): Table<ColumnsType>;
-    // (undocumented)
-    static createLocalOnly(options: TableOptions): Table<ColumnsType>;
-    // @deprecated
-    static createTable(name: string, table: Table): Table<ColumnsType>;
-    // (undocumented)
-    get ignoreEmptyUpdates(): boolean;
-    // (undocumented)
-    get indexes(): Index[];
-    // (undocumented)
-    get insertOnly(): boolean;
-    // (undocumented)
-    get internalName(): string;
-    // (undocumented)
-    get localOnly(): boolean;
+    static createLocalOnly<Columns extends ColumnsType = ColumnsType>(columns: Columns, options?: TableOptions): Table<Columns>;
     // (undocumented)
     protected _mappedColumns: Columns;
-    // (undocumented)
-    get name(): string;
-    // (undocumented)
-    protected options: TableOptions;
-    // (undocumented)
-    toJSON(): {
-        local_only: boolean | undefined;
-        insert_only: boolean | undefined;
-        include_old: any;
-        include_old_only_when_changed: boolean;
-        include_metadata: boolean | undefined;
-        ignore_empty_update: boolean | undefined;
-        name: string;
-        view_name: string;
-        columns: {
-            name: string;
-            type: ColumnType | undefined;
-        }[];
-        indexes: {
-            name: string;
-            columns: {
-                name: string;
-                ascending: boolean | undefined;
-                type: ColumnType;
-            }[];
-        }[];
-    };
-    // (undocumented)
-    get trackMetadata(): boolean;
-    // (undocumented)
-    get trackPrevious(): boolean | TrackPreviousOptions;
-    // (undocumented)
-    validate(): void;
-    // (undocumented)
-    get validName(): boolean;
-    // (undocumented)
-    get viewName(): string;
-    // (undocumented)
-    get viewNameOverride(): string | undefined;
 }
 
-// Warning: (ae-forgotten-export) The symbol "SharedTableOptions" needs to be exported by the entry point index.d.ts
-//
 // @public (undocumented)
 export interface TableOptions extends SharedTableOptions {
     // (undocumented)
-    columns: Column[];
-    // (undocumented)
-    indexes?: Index[];
-    name: string;
+    indexes?: IndexShorthand;
 }
 
 // @public
@@ -1118,16 +1123,6 @@ export interface TableOrRawTableOptions {
     trackMetadata?: boolean;
     // (undocumented)
     trackPrevious?: boolean | TrackPreviousOptions;
-}
-
-// @public @deprecated
-export class TableV2<Columns extends ColumnsType = ColumnsType> extends Table<Columns> {
-}
-
-// @public (undocumented)
-export interface TableV2Options extends SharedTableOptions {
-    // (undocumented)
-    indexes?: IndexShorthand;
 }
 
 // @alpha
