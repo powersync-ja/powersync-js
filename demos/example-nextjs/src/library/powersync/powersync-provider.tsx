@@ -18,13 +18,11 @@ function getDB(): PowerSyncDatabase {
       logger,
       open: {
         dbFilename: 'powersync-nextjs.db',
-        worker: '/@powersync/worker.js',
         databaseWorkerLogLevel: LogLevels.debug,
         disableSSRWarning: true
       }
     }),
     schema: AppSchema,
-    sync: { worker: '/@powersync/worker.js' },
     logger
   });
 
