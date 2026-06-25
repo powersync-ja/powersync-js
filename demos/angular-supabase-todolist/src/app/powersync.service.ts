@@ -66,7 +66,7 @@ export class PowerSyncService {
         dbFilename: 'test.db',
         vfs: WASQLiteVFS.OPFSCoopSyncVFS,
         // Specify the path to the worker script
-        worker: 'assets/@powersync/worker/WASQLiteDB.umd.js',
+        worker: 'assets/@powersync/worker.js',
         databaseWorkerLogLevel: LogLevels.debug
       }
     });
@@ -74,10 +74,9 @@ export class PowerSyncService {
     this.db = new PowerSyncDatabase({
       schema: AppSchema,
       factory,
-
       sync: {
         // Specify the path to the worker script
-        worker: 'assets/@powersync/worker/SharedSyncImplementation.umd.js'
+        worker: 'assets/@powersync/worker.js'
       }
     });
   }

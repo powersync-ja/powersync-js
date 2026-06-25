@@ -1,6 +1,5 @@
 import { DBAdapter, LogLevels, PowerSyncLogger, SQLOpenFactory } from '@powersync/common';
 import * as Comlink from 'comlink';
-import { openWorkerDatabasePort, resolveWorkerDatabasePortFactory } from '../../../worker/db/open-worker-database.js';
 import { ResolvedWebSQLOpenOptions, WebSQLOpenOptions } from '../options.js';
 import { SSRDBAdapter } from '../SSRDBAdapter.js';
 import { vfsRequiresDedicatedWorkers, WASQLiteVFS } from './vfs.js';
@@ -10,6 +9,7 @@ import { generateTabCloseSignal } from '../../../shared/tab_close_signal.js';
 import { AsyncDbAdapter, PoolConnection } from '../AsyncWebAdapter.js';
 import { RawWaSqliteDatabaseOptions } from './RawSqliteConnection.js';
 import { resolveAndValidateOptions } from '../resolveAndValidateOptions.js';
+import { connectToExistingWorker, connectToWorker, WorkerConnection } from '../../../worker/client.js';
 
 export interface WASQLiteOpenFactoryOptions {
   open: WebSQLOpenOptions;
@@ -86,12 +86,23 @@ export class WASQLiteOpenFactory implements SQLOpenFactory {
       const optionsDbWorker = this.options.worker;
 
       const openDatabaseWorker = async (readonly: boolean): Promise<DatabaseClient> => {
-        const workerPort =
-          typeof optionsDbWorker == 'function'
-            ? resolveWorkerDatabasePortFactory(() => optionsDbWorker(this.options))
-            : openWorkerDatabasePort(this.options.dbFilename, enableMultiTabs, optionsDbWorker, vfs);
+        let workerConnection: WorkerConnection;
+        if (typeof optionsDbWorker == 'function') {
+          const worker = optionsDbWorker(this.options);
+          workerConnection = connectToExistingWorker(worker, 'database');
+        } else {
+          const needsDedicated = vfsRequiresDedicatedWorkers(vfs);
+          const useShared = !needsDedicated && enableMultiTabs;
 
-        const source = Comlink.wrap<OpenWorkerConnection>(workerPort);
+          workerConnection = connectToWorker({
+            service: 'database',
+            databaseIdentifier: this.options.dbFilename,
+            shared: useShared,
+            customWorker: optionsDbWorker
+          });
+        }
+
+        const source = Comlink.wrap<OpenWorkerConnection>(workerConnection.endpoint);
         const closeSignal = new AbortController();
         const connection = await source.connect({
           database: resolveRawWaSqliteDatabaseOptions(readonly),
@@ -105,11 +116,7 @@ export class WASQLiteOpenFactory implements SQLOpenFactory {
           remoteCanCloseUnexpectedly: false,
           onClose: () => {
             closeSignal.abort();
-            if (workerPort instanceof Worker) {
-              workerPort.terminate();
-            } else {
-              workerPort.close();
-            }
+            workerConnection.close();
           }
         };
 

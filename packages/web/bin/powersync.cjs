@@ -13,7 +13,7 @@ program
   .description('Copy assets to the specified output directory')
   .option('-o, --output <directory>', 'output directory for assets', 'public')
   .action(async (options) => {
-    const resolvedPath = require.resolve('@powersync/web/umd');
+    const resolvedPath = require.resolve('@powersync/web/bundled_worker');
     const outputDir = options.output;
 
     console.log(`Resolved input path: ${resolvedPath}`);

@@ -10,6 +10,7 @@
     "lib": ["DOM", "ESNext", "WebWorker"] /* Specify library files to be included in the compilation. */,
     "module": "NodeNext" /* Use NodeNext for proper ESM support */,
     "moduleResolution": "nodenext" /* Use nodenext for proper ESM resolution */,
+    "rootDir": "src",
     "outDir": "./lib" /* Redirect output structure to the directory. */,
     "strict": true /* Enable all strict type-checking options. */,
     "target": "ESNext" /* Specify ECMAScript target version: 'ES3' (default), 'ES5', 'ES2015', 'ES2016', 'ES2017', 'ES2018', 'ES2019', 'ES2020', or 'ESNEXT'. */,
@@ -23,5 +24,5 @@
       "path": "../shared-internals"
     }
   ],
-  "include": ["src/**/*", "tests/**/*", "package.json"]
+  "include": ["src/**/*"]
 }
