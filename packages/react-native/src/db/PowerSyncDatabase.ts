@@ -15,7 +15,7 @@ import {
 import { ReactNativeRemote } from '../sync/stream/ReactNativeRemote';
 import { ReactNativeStreamingSyncImplementation } from '../sync/stream/ReactNativeStreamingSyncImplementation';
 import { ReactNativeBucketStorageAdapter } from './../sync/bucket/ReactNativeBucketStorageAdapter';
-import { ReactNativeQuickSqliteOpenFactory } from './adapters/react-native-quick-sqlite/ReactNativeQuickSQLiteOpenFactory';
+import { OPSqliteOpenFactory } from './adapters/op-sqlite/OPSqliteDBOpenFactory';
 
 class ReactNativePowerSyncDatabase extends BasePowerSyncDatabase<PowerSyncDatabaseOptions> {
   constructor(options: PowerSyncDatabaseOptions) {
@@ -26,7 +26,7 @@ class ReactNativePowerSyncDatabase extends BasePowerSyncDatabase<PowerSyncDataba
 
   protected override openDBAdapter(): DBAdapter {
     return openDatabase(this.options, (database) => {
-      const defaultFactory = new ReactNativeQuickSqliteOpenFactory(database);
+      const defaultFactory = new OPSqliteOpenFactory(database);
       return defaultFactory.openDB();
     });
   }

@@ -33,38 +33,25 @@
   },
   "homepage": "https://docs.powersync.com/",
   "peerDependencies": {
-    "@journeyapps/react-native-quick-sqlite": "^2.5.2",
+    "@op-engineering/op-sqlite": "^17.0.0",
     "@powersync/common": "workspace:^1.56.0",
     "react": "*",
     "react-native": "*"
-  },
-  "peerDependenciesMeta": {
-    "@journeyapps/react-native-quick-sqlite": {
-      "optional": true
-    }
   },
   "dependencies": {
     "@powersync/common": "workspace:*",
     "@powersync/react": "workspace:*",
     "@powersync/shared-internals": "workspace:*"
   },
+  "optionalDependencies": {
+    "react-native-fetch-api": "^3.0.0"
+  },
   "devDependencies": {
-    "@craftzdog/react-native-buffer": "^6.0.5",
-    "@journeyapps/react-native-quick-sqlite": "^2.5.2",
-    "@rollup/plugin-alias": "catalog:",
-    "@rollup/plugin-commonjs": "catalog:",
-    "@rollup/plugin-inject": "catalog:",
-    "@rollup/plugin-json": "catalog:",
-    "@rollup/plugin-node-resolve": "catalog:",
-    "@rollup/plugin-replace": "catalog:",
-    "@rollup/plugin-terser": "catalog:",
+    "@op-engineering/op-sqlite": "catalog:",
+    "expo": "catalog:",
     "@types/react": "^19.1.1",
     "react": "^19.2.0",
-    "react-native": "0.83.1",
-    "react-native-fetch-api": "^3.0.0",
-    "rollup": "catalog:",
-    "text-encoding": "^0.7.0",
-    "web-streams-polyfill": "3.2.1"
+    "react-native": "catalog:"
   },
   "keywords": [
     "data sync",
