@@ -148,7 +148,7 @@ export function usePowerSyncQueries(
 
   useEffect(() => {
     const aborts = parsedQueries.map((pq, idx) => {
-      if (pq.parseError || !pq.query) {
+      if (pq.parseError || !pq.query || !tablesArr[idx]?.length) {
         return null;
       }
 
@@ -165,7 +165,8 @@ export function usePowerSyncQueries(
         },
         {
           tables: tablesArr[idx],
-          signal: abort.signal
+          signal: abort.signal,
+          triggerImmediate: true
         }
       );
 
@@ -203,5 +204,5 @@ export function usePowerSyncQueries(
       }),
       streamsHaveSynced
     };
-  }, [parsedQueries, errorsArr, tablesArr, powerSync]);
+  }, [parsedQueries, errorsArr, tablesArr, powerSync, streamsHaveSynced]);
 }
