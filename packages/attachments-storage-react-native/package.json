@@ -30,8 +30,8 @@
     "src"
   ],
   "scripts": {
-    "build": "tsc -b && rollup --config",
-    "build:prod": "tsc -b --sourceMap false && rollup --config",
+    "build": "tsc -b",
+    "build:prod": "tsc -b --sourceMap false",
     "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
     "watch": "tsc -b -w"
   },

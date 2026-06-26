@@ -28,8 +28,8 @@
   },
   "homepage": "https://docs.powersync.com",
   "scripts": {
-    "build": "tsc -b && rollup --config",
-    "build:prod": "tsc -b && rollup --config",
+    "build": "tsc -b",
+    "build:prod": "tsc -b",
     "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
     "watch": "tsc --build -w",
     "test": "vitest",
