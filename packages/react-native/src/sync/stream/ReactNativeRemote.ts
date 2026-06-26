@@ -47,7 +47,7 @@ export class ReactNativeRemote extends AbstractRemote {
     }
 
     try {
-      const fetchImpl = this.options?.fetchImplementation ?? resolveDefaultFetchImplementation();
+      const fetchImpl = this.options?.fetchImplementation ?? resolveDefaultFetchImplementation(this.logger);
 
       if (expectStreamingResponse && !fetchImpl.supportsStreams) {
         // We can't fall back to the default fetch() implementation since we need a response stream.
@@ -82,7 +82,7 @@ export class ReactNativeRemote extends AbstractRemote {
 
 let defaultFetchImplementation: PowerSyncFetchImplementation | undefined;
 
-function resolveDefaultFetchImplementation(): PowerSyncFetchImplementation {
+function resolveDefaultFetchImplementation(logger: PowerSyncLogger): PowerSyncFetchImplementation {
   if (defaultFetchImplementation) {
     return defaultFetchImplementation;
   }
@@ -96,6 +96,12 @@ function resolveDefaultFetchImplementation(): PowerSyncFetchImplementation {
       }
     };
   } catch (expoNotFound) {
+    logger.log({
+      level: LogLevels.debug,
+      message: 'Could not resolve expo/fetch, HTTP streams are unavailable.',
+      error: expoNotFound
+    });
+
     // Fetch polyfill built in to React Native. This one doesn't support streaming responses.
     return {
       supportsStreams: false,
