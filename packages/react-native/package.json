@@ -6,18 +6,20 @@
     "access": "public"
   },
   "description": "PowerSync React Native SDK",
-  "main": "./dist/index.js",
-  "module": "./dist/index.js",
+  "main": "./lib/index.js",
+  "module": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "files": [
     "lib",
-    "dist",
-    "src"
+    "src",
+    "android",
+    "ios",
+    "*.podspec"
   ],
   "scripts": {
-    "build": "tsc -b && rollup -c rollup.config.mjs",
-    "build:prod": "tsc -b && rollup -c rollup.config.mjs",
-    "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
+    "build": "tsc -b",
+    "build:prod": "tsc -b",
+    "clean": "rm -rf lib tsconfig.tsbuildinfo",
     "test": "vitest --config vitest.config.ts",
     "watch": "tsc -b -w",
     "test:exports": "attw --pack ."
@@ -43,15 +45,12 @@
     "@powersync/react": "workspace:*",
     "@powersync/shared-internals": "workspace:*"
   },
-  "optionalDependencies": {
-    "react-native-fetch-api": "^3.0.0"
-  },
   "devDependencies": {
     "@op-engineering/op-sqlite": "catalog:",
     "expo": "catalog:",
     "@types/react": "^19.1.1",
     "react": "^19.2.0",
-    "react-native": "catalog:"
+    "react-native": "^0.86.0"
   },
   "keywords": [
     "data sync",

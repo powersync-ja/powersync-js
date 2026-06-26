@@ -45,9 +45,10 @@ export class ReactNativeRemote extends AbstractRemote {
         // We can't fall back to the default fetch() implementation since we need a response stream.
         const errorMessage =
           'The PowerSync SDK requires a fetch() implementation capable of streaming responses, which React Native ' +
-          'does not support that natively. ' +
-          'Neither `expo/fetch` nor `react-native-fetch-api` could be resolved though. Try adding dependencies or ' +
-          'use `SyncStreamConnectionMethod.WEB_SOCKET` on your connect() call.';
+          'does not support natively. The SDK was unable to import `expo/fetch`. ' +
+          "If you're not using expo, consider passing a custom fetchImplementation via the remote option on " +
+          'the PowerSyncDatabase constructor, or use `SyncStreamConnectionMethod.WEB_SOCKET` on your connect() call.';
+
         throw new Error(errorMessage);
       }
 
@@ -99,40 +100,14 @@ function resolveDefaultFetchImplementation(): FetchImplementation {
       }
     };
   } catch (expoNotFound) {
-    try {
-      // Directly import the fetch implementation from react-native-fetch-api. This removes the requirement for the
-      // global `fetch` to be overridden by a polyfill.
-      const { fetch } = require('react-native-fetch-api');
-      return {
-        supportsStreams: true,
-        // We have to pass textStreaming: true to get streamed responses at all, and those don't support binary data.
-        supportsStreamingBinaryResponses: false,
-        run({ resource, request, expectStreamingResponse }) {
-          if (expectStreamingResponse) {
-            // @ts-expect-error https://github.com/react-native-community/fetch#enable-text-streaming
-            options.request.reactNative = {
-              /**
-               * The `react-native-fetch-api` polyfill provides streaming support via
-               * this non-standard flag
-               * https://github.com/react-native-community/fetch#enable-text-streaming
-               */
-              textStreaming: true
-            };
-          }
-
-          return fetch(resource, request);
-        }
-      };
-    } catch (legacyNotFound) {
-      // Fetch polyfill built in to React Native. This one doesn't support streaming responses.
-      return {
-        supportsStreams: false,
-        supportsStreamingBinaryResponses: false,
-        run({ resource, request }) {
-          return fetch(resource, request);
-        }
-      };
-    }
+    // Fetch polyfill built in to React Native. This one doesn't support streaming responses.
+    return {
+      supportsStreams: false,
+      supportsStreamingBinaryResponses: false,
+      run({ resource, request }) {
+        return fetch(resource, request);
+      }
+    };
   }
 }
 

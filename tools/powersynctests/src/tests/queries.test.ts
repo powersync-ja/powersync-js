@@ -1,4 +1,4 @@
-import { OPSqliteOpenFactory } from '@powersync/op-sqlite';
+
 import {
   CommonPowerSyncDatabase,
   column,
@@ -47,9 +47,9 @@ const AppSchema = new Schema({
 
 const createDatabase = () => {
   return new PowerSyncDatabase({
-    factory: new OPSqliteOpenFactory({
+    database: {
       dbFilename: 'sqlitetest.db'
-    }),
+    },
     schema: AppSchema
   });
 };
