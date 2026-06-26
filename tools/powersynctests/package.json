@@ -22,10 +22,8 @@
     "mocha": "^10.8.2",
     "react": "^19.2.4",
     "react-native": "0.86.0",
-    "react-native-get-random-values": "^2.0.0",
     "react-native-paper": "^5.15.0",
-    "stream-browserify": "^3.0.0",
-    "uuid": "^11.1.0"
+    "stream-browserify": "^3.0.0"
   },
   "devDependencies": {
     "@babel/core": "^7.29.0",
@@ -42,6 +40,7 @@
     "@react-native/gradle-plugin": "0.86.0",
     "@react-native/metro-config": "0.86.0",
     "@react-native/typescript-config": "0.86.0",
+    "@react-native/codegen": "0.86.0",
     "@types/chai": "^5.2.3",
     "@types/chai-as-promised": "^8.0.2",
     "@types/chance": "^1.1.7",
