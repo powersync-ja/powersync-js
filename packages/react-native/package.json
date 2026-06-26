@@ -6,6 +6,7 @@
     "access": "public"
   },
   "description": "PowerSync React Native SDK",
+  "type": "module",
   "main": "./lib/index.js",
   "module": "./lib/index.js",
   "types": "./lib/index.d.ts",
@@ -21,8 +22,7 @@
     "build:prod": "tsc -b",
     "clean": "rm -rf lib tsconfig.tsbuildinfo",
     "test": "vitest --config vitest.config.ts",
-    "watch": "tsc -b -w",
-    "test:exports": "attw --pack ."
+    "watch": "tsc -b -w"
   },
   "repository": {
     "type": "git",
