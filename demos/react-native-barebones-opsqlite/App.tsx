@@ -17,7 +17,8 @@ import {
   Schema,
   type PowerSyncBackendConnector,
   PowerSyncDatabase,
-  SyncStreamConnectionMethod
+  createConsoleLogger,
+  LogLevels
 } from '@powersync/react-native';
 
 const Colors = {
@@ -58,7 +59,8 @@ const setupDatabase = async (): Promise<PowerSyncDatabase> => {
     schema,
     database: {
       dbFilename: 'powersync.db'
-    }
+    },
+    logger: createConsoleLogger({ minLevel: LogLevels.debug })
   });
 
   await powerSync.init();
@@ -97,7 +99,7 @@ function App(): React.JSX.Element {
     const init = async () => {
       try {
         const db = await setupDatabase();
-        await db.connect(new DummyConnector(), { connectionMethod: SyncStreamConnectionMethod.WEB_SOCKET });
+        await db.connect(new DummyConnector());
         if (mounted) await loadCustomers();
       } catch (error) {
         console.error('Database initialization error:', error);

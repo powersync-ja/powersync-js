@@ -9,7 +9,8 @@ import {
   SyncStreamDescription,
   SyncStreamSubscribeOptions,
   SyncStreamSubscription,
-  SyncOptions
+  SyncOptions,
+  SyncStreamConnectionMethod
 } from '@powersync/common';
 
 import { StreamingSyncImplementation, SubscribedStream } from './sync/stream/AbstractStreamingSyncImplementation.js';
@@ -54,6 +55,7 @@ export interface ConnectionManagerOptions {
     connector: PowerSyncBackendConnector,
     options: CreateSyncImplementationOptions
   ): Promise<ConnectionManagerSyncImplementationResult>;
+  readonly defaultConnectionMethod: SyncStreamConnectionMethod;
 
   logger: PowerSyncLogger;
 }
@@ -150,7 +152,7 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
     // Update pending options to the latest values
     this.pendingConnectionOptions = {
       connector,
-      options: resolveSyncOptions(options),
+      options: resolveSyncOptions(options, this.options.defaultConnectionMethod),
       schema: serializedSchema
     };
 
