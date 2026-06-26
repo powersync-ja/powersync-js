@@ -32,7 +32,7 @@
   ],
   "scripts": {
     "build": "tsc -b",
-    "build:prod": "build",
+    "build:prod": "tsc -b",
     "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
     "watch": "tsc -b -w",
     "test": "pnpm build && vitest"
