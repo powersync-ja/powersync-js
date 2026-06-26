@@ -1,8 +1,7 @@
 import React from 'react';
-import { createConsoleLogger, LogLevels, PowerSyncDatabase, SyncClientImplementation } from '@powersync/react-native';
+import { createConsoleLogger, LogLevels, PowerSyncDatabase } from '@powersync/react-native';
 import { SupabaseConnector } from '@/supabase/SupabaseConnector';
 import { AppSchema } from '@/powersync/AppSchema';
-import { OPSqliteOpenFactory } from '@powersync/op-sqlite';
 
 const logger = createConsoleLogger({ minLevel: LogLevels.debug });
 
@@ -13,13 +12,11 @@ export class System {
   constructor() {
     this.connector = new SupabaseConnector();
 
-    const opSqlite = new OPSqliteOpenFactory({
-      dbFilename: 'powersync.db'
-    });
-
     this.powersync = new PowerSyncDatabase({
       schema: AppSchema,
-      database: opSqlite,
+      database: {
+        dbFilename: 'powersync.db'
+      },
       logger: logger
     });
   }
@@ -29,9 +26,7 @@ export class System {
 
     await this.powersync.init();
 
-    await this.powersync.connect(this.connector, {
-      clientImplementation: SyncClientImplementation.RUST
-    });
+    await this.powersync.connect(this.connector);
 
     this.powersync.registerListener({
       statusChanged: (status) => {

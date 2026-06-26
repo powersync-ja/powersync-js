@@ -2,7 +2,6 @@
 '@powersync/react-native': major
 '@powersync/web': major
 '@powersync/common': major
-'@powersync/op-sqlite': minor
 '@powersync/node': minor
 'tauri-plugin-powersync': patch
 '@powersync/tauri-plugin': patch

@@ -4,7 +4,6 @@ import {
   createConsoleLogger,
   LogLevels,
   PowerSyncDatabase,
-  SyncClientImplementation,
   AttachmentQueue,
   type AttachmentRecord,
   type WatchedAttachmentItem
@@ -41,20 +40,6 @@ export class System {
       },
       logger
     });
-    /**
-     * The snippet below uses OP-SQLite as the default database adapter.
-     * You will have to uninstall `@journeyapps/react-native-quick-sqlite` and
-     * install both `@powersync/op-sqlite` and `@op-engineering/op-sqlite` to use this.
-     *
-     * ```typescript
-     * import { OPSqliteOpenFactory } from '@powersync/op-sqlite'; // Add this import
-     *
-     * const factory = new OPSqliteOpenFactory({
-     *  dbFilename: 'sqlite.db'
-     * });
-     * this.powersync = new PowerSyncDatabase({ database: factory, schema: AppSchema });
-     * ```
-     */
 
     if (AppConfig.supabaseBucket) {
       const localStorage = new ReactNativeFileSystemStorageAdapter();
@@ -105,7 +90,7 @@ export class System {
 
   async init() {
     await this.powersync.init();
-    await this.powersync.connect(this.supabaseConnector, { clientImplementation: SyncClientImplementation.RUST });
+    await this.powersync.connect(this.supabaseConnector);
 
     if (this.photoAttachmentQueue) {
       await this.photoAttachmentQueue.startSync();

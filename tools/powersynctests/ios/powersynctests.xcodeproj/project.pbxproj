@@ -385,7 +385,8 @@
 					"$(inherited)",
 					" ",
 				);
-				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
+				PODFILE_DIR = "$(SRCROOT)";
+				REACT_NATIVE_PATH = "${PODS_ROOT}/../../../../node_modules/.pnpm/react-native@0.86.0_@babel+core@7.29.0_@react-native-community+cli@20.2.0_typescript@6._70e03ba719b3636961fba3e073260c63/node_modules/react-native";
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) DEBUG";
 				SWIFT_ENABLE_EXPLICIT_MODULES = NO;
@@ -463,7 +464,8 @@
 					"$(inherited)",
 					" ",
 				);
-				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
+				PODFILE_DIR = "$(SRCROOT)";
+				REACT_NATIVE_PATH = "${PODS_ROOT}/../../../../node_modules/.pnpm/react-native@0.86.0_@babel+core@7.29.0_@react-native-community+cli@20.2.0_typescript@6._70e03ba719b3636961fba3e073260c63/node_modules/react-native";
 				SDKROOT = iphoneos;
 				SWIFT_ENABLE_EXPLICIT_MODULES = NO;
 				USE_HERMES = true;

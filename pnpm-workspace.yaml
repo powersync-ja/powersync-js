@@ -42,7 +42,6 @@ catalog:
   kysely: ^0.28.0
   p-defer: ^4.0.1
   prettier: ^3.7.4
-  react-native: ^0.86.0
   rollup: ^4.52.5
   rollup-plugin-dts: ^6.2.1
   typescript: ^6.0.3

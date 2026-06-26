@@ -1,5 +1,7 @@
 import {
+  BasePowerSyncDatabaseOptions,
   CommonPowerSyncDatabase,
+  DatabaseSource,
   DBAdapter,
   PowerSyncBackendConnector,
   PowerSyncDatabaseConstructor,
@@ -12,12 +14,20 @@ import {
   CreateSyncImplementationOptions,
   openDatabase
 } from '@powersync/shared-internals';
-import { ReactNativeRemote } from '../sync/stream/ReactNativeRemote';
+import { ReactNativeRemote, ReactNativeRemoteOptions } from '../sync/stream/ReactNativeRemote';
 import { ReactNativeStreamingSyncImplementation } from '../sync/stream/ReactNativeStreamingSyncImplementation';
 import { ReactNativeBucketStorageAdapter } from './../sync/bucket/ReactNativeBucketStorageAdapter';
-import { OPSqliteOpenFactory } from './adapters/op-sqlite/OPSqliteDBOpenFactory';
+import { OPSqliteOpenFactory, OPSQLiteOpenFactoryOptions } from './adapters/op-sqlite/OPSqliteDBOpenFactory';
 
-class ReactNativePowerSyncDatabase extends BasePowerSyncDatabase<PowerSyncDatabaseOptions> {
+export type ReactNativeDatabaseOptions = BasePowerSyncDatabaseOptions &
+  DatabaseSource<OPSQLiteOpenFactoryOptions> &
+  ReactNativeSpecificOptions;
+
+export interface ReactNativeSpecificOptions {
+  remote?: ReactNativeRemoteOptions;
+}
+
+class ReactNativePowerSyncDatabase extends BasePowerSyncDatabase<ReactNativeDatabaseOptions> {
   constructor(options: PowerSyncDatabaseOptions) {
     super(options);
   }
@@ -39,7 +49,7 @@ class ReactNativePowerSyncDatabase extends BasePowerSyncDatabase<PowerSyncDataba
     connector: PowerSyncBackendConnector,
     options: CreateSyncImplementationOptions
   ): AbstractStreamingSyncImplementation {
-    const remote = new ReactNativeRemote(connector, this.logger);
+    const remote = new ReactNativeRemote(connector, this.logger, this.options.remote);
 
     return new ReactNativeStreamingSyncImplementation({
       ...options,
