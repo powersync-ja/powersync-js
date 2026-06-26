@@ -6,7 +6,18 @@ import { WebSocketSupport, WebSocketSyncStreamPlatform } from '@powersync/shared
 export const STREAMING_POST_TIMEOUT_MS = 30_000;
 
 export interface ReactNativeRemoteOptions {
-  fetchImplementation?: typeof fetch;
+  fetchImplementation?: PowerSyncFetchImplementation;
+}
+
+export interface PowerSyncFetchImplementation {
+  /**
+   * Whether this fetch implementation supports streaming responses.
+   *
+   * The PowerSync service delivers sync data through a streaming (`Transfer-Encoding: chunked`) response, which is not
+   * supported by the default `fetch` polyfill on React Native.
+   */
+  readonly supportsStreams: boolean;
+  run(options: FetchOptions): Promise<Response>;
 }
 
 export class ReactNativeRemote extends AbstractRemote {
@@ -36,12 +47,9 @@ export class ReactNativeRemote extends AbstractRemote {
     }
 
     try {
-      if (this.options?.fetchImplementation) {
-        this.options.fetchImplementation(resource, request);
-      }
+      const fetchImpl = this.options?.fetchImplementation ?? resolveDefaultFetchImplementation();
 
-      const defaultImpl = resolveDefaultFetchImplementation();
-      if (expectStreamingResponse && !defaultImpl.supportsStreams) {
+      if (expectStreamingResponse && !fetchImpl.supportsStreams) {
         // We can't fall back to the default fetch() implementation since we need a response stream.
         const errorMessage =
           'The PowerSync SDK requires a fetch() implementation capable of streaming responses, which React Native ' +
@@ -52,7 +60,7 @@ export class ReactNativeRemote extends AbstractRemote {
         throw new Error(errorMessage);
       }
 
-      return defaultImpl.run(options);
+      return fetchImpl.run(options);
     } finally {
       if (timeout != null) clearTimeout(timeout);
     }
@@ -70,22 +78,11 @@ export class ReactNativeRemote extends AbstractRemote {
       `${Platform.OS}/${Platform.Version}`
     ].join(' ');
   }
-
-  protected get supportsStreamingBinaryResponses(): boolean {
-    return resolveDefaultFetchImplementation().supportsStreamingBinaryResponses;
-  }
 }
 
-interface FetchImplementation {
-  readonly supportsStreams: boolean;
-  readonly supportsStreamingBinaryResponses: boolean;
+let defaultFetchImplementation: PowerSyncFetchImplementation | undefined;
 
-  run(options: FetchOptions): Promise<Response>;
-}
-
-let defaultFetchImplementation: FetchImplementation | undefined;
-
-function resolveDefaultFetchImplementation(): FetchImplementation {
+function resolveDefaultFetchImplementation(): PowerSyncFetchImplementation {
   if (defaultFetchImplementation) {
     return defaultFetchImplementation;
   }
@@ -94,7 +91,6 @@ function resolveDefaultFetchImplementation(): FetchImplementation {
     const { fetch } = require('expo/fetch');
     return {
       supportsStreams: true,
-      supportsStreamingBinaryResponses: true,
       run({ resource, request }) {
         return fetch(resource, request);
       }
@@ -103,7 +99,6 @@ function resolveDefaultFetchImplementation(): FetchImplementation {
     // Fetch polyfill built in to React Native. This one doesn't support streaming responses.
     return {
       supportsStreams: false,
-      supportsStreamingBinaryResponses: false,
       run({ resource, request }) {
         return fetch(resource, request);
       }
