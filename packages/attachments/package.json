@@ -35,7 +35,8 @@
     "build:prod": "tsc -b",
     "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
     "watch": "tsc -b -w",
-    "test": "pnpm build && vitest"
+    "test": "pnpm build && vitest",
+    "test:exports": "attw --pack . --ignore-rules cjs-resolves-to-esm"
   },
   "peerDependencies": {
     "@powersync/common": "workspace:^1.56.0"
