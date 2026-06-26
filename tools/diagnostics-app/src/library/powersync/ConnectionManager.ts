@@ -4,6 +4,7 @@ import {
   LogLevels,
   PowerSyncDatabase,
   Schema,
+  SyncStreamConnectionMethod,
   SyncStreamSubscription,
   TemporaryStorageOption,
   WASQLiteOpenFactory,
@@ -146,7 +147,7 @@ export async function connect() {
   };
   sync = new WebStreamingSyncImplementation(syncOptions);
   notifySyncChange();
-  await sync.connect(resolveSyncOptions({ params }));
+  await sync.connect(resolveSyncOptions({ params }, SyncStreamConnectionMethod.HTTP));
   await schemaManager.refreshSchemaNow(db);
 }
 

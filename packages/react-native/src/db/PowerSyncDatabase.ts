@@ -5,7 +5,8 @@ import {
   DBAdapter,
   PowerSyncBackendConnector,
   PowerSyncDatabaseConstructor,
-  PowerSyncDatabaseOptions
+  PowerSyncDatabaseOptions,
+  SyncStreamConnectionMethod
 } from '@powersync/common';
 import {
   BasePowerSyncDatabase,
@@ -18,6 +19,7 @@ import { ReactNativeRemote, ReactNativeRemoteOptions } from '../sync/stream/Reac
 import { ReactNativeStreamingSyncImplementation } from '../sync/stream/ReactNativeStreamingSyncImplementation';
 import { ReactNativeBucketStorageAdapter } from './../sync/bucket/ReactNativeBucketStorageAdapter';
 import { OPSqliteOpenFactory, OPSQLiteOpenFactoryOptions } from './adapters/op-sqlite/OPSqliteDBOpenFactory';
+import { defaultFetchImplementation } from '../sync/stream/fetch';
 
 export type ReactNativeDatabaseOptions = BasePowerSyncDatabaseOptions &
   DatabaseSource<OPSQLiteOpenFactoryOptions> &
@@ -28,7 +30,7 @@ export interface ReactNativeSpecificOptions {
 }
 
 class ReactNativePowerSyncDatabase extends BasePowerSyncDatabase<ReactNativeDatabaseOptions> {
-  constructor(options: PowerSyncDatabaseOptions) {
+  constructor(options: ReactNativeDatabaseOptions) {
     super(options);
   }
 
@@ -62,6 +64,11 @@ class ReactNativePowerSyncDatabase extends BasePowerSyncDatabase<ReactNativeData
       identifier: this.database.name,
       logger: this.logger
     });
+  }
+
+  protected get defaultConnectionMethod(): SyncStreamConnectionMethod {
+    const fetch = this.options.remote?.fetchImplementation ?? defaultFetchImplementation(this.logger);
+    return fetch.supportsStreams ? SyncStreamConnectionMethod.HTTP : SyncStreamConnectionMethod.WEB_SOCKET;
   }
 }
 

@@ -31,7 +31,8 @@ import {
   WatchOnChangeEvent,
   WatchOnChangeHandler,
   BaseObserver,
-  SqliteRecord
+  SqliteRecord,
+  SyncStreamConnectionMethod
 } from '@powersync/common';
 import { BucketStorageAdapter, PSInternalTable } from './sync/bucket/BucketStorageAdapter.js';
 import { SyncStatusSnapshot } from '../db/crud/SyncStatus.js';
@@ -178,7 +179,8 @@ export abstract class BasePowerSyncDatabase<Options extends BasePowerSyncDatabas
           };
         });
       },
-      logger: this.logger
+      logger: this.logger,
+      defaultConnectionMethod: this.defaultConnectionMethod
     });
 
     this._isReadyPromise = this.initialize();
@@ -188,6 +190,16 @@ export abstract class BasePowerSyncDatabase<Options extends BasePowerSyncDatabas
       schema: this.schema,
       ...this.generateTriggerManagerConfig()
     });
+  }
+
+  /**
+   * The default connection method to use on this platform.
+   *
+   * This defaults to `HTTP` on most SDKs. On React Native, it defaults to RSocket if a streaming HTTP client is
+   * unavailable.
+   */
+  protected get defaultConnectionMethod(): SyncStreamConnectionMethod {
+    return SyncStreamConnectionMethod.HTTP;
   }
 
   get schema() {
