@@ -17,7 +17,7 @@
   },
   "description": "React Native file system storage adapters for PowerSync attachments",
   "type": "module",
-  "main": "./dist/index.cjs",
+  "main": "./lib/index.cjs",
   "types": "./lib/index.d.ts",
   "exports": {
     ".": {

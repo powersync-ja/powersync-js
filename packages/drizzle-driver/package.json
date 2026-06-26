@@ -45,13 +45,8 @@
   "devDependencies": {
     "@journeyapps/wa-sqlite": "catalog:",
     "@powersync/web": "workspace:*",
-    "@rollup/plugin-commonjs": "catalog:",
-    "@rollup/plugin-node-resolve": "catalog:",
-    "@rollup/plugin-typescript": "catalog:",
     "@types/node": "catalog:",
     "drizzle-orm": "catalog:",
-    "rollup": "catalog:",
-    "rollup-plugin-dts": "catalog:",
     "vite": "catalog:"
   }
 }

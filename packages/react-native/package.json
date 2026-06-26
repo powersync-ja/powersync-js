@@ -6,8 +6,7 @@
     "access": "public"
   },
   "description": "PowerSync React Native SDK",
-  "main": "./dist/index.js",
-  "module": "./dist/index.js",
+  "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "files": [
     "lib",

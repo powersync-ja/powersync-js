@@ -51,9 +51,6 @@ catalogs:
     '@rollup/plugin-terser':
       specifier: ^1.0.0
       version: 1.0.0
-    '@rollup/plugin-typescript':
-      specifier: ^12.1.4
-      version: 12.3.0
     '@types/node':
       specifier: ^24.0.0
       version: 24.10.13
@@ -297,24 +294,9 @@ importers:
       '@powersync/common':
         specifier: workspace:*
         version: link:../common
-      '@rollup/plugin-commonjs':
-        specifier: 'catalog:'
-        version: 29.0.2(rollup@4.59.0)
-      '@rollup/plugin-node-resolve':
-        specifier: 'catalog:'
-        version: 16.0.3(rollup@4.59.0)
-      '@rollup/plugin-typescript':
-        specifier: 'catalog:'
-        version: 12.3.0(rollup@4.59.0)(tslib@2.8.1)(typescript@6.0.3)
       '@types/node':
         specifier: 'catalog:'
         version: 24.10.13
-      rollup:
-        specifier: 'catalog:'
-        version: 4.59.0
-      rollup-plugin-dts:
-        specifier: 'catalog:'
-        version: 6.3.0(rollup@4.59.0)(typescript@6.0.3)
       vite:
         specifier: 'catalog:'
         version: 7.3.1(@types/node@24.10.13)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.48.0)(tsx@4.21.0)(yaml@2.9.0)
@@ -441,27 +423,12 @@ importers:
       '@powersync/web':
         specifier: workspace:*
         version: link:../web
-      '@rollup/plugin-commonjs':
-        specifier: 'catalog:'
-        version: 29.0.2(rollup@4.59.0)
-      '@rollup/plugin-node-resolve':
-        specifier: 'catalog:'
-        version: 16.0.3(rollup@4.59.0)
-      '@rollup/plugin-typescript':
-        specifier: 'catalog:'
-        version: 12.3.0(rollup@4.59.0)(tslib@2.8.1)(typescript@6.0.3)
       '@types/node':
         specifier: 'catalog:'
         version: 24.10.13
       drizzle-orm:
         specifier: 'catalog:'
         version: 0.44.7(@op-engineering/op-sqlite@17.0.0(react-native@0.84.1(@babel/core@7.29.7)(@react-native-community/cli@20.0.0(typescript@6.0.3))(@react-native/metro-config@0.83.1(@babel/core@7.29.7))(@types/react@19.2.14)(react@19.2.4))(react@19.2.4))(@types/better-sqlite3@7.6.13)(@types/sql.js@1.4.9)(better-sqlite3@12.10.0)(kysely@0.28.11)(sql.js@1.14.0)
-      rollup:
-        specifier: 'catalog:'
-        version: 4.59.0
-      rollup-plugin-dts:
-        specifier: 'catalog:'
-        version: 6.3.0(rollup@4.59.0)(typescript@6.0.3)
       vite:
         specifier: 'catalog:'
         version: 7.3.1(@types/node@24.10.13)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.48.0)(tsx@4.21.0)(yaml@2.9.0)
@@ -481,24 +448,9 @@ importers:
       '@powersync/web':
         specifier: workspace:*
         version: link:../web
-      '@rollup/plugin-commonjs':
-        specifier: 'catalog:'
-        version: 29.0.2(rollup@4.59.0)
-      '@rollup/plugin-node-resolve':
-        specifier: 'catalog:'
-        version: 16.0.3(rollup@4.59.0)
-      '@rollup/plugin-typescript':
-        specifier: 'catalog:'
-        version: 12.3.0(rollup@4.59.0)(tslib@2.8.1)(typescript@6.0.3)
       '@types/node':
         specifier: 'catalog:'
         version: 24.10.13
-      rollup:
-        specifier: 'catalog:'
-        version: 4.59.0
-      rollup-plugin-dts:
-        specifier: 'catalog:'
-        version: 6.3.0(rollup@4.59.0)(typescript@6.0.3)
       vite:
         specifier: 'catalog:'
         version: 7.3.1(@types/node@24.10.13)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.48.0)(tsx@4.21.0)(yaml@2.9.0)
@@ -26189,15 +26141,6 @@ snapshots:
       typescript: 6.0.3
     optionalDependencies:
       rollup: 4.14.3
-      tslib: 2.8.1
-
-  '@rollup/plugin-typescript@12.3.0(rollup@4.59.0)(tslib@2.8.1)(typescript@6.0.3)':
-    dependencies:
-      '@rollup/pluginutils': 5.4.0(rollup@4.59.0)
-      resolve: 1.22.12
-      typescript: 6.0.3
-    optionalDependencies:
-      rollup: 4.59.0
       tslib: 2.8.1
 
   '@rollup/plugin-virtual@3.0.2(rollup@2.80.0)':

@@ -18,7 +18,7 @@
   },
   "description": "An PowerSync library to manage attachments for TypeScript and React Native apps",
   "type": "module",
-  "main": "./dist/index.cjs",
+  "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "exports": {
     ".": {
@@ -42,12 +42,7 @@
   },
   "devDependencies": {
     "@powersync/common": "workspace:*",
-    "@rollup/plugin-commonjs": "catalog:",
-    "@rollup/plugin-node-resolve": "catalog:",
-    "@rollup/plugin-typescript": "catalog:",
     "@types/node": "catalog:",
-    "rollup": "catalog:",
-    "rollup-plugin-dts": "catalog:",
     "vite": "catalog:"
   }
 }
