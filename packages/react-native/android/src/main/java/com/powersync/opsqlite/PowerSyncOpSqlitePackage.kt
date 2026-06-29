@@ -1,31 +1,46 @@
 package com.powersync.opsqlite
 
-import com.facebook.react.TurboReactPackage
-import com.facebook.react.bridge.ReactApplicationContext
+import java.io.File
+import com.facebook.proguard.annotations.DoNotStrip
+import com.facebook.react.ReactPackage
 import com.facebook.react.bridge.NativeModule
-import com.facebook.react.module.model.ReactModuleInfoProvider
-import com.facebook.react.module.model.ReactModuleInfo
-import java.util.HashMap
+import com.facebook.react.bridge.ReactApplicationContext
+import com.facebook.react.bridge.ReactMethod
+import com.facebook.react.bridge.ReactContextBaseJavaModule
+import com.facebook.react.uimanager.ViewManager
 
-class PowerSyncOpSqlitePackage : TurboReactPackage() {
-  override fun getModule(name: String, reactContext: ReactApplicationContext): NativeModule? {
-    return null
+class PowerSyncOpSqlitePackage : ReactPackage {
+  override fun createNativeModules(reactContext: ReactApplicationContext): List<NativeModule> {
+    return listOf<NativeModule>(NativePowerSyncHelper(reactContext))
   }
 
-  override fun getReactModuleInfoProvider(): ReactModuleInfoProvider {
-    return ReactModuleInfoProvider {
-      val moduleInfos: MutableMap<String, ReactModuleInfo> = HashMap()
-      val isTurboModule: Boolean = BuildConfig.IS_NEW_ARCHITECTURE_ENABLED
-      moduleInfos["PowerSyncOpSqlite"] = ReactModuleInfo(
-        "PowerSyncOpSqlite",
-        "PowerSyncOpSqlite",
-        false,  // canOverrideExistingModule
-        false,  // needsEagerInit
-        true,  // hasConstants
-        false,  // isCxxModule
-        isTurboModule // isTurboModule
-      )
-      moduleInfos
+  override fun createViewManagers(
+    reactContext: ReactApplicationContext
+  ): List<ViewManager<*, *>> {
+    return emptyList()
+  }
+}
+
+private class NativePowerSyncHelper(context: ReactApplicationContext): ReactContextBaseJavaModule(context) {
+  @ReactMethod(isBlockingSynchronousMethod = true)
+  @DoNotStrip
+  fun resolveDefaultDatabaseLocation(dbName: String): String? {
+    // OP-sqlite uses context.getDatabasePath() as a default location for databases, but previous
+    // versions of the PowerSync React Native SDK used React Native Quick SQLite, which used
+    // context.getFileDir() instead. So, check if an old database exists and keep using the existing
+    // path for backwards compatibility.
+    val context = reactApplicationContext
+    val oldDirectory = context.filesDir
+    val filesPath = File(oldDirectory, dbName)
+    if (filesPath.exists()) {
+      return oldDirectory.absolutePath;
     }
+    return null;
+  }
+
+  override fun getName(): String = NAME
+
+  companion object {
+    const val NAME: String = "NativePowerSyncHelper"
   }
 }
