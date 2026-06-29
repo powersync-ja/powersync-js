@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@azure/core-asynciterator-polyfill": "^1.0.2",
-    "@op-engineering/op-sqlite": "^17.0.0",
+    "@op-engineering/op-sqlite": "^17.1.0",
     "@powersync/react": "^1.10.0",
     "@powersync/react-native": "^1.35.7",
     "react": "19.1.0",

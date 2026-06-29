@@ -658,7 +658,6 @@ export interface LocalStorageAdapter {
 
 // @public (undocumented)
 export abstract class LockContext implements SqlExecutor, DBGetUtils {
-    abstract get connectionType(): 'readWrite' | 'queryOnly' | 'readOnly';
     // (undocumented)
     execute<T = SqliteRecord>(query: string, params?: any[] | undefined): Promise<QueryResult<T>>;
     // (undocumented)
