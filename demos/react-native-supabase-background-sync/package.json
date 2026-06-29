@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@expo/vector-icons": "^15.1.1",
-    "@op-engineering/op-sqlite": "^17.0.0",
+    "@op-engineering/op-sqlite": "^17.1.0",
     "@powersync/react-native": "^1.35.7",
     "@react-navigation/bottom-tabs": "^7.3.10",
     "@react-navigation/elements": "^2.3.8",

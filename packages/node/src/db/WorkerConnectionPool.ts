@@ -119,7 +119,7 @@ export class WorkerConnectionPool extends DBAdapter {
         await database.executeRaw("SELECT powersync_update_hooks('install');", []);
       }
 
-      const connection = new RemoteConnection(worker, comlink, database, !isWriter);
+      const connection = new RemoteConnection(worker, comlink, database);
       if (this.options.initializeConnection) {
         await this.options.initializeConnection(connection, isWriter);
       }

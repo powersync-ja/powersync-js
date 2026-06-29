@@ -3,7 +3,7 @@ PODS:
   - hermes-engine (250829098.0.14):
     - hermes-engine/Pre-built (= 250829098.0.14)
   - hermes-engine/Pre-built (250829098.0.14)
-  - op-sqlite (17.0.0):
+  - op-sqlite (17.1.1):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -1474,28 +1474,6 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - react-native-get-random-values (2.0.0):
-    - hermes-engine
-    - RCTRequired
-    - RCTTypeSafety
-    - React-Core
-    - React-Core-prebuilt
-    - React-debug
-    - React-Fabric
-    - React-featureflags
-    - React-graphics
-    - React-ImageManager
-    - React-jsi
-    - React-NativeModulesApple
-    - React-RCTFabric
-    - React-renderercss
-    - React-rendererdebug
-    - React-utils
-    - ReactCodegen
-    - ReactCommon/turbomodule/bridging
-    - ReactCommon/turbomodule/core
-    - ReactNativeDependencies
-    - Yoga
   - react-native-vector-icons-evil-icons (12.4.3)
   - react-native-vector-icons-fontawesome6 (12.3.3)
   - React-NativeModulesApple (0.86.0):
@@ -1940,7 +1918,6 @@ DEPENDENCIES:
   - React-Mapbuffer (from `../node_modules/react-native/ReactCommon`)
   - React-microtasksnativemodule (from `../node_modules/react-native/ReactCommon/react/nativemodule/microtasks`)
   - React-mutationobservernativemodule (from `../node_modules/react-native/ReactCommon/react/nativemodule/mutationobserver`)
-  - react-native-get-random-values (from `../node_modules/react-native-get-random-values`)
   - "react-native-vector-icons-evil-icons (from `../node_modules/@react-native-vector-icons/evil-icons`)"
   - "react-native-vector-icons-fontawesome6 (from `../node_modules/@react-native-vector-icons/fontawesome6`)"
   - React-NativeModulesApple (from `../node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios`)
@@ -2068,8 +2045,6 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/react/nativemodule/microtasks"
   React-mutationobservernativemodule:
     :path: "../node_modules/react-native/ReactCommon/react/nativemodule/mutationobserver"
-  react-native-get-random-values:
-    :path: "../node_modules/react-native-get-random-values"
   react-native-vector-icons-evil-icons:
     :path: "../node_modules/@react-native-vector-icons/evil-icons"
   react-native-vector-icons-fontawesome6:
@@ -2150,7 +2125,7 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   FBLazyVector: b3e7ad108f0d882e30445c5527d774e3fd432f3d
   hermes-engine: 55148b6d9f59a81514e4602d9af4759dd288f194
-  op-sqlite: 0bea36e790ffedd5a9ade44768fba06175304229
+  op-sqlite: 6e75f040190a3bbd46758c08d252980c3a466e69
   powersync-react-native: 5103c1f81ad39b63df734360f2ba65a26f4b9d19
   powersync-sqlite-core: 6ce0b8b254812855e4ec52899ddc3ac6a30bda12
   RCTDeprecation: 2a74a2c57675e64419bd89078efde81f7c1de90b
@@ -2190,7 +2165,6 @@ SPEC CHECKSUMS:
   React-Mapbuffer: ce449ccdf3b80384415b925606be8a4bdcfc65d3
   React-microtasksnativemodule: 2eb3f49d0d8e77b5343455eccd057010b8d38b6b
   React-mutationobservernativemodule: f0a0d5ae9b51caf7becbeabf836d716cfedb6bf2
-  react-native-get-random-values: 68792987aef40e8aa72dc448d97e009d1f440c88
   react-native-vector-icons-evil-icons: d15eec67512258663efa5ba1203f763e410ea3cb
   react-native-vector-icons-fontawesome6: 02ba7fae6ee853356158bd43406e2e97ba168698
   React-NativeModulesApple: a092d89b58f635ebfab88048b0eda9fb516819fd

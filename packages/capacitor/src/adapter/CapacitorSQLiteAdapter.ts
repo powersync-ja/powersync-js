@@ -264,10 +264,6 @@ export class CapacitorSQLiteAdapter extends DBAdapter {
     };
 
     class CapacitorLockContext extends LockContext {
-      get connectionType(): 'readWrite' {
-        return 'readWrite';
-      }
-
       getAll<T>(sql: string, parameters?: any[]): Promise<T[]> {
         return getAll(sql, parameters);
       }
