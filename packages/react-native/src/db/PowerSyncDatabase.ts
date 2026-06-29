@@ -1,9 +1,12 @@
 import {
+  BasePowerSyncDatabaseOptions,
   CommonPowerSyncDatabase,
+  DatabaseSource,
   DBAdapter,
   PowerSyncBackendConnector,
   PowerSyncDatabaseConstructor,
-  PowerSyncDatabaseOptions
+  PowerSyncDatabaseOptions,
+  SyncStreamConnectionMethod
 } from '@powersync/common';
 import {
   BasePowerSyncDatabase,
@@ -12,13 +15,22 @@ import {
   CreateSyncImplementationOptions,
   openDatabase
 } from '@powersync/shared-internals';
-import { ReactNativeRemote } from '../sync/stream/ReactNativeRemote';
+import { ReactNativeRemote, ReactNativeRemoteOptions } from '../sync/stream/ReactNativeRemote';
 import { ReactNativeStreamingSyncImplementation } from '../sync/stream/ReactNativeStreamingSyncImplementation';
 import { ReactNativeBucketStorageAdapter } from './../sync/bucket/ReactNativeBucketStorageAdapter';
-import { ReactNativeQuickSqliteOpenFactory } from './adapters/react-native-quick-sqlite/ReactNativeQuickSQLiteOpenFactory';
+import { OPSqliteOpenFactory, OPSQLiteOpenFactoryOptions } from './adapters/op-sqlite/OPSqliteDBOpenFactory';
+import { defaultFetchImplementation } from '../sync/stream/fetch';
 
-class ReactNativePowerSyncDatabase extends BasePowerSyncDatabase<PowerSyncDatabaseOptions> {
-  constructor(options: PowerSyncDatabaseOptions) {
+export type ReactNativeDatabaseOptions = BasePowerSyncDatabaseOptions &
+  DatabaseSource<OPSQLiteOpenFactoryOptions> &
+  ReactNativeSpecificOptions;
+
+export interface ReactNativeSpecificOptions {
+  remote?: ReactNativeRemoteOptions;
+}
+
+class ReactNativePowerSyncDatabase extends BasePowerSyncDatabase<ReactNativeDatabaseOptions> {
+  constructor(options: ReactNativeDatabaseOptions) {
     super(options);
   }
 
@@ -26,7 +38,7 @@ class ReactNativePowerSyncDatabase extends BasePowerSyncDatabase<PowerSyncDataba
 
   protected override openDBAdapter(): DBAdapter {
     return openDatabase(this.options, (database) => {
-      const defaultFactory = new ReactNativeQuickSqliteOpenFactory(database);
+      const defaultFactory = new OPSqliteOpenFactory(database);
       return defaultFactory.openDB();
     });
   }
@@ -39,7 +51,7 @@ class ReactNativePowerSyncDatabase extends BasePowerSyncDatabase<PowerSyncDataba
     connector: PowerSyncBackendConnector,
     options: CreateSyncImplementationOptions
   ): AbstractStreamingSyncImplementation {
-    const remote = new ReactNativeRemote(connector, this.logger);
+    const remote = new ReactNativeRemote(connector, this.logger, this.options.remote);
 
     return new ReactNativeStreamingSyncImplementation({
       ...options,
@@ -52,6 +64,11 @@ class ReactNativePowerSyncDatabase extends BasePowerSyncDatabase<PowerSyncDataba
       identifier: this.database.name,
       logger: this.logger
     });
+  }
+
+  protected get defaultConnectionMethod(): SyncStreamConnectionMethod {
+    const fetch = this.options.remote?.fetchImplementation ?? defaultFetchImplementation(this.logger);
+    return fetch.supportsStreams ? SyncStreamConnectionMethod.HTTP : SyncStreamConnectionMethod.WEB_SOCKET;
   }
 }
 

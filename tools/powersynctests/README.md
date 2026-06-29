@@ -1,6 +1,6 @@
 # PowerSync Tests
 
-This is a React Native test application for PowerSync, currently only used to test @powersync/op-sqlite.
+This is a React Native test application for PowerSync, currently only used to test the OP-sqlite based DB adapter.
 
 ## Getting Started
 

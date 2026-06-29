@@ -1,4 +1,4 @@
-import { OPSqliteOpenFactory } from '@powersync/op-sqlite';
+
 import {
   CommonPowerSyncDatabase,
   column,
@@ -11,16 +11,22 @@ import {
 import { expect, use } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import Chance from 'chance';
-import { v4 } from 'uuid';
 import { beforeEach, describe, it } from '../mocha/MochaRNAdapter';
 import { numberName, randomIntFromInterval } from './utils';
 
 const chance = new Chance();
 use(chaiAsPromised);
 
+let idCounter = 0;
+
+function generateUniqueId() {
+  let id = idCounter++;
+  return `test-id-${id}`;
+}
+
 function generateUserInfo() {
   return {
-    id: v4(),
+    id: generateUniqueId(),
     name: chance.name(),
     age: chance.integer({ min: 0, max: 100 }),
     networth: chance.floating({ min: 0, max: 1000000 })
@@ -47,9 +53,9 @@ const AppSchema = new Schema({
 
 const createDatabase = () => {
   return new PowerSyncDatabase({
-    factory: new OPSqliteOpenFactory({
+    database: {
       dbFilename: 'sqlitetest.db'
-    }),
+    },
     schema: AppSchema
   });
 };
@@ -263,7 +269,7 @@ export function registerBaseTests() {
       const actual: unknown[] = [];
 
       // ARRANGE: Generate expected data
-      const id = v4();
+      const id = generateUniqueId();
       const name = chance.name();
       const age = chance.integer();
 
