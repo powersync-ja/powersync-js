@@ -50,14 +50,6 @@ export interface SQLOnChangeOptions {
   /** The minimum interval between queries. */
   throttleMs?: number;
   /**
-   * @deprecated All tables specified in {@link SQLOnChangeOptions.tables} will be watched, including PowerSync tables
-   * with prefixes.
-   *
-   * Allows for watching any SQL table
-   * by not removing PowerSync table name prefixes
-   */
-  rawTableNames?: boolean;
-  /**
    * Emits an empty result set immediately
    */
   triggerImmediate?: boolean;
@@ -94,7 +86,6 @@ export interface WatchHandler {
  */
 export interface WatchOnChangeHandler {
   onChange: (event: WatchOnChangeEvent) => Promise<void> | void;
-  onError?: (error: Error) => void;
 }
 
 /**
