@@ -7,7 +7,8 @@ This adapter is specifically intended to streamline the **development workflow**
 Every write operation triggers a complete rewrite of the entire database file to persistent storage, not just the changed data.
 In addition to the performance overheads, this adapter doesn't provide any of the SQLite consistency guarantees - you may end up with missing data or a corrupted database file if the app is killed while writing to the database file.
 
-For production use, when building React Native apps we recommend switching to our [react-native-quick-sqlite](https://www.npmjs.com/package/@journeyapps/react-native-quick-sqlite) or [OP-SQLite](https://www.npmjs.com/package/@powersync/op-sqlite) adapters when making production builds as they give substantially better performance.
+For production use, when building React Native apps we recommend switching to the default adapter in
+`@powersync/react-native`, based on OP-SQLite as it gives substantially better performance.
 
 ## Note: Alpha Release
 

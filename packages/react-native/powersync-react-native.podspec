@@ -3,7 +3,7 @@ require "json"
 package = JSON.parse(File.read(File.join(__dir__, "package.json")))
 
 Pod::Spec.new do |s|
-  s.name         = "powersync-op-sqlite"
+  s.name         = "powersync-react-native"
   # Our development versions are not recognized by Cocoapods
   version = package['version']
   if version.include?('-dev')

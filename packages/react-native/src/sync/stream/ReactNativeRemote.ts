@@ -1,17 +1,13 @@
 import { LogLevels, PowerSyncLogger } from '@powersync/common';
 import { AbstractRemote, FetchOptions, RemoteConnector } from '@powersync/shared-internals';
 import { Platform } from 'react-native';
-// @ts-expect-error
-import { TextDecoder } from 'text-encoding';
-
-// @ts-expect-error
-import { fetch } from 'react-native-fetch-api';
 import { WebSocketSupport, WebSocketSyncStreamPlatform } from '@powersync/shared-internals/websockets';
+import { defaultFetchImplementation, PowerSyncFetchImplementation } from './fetch';
 
 export const STREAMING_POST_TIMEOUT_MS = 30_000;
 
 export interface ReactNativeRemoteOptions {
-  fetchImplementation?: typeof fetch;
+  fetchImplementation?: PowerSyncFetchImplementation;
 }
 
 export class ReactNativeRemote extends AbstractRemote {
@@ -25,17 +21,8 @@ export class ReactNativeRemote extends AbstractRemote {
 
   protected async fetch(options: FetchOptions): Promise<Response> {
     let timeout: ReturnType<typeof setTimeout> | null = null;
-    if (options.expectStreamingResponse) {
-      // @ts-expect-error https://github.com/react-native-community/fetch#enable-text-streaming
-      options.request.reactNative = {
-        /**
-         * The `react-native-fetch-api` polyfill provides streaming support via
-         * this non-standard flag
-         * https://github.com/react-native-community/fetch#enable-text-streaming
-         */
-        textStreaming: true
-      };
-
+    const { expectStreamingResponse } = options;
+    if (expectStreamingResponse) {
       timeout =
         Platform.OS == 'android'
           ? setTimeout(() => {
@@ -50,13 +37,20 @@ export class ReactNativeRemote extends AbstractRemote {
     }
 
     try {
-      // Directly import the fetch implementation from react-native-fetch-api. This removes the requirement for the
-      // global `fetch` to be overridden by a polyfill.
-      if (this.options?.fetchImplementation) {
-        return await this.options.fetchImplementation(options.resource, options.request);
+      const fetchImpl = this.options?.fetchImplementation ?? defaultFetchImplementation(this.logger);
+
+      if (expectStreamingResponse && !fetchImpl.supportsStreams) {
+        // We can't fall back to the default fetch() implementation since we need a response stream.
+        const errorMessage =
+          'The PowerSync SDK requires a fetch() implementation capable of streaming responses, which React Native ' +
+          'does not support natively. The SDK was unable to import `expo/fetch`. ' +
+          "If you're not using expo, consider passing a custom fetchImplementation via the remote option on " +
+          'the PowerSyncDatabase constructor, or use `SyncStreamConnectionMethod.WEB_SOCKET` on your connect() call.';
+
+        throw new Error(errorMessage);
       }
 
-      return await fetch(options.resource, options.request);
+      return fetchImpl.run(options);
     } finally {
       if (timeout != null) clearTimeout(timeout);
     }
@@ -73,15 +67,6 @@ export class ReactNativeRemote extends AbstractRemote {
       `react-native/${Platform.constants.reactNativeVersion.major}.${Platform.constants.reactNativeVersion.minor}`,
       `${Platform.OS}/${Platform.Version}`
     ].join(' ');
-  }
-
-  createTextDecoder(): TextDecoder {
-    return new TextDecoder();
-  }
-
-  protected get supportsStreamingBinaryResponses(): boolean {
-    // We have to pass textStreaming: true to get streamed responses at all, and those don't support binary data.
-    return false;
   }
 }
 

@@ -5,7 +5,8 @@ import {
   LockContext,
   PowerSyncBackendConnector,
   SyncStatus,
-  LogLevels
+  LogLevels,
+  SyncStreamConnectionMethod
 } from '@powersync/common';
 import {
   AbortOperation,
@@ -158,7 +159,8 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
           onDispose
         };
       },
-      logger: this.logger
+      logger: this.logger,
+      defaultConnectionMethod: SyncStreamConnectionMethod.HTTP
     });
   }
 

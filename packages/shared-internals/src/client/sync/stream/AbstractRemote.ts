@@ -242,16 +242,6 @@ export abstract class AbstractRemote {
   }
 
   /**
-   * @returns Whether the HTTP implementation on this platform can receive streamed binary responses. This is true on
-   * all platforms except React Native (who would have guessed...), where we must not request BSON responses.
-   *
-   * @see https://github.com/react-native-community/fetch?tab=readme-ov-file#motivation
-   */
-  protected get supportsStreamingBinaryResponses(): boolean {
-    return true;
-  }
-
-  /**
    * Posts a `/sync/stream` request, asserts that it completes successfully and returns the streaming response as an
    * async iterator of byte blobs.
    *
@@ -306,7 +296,7 @@ export abstract class AbstractRemote {
           method: 'POST',
           headers: {
             ...request.headers,
-            accept: this.supportsStreamingBinaryResponses ? `${bson};q=0.9,${ndJson};q=0.8` : ndJson
+            accept: `${bson};q=0.9,${ndJson};q=0.8`
           },
           body: JSON.stringify(data),
           signal: controller.signal,
