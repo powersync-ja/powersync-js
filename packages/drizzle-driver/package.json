@@ -3,26 +3,19 @@
   "version": "0.7.4",
   "description": "Drizzle driver for PowerSync",
   "type": "module",
-  "main": "dist/index.cjs",
+  "main": "lib/src/index.js",
   "module": "lib/src/index.js",
   "types": "lib/src/index.d.ts",
   "exports": {
     ".": {
-      "import": {
-        "types": "./lib/src/index.d.ts",
-        "default": "./lib/src/index.js"
-      },
-      "require": {
-        "types": "./dist/index.d.cts",
-        "default": "./dist/index.cjs"
-      }
+      "types": "./lib/src/index.d.ts",
+      "default": "./lib/src/index.js"
     }
   },
   "author": "PowerSync",
   "license": "Apache-2.0",
   "files": [
     "lib",
-    "dist",
     "src"
   ],
   "repository": "https://github.com/powersync-ja/powersync-js",
@@ -35,12 +28,12 @@
   },
   "homepage": "https://docs.powersync.com",
   "scripts": {
-    "build": "tsc -b && rollup --config",
-    "build:prod": "tsc -b && rollup --config",
+    "build": "tsc -b",
+    "build:prod": "tsc -b",
     "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
     "watch": "tsc --build -w",
     "test": "vitest",
-    "test:exports": "attw --pack ."
+    "test:exports": "attw --pack . --ignore-rules cjs-resolves-to-esm"
   },
   "dependencies": {
     "tslib": "^2.8.1"
@@ -52,13 +45,8 @@
   "devDependencies": {
     "@journeyapps/wa-sqlite": "catalog:",
     "@powersync/web": "workspace:*",
-    "@rollup/plugin-commonjs": "catalog:",
-    "@rollup/plugin-node-resolve": "catalog:",
-    "@rollup/plugin-typescript": "catalog:",
     "@types/node": "catalog:",
     "drizzle-orm": "catalog:",
-    "rollup": "catalog:",
-    "rollup-plugin-dts": "catalog:",
     "vite": "catalog:"
   }
 }
