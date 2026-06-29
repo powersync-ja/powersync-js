@@ -194,10 +194,6 @@ class ClientLockContext extends LockContext {
     this.#token = token;
   }
 
-  get connectionType(): 'readWrite' {
-    return 'readWrite';
-  }
-
   /**
    * Requests an operation from the worker, potentially tracing it if that option has been enabled.
    */

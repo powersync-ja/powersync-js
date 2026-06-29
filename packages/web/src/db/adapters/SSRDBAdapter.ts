@@ -38,10 +38,6 @@ export class SSRDBAdapter extends DBAdapter {
 }
 
 class StubLockContext extends LockContext {
-  get connectionType(): 'readWrite' {
-    return 'readWrite';
-  }
-
   async executeRaw(): Promise<RawQueryResult> {
     return MOCK_QUERY_RESPONSE;
   }

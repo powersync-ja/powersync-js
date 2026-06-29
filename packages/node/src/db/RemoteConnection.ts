@@ -14,12 +14,7 @@ export class RemoteConnection extends LockContext {
 
   private readonly notifyWorkerClosed = new AbortController();
 
-  constructor(
-    worker: Worker,
-    comlink: Remote<AsyncDatabaseOpener>,
-    database: Remote<AsyncDatabase>,
-    private readonly readonly: boolean
-  ) {
+  constructor(worker: Worker, comlink: Remote<AsyncDatabaseOpener>, database: Remote<AsyncDatabase>) {
     super();
     this.worker = worker;
     this.comlink = comlink;
@@ -28,10 +23,6 @@ export class RemoteConnection extends LockContext {
     this.worker.once('exit', (_) => {
       this.notifyWorkerClosed.abort();
     });
-  }
-
-  public get connectionType() {
-    return this.readonly ? 'readOnly' : 'readWrite';
   }
 
   /**

@@ -57,8 +57,6 @@ export class OPSQLiteDBAdapter extends DBAdapter {
       `PRAGMA synchronous = ${synchronous}`
     ];
 
-    const readConnectionStatements = [...baseStatements, 'PRAGMA query_only = true'];
-
     for (const statement of writeConnectionStatements) {
       for (let tries = 0; tries < 30; tries++) {
         try {
@@ -82,7 +80,7 @@ export class OPSQLiteDBAdapter extends DBAdapter {
     const underlyingReadConnections = [];
     for (let i = 0; i < READ_CONNECTIONS; i++) {
       const conn = await this.openConnection(true, dbFilename);
-      for (let statement of readConnectionStatements) {
+      for (let statement of baseStatements) {
         await conn.execute(statement);
       }
       underlyingReadConnections.push(conn);
@@ -92,9 +90,9 @@ export class OPSQLiteDBAdapter extends DBAdapter {
     this.readConnections = new Semaphore(underlyingReadConnections);
   }
 
-  protected async openConnection(readonly: boolean, filenameOverride?: string): Promise<OPSQLiteConnection> {
+  protected async openConnection(readOnly: boolean, filenameOverride?: string): Promise<OPSQLiteConnection> {
     const dbFilename = filenameOverride ?? this.options.name;
-    const DB: DB = this.openDatabase(dbFilename, this.options.sqliteOptions?.encryptionKey ?? undefined);
+    const DB: DB = this.openDatabase(dbFilename, readOnly, this.options.sqliteOptions?.encryptionKey ?? undefined);
 
     //Load extensions for all connections
     this.loadAdditionalExtensions(DB);
@@ -103,14 +101,14 @@ export class OPSQLiteDBAdapter extends DBAdapter {
     await DB.execute('SELECT powersync_init()');
 
     return new OPSQLiteConnection({
-      baseDB: DB,
-      readonly
+      baseDB: DB
     });
   }
 
-  private openDatabase(dbFilename: string, encryptionKey?: string): DB {
+  private openDatabase(dbFilename: string, readOnly: boolean, encryptionKey?: string): DB {
     const openOptions: Parameters<typeof open>[0] = {
-      name: dbFilename
+      name: dbFilename,
+      readOnly
     };
 
     if (this.options.dbLocation) {

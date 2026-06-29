@@ -12,7 +12,6 @@ import {
 
 export type OPSQLiteConnectionOptions = {
   baseDB: DB;
-  readonly: boolean;
 };
 
 export type OPSQLiteUpdateNotification = {
@@ -39,10 +38,6 @@ export class OPSQLiteConnection extends LockContext {
     this.DB.updateHook((update) => {
       this.addTableUpdate(update);
     });
-  }
-
-  get connectionType() {
-    return this.options.readonly ? 'queryOnly' : 'readWrite';
   }
 
   addTableUpdate(update: OPSQLiteUpdateNotification) {
