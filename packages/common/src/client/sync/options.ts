@@ -21,7 +21,10 @@ export interface SyncOptions {
   /**
    * The connection method to use when streaming updates from
    * the PowerSync backend instance.
-   * Defaults to a HTTP streaming connection.
+   *
+   * The default value is SDK-specific. {@link SyncStreamConnectionMethod.HTTP} is the preferred implementation and used
+   * by default, except for React Native apps without Expo. Those don't support streaming HTTP responses, which is why
+   * {@link SyncStreamConnectionMethod.WEB_SOCKET} is used as a workaround.
    */
   connectionMethod?: SyncStreamConnectionMethod;
 

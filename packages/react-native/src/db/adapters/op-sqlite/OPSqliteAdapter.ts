@@ -1,3 +1,4 @@
+import { NativeModules } from 'react-native';
 import { getDylibPath, open, type DB } from '@op-engineering/op-sqlite';
 import { DBAdapter, DBLockOptions, QueryResult } from '@powersync/common';
 import { timeoutSignal, Semaphore } from '@powersync/shared-internals';
@@ -114,6 +115,17 @@ export class OPSQLiteDBAdapter extends DBAdapter {
 
     if (this.options.dbLocation) {
       openOptions.location = this.options.dbLocation;
+    } else if ('NativePowerSyncHelper' in NativeModules) {
+      // In older versions of the PowerSync React Native SDK, we used React Native Quick SQLite instead of OP-SQLite.
+      // On Android, RQNS uses context.getFilesDir() instead of context.getDatabasePath() (which OP-SQLite uses as a
+      // default). So, to ensure that databases opened with RNQS continue to work with OP-SQLite, we have a native
+      // helper method that checks whether the database exists in the old path and would apply that as an explicit
+      // location in that case.
+      const helper: NativePowerSyncHelper = NativeModules.NativePowerSyncHelper;
+      const defaultLocation = helper.resolveDefaultDatabaseLocation(dbFilename);
+      if (defaultLocation) {
+        openOptions.location = defaultLocation;
+      }
     }
 
     // If the encryption key is undefined/null when using SQLCipher it will cause the open function to fail
@@ -228,4 +240,8 @@ export class OPSQLiteDBAdapter extends DBAdapter {
     // called directly on the adapter.
     return this.writeLock((conn) => conn.executeNativeBatch(query, params));
   }
+}
+
+interface NativePowerSyncHelper {
+  resolveDefaultDatabaseLocation(dbName: string): string | null;
 }

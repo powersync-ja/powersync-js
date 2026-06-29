@@ -29,9 +29,6 @@
             "path": "./packages/nuxt"
         },
         {
-            "path": "./packages/powersync-op-sqlite"
-        },
-        {
             "path": "./packages/react"
         },
         {

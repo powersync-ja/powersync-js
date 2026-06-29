@@ -8,10 +8,13 @@ export type ResolvedSyncOptions = Required<SyncOptions>;
 /**
  * @internal
  */
-export function resolveSyncOptions(options: SyncOptions): ResolvedSyncOptions {
+export function resolveSyncOptions(
+  options: SyncOptions,
+  defaultConnectionMethod: SyncStreamConnectionMethod
+): ResolvedSyncOptions {
   return {
     appMetadata: options.appMetadata ?? {},
-    connectionMethod: options.connectionMethod ?? SyncStreamConnectionMethod.HTTP,
+    connectionMethod: options.connectionMethod ?? defaultConnectionMethod,
     fetchStrategy: options.fetchStrategy ?? FetchStrategy.Buffered,
     params: options.params ?? {},
     includeDefaultStreams: options.includeDefaultStreams ?? true,

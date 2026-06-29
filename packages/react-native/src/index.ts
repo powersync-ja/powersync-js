@@ -3,7 +3,6 @@ export * from '@powersync/common';
 export * from '@powersync/react';
 
 export * from './db/PowerSyncDatabase';
-export * from './db/adapters/react-native-quick-sqlite/RNQSDBAdapter';
+export { PowerSyncFetchImplementation } from './sync/stream/fetch';
 export * from './sync/stream/ReactNativeRemote';
 export * from './sync/stream/ReactNativeStreamingSyncImplementation';
-export * from './db/adapters/react-native-quick-sqlite/ReactNativeQuickSQLiteOpenFactory';
