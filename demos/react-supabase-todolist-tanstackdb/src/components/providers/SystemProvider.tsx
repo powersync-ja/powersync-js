@@ -21,6 +21,8 @@ export const db = new PowerSyncDatabase({
   })
 });
 
+export const connector = new SupabaseConnector();
+
 export const listsCollection = createCollection(
   powerSyncCollectionOptions({
     database: db,
@@ -50,7 +52,6 @@ export const todosCollection = createCollection(
 export type EnhancedListRecord = ListRecord & { total_tasks: number; completed_tasks: number };
 
 export const SystemProvider = ({ children }: { children: React.ReactNode }) => {
-  const [connector] = React.useState(() => new SupabaseConnector());
   const [powerSync] = React.useState(db);
 
   React.useEffect(() => {
@@ -62,7 +63,7 @@ export const SystemProvider = ({ children }: { children: React.ReactNode }) => {
 
     powerSync.init();
     const l = connector.registerListener({
-      initialized: () => {},
+      initialized: () => { },
       sessionStarted: () => {
         powerSync.connect(connector);
       }

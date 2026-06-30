@@ -11,6 +11,7 @@ export const MOCK_USER_ID = 'test-user-123';
 export type SupabaseConfig = {
   supabaseUrl: string;
   supabaseAnonKey: string;
+  supabaseBucket: string;
   powersyncUrl: string;
 };
 
@@ -51,7 +52,8 @@ export class SupabaseConnector extends BaseObserver<SupabaseConnectorListener> i
     this.config = {
       supabaseUrl: 'https://mock.supabase.test',
       powersyncUrl: 'https://mock.powersync.test',
-      supabaseAnonKey: 'mock-anon-key'
+      supabaseAnonKey: 'mock-anon-key',
+      supabaseBucket: ''
     };
 
     this.client = new MockSupabaseClient();
