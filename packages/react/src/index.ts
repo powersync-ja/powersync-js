@@ -1,6 +1,3 @@
-export { usePowerSyncQuery } from './hooks/deprecated/usePowerSyncQuery.js';
-export { usePowerSyncStatus } from './hooks/deprecated/usePowerSyncStatus.js';
-export { usePowerSyncWatchedQuery } from './hooks/deprecated/usePowerSyncWatchedQuery.js';
 export * from './hooks/PowerSyncContext.js';
 export { SuspenseQueryResult } from './hooks/suspense/SuspenseQueryResult.js';
 export { useSuspenseQuery } from './hooks/suspense/useSuspenseQuery.js';

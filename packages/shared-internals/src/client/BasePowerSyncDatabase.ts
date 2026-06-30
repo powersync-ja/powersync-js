@@ -386,14 +386,6 @@ export abstract class BasePowerSyncDatabase<Options extends BasePowerSyncDatabas
   }
 
   /**
-   * @deprecated Use {@link AbstractPowerSyncDatabase#close} instead.
-   * Clears all listeners registered by {@link AbstractPowerSyncDatabase#registerListener}.
-   */
-  dispose(): void {
-    return super.dispose();
-  }
-
-  /**
    * Locking mechanism for exclusively running critical portions of connect/disconnect operations.
    * Locking here is mostly only important on web for multiple tab scenarios.
    */
@@ -447,6 +439,7 @@ export abstract class BasePowerSyncDatabase<Options extends BasePowerSyncDatabas
     await this.database.close();
     this.closed = true;
     await this.iterateAsyncListeners(async (cb) => cb.closed?.());
+    super.dispose();
   }
 
   async getUploadQueueStats(includeSize?: boolean): Promise<UploadQueueStats> {
@@ -769,10 +762,7 @@ SELECT * FROM crud_entries;
   }
 
   onChangeWithCallback(handler?: WatchOnChangeHandler, options?: SQLOnChangeOptions): () => void {
-    const {
-      onChange,
-      onError = (e: Error) => this.logger.log({ level: LogLevels.error, message: 'error in onChange', error: e })
-    } = handler ?? {};
+    const { onChange } = handler ?? {};
     if (!onChange) {
       throw new Error('onChange is required');
     }
@@ -785,9 +775,7 @@ SELECT * FROM crud_entries;
     const changedTables = new Set<string>();
     const throttleMs = resolvedOptions.throttleMs ?? DEFAULT_WATCH_THROTTLE_MS;
 
-    const executor = new ControlledExecutor(async (e: WatchOnChangeEvent) => {
-      await onChange(e);
-    });
+    const executor = new ControlledExecutor(onChange);
 
     const flushTableUpdates = throttleTrailing(
       () =>
@@ -804,12 +792,8 @@ SELECT * FROM crud_entries;
 
     const dispose = this.database.registerListener({
       tablesUpdated: async (update) => {
-        try {
-          this.processTableUpdates(update, changedTables);
-          flushTableUpdates();
-        } catch (error: any) {
-          onError?.(error);
-        }
+        this.processTableUpdates(update, changedTables);
+        flushTableUpdates();
       }
     });
 
@@ -828,9 +812,6 @@ SELECT * FROM crud_entries;
         {
           onChange: (event): void => {
             queue.notify(event);
-          },
-          onError: (error) => {
-            queue.notifyError(error);
           }
         },
         { ...options, signal: abort }
