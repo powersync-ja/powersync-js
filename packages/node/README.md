@@ -141,12 +141,12 @@ const db = new PowerSyncDatabase({
     },
     initializeConnection: async (db) => {
       if (encryptionKey.length) {
-        const escapedKey = encryptionKey.replace("'", "''");
-        await db.execute(`pragma key = '${escapedKey}'`);
+        const escapedKey = encryptionKey.replaceAll("'", "''");
+        await db.execute(`PRAGMA key = '${escapedKey}'`);
       }
 
       // Make sure the database is readable, this fails early if the key is wrong.
-      await db.execute('pragma user_version');
+      await db.execute('PRAGMA user_version');
     }
   },
   logger
