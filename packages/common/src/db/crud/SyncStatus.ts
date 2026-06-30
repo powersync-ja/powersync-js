@@ -61,7 +61,7 @@ export type SyncStatusOptions = {
  * @public
  */
 export class SyncStatus {
-  constructor(protected options: SyncStatusOptions) { }
+  constructor(protected options: SyncStatusOptions) {}
 
   /**
    * Returns the used sync client implementation (either the one implemented in JavaScript or the newer Rust-based
