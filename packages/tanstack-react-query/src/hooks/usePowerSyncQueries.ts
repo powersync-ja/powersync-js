@@ -159,9 +159,6 @@ export function usePowerSyncQueries(
         {
           onChange: () => {
             queryClient.invalidateQueries({ queryKey: pq.queryKey });
-          },
-          onError: (e) => {
-            updateErrorsArr(e, idx);
           }
         },
         {
