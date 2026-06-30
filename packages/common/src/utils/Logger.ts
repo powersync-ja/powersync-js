@@ -7,7 +7,15 @@ const TypedLogger: ILogger = Logger as any;
 /**
  * @public
  */
-export const LogLevel = {
+export const LogLevel: {
+  TRACE: ILogLevel;
+  DEBUG: ILogLevel;
+  INFO: ILogLevel;
+  TIME: ILogLevel;
+  WARN: ILogLevel;
+  ERROR: ILogLevel;
+  OFF: ILogLevel;
+} = {
   TRACE: TypedLogger.TRACE,
   DEBUG: TypedLogger.DEBUG,
   INFO: TypedLogger.INFO,
