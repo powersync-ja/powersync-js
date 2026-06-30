@@ -213,9 +213,6 @@ export class DifferentialQueryProcessor<RowType>
           } catch (error: any) {
             await this.updateState({ error });
           }
-        },
-        onError: async (error) => {
-          await this.updateState({ error });
         }
       },
       {

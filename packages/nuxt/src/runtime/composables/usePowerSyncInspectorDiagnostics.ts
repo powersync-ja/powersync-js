@@ -372,7 +372,6 @@ export function usePowerSyncInspectorDiagnostics(): UsePowerSyncInspectorDiagnos
         }
       },
       {
-        rawTableNames: true,
         tables: ['ps_oplog', 'ps_buckets', 'ps_data_local__local_bucket_data', 'ps_crud'],
         throttleMs: 500
       }

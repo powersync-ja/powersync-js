@@ -939,8 +939,6 @@ export type SqliteValue = string | number | bigint | number[] | Uint8Array | nul
 
 // @public (undocumented)
 export interface SQLOnChangeOptions {
-    // @deprecated (undocumented)
-    rawTableNames?: boolean;
     // (undocumented)
     signal?: AbortSignal;
     // (undocumented)
@@ -1352,8 +1350,6 @@ export interface WatchOnChangeEvent {
 export interface WatchOnChangeHandler {
     // (undocumented)
     onChange: (event: WatchOnChangeEvent) => Promise<void> | void;
-    // (undocumented)
-    onError?: (error: Error) => void;
 }
 
 // @alpha

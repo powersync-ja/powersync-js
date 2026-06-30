@@ -42,8 +42,7 @@ export function compilableQueryWatch<T>(
             } catch (error: any) {
               onError(error);
             }
-          },
-          onError
+          }
         },
         {
           ...(options ?? {}),
