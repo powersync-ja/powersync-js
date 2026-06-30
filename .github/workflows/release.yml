@@ -51,6 +51,7 @@ jobs:
         run: |
           pnpm build:packages:prod
           pnpm changeset version --no-git-tag --snapshot dev
+          pnpm install --no-frozen-lockfile
           pnpm changeset publish --tag dev
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
