@@ -138,7 +138,7 @@ export class SyncStatus {
   }
 
   /**
-   * All sync streams currently being tracked in teh database.
+   * All sync streams currently being tracked in the database.
    *
    * This returns null when the database is currently being opened and we don't have reliable information about all
    * included streams yet.
