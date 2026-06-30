@@ -18,6 +18,7 @@ export default () => {
     },
     output: {
       filename: 'worker/[name].umd.js',
+      chunkFilename: 'worker/[contenthash].umd.js',
       path: path.join(__dirname, 'dist'),
       library: {
         name: 'sdk_web',
