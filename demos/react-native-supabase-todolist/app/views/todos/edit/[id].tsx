@@ -6,7 +6,7 @@ import { StatusBar } from 'expo-status-bar';
 import { ScrollView, View } from 'react-native';
 import { FAB, Text } from '@rneui/themed';
 import { Stack, useLocalSearchParams } from 'expo-router';
-import prompt from 'react-native-prompt-android';
+import { prompt } from '../../../../library/utils/prompt';
 import { TODO_TABLE, TodoRecord, LIST_TABLE } from '../../../../library/powersync/AppSchema';
 import { useSystem } from '../../../../library/powersync/system';
 import { TodoItemWidget } from '../../../../library/widgets/TodoItemWidget';
@@ -143,7 +143,7 @@ const TodoView: React.FC = () => {
 
               return createNewTodo(text);
             },
-            { placeholder: 'Todo description', style: 'shimo' }
+            { placeholder: 'Todo description' }
           );
         }}
       />

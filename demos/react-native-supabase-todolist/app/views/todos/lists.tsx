@@ -3,7 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { ScrollView, View } from 'react-native';
 import { FAB } from '@rneui/themed';
 import { MaterialIcons } from '@expo/vector-icons';
-import prompt from 'react-native-prompt-android';
+import { prompt } from '../../../library/utils/prompt';
 
 import { router, Stack } from 'expo-router';
 import { LIST_TABLE, TODO_TABLE, ListRecord } from '../../../library/powersync/AppSchema';
@@ -75,7 +75,7 @@ const ListsViewWidget: React.FC = () => {
               }
               await createNewList(name);
             },
-            { placeholder: 'List name', style: 'shimo' }
+            { placeholder: 'List name' }
           );
         }}
       />

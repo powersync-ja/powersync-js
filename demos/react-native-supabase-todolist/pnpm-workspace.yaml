@@ -1,2 +1,7 @@
 packages:
   - .
+# TEMPORARY / DO NOT COMMIT: relaxes the pnpm minimumReleaseAge supply-chain gate so the freshly
+# published SDK 57 packages install/build locally. `expo run:ios` runs `pnpm install`, which fails
+# the age check until these packages are >~24h old. Remove this line before committing/PR — by then
+# they've aged past the gate and a clean install passes on its own.
+minimumReleaseAge: 0

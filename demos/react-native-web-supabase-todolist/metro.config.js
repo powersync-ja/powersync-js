@@ -11,7 +11,7 @@ config.resolver.unstable_conditionsByPlatform.web.push('react-native-web');
 
 config.resolver.resolveRequest = (context, moduleName, platform) => {
   if (platform === 'web') {
-    if (['react-native-prompt-android', '@powersync/react-native'].includes(moduleName)) {
+    if (['@powersync/react-native'].includes(moduleName)) {
       return {
         type: 'empty'
       };
