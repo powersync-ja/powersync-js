@@ -77,15 +77,15 @@ export function NewStreamSubscription(props: { open: boolean; close: () => void 
           {({ values, errors, handleChange, handleBlur, isSubmitting, handleSubmit, setFieldValue }) => (
             <form onSubmit={handleSubmit}>
               <DialogHeader>
-                <DialogTitle>Subscribe to sync stream</DialogTitle>
+                <DialogTitle>Subscribe to Sync Stream</DialogTitle>
                 <DialogDescription>
-                  Add a stream subscription with optional parameters and priority override.
+                  Add a Sync Stream subscription with optional subscription parameters and priority override.
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-3 gap-3">
                   <div className="col-span-2">
-                    <Label htmlFor="stream-name">Stream name</Label>
+                    <Label htmlFor="stream-name">Sync Stream name</Label>
                     <Input
                       id="stream-name"
                       autoFocus
@@ -119,7 +119,7 @@ export function NewStreamSubscription(props: { open: boolean; close: () => void 
                   </div>
                 </div>
                 <div>
-                  <Label>Parameters (JSON)</Label>
+                  <Label>Subscription Parameters (JSON)</Label>
                   <div
                     className={cn(
                       'mt-1.5 rounded-md border overflow-hidden relative',
