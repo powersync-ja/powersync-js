@@ -217,7 +217,7 @@ export class RawSqliteConnection {
     }
   }
 
-  async *cachedStatements(api: SQLiteAPI, sql: string): AsyncIterable<number> {
+  private async *cachedStatements(api: SQLiteAPI, sql: string): AsyncIterable<number> {
     {
       const existing = this.statementCache?.lookup(sql);
       if (existing != null) {
@@ -237,7 +237,7 @@ export class RawSqliteConnection {
     } finally {
       // We can only cache statements if the sql text corresponds to a single statement, otherwise it's not clear what
       // portion of the original sql text to use as a key.
-      if (preparedStatements.length == 1 && this.statementCache) {
+      if (preparedStatements.length === 1 && this.statementCache) {
         const stmt = preparedStatements[0];
         // Don't cache EXPLAIN statements, their result becomes invalid after schema changes.
         if (this.sqlite3_stmt_isexplain(stmt) == 0) {
