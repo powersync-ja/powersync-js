@@ -14,7 +14,8 @@ export class PreparedStatementCache {
   lookup(sql: string): number | null {
     const foundStatement = this.#statements.get(sql);
     if (foundStatement != null) {
-      // Insert again to mark it as used.
+      // Delete and re-insert to move to the end (most-recently-used position).
+      this.#statements.delete(sql);
       this.#statements.set(sql, foundStatement);
       return foundStatement;
     }

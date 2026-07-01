@@ -18,6 +18,21 @@ test('statement cache', () => {
   expect(cache.lookup('SELECT 1')).not.toBeNull();
 });
 
+test('lookup promotes entry to most-recently-used', () => {
+  const cache = new PreparedStatementCache(3);
+  cache.addStatement('SELECT 0', 0);
+  cache.addStatement('SELECT 1', 1);
+  cache.addStatement('SELECT 2', 2);
+
+  // Access SELECT 0 so it becomes the most-recently-used entry.
+  expect(cache.lookup('SELECT 0')).toStrictEqual(0);
+
+  // Adding a fourth entry must evict SELECT 1 (oldest).
+  expect(cache.addStatement('SELECT 3', 3)).toStrictEqual(1);
+  expect(cache.lookup('SELECT 0')).not.toBeNull();
+  expect(cache.lookup('SELECT 1')).toBeNull();
+});
+
 test('does not cache explain statements', async () => {
   const db = generateTestDb({
     schema: new Schema({}),
