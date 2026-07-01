@@ -173,10 +173,6 @@ class SqlJsLockContext extends LockContext {
     super();
   }
 
-  get connectionType(): 'readWrite' {
-    return 'readWrite';
-  }
-
   async executeRaw(query: string, params?: any[]): Promise<RawQueryResult> {
     const db = this.db;
     const statement = db.prepare(query);

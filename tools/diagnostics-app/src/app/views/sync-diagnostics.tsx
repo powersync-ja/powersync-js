@@ -161,7 +161,7 @@ export default function SyncDiagnosticsPage() {
           queryClient.invalidateQueries({ queryKey: syncDiagnosticsKeys.stats() });
         }
       },
-      { rawTableNames: true, tables: ['ps_oplog', 'ps_buckets', 'ps_data_local__local_bucket_data'], throttleMs: 500 }
+      { tables: ['ps_oplog', 'ps_buckets', 'ps_data_local__local_bucket_data'], throttleMs: 500 }
     );
     return () => dispose?.();
   }, [queryClient]);

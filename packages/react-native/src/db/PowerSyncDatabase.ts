@@ -5,7 +5,6 @@ import {
   DBAdapter,
   PowerSyncBackendConnector,
   PowerSyncDatabaseConstructor,
-  PowerSyncDatabaseOptions,
   SyncStreamConnectionMethod
 } from '@powersync/common';
 import {
@@ -86,6 +85,6 @@ class ReactNativePowerSyncDatabase extends BasePowerSyncDatabase<ReactNativeData
  * });
  * ```
  */
-export const PowerSyncDatabase: PowerSyncDatabaseConstructor<PowerSyncDatabaseOptions> = ReactNativePowerSyncDatabase;
+export const PowerSyncDatabase: PowerSyncDatabaseConstructor<ReactNativeDatabaseOptions> = ReactNativePowerSyncDatabase;
 
 export interface PowerSyncDatabase extends CommonPowerSyncDatabase {}

@@ -1,3 +1,4 @@
+import { NativeModules } from 'react-native';
 import { getDylibPath, open, type DB } from '@op-engineering/op-sqlite';
 import { DBAdapter, DBLockOptions, QueryResult } from '@powersync/common';
 import { timeoutSignal, Semaphore } from '@powersync/shared-internals';
@@ -56,8 +57,6 @@ export class OPSQLiteDBAdapter extends DBAdapter {
       `PRAGMA synchronous = ${synchronous}`
     ];
 
-    const readConnectionStatements = [...baseStatements, 'PRAGMA query_only = true'];
-
     for (const statement of writeConnectionStatements) {
       for (let tries = 0; tries < 30; tries++) {
         try {
@@ -81,7 +80,7 @@ export class OPSQLiteDBAdapter extends DBAdapter {
     const underlyingReadConnections = [];
     for (let i = 0; i < READ_CONNECTIONS; i++) {
       const conn = await this.openConnection(true, dbFilename);
-      for (let statement of readConnectionStatements) {
+      for (let statement of baseStatements) {
         await conn.execute(statement);
       }
       underlyingReadConnections.push(conn);
@@ -91,9 +90,9 @@ export class OPSQLiteDBAdapter extends DBAdapter {
     this.readConnections = new Semaphore(underlyingReadConnections);
   }
 
-  protected async openConnection(readonly: boolean, filenameOverride?: string): Promise<OPSQLiteConnection> {
+  protected async openConnection(readOnly: boolean, filenameOverride?: string): Promise<OPSQLiteConnection> {
     const dbFilename = filenameOverride ?? this.options.name;
-    const DB: DB = this.openDatabase(dbFilename, this.options.sqliteOptions?.encryptionKey ?? undefined);
+    const DB: DB = this.openDatabase(dbFilename, readOnly, this.options.sqliteOptions?.encryptionKey ?? undefined);
 
     //Load extensions for all connections
     this.loadAdditionalExtensions(DB);
@@ -102,18 +101,29 @@ export class OPSQLiteDBAdapter extends DBAdapter {
     await DB.execute('SELECT powersync_init()');
 
     return new OPSQLiteConnection({
-      baseDB: DB,
-      readonly
+      baseDB: DB
     });
   }
 
-  private openDatabase(dbFilename: string, encryptionKey?: string): DB {
+  private openDatabase(dbFilename: string, readOnly: boolean, encryptionKey?: string): DB {
     const openOptions: Parameters<typeof open>[0] = {
-      name: dbFilename
+      name: dbFilename,
+      readOnly
     };
 
     if (this.options.dbLocation) {
       openOptions.location = this.options.dbLocation;
+    } else if ('NativePowerSyncHelper' in NativeModules) {
+      // In older versions of the PowerSync React Native SDK, we used React Native Quick SQLite instead of OP-SQLite.
+      // On Android, RQNS uses context.getFilesDir() instead of context.getDatabasePath() (which OP-SQLite uses as a
+      // default). So, to ensure that databases opened with RNQS continue to work with OP-SQLite, we have a native
+      // helper method that checks whether the database exists in the old path and would apply that as an explicit
+      // location in that case.
+      const helper: NativePowerSyncHelper = NativeModules.NativePowerSyncHelper;
+      const defaultLocation = helper.resolveDefaultDatabaseLocation(dbFilename);
+      if (defaultLocation) {
+        openOptions.location = defaultLocation;
+      }
     }
 
     // If the encryption key is undefined/null when using SQLCipher it will cause the open function to fail
@@ -228,4 +238,8 @@ export class OPSQLiteDBAdapter extends DBAdapter {
     // called directly on the adapter.
     return this.writeLock((conn) => conn.executeNativeBatch(query, params));
   }
+}
+
+interface NativePowerSyncHelper {
+  resolveDefaultDatabaseLocation(dbName: string): string | null;
 }

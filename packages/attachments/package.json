@@ -18,45 +18,32 @@
   },
   "description": "An PowerSync library to manage attachments for TypeScript and React Native apps",
   "type": "module",
-  "main": "./dist/index.cjs",
-  "module": "./lib/index.js",
+  "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "exports": {
     ".": {
-      "import": {
-        "types": "./lib/index.d.ts",
-        "default": "./lib/index.js"
-      },
-      "require": {
-        "types": "./dist/index.d.cts",
-        "default": "./dist/index.cjs"
-      }
+      "types": "./lib/index.d.ts",
+      "default": "./lib/index.js"
     }
   },
   "files": [
     "lib",
-    "dist",
     "src"
   ],
   "scripts": {
-    "build": "tsc -b && rollup --config",
-    "build:prod": "tsc -b --sourceMap false && rollup --config",
+    "build": "tsc -b",
+    "build:prod": "tsc -b",
     "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
     "watch": "tsc -b -w",
     "test": "pnpm build && vitest",
-    "test:exports": "attw --pack ."
+    "test:exports": "attw --pack . --ignore-rules cjs-resolves-to-esm"
   },
   "peerDependencies": {
     "@powersync/common": "workspace:^1.56.0"
   },
   "devDependencies": {
     "@powersync/common": "workspace:*",
-    "@rollup/plugin-commonjs": "catalog:",
-    "@rollup/plugin-node-resolve": "catalog:",
-    "@rollup/plugin-typescript": "catalog:",
     "@types/node": "catalog:",
-    "rollup": "catalog:",
-    "rollup-plugin-dts": "catalog:",
     "vite": "catalog:"
   }
 }

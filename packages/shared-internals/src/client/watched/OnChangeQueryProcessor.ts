@@ -95,9 +95,6 @@ export class OnChangeQueryProcessor<Data> extends AbstractQueryProcessor<Data, W
           } catch (error: any) {
             await this.updateState({ error });
           }
-        },
-        onError: async (error) => {
-          await this.updateState({ error });
         }
       },
       {
