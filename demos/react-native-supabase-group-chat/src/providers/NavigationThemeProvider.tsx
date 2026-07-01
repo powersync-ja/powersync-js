@@ -1,4 +1,4 @@
-import { DefaultTheme, ThemeProvider, Theme } from '@react-navigation/native';
+import { DefaultTheme, ThemeProvider, Theme } from "expo-router/react-navigation";
 import { useTheme } from '@tamagui/core';
 import { ReactNode } from 'react';
 import { useColorScheme } from 'react-native';
