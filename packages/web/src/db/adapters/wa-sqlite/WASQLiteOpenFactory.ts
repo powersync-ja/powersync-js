@@ -60,8 +60,16 @@ export class WASQLiteOpenFactory implements SQLOpenFactory {
   }
 
   async openConnection(): Promise<PoolConnection> {
-    const { enableMultiTabs, useWebWorker, vfs, dbFilename, encryptionKey, temporaryStorage, cacheSizeKb } =
-      this.options;
+    const {
+      enableMultiTabs,
+      useWebWorker,
+      vfs,
+      dbFilename,
+      encryptionKey,
+      temporaryStorage,
+      cacheSizeKb,
+      preparedStatementsCache
+    } = this.options;
 
     if (!enableMultiTabs) {
       this.logger.log({ level: LogLevels.warn, message: 'Multiple tabs are not enabled in this browser' });
@@ -78,7 +86,9 @@ export class WASQLiteOpenFactory implements SQLOpenFactory {
         vfs,
         encryptionKey,
         temporaryStorage,
-        cacheSizeKb
+        cacheSizeKb,
+        // TODO: Enable prepared statement cache by default?
+        preparedStatementsCache: preparedStatementsCache ?? 0
       };
     }
 

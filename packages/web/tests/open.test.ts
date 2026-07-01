@@ -72,7 +72,8 @@ describe('Open Methods', { sequential: true }, () => {
       cacheSizeKb: 0,
       encryptionKey: undefined,
       filename: '',
-      readonly: false
+      readonly: false,
+      preparedStatementsCache: 0
     };
     const connection = await server.openConnectionLocally(logger, options);
     const client = new DatabaseClient(
