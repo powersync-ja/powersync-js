@@ -18,11 +18,6 @@ const config: ExpoConfig = {
   icon: './assets/icon.png',
   userInterfaceStyle: 'light',
   scheme: 'powersync',
-  splash: {
-    image: './assets/splash.png',
-    resizeMode: 'contain',
-    backgroundColor: '#ffffff'
-  },
   updates: {
     url: `https://u.expo.dev/${projectId}`
   },
@@ -38,8 +33,6 @@ const config: ExpoConfig = {
     },
     package: 'com.powersync.example'
   },
-  newArchEnabled: true,
-  jsEngine: 'hermes',
   web: {
     bundler: 'metro',
     output: 'single',
@@ -52,6 +45,16 @@ const config: ExpoConfig = {
   },
   plugins: [
     'expo-router',
+    'expo-font',
+    'expo-web-browser',
+    [
+      'expo-splash-screen',
+      {
+        image: './assets/splash.png',
+        resizeMode: 'contain',
+        backgroundColor: '#ffffff'
+      }
+    ],
     [
       'expo-camera',
       {
@@ -62,13 +65,13 @@ const config: ExpoConfig = {
       'expo-build-properties',
       {
         ios: {
-          deploymentTarget: '15.1',
+          deploymentTarget: '16.4'
         },
         android: {
           minSdkVersion: 24,
           compileSdkVersion: 35,
           targetSdkVersion: 35,
-          buildToolsVersion: '35.0.0',
+          buildToolsVersion: '35.0.0'
         }
       }
     ],

@@ -2,6 +2,7 @@ import * as React from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { ScrollView, View } from 'react-native';
 import { FAB } from '@rneui/themed';
+import { MaterialIcons } from '@expo/vector-icons';
 import prompt from 'react-native-prompt-android';
 
 import { router, Stack } from 'expo-router';
@@ -60,7 +61,7 @@ const ListsViewWidget: React.FC = () => {
       />
       <FAB
         style={{ zIndex: 99, bottom: 0 }}
-        icon={{ name: 'add', color: 'white' }}
+        icon={<MaterialIcons name="add" color="white" size={20} />}
         color="#aa00ff"
         size="small"
         placement="right"

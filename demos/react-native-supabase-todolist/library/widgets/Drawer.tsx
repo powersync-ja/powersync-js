@@ -1,16 +1,23 @@
 import React from 'react';
-import _ from 'lodash';
-import { createDrawerNavigator, DrawerNavigationOptions } from '@react-navigation/drawer';
-
-import { withLayoutContext } from 'expo-router';
+import { Drawer as ExpoDrawer } from 'expo-router/drawer';
 import { HeaderWidget } from './HeaderWidget';
 
-const DrawerNavigator = createDrawerNavigator().Navigator as React.ComponentType<any>;
+/**
+ * As of Expo SDK 56 `expo-router` no longer depends on React Navigation and ships its own
+ * `Drawer` layout. We wrap it here to render the shared {@link HeaderWidget} as the header for
+ * every drawer screen, preserving the previous behaviour without a custom `createDrawerNavigator`.
+ */
+function DrawerWithHeader(props: React.ComponentProps<typeof ExpoDrawer>) {
+  return (
+    <ExpoDrawer
+      screenOptions={{ header: ({ options }) => <HeaderWidget title={options.title ?? ''} /> }}
+      {...props}
+    />
+  );
+}
 
-export const Drawer = withLayoutContext<DrawerNavigationOptions, typeof DrawerNavigator>(DrawerNavigator, (options) =>
-  _.chain(options)
-    .map((o) => ({ ...o, options: { ...o.options, header: () => <HeaderWidget title={o.options?.title || ''} /> } }))
-    .value()
-);
+DrawerWithHeader.Screen = ExpoDrawer.Screen;
+
+export const Drawer = DrawerWithHeader;
 
 export default Drawer;
