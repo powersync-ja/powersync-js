@@ -1,15 +1,15 @@
 import { cleanup, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import React from 'react';
-import { AbstractPowerSyncDatabase, SyncStatus } from '@powersync/common';
 import { PowerSyncContext } from '@powersync/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { openPowerSync } from './utils';
 import * as Tanstack from '@tanstack/react-query';
 import { usePowerSyncQueries } from '../src/hooks/usePowerSyncQueries';
+import { BasePowerSyncDatabase, SyncStatusSnapshot } from '@powersync/shared-internals';
 
 describe('usePowerSyncQueries bug fixes', () => {
-  let db: AbstractPowerSyncDatabase;
+  let db: BasePowerSyncDatabase;
   let queryClient = new QueryClient({
     defaultOptions: {
       queries: {
@@ -19,7 +19,7 @@ describe('usePowerSyncQueries bug fixes', () => {
   });
 
   beforeEach(() => {
-    db = openPowerSync();
+    db = openPowerSync() as BasePowerSyncDatabase;
     queryClient.clear();
     vi.clearAllMocks();
     cleanup();
@@ -32,9 +32,13 @@ describe('usePowerSyncQueries bug fixes', () => {
   );
 
   const syncedStatus = () =>
-    new SyncStatus({
-      dataFlow: {
-        internalStreamSubscriptions: [
+    new SyncStatusSnapshot(
+      {
+        connecting: false,
+        connected: true,
+        downloading: null,
+        priority_status: [],
+        streams: [
           {
             name: 'a',
             parameters: null,
@@ -47,8 +51,9 @@ describe('usePowerSyncQueries bug fixes', () => {
             priority: 1
           }
         ]
-      }
-    });
+      },
+      {}
+    );
 
   describe('usePowerSyncQueries ', () => {
     it('updated returned streamsHaveSynced once a waitForStream stream syncs', async () => {

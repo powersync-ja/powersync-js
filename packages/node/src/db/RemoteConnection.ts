@@ -29,18 +29,18 @@ export class RemoteConnection extends LockContext {
    * Runs the inner function, but appends the stack trace where this function was called. This is useful for workers
    * because stack traces from worker errors are otherwise unrelated to the application issue that has caused them.
    */
-  private withRemote<T>(description: () => string, inner: () => Promise<T>): Promise<T> {
+  private withRemote<T>(inner: () => Promise<T>): Promise<T> {
     const trace = {};
     Error.captureStackTrace(trace);
     const controller = this.notifyWorkerClosed;
 
     return new Promise((resolve, reject) => {
       if (controller.signal.aborted) {
-        reject(new ConnectionClosedError(`Called operation on closed remote: ${description()}`));
+        reject(new ConnectionClosedError('Called operation on closed remote'));
       }
 
       function handleAbort() {
-        reject(new ConnectionClosedError(`Remote peer closed with request in flight: ${description()}`));
+        reject(new ConnectionClosedError('Remote peer closed with request in flight'));
       }
 
       function completePromise(action: () => void) {
@@ -63,31 +63,22 @@ export class RemoteConnection extends LockContext {
   }
 
   execute<T = SqliteRecord>(query: string, params?: any[] | undefined): Promise<QueryResult<T>> {
-    return this.withRemote(
-      () => `execute(${query}, ${JSON.stringify(params)})`,
-      async () => {
-        const results = await this.database.execute(query, params ?? []);
-        return queryResultFromMapped(results, results.rows as T[] | undefined);
-      }
-    );
+    return this.withRemote(async () => {
+      const results = await this.database.execute(query, params ?? []);
+      return queryResultFromMapped(results, results.rows as T[] | undefined);
+    });
   }
 
   executeBatch(query: string, params: any[][] = []): Promise<QueryResult<never>> {
-    return this.withRemote(
-      () => `executeBatch(${query}, ${JSON.stringify(params)})`,
-      async () => {
-        return await this.database.executeBatch(query, params ?? []);
-      }
-    );
+    return this.withRemote(async () => {
+      return await this.database.executeBatch(query, params ?? []);
+    });
   }
 
   executeRaw(query: string, params?: any[] | undefined): Promise<RawQueryResult> {
-    return this.withRemote(
-      () => `executeRaw(${query}, ${JSON.stringify(params)})`,
-      async () => {
-        return await this.database.executeRaw(query, params ?? []);
-      }
-    );
+    return this.withRemote(async () => {
+      return await this.database.executeRaw(query, params ?? []);
+    });
   }
 
   async refreshSchema() {

@@ -348,6 +348,7 @@ export class AttachmentQueue {
    */
   async syncStorage(): Promise<void> {
     const signal = this.syncAbortController?.signal;
+    // We have a signal from startSync() to stopSync(), so treat the absence of one like an aborted sync.
     if (signal == null || signal?.aborted) return;
 
     try {
