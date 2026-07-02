@@ -36,11 +36,11 @@ export class RemoteConnection extends LockContext {
 
     return new Promise((resolve, reject) => {
       if (controller.signal.aborted) {
-        reject(new ConnectionClosedError(`Called operation on closed remote: ${description}`));
+        reject(new ConnectionClosedError(`Called operation on closed remote: ${description()}`));
       }
 
       function handleAbort() {
-        reject(new ConnectionClosedError(`Remote peer closed with request in flight: ${description}`));
+        reject(new ConnectionClosedError(`Remote peer closed with request in flight: ${description()}`));
       }
 
       function completePromise(action: () => void) {
