@@ -1,26 +1,24 @@
 import {
-  AbortOperation,
   BaseObserver,
-  ConnectionManager,
-  ConnectionPool,
   DBAdapter,
-  DBAdapterDefaultMixin,
-  DBAdapterListener,
   DBLockOptions,
   LockContext,
   PowerSyncBackendConnector,
+  SyncStatus,
+  LogLevels,
+  SyncStreamConnectionMethod
+} from '@powersync/common';
+import {
+  AbortOperation,
+  ConnectionManager,
   SqliteBucketStorage,
   SubscribedStream,
-  SyncStatus,
-  createLogger,
-  Mutex,
-  type ILogLevel,
-  type ILogger,
-  type PowerSyncConnectionOptions,
   type StreamingSyncImplementation,
   type StreamingSyncImplementationListener,
-  type SyncStatusOptions
-} from '@powersync/common';
+  Mutex,
+  ResolvedSyncOptions,
+  SyncStatusSnapshot
+} from '@powersync/shared-internals';
 import * as Comlink from 'comlink';
 import { WebRemote } from '../../db/sync/WebRemote.js';
 import {
@@ -28,11 +26,11 @@ import {
   WebStreamingSyncImplementationOptions
 } from '../../db/sync/WebStreamingSyncImplementation.js';
 
-import { ResolvedWebSQLOpenOptions } from '../../db/adapters/web-sql-flags.js';
 import { AbstractSharedSyncClientProvider } from './AbstractSharedSyncClientProvider.js';
 import { BroadcastLogger } from './BroadcastLogger.js';
 import { DatabaseClient, OpenWorkerConnection } from '../../db/adapters/wa-sqlite/DatabaseClient.js';
 import { generateTabCloseSignal } from '../../shared/tab_close_signal.js';
+import { ResolvedWebSQLOpenOptions } from '../../db/adapters/options.js';
 
 /**
  * @internal
@@ -60,8 +58,12 @@ export type ManualSharedSyncPayload = {
  * @internal
  */
 export type SharedSyncInitOptions = {
-  streamOptions: Omit<WebStreamingSyncImplementationOptions, 'adapter' | 'uploadCrud' | 'remote' | 'subscriptions'>;
+  streamOptions: Omit<
+    WebStreamingSyncImplementationOptions,
+    'adapter' | 'uploadCrud' | 'remote' | 'subscriptions' | 'logger'
+  >;
   dbParams: ResolvedWebSQLOpenOptions;
+  enableBroadcastLogs: boolean;
 };
 
 /**
@@ -112,21 +114,19 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
   protected uploadDataController?: RemoteOperationAbortController;
 
   protected syncParams: SharedSyncInitOptions | null;
-  protected logger: ILogger;
-  protected lastConnectOptions: PowerSyncConnectionOptions | undefined;
+  protected lastConnectOptions: ResolvedSyncOptions | undefined;
   protected portMutex: Mutex;
   private subscriptions: SubscribedStream[] = [];
 
   protected connectionManager: ConnectionManager;
-  syncStatus: SyncStatus;
-  broadCastLogger: ILogger;
+  private syncStatus?: SyncStatusSnapshot;
+  logger: BroadcastLogger;
   protected readonly database = this.generateReconnectableDatabase();
 
   constructor() {
     super();
     this.ports = [];
     this.syncParams = null;
-    this.logger = createLogger('shared-sync');
     this.lastConnectOptions = undefined;
     this.portMutex = new Mutex();
 
@@ -139,8 +139,7 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
       });
     });
 
-    this.syncStatus = new SyncStatus({});
-    this.broadCastLogger = new BroadcastLogger(this.ports);
+    this.logger = new BroadcastLogger('shared-sync', this.ports);
 
     this.connectionManager = new ConnectionManager({
       createSyncImplementation: async () => {
@@ -148,8 +147,10 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
 
         const sync = this.generateStreamingImplementation();
         const onDispose = sync.registerListener({
-          statusChanged: (status) => {
-            this.updateAllStatuses(status.toJSON());
+          statusChanged: (snapshot) => {
+            this.syncStatus = snapshot;
+            const json = snapshot.toJSON();
+            this.ports.forEach((p) => p.clientProvider.statusChanged(json));
           }
         });
 
@@ -158,7 +159,8 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
           onDispose
         };
       },
-      logger: this.logger
+      logger: this.logger,
+      defaultConnectionMethod: SyncStreamConnectionMethod.HTTP
     });
   }
 
@@ -192,12 +194,6 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
     });
   }
 
-  async waitForStatus(status: SyncStatusOptions): Promise<void> {
-    return this.withSyncImplementation(async (sync) => {
-      return sync.waitForStatus(status);
-    });
-  }
-
   async waitUntilStatusMatches(predicate: (status: SyncStatus) => boolean): Promise<void> {
     return this.withSyncImplementation(async (sync) => {
       return sync.waitUntilStatusMatches(predicate);
@@ -209,7 +205,7 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
   }
 
   private collectActiveSubscriptions() {
-    this.logger.debug('Collecting active stream subscriptions across tabs');
+    this.logger.log({ level: LogLevels.debug, message: 'Collecting active stream subscriptions across tabs' });
     const active = new Map<string, SubscribedStream>();
     for (const port of this.ports) {
       for (const stream of port.currentSubscriptions) {
@@ -218,7 +214,10 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
       }
     }
     this.subscriptions = [...active.values()];
-    this.logger.debug('Collected stream subscriptions', this.subscriptions);
+    this.logger.log({
+      level: LogLevels.debug,
+      message: `Collected stream subscriptions, ${JSON.stringify(this.subscriptions)}`
+    });
     this.connectionManager.syncStreamImplementation?.updateSubscriptions(this.subscriptions);
   }
 
@@ -227,9 +226,8 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
     this.collectActiveSubscriptions();
   }
 
-  setLogLevel(level: ILogLevel) {
+  setLogLevel(level: number) {
     this.logger.setLevel(level);
-    this.broadCastLogger.setLevel(level);
   }
 
   /**
@@ -247,16 +245,18 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
 
     // First time setting params
     this.syncParams = params;
-    if (params.streamOptions?.flags?.broadcastLogs) {
-      this.logger = this.broadCastLogger;
-    }
+    this.logger.sendBroadcasts = params.enableBroadcastLogs;
 
     // Ensure we have a usable database connection, the reconnectable database will connect lazily on first use.
     await this.database.readLock(async () => {});
 
     self.onerror = (event) => {
       // Share any uncaught events on the broadcast logger
-      this.logger.error('Uncaught exception in PowerSync shared sync worker', event);
+      this.logger.log({
+        level: LogLevels.error,
+        message: 'Uncaught exception in PowerSync shared sync worker',
+        error: event
+      });
     };
 
     this.iterateListeners((l) => l.initialized?.());
@@ -274,9 +274,9 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
    * The connection will simply be reconnected whenever a new tab
    * connects.
    */
-  async connect(options?: PowerSyncConnectionOptions) {
+  async connect(options: ResolvedSyncOptions, serializedSchema: any) {
     this.lastConnectOptions = options;
-    return this.connectionManager.connect(CONNECTOR_PLACEHOLDER, options ?? {});
+    return this.connectionManager.connect(CONNECTOR_PLACEHOLDER, options ?? {}, serializedSchema);
   }
 
   async disconnect() {
@@ -298,7 +298,7 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
       this.ports.push(portProvider);
 
       // Give the newly connected client the latest status
-      const status = this.connectionManager.syncStreamImplementation?.syncStatus;
+      const status = this.syncStatus;
       if (status) {
         portProvider.clientProvider.statusChanged(status.toJSON());
       }
@@ -321,7 +321,10 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
     return await this.portMutex.runExclusive(async () => {
       const index = this.ports.findIndex((p) => p == port);
       if (index < 0) {
-        this.logger.warn(`Could not remove port ${port} since it is not present in active ports.`);
+        this.logger.log({
+          level: LogLevels.warn,
+          message: `Could not remove port ${port} since it is not present in active ports.`
+        });
         return () => {};
       }
 
@@ -397,10 +400,13 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
               throw new Error('No client port found to invalidate credentials');
             }
             try {
-              this.logger.log('calling the last port client provider to invalidate credentials');
+              this.logger.log({
+                level: LogLevels.info,
+                message: 'calling the last port client provider to invalidate credentials'
+              });
               lastPort.clientProvider.invalidateCredentials();
-            } catch (ex) {
-              this.logger.error('error invalidating credentials', ex);
+            } catch (error) {
+              this.logger.log({ level: LogLevels.error, message: 'error invalidating credentials', error });
             }
           },
           fetchCredentials: async () => {
@@ -417,7 +423,10 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
 
               abortController.signal.onabort = reject;
               try {
-                this.logger.log('calling the last port client provider for credentials');
+                this.logger.log({
+                  level: LogLevels.info,
+                  message: 'calling the last port client provider for credentials'
+                });
                 resolve(await lastPort.clientProvider.fetchCredentials());
               } catch (ex) {
                 reject(ex);
@@ -542,7 +551,7 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
     clearTimeout(timeout);
 
     client.closeListeners.push(async () => {
-      this.logger.info('Aborting open connection because associated tab closed.');
+      this.logger.log({ level: LogLevels.info, message: 'Aborting open connection because associated tab closed.' });
       handleClosed(db);
       /**
        * Don't await this close operation. It might never resolve if the tab is closed.
@@ -550,7 +559,9 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
        * We then call close. The close operation is configured to fire-and-forget, the main promise will reject immediately.
        */
       db.markRemoteClosed();
-      db.close().catch((ex) => this.logger.warn('error closing database connection', ex));
+      db.close().catch((error) =>
+        this.logger.log({ level: LogLevels.warn, message: 'error closing database connection', error })
+      );
     });
     return db;
   }
@@ -559,7 +570,7 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
     const syncParams = this.syncParams;
     const sharedSync = this;
 
-    class ReconnectPool extends BaseObserver<DBAdapterListener> implements ConnectionPool {
+    return new (class extends DBAdapter {
       private connectionState:
         | null
         | DatabaseClient<ResolvedWebSQLOpenOptions>
@@ -628,19 +639,7 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
       async refreshSchema(): Promise<void> {
         // Not used by sync client.
       }
-    }
-
-    const Adapter = DBAdapterDefaultMixin(ReconnectPool);
-    return new Adapter();
-  }
-
-  /**
-   * A method to update the all shared statuses for each
-   * client.
-   */
-  private updateAllStatuses(status: SyncStatusOptions) {
-    this.syncStatus = new SyncStatus(status);
-    this.ports.forEach((p) => p.clientProvider.statusChanged(status));
+    })();
   }
 }
 

@@ -1,8 +1,8 @@
 import type { DBAdapter } from '@powersync/web';
-import { Column, ColumnType, Schema, Table } from '@powersync/web';
+import { Column, ColumnType, ResolvedTable, Schema } from '@powersync/web';
 import { DiagnosticsAppSchema as AppSchema } from './AppSchema';
 import { JsSchemaGenerator } from './JsSchemaGenerator';
-import type { SyncDataBucketJSON } from '@powersync/common/internal/sync_protocol';
+import type { SyncDataBucketJSON } from '@powersync/shared-internals/internal/sync_protocol';
 
 /**
  * Record fields from downloaded data, then build a schema from it.
@@ -81,7 +81,7 @@ export class DynamicSchemaManager {
     const tables = [...base.tables];
 
     for (const [key, value] of Object.entries(this.tables)) {
-      const table = new Table({
+      const table = new ResolvedTable({
         name: key,
         columns: Object.entries(value).map(
           ([cname, ctype]) =>

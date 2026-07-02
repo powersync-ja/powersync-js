@@ -1,17 +1,15 @@
 import { describe, vi, expect, onTestFinished } from 'vitest';
-import { PowerSyncConnectionOptions, SyncStreamConnectionMethod } from '@powersync/common';
-import Logger from 'js-logger';
+import { createConsoleLogger, LogLevels, SyncOptions, SyncStreamConnectionMethod } from '@powersync/common';
 import { bucket, checkpoint, mockSyncServiceTest, nextStatus, stream, TestConnector } from './utils.js';
 
-Logger.useDefaults({ defaultLevel: (Logger as any).WARN });
-
 describe('Sync streams', () => {
-  const defaultOptions = {
+  const defaultOptions: SyncOptions = {
     connectionMethod: SyncStreamConnectionMethod.HTTP
-  } satisfies PowerSyncConnectionOptions;
+  };
+  const logger = createConsoleLogger({ minLevel: LogLevels.warn });
 
   mockSyncServiceTest('can disable default streams', async ({ syncService }) => {
-    const database = await syncService.createDatabase();
+    const database = await syncService.createDatabase({ logger });
     await database.connect(new TestConnector(), {
       includeDefaultStreams: false,
       ...defaultOptions
@@ -26,7 +24,7 @@ describe('Sync streams', () => {
   });
 
   mockSyncServiceTest('subscribes with streams', async ({ syncService }) => {
-    const database = await syncService.createDatabase();
+    const database = await syncService.createDatabase({ logger });
     const a = await database.syncStream('stream', { foo: 'a' }).subscribe();
     const b = await database.syncStream('stream', { foo: 'b' }).subscribe({ priority: 1 });
     onTestFinished(() => {
@@ -84,7 +82,7 @@ describe('Sync streams', () => {
   });
 
   mockSyncServiceTest('reports default streams', async ({ syncService }) => {
-    const database = await syncService.createDatabase();
+    const database = await syncService.createDatabase({ logger });
     await database.connect(new TestConnector(), defaultOptions);
 
     let statusPromise = nextStatus(database);
@@ -109,7 +107,7 @@ describe('Sync streams', () => {
   });
 
   mockSyncServiceTest('changes subscriptions dynamically', async ({ syncService }) => {
-    const database = await syncService.createDatabase();
+    const database = await syncService.createDatabase({ logger });
     await database.connect(new TestConnector(), defaultOptions);
 
     syncService.pushLine(
@@ -142,7 +140,7 @@ describe('Sync streams', () => {
   });
 
   mockSyncServiceTest('subscriptions update while offline', async ({ syncService }) => {
-    const database = await syncService.createDatabase();
+    const database = await syncService.createDatabase({ logger });
 
     let statusPromise = nextStatus(database);
     const subscription = await database.syncStream('foo').subscribe();
@@ -151,7 +149,7 @@ describe('Sync streams', () => {
   });
 
   mockSyncServiceTest('unsubscribing multiple times has no effect', async ({ syncService }) => {
-    const database = await syncService.createDatabase();
+    const database = await syncService.createDatabase({ logger });
     const a = await database.syncStream('a').subscribe();
     const aAgain = await database.syncStream('a').subscribe();
     a.unsubscribe();
@@ -172,7 +170,7 @@ describe('Sync streams', () => {
   });
 
   mockSyncServiceTest('unsubscribeAll', async ({ syncService }) => {
-    const database = await syncService.createDatabase();
+    const database = await syncService.createDatabase({ logger });
     const a = await database.syncStream('a').subscribe();
     database.syncStream('a').unsubscribeAll();
 

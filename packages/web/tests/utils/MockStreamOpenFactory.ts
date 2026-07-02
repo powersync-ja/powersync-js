@@ -1,23 +1,20 @@
 import {
-  AbstractPowerSyncDatabase,
-  AbstractRemote,
-  AbstractStreamingSyncImplementation,
-  DEFAULT_CRUD_UPLOAD_THROTTLE_MS,
+  CommonPowerSyncDatabase,
   PowerSyncBackendConnector,
   PowerSyncCredentials,
-  PowerSyncDatabaseOptions,
-  RemoteConnector,
-  SimpleAsyncIterator,
-  SyncStreamOptions
+  PowerSyncLogger
 } from '@powersync/common';
-import { StreamingSyncLine } from '@powersync/common/internal/sync_protocol';
 import {
-  PowerSyncDatabase,
-  WASQLitePowerSyncDatabaseOpenFactory,
-  WebPowerSyncDatabaseOptions,
-  WebPowerSyncOpenFactoryOptions,
-  WebStreamingSyncImplementation
-} from '@powersync/web';
+  AbstractRemote,
+  AbstractStreamingSyncImplementation,
+  CreateSyncImplementationOptions,
+  SimpleAsyncIterator,
+  RemoteConnector,
+  SyncStreamOptions,
+  SqliteBucketStorage
+} from '@powersync/shared-internals';
+import { StreamingSyncLine } from '@powersync/shared-internals/internal/sync_protocol';
+import { PowerSyncDatabase, WebPowerSyncDatabaseOptions, WebStreamingSyncImplementation } from '@powersync/web';
 import { MockedFunction, vi } from 'vitest';
 
 export class TestConnector implements PowerSyncBackendConnector {
@@ -27,7 +24,7 @@ export class TestConnector implements PowerSyncBackendConnector {
       token: ''
     };
   }
-  async uploadData(database: AbstractPowerSyncDatabase): Promise<void> {
+  async uploadData(database: CommonPowerSyncDatabase): Promise<void> {
     const tx = await database.getNextCrudTransaction();
     await tx?.complete();
   }
@@ -40,9 +37,10 @@ export class MockRemote extends AbstractRemote {
 
   constructor(
     connector: RemoteConnector,
+    logger: PowerSyncLogger,
     protected onStreamRequested: () => void
   ) {
-    super(connector);
+    super(connector, logger);
     this.streamController = null;
     this.generateCheckpoint = vi.fn(() => {
       return {
@@ -53,9 +51,10 @@ export class MockRemote extends AbstractRemote {
     });
   }
 
-  post(path: string, data: any, headers?: Record<string, string> | undefined): Promise<any> {
-    throw new Error('Method not implemented.');
+  protected fetch(): Promise<Response> {
+    throw new Error('Not implemented');
   }
+
   async get(path: string, headers?: Record<string, string> | undefined): Promise<any> {
     // mock a response for write checkpoint API
     if (path.includes('checkpoint')) {
@@ -64,12 +63,7 @@ export class MockRemote extends AbstractRemote {
     throw new Error('Not implemented');
   }
 
-  async postStreaming(
-    path: string,
-    data: any,
-    headers?: Record<string, string>,
-    signal?: AbortSignal
-  ): Promise<ReadableStream> {
+  async postStreaming(path: string, data: any, signal?: AbortSignal): Promise<ReadableStream> {
     const stream = new ReadableStream({
       start: (controller) => {
         this.streamController = controller;
@@ -96,12 +90,12 @@ export class MockRemote extends AbstractRemote {
     return new Response(stream).body!;
   }
 
-  async socketStreamRaw<T>(): Promise<never> {
-    throw 'Unsupported: Socket streams are not currently supported in tests';
+  protected loadWebSocketSupport(): Promise<never> {
+    throw new Error('Mocked WebRemote does not support WebSockets');
   }
 
   async fetchStream(options: SyncStreamOptions): Promise<SimpleAsyncIterator<Uint8Array | string>> {
-    const mockResponse = await this.postStreaming(options.path, options.data, options.headers, options.abortSignal);
+    const mockResponse = await this.postStreaming(options.path, options.data, options.abortSignal);
     const mockReader = mockResponse.getReader();
     options.abortSignal?.addEventListener('abort', async () => {
       try {
@@ -133,37 +127,20 @@ export class MockedStreamPowerSync extends PowerSyncDatabase {
   }
 
   protected generateSyncStreamImplementation(
-    connector: PowerSyncBackendConnector
+    connector: PowerSyncBackendConnector,
+    options: CreateSyncImplementationOptions
   ): AbstractStreamingSyncImplementation {
     return new WebStreamingSyncImplementation({
-      logger: this.options.logger,
-      adapter: this.bucketStorageAdapter,
+      logger: this.logger,
+      adapter: new SqliteBucketStorage(this.database, this.logger),
       remote: this.remote,
       uploadCrud: async () => {
         await this.waitForReady();
         await connector.uploadData(this);
       },
       identifier: this.database.name,
-      retryDelayMs: this.options.crudUploadThrottleMs ?? 0, // The zero here makes tests faster
-      crudUploadThrottleMs: DEFAULT_CRUD_UPLOAD_THROTTLE_MS,
-      subscriptions: []
+      subscriptions: [],
+      serializedSchema: options.serializedSchema
     });
-  }
-}
-
-export class MockStreamOpenFactory extends WASQLitePowerSyncDatabaseOpenFactory {
-  constructor(
-    options: WebPowerSyncOpenFactoryOptions,
-    protected remote: AbstractRemote
-  ) {
-    super(options);
-  }
-  generateInstance(options: PowerSyncDatabaseOptions): AbstractPowerSyncDatabase {
-    return new MockedStreamPowerSync(
-      {
-        ...options
-      },
-      this.remote
-    );
   }
 }

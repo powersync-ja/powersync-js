@@ -1,5 +1,5 @@
 import {
-  AbstractPowerSyncDatabase,
+  CommonPowerSyncDatabase,
   ArrayComparator,
   GetAllQuery,
   QueryResult,
@@ -23,15 +23,15 @@ vi.useRealTimers();
 const throttleDuration = 1000;
 
 describe('Watch Tests', { sequential: true }, () => {
-  let powersync: AbstractPowerSyncDatabase;
+  let powersync: CommonPowerSyncDatabase;
 
   beforeEach(async () => {
     powersync = new PowerSyncDatabase({
-      database: { dbFilename: 'test-watch.db' },
-      schema: TEST_SCHEMA,
-      flags: {
+      database: {
+        dbFilename: 'test-watch.db',
         enableMultiTabs: false
-      }
+      },
+      schema: TEST_SCHEMA
     });
     await powersync.init();
   });

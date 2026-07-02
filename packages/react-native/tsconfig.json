@@ -12,6 +12,9 @@
     },
     {
       "path": "../react"
+    },
+    {
+      "path": "../shared-internals"
     }
   ],
   "include": ["src/**/*"]

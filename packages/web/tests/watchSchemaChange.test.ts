@@ -1,4 +1,4 @@
-import { AbstractPowerSyncDatabase, QueryResult } from '@powersync/common';
+import { CommonPowerSyncDatabase, QueryResult } from '@powersync/common';
 import { PowerSyncDatabase } from '@powersync/web';
 import { v4 as uuid } from 'uuid';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -16,15 +16,12 @@ vi.useRealTimers();
 const throttleDuration = 1000;
 
 describe('Watch With Schema Change Tests', { sequential: true }, () => {
-  let powersync: AbstractPowerSyncDatabase;
+  let powersync: CommonPowerSyncDatabase;
 
   beforeEach(async () => {
     powersync = new PowerSyncDatabase({
-      database: { dbFilename: 'test-watch-optional-sync.db' },
-      schema: makeOptionalSyncSchema(false),
-      flags: {
-        enableMultiTabs: false
-      }
+      database: { dbFilename: 'test-watch-optional-sync.db', enableMultiTabs: false },
+      schema: makeOptionalSyncSchema(false)
     });
     await powersync.init();
   });
@@ -147,7 +144,7 @@ describe('Watch With Schema Change Tests', { sequential: true }, () => {
   });
 });
 
-export async function getSourceTables(db: AbstractPowerSyncDatabase, sql: string, parameters: Array<any> = []) {
+export async function getSourceTables(db: CommonPowerSyncDatabase, sql: string, parameters: Array<any> = []) {
   const rows = await db.getAll<{ opcode: string; p3: number; p2: string }>(`EXPLAIN ${sql}`, parameters);
   const rootpages: number[] = [];
 

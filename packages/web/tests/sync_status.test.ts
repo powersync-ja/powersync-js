@@ -8,11 +8,9 @@ describe(
   { sequential: true },
   describeSyncStatusStreamingTests(() =>
     generateConnectedDatabase({
-      powerSyncOptions: {
-        flags: {
-          useWebWorker: false,
-          enableMultiTabs: false
-        }
+      database: {
+        useWebWorker: false,
+        enableMultiTabs: false
       }
     })
   )
@@ -37,7 +35,7 @@ function describeSyncStatusStreamingTests(createConnectedDatabase: () => Promise
 
       powersync.registerListener({
         statusChanged: (status) => {
-          if (status.dataFlowStatus.downloadError) {
+          if (status.downloadError) {
             resolveDownloadError();
             receivedUploadError = true;
           }
@@ -77,7 +75,7 @@ function describeSyncStatusStreamingTests(createConnectedDatabase: () => Promise
 
       powersync.registerListener({
         statusChanged: (status) => {
-          if (status.dataFlowStatus.uploadError) {
+          if (status.uploadError) {
             resolveUploadError();
             receivedUploadError = true;
           } else if (receivedUploadError) {

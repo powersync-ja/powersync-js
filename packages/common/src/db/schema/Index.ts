@@ -1,5 +1,5 @@
 import { IndexedColumn } from './IndexedColumn.js';
-import { Table } from './Table.js';
+import { ResolvedTable } from './Table.js';
 
 /**
  * @public
@@ -9,10 +9,7 @@ export interface IndexOptions {
   columns?: IndexedColumn[];
 }
 
-/**
- * @internal
- */
-export const DEFAULT_INDEX_OPTIONS: Partial<IndexOptions> = {
+const DEFAULT_INDEX_OPTIONS: Partial<IndexOptions> = {
   columns: []
 };
 
@@ -39,7 +36,7 @@ export class Index {
     return this.options.columns ?? [];
   }
 
-  toJSON(table: Table) {
+  toJSON(table: ResolvedTable) {
     return {
       name: this.name,
       columns: this.columns.map((c) => c.toJSON(table))

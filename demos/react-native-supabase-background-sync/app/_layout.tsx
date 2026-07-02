@@ -1,12 +1,12 @@
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { useSystem } from '@/powersync/SystemContext';
 import { PowerSyncContext } from '@powersync/react-native';
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import { DarkTheme, DefaultTheme, ThemeProvider } from "expo-router/react-navigation";
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useMemo } from 'react';
-import { SafeAreaView } from 'react-native';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import 'react-native-reanimated';
 
 export default function RootLayout() {
@@ -28,15 +28,17 @@ export default function RootLayout() {
 
   return (
     <PowerSyncContext.Provider value={db}>
-      <SafeAreaView style={{ flex: 1 }}>
-        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-          <Stack>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="+not-found" />
-          </Stack>
-          <StatusBar style="auto" />
-        </ThemeProvider>
-      </SafeAreaView>
+      <SafeAreaProvider>
+        <SafeAreaView style={{ flex: 1 }}>
+          <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+            <Stack>
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen name="+not-found" />
+            </Stack>
+            <StatusBar style="auto" />
+          </ThemeProvider>
+        </SafeAreaView>
+      </SafeAreaProvider>
     </PowerSyncContext.Provider>
   );
 }

@@ -1,25 +1,21 @@
 import {
-  BaseListener,
   BaseObserver,
+  BaseListener,
   BatchedUpdateNotification,
-  ConnectionPool,
-  ControlledExecutor,
-  createLogger,
+  createConsoleLogger,
   DBAdapter,
-  DBAdapterDefaultMixin,
-  DBAdapterListener,
-  DBGetUtilsDefaultMixin,
   DBLockOptions,
-  ILogger,
   LockContext,
-  Mutex,
+  LogLevels,
+  PowerSyncLogger,
   QueryResult,
-  SqlExecutor,
   SQLOpenFactory,
   SQLOpenOptions,
-  timeoutSignal,
-  Transaction
+  SqliteValue,
+  RawQueryResult,
+  queryResultWithoutRows
 } from '@powersync/common';
+import { Mutex, timeoutSignal, ControlledExecutor } from '@powersync/shared-internals';
 // This uses a pure JS version which avoids the need for WebAssembly, which is not supported in React Native.
 import SQLJs from '@powersync/sql-js/dist/sql-asm.js';
 
@@ -30,12 +26,12 @@ export interface SQLJSPersister {
 
 export interface SQLJSOpenOptions extends SQLOpenOptions {
   persister?: SQLJSPersister;
-  logger?: ILogger;
+  logger?: PowerSyncLogger;
 }
 
 export interface ResolvedSQLJSOpenOptions extends SQLJSOpenOptions {
   persister?: SQLJSPersister;
-  logger: ILogger;
+  logger: PowerSyncLogger;
 }
 
 export class SQLJSOpenFactory implements SQLOpenFactory {
@@ -61,7 +57,7 @@ interface TableObserverListener extends BaseListener {
 }
 class TableObserver extends BaseObserver<TableObserverListener> {}
 
-class SqlJsConnectionPool extends BaseObserver<DBAdapterListener> implements ConnectionPool {
+export class SQLJSDBAdapter extends DBAdapter {
   protected initPromise: Promise<SQLJs.Database>;
   protected _db: SQLJs.Database | null;
   protected tableUpdateCache: Set<string>;
@@ -110,7 +106,7 @@ class SqlJsConnectionPool extends BaseObserver<DBAdapterListener> implements Con
   }
 
   protected resolveOptions(options: SQLJSOpenOptions): ResolvedSQLJSOpenOptions {
-    const logger = options.logger ?? createLogger('SQLJSDBAdapter');
+    const logger = options.logger ?? createConsoleLogger({ prefix: 'SQLJSDBAdapter' });
 
     return {
       ...options,
@@ -122,10 +118,10 @@ class SqlJsConnectionPool extends BaseObserver<DBAdapterListener> implements Con
     const SQL = await SQLJs({
       locateFile: (filename: any) => `../dist/${filename}`,
       print: (text) => {
-        this.options.logger.info(text);
+        this.options.logger.log({ level: LogLevels.info, message: text });
       },
       printErr: (text) => {
-        this.options.logger.error('[stderr]', text);
+        this.options.logger.log({ level: LogLevels.error, message: `[stderr]: ${text}` });
       }
     });
     const existing = await this.options.persister?.readFile();
@@ -159,9 +155,7 @@ class SqlJsConnectionPool extends BaseObserver<DBAdapterListener> implements Con
       }
 
       const notification: BatchedUpdateNotification = {
-        rawUpdates: [],
-        tables: Array.from(this.tableUpdateCache),
-        groupedUpdates: {}
+        tables: Array.from(this.tableUpdateCache)
       };
       this.tableUpdateCache.clear();
       this.iterateListeners((l) => l.tablesUpdated?.(notification));
@@ -174,61 +168,37 @@ class SqlJsConnectionPool extends BaseObserver<DBAdapterListener> implements Con
   }
 }
 
-class SqlJsExecutor implements SqlExecutor {
-  constructor(readonly db: SQLJs.Database) {}
+class SqlJsLockContext extends LockContext {
+  constructor(readonly db: SQLJs.Database) {
+    super();
+  }
 
-  async execute(query: string, params?: any[]): Promise<QueryResult> {
+  async executeRaw(query: string, params?: any[]): Promise<RawQueryResult> {
     const db = this.db;
     const statement = db.prepare(query);
-    const rawResults: any[][] = [];
-    let columnNames: string[] | null = null;
+    const rawResults: SqliteValue[][] = [];
+
     try {
       if (params) {
         statement.bind(params);
       }
       while (statement.step()) {
-        if (!columnNames) {
-          columnNames = statement.getColumnNames();
-        }
         rawResults.push(statement.get());
       }
 
-      const rows = rawResults.map((row) => {
-        return Object.fromEntries(row.map((value, index) => [columnNames![index], value]));
-      });
       return {
+        rowsAffected: db.getRowsModified(),
         // `lastInsertId` is not available in the original version of SQL.js or its types, but it's available in the fork we use.
         insertId: (db as any).lastInsertId(),
-        rowsAffected: db.getRowsModified(),
-        rows: {
-          _array: rows,
-          length: rows.length,
-          item: (idx: number) => rows[idx]
-        }
+        columnNames: statement.getColumnNames(),
+        rawRows: rawResults
       };
     } finally {
       statement.free();
     }
   }
 
-  async executeRaw(query: string, params?: any[]): Promise<any[][]> {
-    const db = this.db;
-    const statement = db.prepare(query);
-    const rawResults: any[][] = [];
-    try {
-      if (params) {
-        statement.bind(params);
-      }
-      while (statement.step()) {
-        rawResults.push(statement.get());
-      }
-      return rawResults;
-    } finally {
-      statement.free();
-    }
-  }
-
-  async executeBatch(query: string, params: any[][] = []): Promise<QueryResult> {
+  async executeBatch(query: string, params: any[][] = []): Promise<QueryResult<never>> {
     let totalRowsAffected = 0;
     const db = this.db;
 
@@ -239,15 +209,11 @@ class SqlJsExecutor implements SqlExecutor {
         totalRowsAffected += db.getRowsModified();
       }
 
-      return {
+      return queryResultWithoutRows({
         rowsAffected: totalRowsAffected
-      };
+      });
     } finally {
       stmt.free();
     }
   }
 }
-
-class SqlJsLockContext extends DBGetUtilsDefaultMixin(SqlJsExecutor) implements LockContext {}
-
-export class SQLJSDBAdapter extends DBAdapterDefaultMixin(SqlJsConnectionPool) implements DBAdapter {}

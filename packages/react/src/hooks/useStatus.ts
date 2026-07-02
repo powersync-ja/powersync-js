@@ -1,4 +1,5 @@
-import { usePowerSyncStatus } from './deprecated/usePowerSyncStatus.js';
+import { useContext, useEffect, useState } from 'react';
+import { PowerSyncContext } from './PowerSyncContext.js';
 
 /**
  * Custom hook that provides access to the current status of PowerSync.
@@ -14,4 +15,19 @@ import { usePowerSyncStatus } from './deprecated/usePowerSyncStatus.js';
  *   </div>
  * };
  */
-export const useStatus = () => usePowerSyncStatus();
+export function useStatus() {
+  const powerSync = useContext(PowerSyncContext);
+  const [syncStatus, setSyncStatus] = useState(powerSync.currentStatus);
+
+  useEffect(() => {
+    const listener = powerSync.registerListener({
+      statusChanged: (status) => {
+        setSyncStatus(status);
+      }
+    });
+
+    return () => listener?.();
+  }, [powerSync]);
+
+  return syncStatus;
+}

@@ -1,13 +1,8 @@
 import {
-  AbstractPowerSyncDatabase,
-  BucketStorageAdapter,
+  BasePowerSyncDatabaseOptions,
   DBAdapter,
   PowerSyncCloseOptions,
-  PowerSyncDatabaseOptions,
   SQLOpenOptions,
-  StreamingSyncImplementation,
-  SyncStatus,
-  SyncStatusOptions,
   SyncStream,
   SyncStreamSubscribeOptions,
   SyncStreamSubscription
@@ -16,10 +11,17 @@ import { LateHandle, RustDatabaseAdapter } from './pool';
 import { CreatedDatabase, powersyncCommand } from './command';
 import { listen, UnlistenFn } from '@tauri-apps/api/event';
 import { join } from '@tauri-apps/api/path';
+import {
+  BasePowerSyncDatabase,
+  BucketStorageAdapter,
+  StreamingSyncImplementation,
+  SyncStatusJson,
+  SyncStatusSnapshot
+} from '@powersync/shared-internals';
 
-export type TauriPowerSyncOpenOptions = PowerSyncDatabaseOptions & {
+export interface TauriPowerSyncOpenOptions extends BasePowerSyncDatabaseOptions {
   database: TauriSQLOpenOptions;
-};
+}
 
 export interface TauriSQLOpenOptions extends SQLOpenOptions {
   /**
@@ -36,7 +38,7 @@ export interface TauriSQLOpenOptions extends SQLOpenOptions {
 /**
  * A PowerSync database backed by a Rust-owned structure for Tauri apps.
  */
-export class PowerSyncTauriDatabase extends AbstractPowerSyncDatabase {
+export class PowerSyncTauriDatabase extends BasePowerSyncDatabase<TauriPowerSyncOpenOptions> {
   declare private handle: LateHandle;
   private didInitializeSchema = false;
   private tableUpdateListener?: UnlistenFn;
@@ -65,7 +67,7 @@ export class PowerSyncTauriDatabase extends AbstractPowerSyncDatabase {
     return this.handle.handle;
   }
 
-  protected openDBAdapter(): DBAdapter {
+  protected override openDBAdapter(): DBAdapter {
     this.handle = { handle: -1 };
     return new RustDatabaseAdapter('uninitialized', this.handle);
   }
@@ -151,15 +153,15 @@ export class PowerSyncTauriDatabase extends AbstractPowerSyncDatabase {
     };
   }
 
-  private updateSyncStatusFromRust(status: SyncStatusOptions) {
-    const updatedStatus = new SyncStatus(status);
+  private updateSyncStatusFromRust({ core, dataFlow }: SyncStatusJson) {
+    const updatedStatus = new SyncStatusSnapshot(core, dataFlow);
     this.currentStatus = updatedStatus;
     this.iterateListeners((l) => l.statusChanged?.(this.currentStatus));
   }
 
   protected async resolveOfflineSyncStatus(): Promise<void> {
     const result = await powersyncCommand({ GetSyncStatus: this.rustHandle });
-    const status = (result as any).SyncStatus as SyncStatusOptions;
+    const status = (result as any).SyncStatus as SyncStatusJson;
 
     this.updateSyncStatusFromRust(status);
   }
@@ -177,12 +179,10 @@ export class PowerSyncTauriDatabase extends AbstractPowerSyncDatabase {
     this.tableUpdateListener = await listen<string[]>(`table-updates:${event_key}`, (event) => {
       const adapter = this.database;
       if (adapter instanceof RustDatabaseAdapter) {
-        adapter.iterateListeners((l) =>
-          l.tablesUpdated?.({ tables: event.payload, rawUpdates: [], groupedUpdates: {} })
-        );
+        adapter.iterateListeners((l) => l.tablesUpdated?.({ tables: event.payload }));
       }
     });
-    this.syncStatusListener = await listen<SyncStatusOptions>(`sync-status:${event_key}`, (event) => {
+    this.syncStatusListener = await listen<SyncStatusJson>(`sync-status:${event_key}`, (event) => {
       this.updateSyncStatusFromRust(event.payload);
     });
 

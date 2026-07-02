@@ -1,6 +1,15 @@
-import { LogLevel, Schema, SyncStreamConnectionMethod, TableV2, column, createLogger } from '@powersync/common';
-import { PowerSyncDatabase, WASQLiteOpenFactory, WASQLiteVFS } from '@powersync/web';
+import {
+  DatabaseSource,
+  LogLevels,
+  Schema,
+  SyncStreamConnectionMethod,
+  Table,
+  column,
+  createConsoleLogger
+} from '@powersync/common';
+import { PowerSyncDatabase, WASQLiteOpenFactory, WASQLiteVFS, WebSQLOpenOptions } from '@powersync/web';
 import { getMockSyncServiceFromWorker } from './MockSyncServiceClient.js';
+import { defaultLogLevel, defaultTestLogger } from './logger.js';
 
 /**
  * Initializes a PowerSync client in the current iframe context and notifies the parent.
@@ -29,7 +38,7 @@ export async function setupPowerSyncInIframe(
 
     // Create a simple schema for testing
     const schema = new Schema({
-      customers: new TableV2({
+      customers: new Table({
         name: column.text,
         email: column.text
       })
@@ -37,28 +46,36 @@ export async function setupPowerSyncInIframe(
 
     // Configure database with optional VFS
     // The vfs string value is the enum value itself (string enums)
-    const databaseOptions = vfs
-      ? new WASQLiteOpenFactory({
-          dbFilename,
-          vfs: vfs as WASQLiteVFS
-        })
-      : { dbFilename };
+    const databaseOptions: DatabaseSource<WebSQLOpenOptions> = vfs
+      ? {
+          factory: new WASQLiteOpenFactory({
+            logger: defaultTestLogger,
+            open: {
+              databaseWorkerLogLevel: defaultLogLevel,
+              dbFilename,
+              vfs: vfs as WASQLiteVFS
+            }
+          })
+        }
+      : { database: { dbFilename, enableMultiTabs: true, useWebWorker: true } };
 
     // Configure verbose logging
-    const logger = createLogger('iFrame test', {
-      logLevel: LogLevel.DEBUG
+    const logger = createConsoleLogger({
+      prefix: 'iFrame test',
+      minLevel: LogLevels.debug
     });
 
     const db = new PowerSyncDatabase({
-      database: databaseOptions,
+      ...databaseOptions,
       schema: schema,
-      retryDelayMs: 100,
-      flags: { enableMultiTabs: true, useWebWorker: true },
       logger
     });
 
     // Connect to PowerSync (don't await this since we want to create multiple tabs)
-    const connectionPromise = db.connect(connector, { connectionMethod: SyncStreamConnectionMethod.HTTP });
+    const connectionPromise = db.connect(connector, {
+      retryDelayMs: 100,
+      connectionMethod: SyncStreamConnectionMethod.HTTP
+    });
 
     if (waitForConnection) {
       await connectionPromise;

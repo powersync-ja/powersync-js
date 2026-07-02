@@ -1,10 +1,4 @@
-import {
-  AbstractPowerSyncDatabase,
-  createBaseLogger,
-  createLogger,
-  DBAdapterDefaultMixin,
-  LogLevel
-} from '@powersync/common';
+import { CommonPowerSyncDatabase, createConsoleLogger, LogLevels, LogRecord, PowerSyncLogger } from '@powersync/common';
 import * as Comlink from 'comlink';
 import { beforeAll, describe, expect, it, onTestFinished, vi } from 'vitest';
 import { WebDBAdapter } from '../src/db/adapters/WebDBAdapter.js';
@@ -26,9 +20,7 @@ describe('Multiple Instances', { sequential: true }, () => {
       schema: TEST_SCHEMA
     });
 
-  beforeAll(() => createBaseLogger().useDefaults());
-
-  function createAsset(powersync: AbstractPowerSyncDatabase) {
+  function createAsset(powersync: CommonPowerSyncDatabase) {
     return powersync.execute('INSERT INTO assets(id, description) VALUES(uuid(), ?)', ['test']);
   }
 
@@ -48,14 +40,21 @@ describe('Multiple Instances', { sequential: true }, () => {
     'should broadcast logs from shared sync worker',
     { timeout: 10_000 },
     async ({ context: { openDatabase, mockService } }) => {
-      const logger = createLogger('test-logger');
-      logger.setLevel(LogLevel.TRACE);
-      const spiedErrorLogger = vi.spyOn(logger, 'error');
-      const spiedTraceLogger = vi.spyOn(logger, 'trace');
+      const logLines: LogRecord[] = [];
+      const logger: PowerSyncLogger = {
+        log(msg) {
+          logLines.push(msg);
+        }
+      };
 
       // Open an additional database which we can spy on the logs.
       const powersync = openDatabase({
-        logger
+        logger,
+        web: {
+          sync: {
+            logLevel: LogLevels.trace
+          }
+        }
       });
 
       powersync.connect({
@@ -83,16 +82,21 @@ describe('Multiple Instances', { sequential: true }, () => {
       // Asserting that powersync_control logs exists verifies that some connection attempt was made.
       await vi.waitFor(
         () =>
-          expect(
-            spiedTraceLogger.mock.calls
-              .flat(1)
-              .find((argument) => typeof argument == 'string' && argument.includes('powersync_control'))
-          ).exist,
-        { timeout: 2000 }
+          expect(logLines.map((l) => l.message)).toEqual(
+            expect.arrayContaining([expect.stringContaining('powersync_control')])
+          ),
+        {
+          timeout: 2000
+        }
       );
 
       // The connection should fail with an error
-      await vi.waitFor(() => expect(spiedErrorLogger.mock.calls.length).gt(0), { timeout: 2000 });
+      await vi.waitFor(
+        () => expect(logLines.map((l) => l.error)).toEqual(expect.arrayContaining([expect.any(Error)])),
+        {
+          timeout: 2000
+        }
+      );
     }
   );
 
@@ -178,10 +182,8 @@ describe('Multiple Instances', { sequential: true }, () => {
     // Should be true initially
     expect(isAutoCommit).true;
 
-    const DatabaseClientAsAdapter = DBAdapterDefaultMixin(DatabaseClient);
-
     // Now we'll simulate the locked connections which are used by the shared sync worker
-    const initialClient = new DatabaseClientAsAdapter(
+    const initialClient = new DatabaseClient(
       {
         connection: initialSharedConnection,
         remoteCanCloseUnexpectedly: true,
@@ -228,7 +230,7 @@ describe('Multiple Instances', { sequential: true }, () => {
     expect(await subsequentSharedConnection.debugIsAutoCommit()).false;
 
     // Allows us to simulate a new locked shared connection.
-    const subsequentClient = new DatabaseClientAsAdapter(
+    const subsequentClient = new DatabaseClient(
       {
         connection: subsequentSharedConnection,
         remoteCanCloseUnexpectedly: true,
@@ -288,7 +290,7 @@ describe('Multiple Instances', { sequential: true }, () => {
 
   sharedMockSyncServiceTest(
     'should trigger uploads from last connected clients',
-    async ({ context: { database, openDatabase, connect, connector, mockService } }) => {
+    async ({ context: { database, openDatabase, connect, connector, mockService, defaultSyncOptions } }) => {
       const secondDatabase = openDatabase();
 
       expect(database.currentStatus.connected).false;
@@ -317,7 +319,7 @@ describe('Multiple Instances', { sequential: true }, () => {
       });
 
       // Connect the second database and wait for a pending request to appear
-      const secondConnectPromise = secondDatabase.connect(secondConnector);
+      const secondConnectPromise = secondDatabase.connect(secondConnector, defaultSyncOptions);
       let _pendingRequestId: string;
       await vi.waitFor(async () => {
         const requests = await mockService.getPendingRequests();

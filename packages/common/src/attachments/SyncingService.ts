@@ -1,4 +1,4 @@
-import { ILogger } from '../utils/Logger.js';
+import { LogLevels, PowerSyncLogger } from '../utils/Logger.js';
 import { AttachmentService } from './AttachmentService.js';
 import { LocalStorageAdapter } from './LocalStorageAdapter.js';
 import { RemoteStorageAdapter } from './RemoteStorageAdapter.js';
@@ -16,14 +16,14 @@ export class SyncingService {
   private attachmentService: AttachmentService;
   private localStorage: LocalStorageAdapter;
   private remoteStorage: RemoteStorageAdapter;
-  private logger: ILogger;
+  private logger: PowerSyncLogger;
   private errorHandler?: AttachmentErrorHandler;
 
   constructor(
     attachmentService: AttachmentService,
     localStorage: LocalStorageAdapter,
     remoteStorage: RemoteStorageAdapter,
-    logger: ILogger,
+    logger: PowerSyncLogger,
     errorHandler?: AttachmentErrorHandler
   ) {
     this.attachmentService = attachmentService;
@@ -56,11 +56,17 @@ export class SyncingService {
     }
   ): Promise<void> {
     const signal = options?.signal;
-    this.logger.info(`Starting processAttachments with ${attachments.length} attachments`);
+    this.logger.log({
+      level: LogLevels.info,
+      message: `Starting processAttachments with ${attachments.length} attachments`
+    });
 
     for (const attachment of attachments) {
       if (signal?.aborted) {
-        this.logger.info('Sync cancelled; stopping iteration early');
+        this.logger.log({
+          level: LogLevels.info,
+          message: 'Sync cancelled; stopping iteration early'
+        });
         return;
       }
 
@@ -84,7 +90,11 @@ export class SyncingService {
 
         await this.attachmentService.withContext((ctx) => ctx.saveAttachments([updated]));
       } catch (error) {
-        this.logger.warn(`Error during sync for ${attachment.id}`, error);
+        this.logger.log({
+          level: LogLevels.warn,
+          message: `Error during sync for ${attachment.id}`,
+          error
+        });
       }
     }
   }
@@ -98,7 +108,7 @@ export class SyncingService {
    * @throws Error if the attachment has no localUri
    */
   async uploadAttachment(attachment: AttachmentRecord): Promise<AttachmentRecord> {
-    this.logger.info(`Uploading attachment ${attachment.filename}`);
+    this.logger.log({ level: LogLevels.info, message: `Uploading attachment ${attachment.filename}` });
     try {
       if (attachment.localUri == null) {
         throw new Error(`No localUri for attachment ${attachment.id}`);
@@ -134,7 +144,7 @@ export class SyncingService {
    * @returns Updated attachment record with local URI and new state
    */
   async downloadAttachment(attachment: AttachmentRecord): Promise<AttachmentRecord> {
-    this.logger.info(`Downloading attachment ${attachment.filename}`);
+    this.logger.log({ level: LogLevels.info, message: `Downloading attachment ${attachment.filename}` });
     try {
       const fileData = await this.remoteStorage.downloadFile(attachment);
 
@@ -206,7 +216,11 @@ export class SyncingService {
           try {
             await this.localStorage.deleteFile(attachment.localUri);
           } catch (error) {
-            this.logger.error('Error deleting local file for archived attachment', error);
+            this.logger.log({
+              level: LogLevels.error,
+              message: 'Error deleting local file for archived attachment',
+              error
+            });
           }
         }
       }

@@ -19,7 +19,7 @@ export default function AppLayout() {
           options={{
             title: 'Chats',
             headerShown: false,
-            tabBarIcon: ({ color }) => <MessageSquare color={color} />
+            tabBarIcon: ({ color }) => <MessageSquare color={color as string} />
           }}
         />
         <Tabs.Screen
@@ -27,7 +27,7 @@ export default function AppLayout() {
           options={{
             title: 'Contacts',
             headerShown: false,
-            tabBarIcon: ({ color }) => <Contact color={color} />
+            tabBarIcon: ({ color }) => <Contact color={color as string} />
           }}
         />
         <Tabs.Screen
@@ -35,7 +35,7 @@ export default function AppLayout() {
           options={{
             title: 'Settings',
             headerShown: false,
-            tabBarIcon: ({ color }) => <Settings color={color} />
+            tabBarIcon: ({ color }) => <Settings color={color as string} />
           }}
         />
       </Tabs>

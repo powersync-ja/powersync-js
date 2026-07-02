@@ -1,16 +1,13 @@
-import util from 'node:util';
 import { beforeEach, describe, expect, vi } from 'vitest';
 
 import {
-  AbstractPowerSyncDatabase,
-  createLogger,
-  PowerSyncConnectionOptions,
+  CommonPowerSyncDatabase,
+  PowerSyncLogger,
   ProgressWithOperations,
   Schema,
-  SyncClientImplementation,
+  SyncOptions,
   SyncStreamConnectionMethod
 } from '@powersync/common';
-import Logger from 'js-logger';
 import {
   bucket,
   MockSyncService,
@@ -19,7 +16,13 @@ import {
   TestConnector,
   waitForSyncStatus
 } from './utils.js';
-import { BucketChecksum, OplogEntryJSON } from '@powersync/common/internal/sync_protocol';
+import { BucketChecksum, OplogEntryJSON } from '@powersync/shared-internals/internal/sync_protocol';
+import { BasePowerSyncDatabase } from '@powersync/shared-internals';
+
+const defaultConnectOptions: SyncOptions = {
+  // This might help with test stability/timeouts if a retry is needed.
+  retryDelayMs: 100
+};
 
 describe('Sync', () => {
   describe('json', () => defineSyncTests(false));
@@ -72,6 +75,7 @@ describe('Sync', () => {
 
     // Connecting with the new client should fix the format.
     database.connect(new TestConnector(), {
+      ...defaultConnectOptions,
       connectionMethod: SyncStreamConnectionMethod.HTTP
     });
     await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
@@ -91,7 +95,7 @@ describe('Sync', () => {
   mockSyncServiceTest('reconnects immediately after changed connection', async ({ syncService }) => {
     let database = await syncService.createDatabase();
     database.connect(new TestConnector(), {
-      clientImplementation: SyncClientImplementation.RUST,
+      ...defaultConnectOptions,
       connectionMethod: SyncStreamConnectionMethod.HTTP,
       // This large retry delay is to provoke test timeouts if the don't immediately reconnect.
       retryDelayMs: 60_000
@@ -101,14 +105,15 @@ describe('Sync', () => {
     // Replicate what we'd see on the web when switching connections in the shared sync worker: The sync client would
     // suddenly see a database without an active sync iteration.
     await database.execute('SELECT powersync_control(?, null)', ['stop']);
-    database.syncStreamImplementation!.markConnectionMayHaveChanged();
+    (database as BasePowerSyncDatabase).syncStreamImplementation!.markConnectionMayHaveChanged();
     await database.waitForStatus((s) => !s.connected);
     await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
   });
 });
 
 function defineSyncTests(bson: boolean) {
-  const options: PowerSyncConnectionOptions = {
+  const options: SyncOptions = {
+    ...defaultConnectOptions,
     connectionMethod: SyncStreamConnectionMethod.HTTP
   };
 
@@ -148,7 +153,7 @@ function defineSyncTests(bson: boolean) {
     await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
     // We want connected: true once we have a connection
     await vi.waitFor(() => connectCompleted);
-    expect(database.currentStatus.dataFlowStatus.downloading).toBeFalsy();
+    expect(database.currentStatus.downloading).toBeFalsy();
 
     syncService.pushLine({
       checkpoint: {
@@ -157,14 +162,14 @@ function defineSyncTests(bson: boolean) {
       }
     });
 
-    await vi.waitFor(() => expect(database.currentStatus.dataFlowStatus.downloading).toBeTruthy());
+    await vi.waitFor(() => expect(database.currentStatus.downloading).toBeTruthy());
   });
 
   mockSyncServiceTest('does not set uploading status without local writes', async ({ syncService }) => {
     const database = await syncService.createDatabase();
     database.registerListener({
       statusChanged(status) {
-        expect(status.dataFlowStatus.uploading).toBeFalsy();
+        expect(status.uploading).toBeFalsy();
       }
     });
 
@@ -177,7 +182,7 @@ function defineSyncTests(bson: boolean) {
         buckets: [bucket('a', 10)]
       }
     });
-    await vi.waitFor(() => expect(database.currentStatus.dataFlowStatus.downloading).toBeTruthy());
+    await vi.waitFor(() => expect(database.currentStatus.downloading).toBeTruthy());
   });
 
   describe('reports progress', () => {
@@ -552,7 +557,7 @@ function defineSyncTests(bson: boolean) {
 
     const connector = new TestConnector();
     database.connect(connector, { ...options, retryDelayMs: 10_000, crudUploadThrottleMs: 100 });
-    await database.waitForStatus((s) => s.dataFlowStatus.downloadError != null);
+    await database.waitForStatus((s) => s.downloadError != null);
 
     // We'll never connect due to the error, but we should still try to upload once.
     expect(connector.uploadDataInvocations).toStrictEqual(1);
@@ -588,11 +593,11 @@ function defineSyncTests(bson: boolean) {
       },
       { ...options, retryDelayMs: 100, crudUploadThrottleMs: 100 }
     );
-    await database.waitForStatus((s) => s.dataFlowStatus.downloadError != null);
+    await database.waitForStatus((s) => s.downloadError != null);
 
     // Because we start a crud upload on connect, there should have been a call.
     expect(attemptedUploads).toStrictEqual(1);
-    expect(database.currentStatus.dataFlowStatus.uploadError).toMatchObject({ name: 'Error' });
+    expect(database.currentStatus.uploadError).toMatchObject({ name: 'Error' });
 
     // Currently, we don't retry crud uploads if we're not connected. We might revisit that in the future, but either
     // way we definitely want to retry if there's a new CRUD entry.
@@ -602,11 +607,12 @@ function defineSyncTests(bson: boolean) {
   });
 
   mockSyncServiceTest('handles uploads across checkpoints', async ({ syncService }) => {
-    const logger = createLogger('test', { logLevel: (Logger as any).TRACE });
     const logMessages: string[] = [];
-    (logger as any).invoke = (level, args) => {
-      console.log(...args);
-      logMessages.push(util.format(...args));
+    const logger: PowerSyncLogger = {
+      log({ message }) {
+        console.log(message);
+        logMessages.push(message);
+      }
     };
 
     // Regression test for https://github.com/powersync-ja/powersync-js/pull/665
@@ -733,7 +739,7 @@ function defineSyncTests(bson: boolean) {
         }
       });
 
-      await powersync.syncStreamImplementation!.waitUntilStatusMatches((status) => {
+      await powersync.waitForStatus((status) => {
         return status.statusForPriority(prio).hasSynced === true;
       });
       await new Promise((r) => setTimeout(r));
@@ -831,7 +837,7 @@ function defineSyncTests(bson: boolean) {
         buckets: [bucket('a', 2)]
       }
     });
-    await vi.waitFor(() => powersync.currentStatus.dataFlowStatus.downloading == true);
+    await vi.waitFor(() => powersync.currentStatus.downloading == true);
     syncService.pushLine({
       data: {
         bucket: 'a',
@@ -847,7 +853,7 @@ function defineSyncTests(bson: boolean) {
       }
     });
     syncService.pushLine({ checkpoint_complete: { last_op_id: '2' } });
-    await vi.waitFor(() => powersync.currentStatus.dataFlowStatus.downloading == false);
+    await vi.waitFor(() => powersync.currentStatus.downloading == false);
 
     expect((await query.next()).value.rows._array).toStrictEqual([]);
   });
@@ -910,7 +916,7 @@ function defineSyncTests(bson: boolean) {
         buckets: [bucket('a', 2)]
       }
     });
-    await vi.waitFor(() => powersync.currentStatus.dataFlowStatus.downloading == true);
+    await vi.waitFor(() => powersync.currentStatus.downloading == true);
     syncService.pushLine({
       data: {
         bucket: 'a',
@@ -926,18 +932,19 @@ function defineSyncTests(bson: boolean) {
       }
     });
     syncService.pushLine({ checkpoint_complete: { last_op_id: '2' } });
-    await vi.waitFor(() => powersync.currentStatus.dataFlowStatus.downloading == false);
+    await vi.waitFor(() => powersync.currentStatus.downloading == false);
 
     expect((await query.next()).value.rows._array).toStrictEqual([]);
   });
 
   mockSyncServiceTest('can reconnect based on query changes', async ({ syncService }) => {
     // Test for https://discord.com/channels/1138230179878154300/1399340612435710034/1399340612435710034
-    const logger = createLogger('test', { logLevel: (Logger as any).TRACE });
     const logMessages: string[] = [];
-    (logger as any).invoke = (level, args) => {
-      console.log(...args);
-      logMessages.push(util.format(...args));
+    const logger: PowerSyncLogger = {
+      log({ message }) {
+        console.log(message);
+        logMessages.push(message);
+      }
     };
 
     const powersync = await syncService.createDatabase({ logger });
@@ -1036,13 +1043,13 @@ function defineSyncTests(bson: boolean) {
 }
 
 async function waitForProgress(
-  database: AbstractPowerSyncDatabase,
+  database: CommonPowerSyncDatabase,
   total: [number, number],
   forPriorities: [number, [number, number]][] = []
 ) {
   await waitForSyncStatus(database, (status) => {
-    if (status.dataFlowStatus.downloadError != null) {
-      throw `Unexpected sync error: ${status.dataFlowStatus.downloadError}`;
+    if (status.downloadError != null) {
+      throw `Unexpected sync error: ${status.downloadError}`;
     }
 
     const progress = status.downloadProgress;

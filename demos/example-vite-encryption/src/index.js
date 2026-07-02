@@ -1,6 +1,6 @@
-import { column, Schema, Table, PowerSyncDatabase, createBaseLogger } from '@powersync/web';
+import { column, Schema, Table, PowerSyncDatabase, createConsoleLogger, LogLevels } from '@powersync/web';
 
-createBaseLogger().useDefaults();
+const logger = createConsoleLogger({ minLevel: LogLevels.debug });
 
 const customers = new Table({ name: column.text });
 
@@ -12,7 +12,8 @@ const openDatabase = async (encryptionKey) => {
   PowerSync = new PowerSyncDatabase({
     schema: AppSchema,
     database: { dbFilename: 'example-encryption.db' },
-    encryptionKey: encryptionKey
+    encryptionKey: encryptionKey,
+    logger
   });
 
   await PowerSync.init();

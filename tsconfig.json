@@ -29,13 +29,13 @@
             "path": "./packages/nuxt"
         },
         {
-            "path": "./packages/powersync-op-sqlite"
-        },
-        {
             "path": "./packages/react"
         },
         {
             "path": "./packages/react-native"
+        },
+        {
+            "path": "./packages/shared-internals"
         },
         {
             "path": "./packages/tanstack-react-query"
@@ -63,6 +63,9 @@
         },
         {
             "path": "./packages/node/tests"
-        }
+        },
+        {
+            "path": "./packages/web/tests"
+        },
     ]
 }

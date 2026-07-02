@@ -1,15 +1,17 @@
-import { ILogger } from '@powersync/common';
+import { LogLevels, PowerSyncLogger } from '@powersync/common';
 import * as Comlink from 'comlink';
 import { ClientConnectionView, DatabaseServer } from '../../db/adapters/wa-sqlite/DatabaseServer.js';
-import {
-  ResolvedWASQLiteOpenFactoryOptions,
-  WorkerDBOpenerOptions
-} from '../../db/adapters/wa-sqlite/WASQLiteOpenFactory.js';
 import { getNavigatorLocks } from '../../shared/navigator.js';
-import { RawSqliteConnection } from '../../db/adapters/wa-sqlite/RawSqliteConnection.js';
+import { RawSqliteConnection, RawWaSqliteDatabaseOptions } from '../../db/adapters/wa-sqlite/RawSqliteConnection.js';
 import { ConcurrentSqliteConnection } from '../../db/adapters/wa-sqlite/ConcurrentConnection.js';
 
 const OPEN_DB_LOCK = 'open-wasqlite-db';
+
+export interface ConnectToMultiDatabaseServerOptions {
+  logLevel: number;
+  database: RawWaSqliteDatabaseOptions;
+  lockName: string;
+}
 
 /**
  * Shared state to manage multiple database connections hosted by a worker.
@@ -17,11 +19,20 @@ const OPEN_DB_LOCK = 'open-wasqlite-db';
 export class MultiDatabaseServer {
   private activeDatabases = new Map<string, DatabaseServer>();
 
-  constructor(readonly logger: ILogger) {}
+  constructor(readonly logger: PowerSyncLogger) {}
 
-  async handleConnection(options: WorkerDBOpenerOptions): Promise<ClientConnectionView> {
-    this.logger.setLevel(options.logLevel);
-    return Comlink.proxy(await this.openConnectionLocally(options, options.lockName));
+  async handleConnection({
+    logLevel,
+    database,
+    lockName
+  }: ConnectToMultiDatabaseServerOptions): Promise<ClientConnectionView> {
+    const logger: PowerSyncLogger = {
+      log: (record) => {
+        if (record.level >= logLevel) this.logger.log(record);
+      }
+    };
+
+    return Comlink.proxy(await this.openConnectionLocally(logger, database, lockName));
   }
 
   async connectToExisting(name: string, lockName: string): Promise<ClientConnectionView> {
@@ -35,7 +46,7 @@ export class MultiDatabaseServer {
     });
   }
 
-  async openConnectionLocally(options: ResolvedWASQLiteOpenFactoryOptions, lockName?: string) {
+  async openConnectionLocally(logger: PowerSyncLogger, options: RawWaSqliteDatabaseOptions, lockName?: string) {
     // Especially on Firefox, we're sometimes seeing "NoModificationAllowedError"s when opening OPFS databases we can
     // work around by retrying.
     const maxAttempts = 3;
@@ -43,28 +54,35 @@ export class MultiDatabaseServer {
 
     for (let count = 0; count < maxAttempts - 1; count++) {
       try {
-        server = await this.databaseOpenAttempt(options);
-      } catch (ex) {
-        this.logger.warn(`Attempt ${count + 1} of ${maxAttempts} to open database failed, retrying in 1 second...`, ex);
+        server = await this.databaseOpenAttempt(logger, options);
+      } catch (error) {
+        this.logger.log({
+          level: LogLevels.warn,
+          message: `Attempt ${count + 1} of ${maxAttempts} to open database failed, retrying in 1 second...`,
+          error
+        });
         await new Promise((resolve) => setTimeout(resolve, 1000));
       }
     }
 
     // Final attempt if we haven't been able to open the server - rethrow errors if we still can't open.
-    server ??= await this.databaseOpenAttempt(options);
+    server ??= await this.databaseOpenAttempt(logger, options);
     return server.connect(lockName);
   }
 
-  private async databaseOpenAttempt(options: ResolvedWASQLiteOpenFactoryOptions): Promise<DatabaseServer> {
+  private async databaseOpenAttempt(
+    logger: PowerSyncLogger,
+    options: RawWaSqliteDatabaseOptions
+  ): Promise<DatabaseServer> {
     return getNavigatorLocks().request(OPEN_DB_LOCK, async () => {
-      const { dbFilename } = options;
+      const { filename } = options;
 
-      let server: DatabaseServer | undefined = this.activeDatabases.get(dbFilename);
+      let server: DatabaseServer | undefined = this.activeDatabases.get(filename);
       if (server == null) {
         // We don't need navigator locks for shared workers because all queries run in this shared worker exclusively.
         // For read-only connections, we use a VFS that supports concurrent reads (so a single lock on the connection is
         // fine).
-        const needsNavigatorLocks = !(isSharedWorker || options.isReadOnly);
+        const needsNavigatorLocks = !(isSharedWorker || options.readonly);
         const connection = new RawSqliteConnection(options);
         const withSafeConcurrency = new ConcurrentSqliteConnection(connection, needsNavigatorLocks);
 
@@ -81,13 +99,13 @@ export class MultiDatabaseServer {
         }
         returnLease();
 
-        const onClose = () => this.activeDatabases.delete(dbFilename);
+        const onClose = () => this.activeDatabases.delete(filename);
         server = new DatabaseServer({
           inner: withSafeConcurrency,
-          logger: this.logger,
+          logger,
           onClose
         });
-        this.activeDatabases.set(dbFilename, server);
+        this.activeDatabases.set(filename, server);
       }
 
       return server;

@@ -3,22 +3,27 @@
 import { AppSchema } from '@/library/powersync/schema';
 import { BackendConnector } from '@/library/powersync/connector';
 import { PowerSyncContext } from '@powersync/react';
-import { PowerSyncDatabase, WASQLiteOpenFactory } from '@powersync/web';
+import { createConsoleLogger, LogLevels, PowerSyncDatabase, WASQLiteOpenFactory } from '@powersync/web';
 import React, { Suspense } from 'react';
 
 let dbInstance: PowerSyncDatabase | null = null;
+
+const logger = createConsoleLogger({ minLevel: LogLevels.debug });
 
 function getDB(): PowerSyncDatabase {
   if (dbInstance) return dbInstance;
 
   dbInstance = new PowerSyncDatabase({
-    database: new WASQLiteOpenFactory({
-      dbFilename: 'powersync-nextjs.db',
-      worker: '/@powersync/worker/WASQLiteDB.umd.js'
+    factory: new WASQLiteOpenFactory({
+      logger,
+      open: {
+        dbFilename: 'powersync-nextjs.db',
+        databaseWorkerLogLevel: LogLevels.debug,
+        disableSSRWarning: true
+      }
     }),
     schema: AppSchema,
-    flags: { disableSSRWarning: true },
-    sync: { worker: '/@powersync/worker/SharedSyncImplementation.umd.js' }
+    logger
   });
 
   dbInstance.connect(new BackendConnector());

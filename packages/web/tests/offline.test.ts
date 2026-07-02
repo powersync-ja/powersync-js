@@ -1,4 +1,4 @@
-import { AbstractPowerSyncDatabase } from '@powersync/common';
+import { CommonPowerSyncDatabase } from '@powersync/common';
 import { PowerSyncDatabase } from '@powersync/web';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { makeOptionalSyncSchema } from './utils/optionalSyncTestSchema.js';
@@ -8,7 +8,7 @@ const userId = '3390de4f-0488-4e50-abed-f8e8eb1d0b42';
 const customerId = '4490de4f-0488-4e50-abed-f8e8eb1d0b42';
 
 describe('Schema Tests', { sequential: true }, () => {
-  let db: AbstractPowerSyncDatabase;
+  let db: CommonPowerSyncDatabase;
 
   beforeEach(async () => {
     db = new PowerSyncDatabase({
@@ -17,11 +17,11 @@ describe('Schema Tests', { sequential: true }, () => {
        * Use a new DB for each run to keep CRUD counters
        * consistent
        */
-      database: { dbFilename: 'test.db' },
-      schema: makeOptionalSyncSchema(false),
-      flags: {
+      database: {
+        dbFilename: 'test.db',
         enableMultiTabs: false
-      }
+      },
+      schema: makeOptionalSyncSchema(false)
     });
   });
 
@@ -100,7 +100,7 @@ describe('Schema Tests', { sequential: true }, () => {
   });
 });
 
-export async function getSourceTables(db: AbstractPowerSyncDatabase, sql: string, parameters: Array<any> = []) {
+export async function getSourceTables(db: CommonPowerSyncDatabase, sql: string, parameters: Array<any> = []) {
   const rows = await db.getAll<{ opcode: string; p3: number; p2: string }>(`EXPLAIN ${sql}`, parameters);
   const rootpages: number[] = [];
 

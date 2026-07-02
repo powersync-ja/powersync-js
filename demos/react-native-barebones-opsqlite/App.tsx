@@ -11,8 +11,15 @@ import {
   ActivityIndicator
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import { OPSqliteOpenFactory } from '@powersync/op-sqlite';
-import { column, Table, Schema, type PowerSyncBackendConnector, PowerSyncDatabase } from '@powersync/react-native';
+import {
+  column,
+  Table,
+  Schema,
+  type PowerSyncBackendConnector,
+  PowerSyncDatabase,
+  createConsoleLogger,
+  LogLevels
+} from '@powersync/react-native';
 
 const Colors = {
   primary: '#0a7ea4',
@@ -24,18 +31,7 @@ const Colors = {
   darker: '#1a1a1a'
 };
 
-const RANDOM_NAMES = [
-  'Alex',
-  'Jordan',
-  'Sam',
-  'Casey',
-  'Riley',
-  'Morgan',
-  'Quinn',
-  'Avery',
-  'Taylor',
-  'Jamie'
-];
+const RANDOM_NAMES = ['Alex', 'Jordan', 'Sam', 'Casey', 'Riley', 'Morgan', 'Quinn', 'Avery', 'Taylor', 'Jamie'];
 
 /**
  * A placeholder connector which doesn't do anything but used to confirm connect can run.
@@ -59,13 +55,12 @@ let powerSync: PowerSyncDatabase | null = null;
 const setupDatabase = async (): Promise<PowerSyncDatabase> => {
   if (powerSync) return powerSync;
 
-  const factory = new OPSqliteOpenFactory({
-    dbFilename: 'powersync.db'
-  });
-
   powerSync = new PowerSyncDatabase({
     schema,
-    database: factory
+    database: {
+      dbFilename: 'powersync.db'
+    },
+    logger: createConsoleLogger({ minLevel: LogLevels.debug })
   });
 
   await powerSync.init();
@@ -155,9 +150,7 @@ function App(): React.JSX.Element {
         />
         <View style={styles.header}>
           <Text style={[styles.headerTitle, { color: textColor }]}>Customers</Text>
-          <Text style={[styles.headerSubtitle, { color: mutedColor }]}>
-            PowerSync + OP-SQLite
-          </Text>
+          <Text style={[styles.headerSubtitle, { color: mutedColor }]}>PowerSync + OP-SQLite</Text>
         </View>
 
         {loading ? (
@@ -169,8 +162,7 @@ function App(): React.JSX.Element {
           <ScrollView
             contentInsetAdjustmentBehavior="automatic"
             style={backgroundStyle}
-            contentContainerStyle={styles.scrollContent}
-          >
+            contentContainerStyle={styles.scrollContent}>
             <View style={[styles.card, { backgroundColor: cardBg }]}>
               {customers.length === 0 ? (
                 <Text style={[styles.emptyText, { color: mutedColor }]}>No customers yet.</Text>
@@ -181,8 +173,7 @@ function App(): React.JSX.Element {
                     <TouchableOpacity
                       style={styles.deleteButton}
                       onPress={() => deleteCustomer(c.id)}
-                      disabled={deletingId !== null}
-                    >
+                      disabled={deletingId !== null}>
                       {deletingId === c.id ? (
                         <ActivityIndicator size="small" color={Colors.primary} />
                       ) : (
@@ -197,8 +188,7 @@ function App(): React.JSX.Element {
             <TouchableOpacity
               style={[styles.button, adding && styles.buttonDisabled]}
               onPress={addRandomCustomer}
-              disabled={adding}
-            >
+              disabled={adding}>
               {adding ? (
                 <ActivityIndicator size="small" color={Colors.white} />
               ) : (

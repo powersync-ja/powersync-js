@@ -1,10 +1,10 @@
 import {
   BaseListener,
-  createBaseLogger,
-  DEFAULT_STREAMING_SYNC_OPTIONS,
-  LogLevel,
+  createConsoleLogger,
+  LogLevels,
   PowerSyncDatabase,
-  SyncClientImplementation,
+  Schema,
+  SyncStreamConnectionMethod,
   SyncStreamSubscription,
   TemporaryStorageOption,
   WASQLiteOpenFactory,
@@ -13,15 +13,15 @@ import {
   WebStreamingSyncImplementation,
   WebStreamingSyncImplementationOptions
 } from '@powersync/web';
+import { resolveSyncOptions } from '@powersync/shared-internals';
 import React from 'react';
 import { ClientParameterRow, localStateDb } from './LocalStateManager';
 import { DynamicSchemaManager } from './DynamicSchemaManager';
 import { RustClientInterceptor } from './RustClientInterceptor';
 import { TokenConnector } from './TokenConnector';
+import { SyncStatusSnapshot } from '@powersync/shared-internals';
 
-const baseLogger = createBaseLogger();
-baseLogger.useDefaults();
-baseLogger.setLevel(LogLevel.DEBUG);
+const baseLogger = createConsoleLogger({ minLevel: LogLevels.debug });
 
 export type JSONValue = string | number | boolean | null | { [key: string]: JSONValue } | JSONValue[];
 
@@ -56,15 +56,19 @@ export const getParams = async (): Promise<Record<string, JSONValue>> => {
 export const schemaManager = new DynamicSchemaManager();
 
 const openFactory = new WASQLiteOpenFactory({
-  dbFilename: 'diagnostics.db',
-  debugMode: true,
-  cacheSizeKb: 500 * 1024,
-  temporaryStorage: TemporaryStorageOption.MEMORY,
-  vfs: WASQLiteVFS.OPFSCoopSyncVFS
+  logger: baseLogger,
+  open: {
+    dbFilename: 'diagnostics.db',
+    debugMode: true,
+    cacheSizeKb: 500 * 1024,
+    temporaryStorage: TemporaryStorageOption.MEMORY,
+    vfs: WASQLiteVFS.OPFSCoopSyncVFS,
+    databaseWorkerLogLevel: LogLevels.info
+  }
 });
 
 export const db = new PowerSyncDatabase({
-  database: openFactory,
+  factory: openFactory,
   schema: schemaManager.buildSchema()
 });
 
@@ -123,12 +127,11 @@ export function useSchemaReady(): boolean {
 export async function connect() {
   activeSubscriptions.length = 0;
   lastConnectionError = undefined;
-  const client = SyncClientImplementation.RUST;
 
   await schemaManager.loadFromDb();
   const params = await getParams();
   await sync?.disconnect();
-  const remote = new WebRemote(connector);
+  const remote = new WebRemote(connector, baseLogger);
   const adapter = new RustClientInterceptor(db, remote, schemaManager);
 
   const syncOptions: WebStreamingSyncImplementationOptions = {
@@ -138,12 +141,13 @@ export async function connect() {
       // No-op
     },
     identifier: 'diagnostics',
-    ...DEFAULT_STREAMING_SYNC_OPTIONS,
-    subscriptions: []
+    subscriptions: [],
+    logger: baseLogger,
+    serializedSchema: new Schema({}).toJSON()
   };
   sync = new WebStreamingSyncImplementation(syncOptions);
   notifySyncChange();
-  await sync.connect({ params, clientImplementation: client });
+  await sync.connect(resolveSyncOptions({ params }, SyncStreamConnectionMethod.HTTP));
   await schemaManager.refreshSchemaNow(db);
 }
 
@@ -198,23 +202,16 @@ export function useSyncStatus() {
 
     setCurrent(sync.syncStatus);
     const l = sync.registerListener({
-      statusChanged: (status) => {
-        setCurrent(status);
+      statusChanged: (snapshot) => {
+        setCurrent(snapshot);
       }
     });
     return () => l?.();
   }, [current]); // Re-run when current changes (triggered by sync recreation)
 
   // Return status with persisted error if available
-  if (current && lastConnectionError && !current.dataFlowStatus?.downloadError) {
-    // Use type assertion to preserve the full SyncStatus type after spread
-    return {
-      ...current,
-      dataFlowStatus: {
-        ...current.dataFlowStatus,
-        downloadError: lastConnectionError
-      }
-    } as typeof current;
+  if (current && lastConnectionError && !current.downloadError) {
+    return new SyncStatusSnapshot(current.core, { ...current.jsState, downloadError: lastConnectionError });
   }
 
   return current;

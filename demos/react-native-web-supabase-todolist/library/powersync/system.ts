@@ -1,10 +1,7 @@
 import '@azure/core-asynciterator-polyfill';
 
 import React from 'react';
-import {
-  PowerSyncDatabase as PowerSyncDatabaseNative,
-  AbstractPowerSyncDatabase
-} from '@powersync/react-native';
+import { PowerSyncDatabase as PowerSyncDatabaseNative } from '@powersync/react-native';
 import {
   PowerSyncDatabase as PowerSyncDatabaseWeb,
   WASQLiteOpenFactory,
@@ -14,8 +11,9 @@ import { ReactNativeFileSystemStorageAdapter } from '@powersync/attachments-stor
 import {
   type AttachmentRecord,
   AttachmentQueue,
-  LogLevel,
-  createBaseLogger,
+  CommonPowerSyncDatabase,
+  createConsoleLogger,
+  LogLevels,
   WatchedAttachmentItem
 } from '@powersync/common';
 import { SupabaseRemoteStorageAdapter } from '../storage/SupabaseRemoteStorageAdapter';
@@ -25,14 +23,12 @@ import { SupabaseConnector } from '../supabase/SupabaseConnector';
 import { AppSchema, TODO_TABLE } from './AppSchema';
 import { Platform } from 'react-native';
 
-const logger = createBaseLogger();
-logger.useDefaults();
-logger.setLevel(LogLevel.DEBUG);
+const logger = createConsoleLogger({ minLevel: LogLevels.debug });
 
 export class System {
   kvStorage: ExpoKVStorage | WebKVStorage;
   supabaseConnector: SupabaseConnector;
-  powersync: AbstractPowerSyncDatabase;
+  powersync: CommonPowerSyncDatabase;
   photoAttachmentQueue: AttachmentQueue | undefined = undefined;
 
   constructor() {
@@ -52,36 +48,38 @@ export class System {
       });
     } else {
       const factory = new WASQLiteOpenFactory({
-        dbFilename: 'sqlite.db',
-
-        // You can specify a path to the db worker
-        worker: '/@powersync/worker/WASQLiteDB.umd.js'
-
-        // Or provide a factory function to create the worker.
-        // The worker name should be unique for the database filename to avoid conflicts if multiple clients with different databases are present.
-        // worker: (options) => {
-        //   if (options?.flags?.enableMultiTabs) {
-        //     return new SharedWorker(`/@powersync/worker/WASQLiteDB.umd.js`, {
-        //       name: `shared-DB-worker-${options?.dbFilename}`
-        //     });
-        //   } else {
-        //     return new Worker(`/@powersync/worker/WASQLiteDB.umd.js`, {
-        //       name: `DB-worker-${options?.dbFilename}`
-        //     });
-        //   }
-        // }
-      });
-      this.powersync = new PowerSyncDatabaseWeb({
-        schema: AppSchema,
-        database: factory,
-        sync: {
-          // You can specify a path to the sync worker
-          worker: '/@powersync/worker/SharedSyncImplementation.umd.js'
+        logger: logger,
+        open: {
+          dbFilename: 'sqlite.db',
+          // You can specify a path to the db worker
+          worker: '/@powersync/worker.js'
 
           // Or provide a factory function to create the worker.
           // The worker name should be unique for the database filename to avoid conflicts if multiple clients with different databases are present.
           // worker: (options) => {
-          //   return new SharedWorker(`/@powersync/worker/SharedSyncImplementation.umd.js`, {
+          //   if (options?.flags?.enableMultiTabs) {
+          //     return new SharedWorker(`/@powersync/worker.js`, {
+          //       name: `shared-DB-worker-${options?.dbFilename}`
+          //     });
+          //   } else {
+          //     return new Worker(`/@powersync/worker.js`, {
+          //       name: `DB-worker-${options?.dbFilename}`
+          //     });
+          //   }
+          // }
+        }
+      });
+      this.powersync = new PowerSyncDatabaseWeb({
+        schema: AppSchema,
+        factory: factory,
+        sync: {
+          // You can specify a path to the sync worker
+          worker: '/@powersync/worker.js'
+
+          // Or provide a factory function to create the worker.
+          // The worker name should be unique for the database filename to avoid conflicts if multiple clients with different databases are present.
+          // worker: (options) => {
+          //   return new SharedWorker(`/@powersync/worker.js`, {
           //     name: `shared-sync-${options?.dbFilename}`
           //   });
           // }

@@ -1,10 +1,9 @@
 import { Injectable } from '@angular/core';
 import {
-  AbstractPowerSyncDatabase,
-  Column,
-  ColumnType,
-  Index,
-  IndexedColumn,
+  column,
+  CommonPowerSyncDatabase,
+  createConsoleLogger,
+  LogLevels,
   PowerSyncBackendConnector,
   PowerSyncDatabase,
   Schema,
@@ -34,51 +33,50 @@ export interface TodoRecord {
 export const LISTS_TABLE = 'lists';
 export const TODOS_TABLE = 'todos';
 
-export const AppSchema = new Schema([
-  new Table({
-    name: TODOS_TABLE,
-    columns: [
-      new Column({ name: 'list_id', type: ColumnType.TEXT }),
-      new Column({ name: 'created_at', type: ColumnType.TEXT }),
-      new Column({ name: 'completed_at', type: ColumnType.TEXT }),
-      new Column({ name: 'description', type: ColumnType.TEXT }),
-      new Column({ name: 'completed', type: ColumnType.INTEGER }),
-      new Column({ name: 'created_by', type: ColumnType.TEXT }),
-      new Column({ name: 'completed_by', type: ColumnType.TEXT })
-    ],
-    indexes: [new Index({ name: 'list', columns: [new IndexedColumn({ name: 'list_id' })] })]
-  }),
-  new Table({
-    name: LISTS_TABLE,
-    columns: [
-      new Column({ name: 'created_at', type: ColumnType.TEXT }),
-      new Column({ name: 'name', type: ColumnType.TEXT }),
-      new Column({ name: 'owner_id', type: ColumnType.TEXT })
-    ]
+export const AppSchema = new Schema({
+  [TODOS_TABLE]: new Table(
+    {
+      list_id: column.text,
+      created_at: column.text,
+      completed_at: column.text,
+      description: column.text,
+      completed: column.integer,
+      created_by: column.text,
+      completed_by: column.text
+    },
+    { indexes: { list: ['list_id'] } }
+  ),
+  [LISTS_TABLE]: new Table({
+    created_at: column.text,
+    name: column.text,
+    owner_id: column.text
   })
-]);
+});
 
 @Injectable({
   providedIn: 'root'
 })
 export class PowerSyncService {
-  db: AbstractPowerSyncDatabase;
+  db: CommonPowerSyncDatabase;
 
   constructor() {
     const factory = new WASQLiteOpenFactory({
-      dbFilename: 'test.db',
-      vfs: WASQLiteVFS.OPFSCoopSyncVFS,
-      // Specify the path to the worker script
-      worker: 'assets/@powersync/worker/WASQLiteDB.umd.js'
+      logger: createConsoleLogger({ prefix: 'powersync' }),
+      open: {
+        dbFilename: 'test.db',
+        vfs: WASQLiteVFS.OPFSCoopSyncVFS,
+        // Specify the path to the worker script
+        worker: 'assets/@powersync/worker.js',
+        databaseWorkerLogLevel: LogLevels.debug
+      }
     });
 
     this.db = new PowerSyncDatabase({
       schema: AppSchema,
-      database: factory,
-
+      factory,
       sync: {
         // Specify the path to the worker script
-        worker: 'assets/@powersync/worker/SharedSyncImplementation.umd.js'
+        worker: 'assets/@powersync/worker.js'
       }
     });
   }

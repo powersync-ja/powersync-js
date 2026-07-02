@@ -1,38 +1,73 @@
 import {
-  AbstractPowerSyncDatabase,
-  AbstractRemoteOptions,
-  AbstractStreamingSyncImplementation,
-  AdditionalConnectionOptions,
-  BucketStorageAdapter,
+  BasePowerSyncDatabaseOptions,
+  CommonPowerSyncDatabase,
+  DatabaseSource,
   DBAdapter,
   PowerSyncBackendConnector,
-  PowerSyncConnectionOptions,
-  PowerSyncDatabaseOptions,
-  PowerSyncDatabaseOptionsWithSettings,
-  RequiredAdditionalConnectionOptions,
-  SqliteBucketStorage,
-  SQLOpenFactory
+  PowerSyncDatabaseConstructor
 } from '@powersync/common';
+import {
+  BasePowerSyncDatabase,
+  AbstractStreamingSyncImplementation,
+  BucketStorageAdapter,
+  CreateSyncImplementationOptions,
+  SqliteBucketStorage,
+  openDatabase
+} from '@powersync/shared-internals';
 
-import { NodeCustomConnectionOptions, NodeRemote } from '../sync/stream/NodeRemote.js';
+import { NodeRemote, NodeRemoteOptions } from '../sync/stream/NodeRemote.js';
 import { NodeStreamingSyncImplementation } from '../sync/stream/NodeStreamingSyncImplementation.js';
 
-import { WorkerPoolDatabaseAdapter } from './WorkerConnectionPool.js';
+import { WorkerConnectionPool } from './WorkerConnectionPool.js';
 import { NodeSQLOpenOptions } from './options.js';
 
-export type NodePowerSyncDatabaseOptions = PowerSyncDatabaseOptions & {
-  database: DBAdapter | SQLOpenFactory | NodeSQLOpenOptions;
-  /**
-   * Options to override how the SDK will connect to the sync service.
-   *
-   * This option is intended to be used for internal tests.
-   */
-  remoteOptions?: Partial<AbstractRemoteOptions>;
-};
+export type NodePowerSyncDatabaseOptions = BasePowerSyncDatabaseOptions &
+  DatabaseSource<NodeSQLOpenOptions> & {
+    /**
+     * Options to override how the SDK will connect to the sync service.
+     */
+    remoteOptions?: NodeRemoteOptions;
+  };
 
-export type NodeAdditionalConnectionOptions = AdditionalConnectionOptions & NodeCustomConnectionOptions;
+class NodePowerSyncDatabase extends BasePowerSyncDatabase<NodePowerSyncDatabaseOptions> {
+  constructor(options: NodePowerSyncDatabaseOptions) {
+    super(options);
+  }
 
-export type NodePowerSyncConnectionOptions = PowerSyncConnectionOptions & NodeAdditionalConnectionOptions;
+  async _initialize(): Promise<void> {
+    if ('initialize' in this.database) {
+      await (this.database as WorkerConnectionPool).initialize();
+    }
+  }
+
+  protected openDBAdapter(): DBAdapter {
+    return openDatabase(this.options, (open) => new WorkerConnectionPool(open));
+  }
+
+  protected generateBucketStorageAdapter(): BucketStorageAdapter {
+    return new SqliteBucketStorage(this.database, this.logger);
+  }
+
+  protected generateSyncStreamImplementation(
+    connector: PowerSyncBackendConnector,
+    options: CreateSyncImplementationOptions
+  ): AbstractStreamingSyncImplementation {
+    const logger = this.logger;
+    const remote = new NodeRemote(connector, logger, this.options.remoteOptions);
+
+    return new NodeStreamingSyncImplementation({
+      adapter: this.bucketStorageAdapter,
+      remote,
+      uploadCrud: async () => {
+        await this.waitForReady();
+        await connector.uploadData(this);
+      },
+      ...options,
+      identifier: this.database.name,
+      logger
+    });
+  }
+}
 
 /**
  * A PowerSync database which provides SQLite functionality
@@ -48,55 +83,7 @@ export type NodePowerSyncConnectionOptions = PowerSyncConnectionOptions & NodeAd
  * });
  * ```
  */
-export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
-  constructor(options: NodePowerSyncDatabaseOptions) {
-    super(options);
-  }
+// Typed constructor to avoid leaking AbstractPowerSyncDatabase into the public interface
+export const PowerSyncDatabase: PowerSyncDatabaseConstructor<NodePowerSyncDatabaseOptions> = NodePowerSyncDatabase;
 
-  async _initialize(): Promise<void> {
-    if ('initialize' in this.database) {
-      await (this.database as WorkerPoolDatabaseAdapter).initialize();
-    }
-  }
-
-  /**
-   * Opens a DBAdapter using better-sqlite3 as the default SQLite open factory.
-   */
-  protected openDBAdapter(options: PowerSyncDatabaseOptionsWithSettings): DBAdapter {
-    return new WorkerPoolDatabaseAdapter(options.database);
-  }
-
-  protected generateBucketStorageAdapter(): BucketStorageAdapter {
-    return new SqliteBucketStorage(this.database, this.logger);
-  }
-
-  connect(
-    connector: PowerSyncBackendConnector,
-    options?: PowerSyncConnectionOptions & NodeCustomConnectionOptions
-  ): Promise<void> {
-    return super.connect(connector, options);
-  }
-
-  protected generateSyncStreamImplementation(
-    connector: PowerSyncBackendConnector,
-    options: RequiredAdditionalConnectionOptions & NodeAdditionalConnectionOptions
-  ): AbstractStreamingSyncImplementation {
-    const logger = this.logger;
-    const remote = new NodeRemote(connector, logger, {
-      dispatcher: options.dispatcher,
-      ...(this.options as NodePowerSyncDatabaseOptions).remoteOptions
-    });
-
-    return new NodeStreamingSyncImplementation({
-      adapter: this.bucketStorageAdapter,
-      remote,
-      uploadCrud: async () => {
-        await this.waitForReady();
-        await connector.uploadData(this);
-      },
-      ...options,
-      identifier: this.database.name,
-      logger
-    });
-  }
-}
+export interface PowerSyncDatabase extends CommonPowerSyncDatabase {}

@@ -1,4 +1,3 @@
-import { ILogLevel, PowerSyncConnectionOptions, SubscribedStream } from '@powersync/common';
 import * as Comlink from 'comlink';
 import { getNavigatorLocks } from '../../shared/navigator.js';
 import {
@@ -8,6 +7,7 @@ import {
   SharedSyncInitOptions,
   WrappedSyncPort
 } from './SharedSyncImplementation.js';
+import { SubscribedStream, ResolvedSyncOptions } from '@powersync/shared-internals';
 
 /**
  * A client to the shared sync worker.
@@ -65,7 +65,7 @@ export class WorkerClient {
     });
   }
 
-  setLogLevel(level: ILogLevel) {
+  setLogLevel(level: number) {
     this.sync.setLogLevel(level);
   }
 
@@ -82,8 +82,8 @@ export class WorkerClient {
     return this.sync.getWriteCheckpoint();
   }
 
-  connect(options?: PowerSyncConnectionOptions) {
-    return this.sync.connect(options);
+  connect(options: ResolvedSyncOptions, schema: any) {
+    return this.sync.connect(options, schema);
   }
 
   updateSubscriptions(subscriptions: SubscribedStream[]) {

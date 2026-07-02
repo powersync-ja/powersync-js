@@ -1,11 +1,11 @@
-import { ILogger } from '@powersync/common';
+import { LogLevels, PowerSyncLogger } from '@powersync/common';
 import { ConcurrentSqliteConnection, ConnectionLeaseToken } from './ConcurrentConnection.js';
-import { RawQueryResult } from './RawSqliteConnection.js';
+import { RawWebResult } from './RawSqliteConnection.js';
 
 export interface DatabaseServerOptions {
   inner: ConcurrentSqliteConnection;
   onClose: () => void;
-  logger: ILogger;
+  logger: PowerSyncLogger;
 }
 
 /**
@@ -24,7 +24,7 @@ export class DatabaseServer {
   constructor(options: DatabaseServerOptions) {
     this.#options = options;
     const inner = options.inner;
-    this.#updateBroadcastChannel = new BroadcastChannel(`${inner.options.dbFilename}-table-updates`);
+    this.#updateBroadcastChannel = new BroadcastChannel(`${inner.options.filename}-table-updates`);
 
     this.#updateBroadcastChannel.onmessage = ({ data }) => {
       this.#pushTableUpdateToClients(data as string[]);
@@ -85,7 +85,7 @@ export class DatabaseServer {
 
         // If the client holds a connection lease it hasn't returned, return that now.
         for (const { lease } of connectionLeases.values()) {
-          this.#logger.debug(`Closing connection lease that hasn't been returned.`);
+          this.#logger.log({ level: LogLevels.debug, message: `Closing connection lease that hasn't been returned.` });
           await lease.returnLease();
         }
 
@@ -94,7 +94,10 @@ export class DatabaseServer {
         if (this.#activeClients.size == 0) {
           await this.forceClose();
         } else {
-          this.#logger.debug('Keeping underlying connection active since its used by other clients.');
+          this.#logger.log({
+            level: LogLevels.debug,
+            message: 'Keeping underlying connection active since its used by other clients.'
+          });
         }
       }
     };
@@ -133,9 +136,9 @@ export class DatabaseServer {
         try {
           if (lease.write) {
             // Collect update hooks invoked while the client had the write connection.
-            const { resultSet } = await lease.lease.use((conn) => conn.execute(`SELECT powersync_update_hooks('get')`));
-            if (resultSet) {
-              const updatedTables: string[] = JSON.parse(resultSet.rows[0][0] as string);
+            const { rawRows } = await lease.lease.use((conn) => conn.execute(`SELECT powersync_update_hooks('get')`));
+            if (rawRows.length) {
+              const updatedTables: string[] = JSON.parse(rawRows[0][0] as string);
               if (updatedTables.length) {
                 this.#updateBroadcastChannel.postMessage(updatedTables);
                 this.#pushTableUpdateToClients(updatedTables);
@@ -169,7 +172,7 @@ export class DatabaseServer {
   }
 
   async forceClose() {
-    this.#logger.debug(`Closing connection to ${this.#inner.options}.`);
+    this.#logger.log({ level: LogLevels.debug, message: `Closing connection to ${this.#inner.options}.` });
     const connection = this.#inner;
     this.#options.onClose();
     this.#updateBroadcastChannel.close();
@@ -190,8 +193,8 @@ export interface ClientConnectionView {
    * give other clients access to the database afterwards.
    */
   requestAccess(write: boolean, timeoutMs?: number): Promise<string>;
-  execute(token: string, sql: string, params: any[] | undefined): Promise<RawQueryResult>;
-  executeBatch(token: string, sql: string, params: any[][]): Promise<RawQueryResult[]>;
+  execute(token: string, sql: string, params: any[] | undefined): Promise<RawWebResult>;
+  executeBatch(token: string, sql: string, params: any[][]): Promise<RawWebResult[]>;
   completeAccess(token: string): Promise<void>;
 
   /**

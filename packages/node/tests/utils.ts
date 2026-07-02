@@ -3,12 +3,13 @@ import os from 'node:os';
 import path from 'node:path';
 import { ReadableStream, TransformStream } from 'node:stream/web';
 
-import { createLogger } from '@powersync/common';
-import { BucketChecksum, StreamingSyncCheckpoint, StreamingSyncLine } from '@powersync/common/internal/sync_protocol';
-import Logger from 'js-logger';
+import {
+  BucketChecksum,
+  StreamingSyncCheckpoint,
+  StreamingSyncLine
+} from '@powersync/shared-internals/internal/sync_protocol';
 import { onTestFinished, test } from 'vitest';
 import {
-  AbstractPowerSyncDatabase,
   NodePowerSyncDatabaseOptions,
   PowerSyncBackendConnector,
   PowerSyncCredentials,
@@ -19,6 +20,8 @@ import {
   column
 } from '../lib/index.js';
 import { BSON } from 'bson';
+import { CommonPowerSyncDatabase, createConsoleLogger, LogLevels } from '@powersync/common';
+import { NodeSQLOpenOptions } from '../src/db/options.js';
 
 export async function createTempDir() {
   const ostmpdir = os.tmpdir();
@@ -57,23 +60,24 @@ export async function createDatabase(
   tmpdir: string,
   options: Partial<NodePowerSyncDatabaseOptions> = {}
 ): Promise<PowerSyncDatabase> {
-  const defaultLogger = createLogger('PowerSyncTest', { logLevel: (Logger as any).TRACE });
-  (defaultLogger as any).invoke = (_: any, args: any) => {
-    console.log(...args);
+  const defaultLogger = createConsoleLogger({ prefix: 'PowerSyncTest', minLevel: LogLevels.trace });
+
+  let databaseOptions: NodeSQLOpenOptions = {
+    dbFilename: 'test.db',
+    dbLocation: tmpdir,
+    // Using a single read worker (instead of multiple, the default) seems to improve the reliability of tests in GH
+    // actions. So far, we've not been able to reproduce these failures locally.
+    readWorkerCount: 1
   };
+  if ('database' in options) {
+    databaseOptions = { ...databaseOptions, ...options.database };
+  }
 
   const database = new PowerSyncDatabase({
     schema: AppSchema,
     ...options,
     logger: options.logger ?? defaultLogger,
-    database: {
-      dbFilename: 'test.db',
-      dbLocation: tmpdir,
-      // Using a single read worker (instead of multiple, the default) seems to improve the reliability of tests in GH
-      // actions. So far, we've not been able to reproduce these failures locally.
-      readWorkerCount: 1,
-      ...options.database
-    }
+    database: databaseOptions
   });
   await database.init();
   return database;
@@ -159,16 +163,16 @@ export function createMockSyncServiceTest(bson: boolean) {
       };
 
       const newConnection = async (options?: Partial<NodePowerSyncDatabaseOptions>) => {
+        let dbOptions: NodeSQLOpenOptions = { dbFilename: databaseName };
+        if (options && 'database' in options) {
+          dbOptions = { ...dbOptions, ...options.database };
+        }
+
         const db = await createDatabase(tmpdir, {
-          // This might help with test stability/timeouts if a retry is needed
-          retryDelayMs: 100,
           ...options,
-          database: {
-            dbFilename: databaseName,
-            ...options?.database
-          },
+          database: dbOptions,
           remoteOptions: {
-            fetchImplementation: inMemoryFetch
+            customFetch: inMemoryFetch
           }
         });
 
@@ -200,6 +204,7 @@ export interface MockSyncService {
   installRequestInterceptor(interceptor: (request: Request) => Promise<void>): void;
   pushLine: (line: StreamingSyncLine) => void;
   connectedListeners: any[];
+
   createDatabase: (options?: Partial<NodePowerSyncDatabaseOptions>) => Promise<PowerSyncDatabase>;
 }
 
@@ -212,7 +217,7 @@ export class TestConnector implements PowerSyncBackendConnector {
       token: 'test'
     };
   }
-  async uploadData(database: AbstractPowerSyncDatabase): Promise<void> {
+  async uploadData(database: CommonPowerSyncDatabase): Promise<void> {
     const tx = await database.getNextCrudTransaction();
     await tx?.complete();
     this.uploadDataInvocations++;
@@ -220,7 +225,7 @@ export class TestConnector implements PowerSyncBackendConnector {
 }
 
 export function waitForSyncStatus(
-  database: AbstractPowerSyncDatabase,
+  database: CommonPowerSyncDatabase,
   matcher: (status: SyncStatus) => boolean
 ): Promise<void> {
   return new Promise((resolve, reject) => {

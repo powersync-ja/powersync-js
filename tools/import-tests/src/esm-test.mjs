@@ -1,9 +1,12 @@
 import assert from 'assert';
 
 import * as NodeSDK from '@powersync/node';
-import { ControlledExecutor } from '@powersync/node';
+import { PowerSyncDatabase } from '@powersync/node';
 assert(NodeSDK);
-assert(ControlledExecutor);
+assert(PowerSyncDatabase);
+
+import { AttachmentContext } from '@powersync/common';
+assert(AttachmentContext);
 
 // Simulates SSR environment
 import * as WebSDK from '@powersync/web';

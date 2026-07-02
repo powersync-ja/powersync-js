@@ -2,6 +2,7 @@ import * as React from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { ScrollView, View } from 'react-native';
 import { FAB, Text } from '@rneui/themed';
+import { MaterialIcons } from '@expo/vector-icons';
 
 import { router, Stack } from 'expo-router';
 import { LIST_TABLE, TODO_TABLE, ListRecord } from '../../../library/powersync/AppSchema';
@@ -60,7 +61,7 @@ const ListsViewWidget: React.FC = () => {
       />
       <FAB
         style={{ zIndex: 99, bottom: 0 }}
-        icon={{ name: 'add', color: 'white' }}
+        icon={<MaterialIcons name="add" color="white" size={20} />}
         size="small"
         placement="right"
         onPress={async () => {

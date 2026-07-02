@@ -1,21 +1,16 @@
-import {
-  PowerSyncConnectionOptions,
-  PowerSyncCredentials,
-  SubscribedStream,
-  SyncStatusOptions
-} from '@powersync/common';
+import { LogRecord, PowerSyncCredentials } from '@powersync/common';
 import * as Comlink from 'comlink';
-import { getNavigatorLocks } from '../../shared/navigator.js';
 import { AbstractSharedSyncClientProvider } from '../../worker/sync/AbstractSharedSyncClientProvider.js';
 import { ManualSharedSyncPayload, SharedSyncClientEvent } from '../../worker/sync/SharedSyncImplementation.js';
 import { WorkerClient } from '../../worker/sync/WorkerClient.js';
 import { WebDBAdapter } from '../adapters/WebDBAdapter.js';
-import { DEFAULT_CACHE_SIZE_KB, TemporaryStorageOption, resolveWebSQLFlags } from '../adapters/web-sql-flags.js';
 import {
   WebStreamingSyncImplementation,
   WebStreamingSyncImplementationOptions
 } from './WebStreamingSyncImplementation.js';
 import { generateTabCloseSignal } from '../../shared/tab_close_signal.js';
+import { SubscribedStream, SyncStatusJson, ResolvedSyncOptions } from '@powersync/shared-internals';
+import { connectToExistingWorker, connectToWorker, WorkerConnection } from '../../worker/client.js';
 
 /**
  * The shared worker will trigger methods on this side of the message port
@@ -24,7 +19,7 @@ import { generateTabCloseSignal } from '../../shared/tab_close_signal.js';
 class SharedSyncClientProvider extends AbstractSharedSyncClientProvider {
   constructor(
     protected options: WebStreamingSyncImplementationOptions,
-    public statusChanged: (status: SyncStatusOptions) => void,
+    public statusChanged: (status: SyncStatusJson) => void,
     protected webDB: WebDBAdapter
   ) {
     super();
@@ -68,34 +63,15 @@ class SharedSyncClientProvider extends AbstractSharedSyncClientProvider {
     return this.options.logger;
   }
 
-  trace(...x: any[]): void {
-    this.logger?.trace(...x);
-  }
-  debug(...x: any[]): void {
-    this.logger?.debug(...x);
-  }
-  info(...x: any[]): void {
-    this.logger?.info(...x);
-  }
-  log(...x: any[]): void {
-    this.logger?.log(...x);
-  }
-  warn(...x: any[]): void {
-    this.logger?.warn(...x);
-  }
-  error(...x: any[]): void {
-    this.logger?.error(...x);
-  }
-  time(label: string): void {
-    this.logger?.time(label);
-  }
-  timeEnd(label: string): void {
-    this.logger?.timeEnd(label);
+  log(record: LogRecord): void {
+    this.logger.log(record);
   }
 }
 
 export interface SharedWebStreamingSyncImplementationOptions extends WebStreamingSyncImplementationOptions {
+  logLevel: number;
   db: WebDBAdapter;
+  enableBroadcastLogs: boolean;
 }
 
 /**
@@ -104,46 +80,30 @@ export interface SharedWebStreamingSyncImplementationOptions extends WebStreamin
 export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplementation {
   protected syncManager: Comlink.Remote<WorkerClient>;
   protected clientProvider: SharedSyncClientProvider;
-  protected messagePort: MessagePort;
+  protected worker: WorkerConnection;
 
   protected isInitialized: Promise<void>;
   protected dbAdapter: WebDBAdapter;
   private abortOnClose = new AbortController();
+  private logLevel: number;
+  private enableBroadcastLogs: boolean;
 
   constructor(options: SharedWebStreamingSyncImplementationOptions) {
     super(options);
     this.dbAdapter = options.db;
-    /**
-     * Configure or connect to the shared sync worker.
-     * This worker will manage all syncing operations remotely.
-     */
-    const resolvedWorkerOptions = {
-      dbFilename: this.options.identifier!,
-      temporaryStorage: TemporaryStorageOption.MEMORY,
-      cacheSizeKb: DEFAULT_CACHE_SIZE_KB,
-      ...options,
-      flags: resolveWebSQLFlags(options.flags)
-    };
+    this.logLevel = options.logLevel;
+    this.enableBroadcastLogs = options.enableBroadcastLogs;
 
     const syncWorker = options.sync?.worker;
-    if (syncWorker) {
-      if (typeof syncWorker === 'function') {
-        this.messagePort = syncWorker(resolvedWorkerOptions).port;
-      } else {
-        this.messagePort = new SharedWorker(`${syncWorker}`, {
-          /* @vite-ignore */
-          name: `shared-sync-${this.webOptions.identifier}`
-        }).port;
-      }
+    if (typeof syncWorker === 'function') {
+      this.worker = connectToExistingWorker(syncWorker(), 'sync');
     } else {
-      this.messagePort = new SharedWorker(
-        new URL('../../worker/sync/SharedSyncImplementation.worker.js', import.meta.url),
-        {
-          /* @vite-ignore */
-          name: `shared-sync-${this.webOptions.identifier}`,
-          type: 'module'
-        }
-      ).port;
+      this.worker = connectToWorker({
+        service: 'sync',
+        databaseIdentifier: this.webOptions.identifier!,
+        shared: true,
+        customWorker: syncWorker
+      });
     }
 
     /**
@@ -151,21 +111,21 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
      */
     this.clientProvider = new SharedSyncClientProvider(
       this.webOptions,
-      (status) => {
-        this.updateSyncStatus(status);
+      ({ core, dataFlow }) => {
+        this.updateSyncStatus(core, dataFlow);
       },
       options.db
     );
 
-    this.syncManager = Comlink.wrap<WorkerClient>(this.messagePort);
+    this.syncManager = Comlink.wrap<WorkerClient>(this.worker.endpoint);
     /**
      * The sync worker will call this client provider when it needs
      * to fetch credentials or upload data.
      * This performs bi-directional method calling.
      */
-    Comlink.expose(this.clientProvider, this.messagePort);
+    Comlink.expose(this.clientProvider, this.worker.endpoint);
 
-    this.syncManager.setLogLevel(this.logger.getLevel());
+    this.syncManager.setLogLevel(this.logLevel);
 
     this.triggerCrudUpload = this.syncManager.triggerCrudUpload;
 
@@ -197,18 +157,16 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
     // Awaiting here ensures the worker is waiting for the lock
     await this.syncManager.addLockBasedCloseSignal(closeSignal);
 
-    const { crudUploadThrottleMs, identifier, retryDelayMs } = this.options;
-    const flags = { ...this.webOptions.flags, workers: undefined };
+    const { identifier } = this.options;
 
     await this.syncManager.setParams(
       {
         dbParams: this.dbAdapter.getConfiguration(),
         streamOptions: {
-          crudUploadThrottleMs,
           identifier,
-          retryDelayMs,
-          flags: flags
-        }
+          serializedSchema: this.options.serializedSchema
+        },
+        enableBroadcastLogs: this.enableBroadcastLogs
       },
       this.options.subscriptions
     );
@@ -218,9 +176,9 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
    * Starts the sync process, this effectively acts as a call to
    * `connect` if not yet connected.
    */
-  async connect(options?: PowerSyncConnectionOptions): Promise<void> {
+  async connect(options: ResolvedSyncOptions): Promise<void> {
     await this.waitForReady();
-    return this.syncManager.connect(options);
+    return this.syncManager.connect(options, this.options.serializedSchema);
   }
 
   async disconnect(): Promise<void> {
@@ -237,8 +195,11 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
     await this.waitForReady();
 
     await new Promise<void>((resolve) => {
+      // This will always be a message port since we use shared workers.
+      const messagePort = this.worker.endpoint as MessagePort;
+
       // Listen for the close acknowledgment from the worker
-      this.messagePort.addEventListener('message', (event) => {
+      messagePort.addEventListener('message', (event) => {
         const payload = event.data as ManualSharedSyncPayload;
         if (payload?.event === SharedSyncClientEvent.CLOSE_ACK) {
           resolve();
@@ -250,7 +211,7 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
         event: SharedSyncClientEvent.CLOSE_CLIENT,
         data: {}
       };
-      this.messagePort.postMessage(closeMessagePayload);
+      messagePort.postMessage(closeMessagePayload);
     });
 
     await super.dispose();
@@ -259,7 +220,7 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
 
     // Release the proxy
     this.syncManager[Comlink.releaseProxy]();
-    this.messagePort.close();
+    this.worker.close();
   }
 
   async waitForReady() {

@@ -4,9 +4,9 @@ import { SupabaseConnector } from '@/library/powersync/SupabaseConnector';
 import { CircularProgress } from '@mui/material';
 import { PowerSyncContext } from '@powersync/react';
 import {
-  createBaseLogger,
+  createConsoleLogger,
+  LogLevels,
   DifferentialWatchedQuery,
-  LogLevel,
   PowerSyncDatabase,
   WASQLiteOpenFactory,
   WASQLiteVFS
@@ -18,19 +18,17 @@ declare const APP_VERSION: string;
 
 const SupabaseContext = React.createContext<SupabaseConnector | null>(null);
 export const useSupabase = () => React.useContext(SupabaseContext);
+const logger = createConsoleLogger({ minLevel: LogLevels.debug });
 
 export const db = new PowerSyncDatabase({
   schema: AppSchema,
-  database: new WASQLiteOpenFactory({
+  database: {
     dbFilename: 'example.db',
     vfs: WASQLiteVFS.OPFSCoopSyncVFS,
-    flags: {
-      enableMultiTabs: typeof SharedWorker !== 'undefined'
-    }
-  }),
-  flags: {
-    enableMultiTabs: typeof SharedWorker !== 'undefined'
-  }
+    databaseWorkerLogLevel: LogLevels.debug,
+    enableMultiTabs: typeof SharedWorker !== 'undefined',
+  },
+  logger
 });
 
 export type EnhancedListRecord = ListRecord & { total_tasks: number; completed_tasks: number };
@@ -74,15 +72,12 @@ export const SystemProvider = ({ children }: { children: React.ReactNode }) => {
   });
 
   React.useEffect(() => {
-    const logger = createBaseLogger();
-    logger.useDefaults(); // eslint-disable-line
-    logger.setLevel(LogLevel.DEBUG);
     // For console testing purposes
     (window as any)._powersync = powerSync;
 
     powerSync.init();
     const l = connector.registerListener({
-      initialized: () => {},
+      initialized: () => { },
       sessionStarted: () => {
         powerSync.connect(connector, {
           appMetadata: {

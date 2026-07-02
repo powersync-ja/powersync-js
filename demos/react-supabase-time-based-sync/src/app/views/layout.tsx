@@ -73,8 +73,8 @@ export default function ViewsLayout({ children }: { children: React.ReactNode })
           <Box sx={{ flexGrow: 1 }}>
             <Typography>{title}</Typography>
           </Box>
-          <NorthIcon sx={{ marginRight: '-10px' }} color={status?.dataFlowStatus.uploading ? 'primary' : 'inherit'} />
-          <SouthIcon color={status?.dataFlowStatus.downloading ? 'primary' : 'inherit'} />
+          <NorthIcon sx={{ marginRight: '-10px' }} color={status?.uploading ? 'primary' : 'inherit'} />
+          <SouthIcon color={status?.downloading ? 'primary' : 'inherit'} />
           <Box
             sx={{ cursor: 'pointer' }}
             onClick={(event) => {

@@ -4,348 +4,8 @@
 
 ```ts
 
-import { fetch as fetch_2 } from 'cross-fetch';
-import { GlobalLogger } from 'js-logger';
-import { ILogger } from 'js-logger';
-import { ILoggerOpts } from 'js-logger';
-import { ILogHandler } from 'js-logger';
-import { ILogLevel } from 'js-logger';
-import Logger from 'js-logger';
-
-// Warning: (ae-internal-missing-underscore) The name "AbortOperation" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal
-export class AbortOperation extends Error {
-    constructor(reason: string);
-    // (undocumented)
-    protected reason: string;
-}
-
-// Warning: (ae-incompatible-release-tags) The symbol "AbstractPowerSyncDatabase" is marked as @public, but its signature references "BaseObserver" which is marked as @internal
-//
-// @public (undocumented)
-export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDBListener> {
-    constructor(options: PowerSyncDatabaseOptionsWithDBAdapter);
-    constructor(options: PowerSyncDatabaseOptionsWithOpenFactory);
-    constructor(options: PowerSyncDatabaseOptionsWithSettings);
-    constructor(options: PowerSyncDatabaseOptions);
-    // Warning: (ae-incompatible-release-tags) The symbol "bucketStorageAdapter" is marked as @public, but its signature references "BucketStorageAdapter" which is marked as @internal
-    //
-    // (undocumented)
-    protected bucketStorageAdapter: BucketStorageAdapter;
-    close(options?: PowerSyncCloseOptions): Promise<void>;
-    closed: boolean;
-    connect(connector: PowerSyncBackendConnector, options?: PowerSyncConnectionOptions): Promise<void>;
-    get connected(): boolean;
-    // (undocumented)
-    get connecting(): boolean;
-    // Warning: (ae-incompatible-release-tags) The symbol "connectionManager" is marked as @public, but its signature references "ConnectionManager" which is marked as @internal
-    //
-    // (undocumented)
-    protected connectionManager: ConnectionManager;
-    // Warning: (ae-incompatible-release-tags) The symbol "connectionOptions" is marked as @public, but its signature references "InternalConnectionOptions" which is marked as @internal
-    get connectionOptions(): InternalConnectionOptions | null;
-    get connector(): PowerSyncBackendConnector | null;
-    currentStatus: SyncStatus;
-    customQuery<RowType>(query: WatchCompatibleQuery<RowType[]>): Query<RowType>;
-    get database(): DBAdapter;
-    disconnect(): Promise<void>;
-    disconnectAndClear(options?: DisconnectAndClearOptions): Promise<void>;
-    // @deprecated (undocumented)
-    dispose(): void;
-    execute(sql: string, parameters?: any[]): Promise<QueryResult>;
-    executeBatch(sql: string, parameters?: any[][]): Promise<QueryResult>;
-    executeRaw(sql: string, parameters?: any[]): Promise<any[][]>;
-    // Warning: (ae-incompatible-release-tags) The symbol "generateBucketStorageAdapter" is marked as @public, but its signature references "BucketStorageAdapter" which is marked as @internal
-    //
-    // (undocumented)
-    protected abstract generateBucketStorageAdapter(): BucketStorageAdapter;
-    // Warning: (ae-incompatible-release-tags) The symbol "generateSyncStreamImplementation" is marked as @public, but its signature references "CreateSyncImplementationOptions" which is marked as @internal
-    // Warning: (ae-incompatible-release-tags) The symbol "generateSyncStreamImplementation" is marked as @public, but its signature references "RequiredAdditionalConnectionOptions" which is marked as @internal
-    // Warning: (ae-incompatible-release-tags) The symbol "generateSyncStreamImplementation" is marked as @public, but its signature references "StreamingSyncImplementation" which is marked as @internal
-    //
-    // (undocumented)
-    protected abstract generateSyncStreamImplementation(connector: PowerSyncBackendConnector, options: CreateSyncImplementationOptions & RequiredAdditionalConnectionOptions): StreamingSyncImplementation;
-    // Warning: (ae-incompatible-release-tags) The symbol "generateTriggerManagerConfig" is marked as @public, but its signature references "TriggerManagerConfig" which is marked as @internal
-    protected generateTriggerManagerConfig(): TriggerManagerConfig;
-    get<T>(sql: string, parameters?: any[]): Promise<T>;
-    getAll<T>(sql: string, parameters?: any[]): Promise<T[]>;
-    getClientId(): Promise<string>;
-    getCrudBatch(limit?: number): Promise<CrudBatch | null>;
-    getCrudTransactions(): AsyncIterable<CrudTransaction, null>;
-    getNextCrudTransaction(): Promise<CrudTransaction | null>;
-    getOptional<T>(sql: string, parameters?: any[]): Promise<T | null>;
-    getUploadQueueStats(includeSize?: boolean): Promise<UploadQueueStats>;
-    init(): Promise<void>;
-    protected initialize(): Promise<void>;
-    abstract _initialize(): Promise<void>;
-    // (undocumented)
-    protected _isReadyPromise: Promise<void>;
-    // (undocumented)
-    protected loadVersion(): Promise<void>;
-    // (undocumented)
-    logger: ILogger;
-    onChange(options?: SQLOnChangeOptions): AsyncIterable<WatchOnChangeEvent>;
-    onChange(handler?: WatchOnChangeHandler, options?: SQLOnChangeOptions): () => void;
-    onChangeWithAsyncGenerator(options?: SQLWatchOptions): AsyncIterable<WatchOnChangeEvent>;
-    onChangeWithCallback(handler?: WatchOnChangeHandler, options?: SQLOnChangeOptions): () => void;
-    protected abstract openDBAdapter(options: PowerSyncDatabaseOptionsWithSettings): DBAdapter;
-    // (undocumented)
-    protected options: PowerSyncDatabaseOptions;
-    query<RowType>(query: ArrayQueryDefinition<RowType>): Query<RowType>;
-    readLock<T>(callback: (db: LockContext) => Promise<T>): Promise<T>;
-    readTransaction<T>(callback: (tx: Transaction) => Promise<T>, lockTimeout?: number): Promise<T>;
-    // (undocumented)
-    ready: boolean;
-    // Warning: (ae-incompatible-release-tags) The symbol "resolvedConnectionOptions" is marked as @public, but its signature references "CreateSyncImplementationOptions" which is marked as @internal
-    // Warning: (ae-incompatible-release-tags) The symbol "resolvedConnectionOptions" is marked as @public, but its signature references "RequiredAdditionalConnectionOptions" which is marked as @internal
-    //
-    // (undocumented)
-    protected resolvedConnectionOptions(options: CreateSyncImplementationOptions): CreateSyncImplementationOptions & RequiredAdditionalConnectionOptions;
-    // (undocumented)
-    protected resolveOfflineSyncStatus(): Promise<void>;
-    resolveTables(sql: string, parameters?: any[], options?: SQLWatchOptions): Promise<string[]>;
-    protected runExclusive<T>(callback: () => Promise<T>): Promise<T>;
-    // Warning: (ae-incompatible-release-tags) The symbol "runExclusiveMutex" is marked as @public, but its signature references "Mutex" which is marked as @internal
-    //
-    // (undocumented)
-    protected runExclusiveMutex: Mutex;
-    get schema(): Schema<{
-        [x: string]: Table<any>;
-    }>;
-    // (undocumented)
-    protected _schema: Schema;
-    // (undocumented)
-    sdkVersion: string;
-    syncStream(name: string, params?: Record<string, any>): SyncStream;
-    // Warning: (ae-incompatible-release-tags) The symbol "syncStreamImplementation" is marked as @public, but its signature references "StreamingSyncImplementation" which is marked as @internal
-    //
-    // (undocumented)
-    get syncStreamImplementation(): StreamingSyncImplementation | null;
-    // Warning: (ae-incompatible-release-tags) The symbol "triggers" is marked as @public, but its signature references "TriggerManager" which is marked as @alpha
-    readonly triggers: TriggerManager;
-    // Warning: (ae-incompatible-release-tags) The symbol "triggersImpl" is marked as @public, but its signature references "TriggerManagerImpl" which is marked as @internal
-    //
-    // (undocumented)
-    protected triggersImpl: TriggerManagerImpl;
-    updateSchema(schema: Schema): Promise<void>;
-    waitForFirstSync(request?: AbortSignal | {
-        signal?: AbortSignal;
-        priority?: number;
-    }): Promise<void>;
-    // (undocumented)
-    waitForReady(): Promise<void>;
-    waitForStatus(predicate: (status: SyncStatus) => any, signal?: AbortSignal): Promise<void>;
-    watch(sql: string, parameters?: any[], options?: SQLWatchOptions): AsyncIterable<QueryResult>;
-    watch(sql: string, parameters?: any[], handler?: WatchHandler, options?: SQLWatchOptions): void;
-    watchWithAsyncGenerator(sql: string, parameters?: any[], options?: SQLWatchOptions): AsyncIterable<QueryResult>;
-    watchWithCallback(sql: string, parameters?: any[], handler?: WatchHandler, options?: SQLWatchOptions): void;
-    writeLock<T>(callback: (db: LockContext) => Promise<T>): Promise<T>;
-    writeTransaction<T>(callback: (tx: Transaction) => Promise<T>, lockTimeout?: number): Promise<T>;
-}
-
-// Warning: (ae-internal-missing-underscore) The name "AbstractPowerSyncDatabaseOpenFactory" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export abstract class AbstractPowerSyncDatabaseOpenFactory {
-    constructor(options: PowerSyncOpenFactoryOptions);
-    // (undocumented)
-    abstract generateInstance(options: PowerSyncDatabaseOptions): AbstractPowerSyncDatabase;
-    // (undocumented)
-    generateOptions(): PowerSyncDatabaseOptions;
-    // (undocumented)
-    getInstance(): AbstractPowerSyncDatabase;
-    // (undocumented)
-    protected abstract openDB(): DBAdapter;
-    // (undocumented)
-    protected options: PowerSyncOpenFactoryOptions;
-    get schema(): Schema<{
-        [x: string]: Table<any>;
-    }>;
-}
-
-// Warning: (ae-forgotten-export) The symbol "MetaBaseObserver" needs to be exported by the entry point index.d.ts
-// Warning: (ae-forgotten-export) The symbol "WatchedQueryProcessorListener" needs to be exported by the entry point index.d.ts
-// Warning: (ae-internal-missing-underscore) The name "AbstractQueryProcessor" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal
-export abstract class AbstractQueryProcessor<Data = unknown[], Settings extends WatchedQueryOptions = WatchedQueryOptions> extends MetaBaseObserver<WatchedQueryProcessorListener<Data>> implements WatchedQuery<Data, Settings> {
-    constructor(options: AbstractQueryProcessorOptions<Data, Settings>);
-    // (undocumented)
-    protected abortController: AbortController;
-    // (undocumented)
-    close(): Promise<void>;
-    // (undocumented)
-    get closed(): boolean;
-    // (undocumented)
-    protected _closed: boolean;
-    // (undocumented)
-    protected constructInitialState(): WatchedQueryState<Data>;
-    // (undocumented)
-    protected disposeListeners: (() => void) | null;
-    protected init(signal: AbortSignal): Promise<void>;
-    // (undocumented)
-    protected initialized: Promise<void>;
-    protected iterateAsyncListenersWithError(callback: (listener: Partial<WatchedQueryProcessorListener<Data>>) => Promise<void> | void): Promise<void>;
-    protected abstract linkQuery(options: LinkQueryOptions<Data>): Promise<void>;
-    // (undocumented)
-    protected options: AbstractQueryProcessorOptions<Data, Settings>;
-    // (undocumented)
-    protected get reportFetching(): boolean;
-    protected runWithReporting<T>(callback: () => Promise<T>): Promise<void>;
-    // (undocumented)
-    readonly state: WatchedQueryState<Data>;
-    updateSettings(settings: Settings): Promise<void>;
-    // (undocumented)
-    protected updateSettingsInternal(settings: Settings, signal: AbortSignal): Promise<void>;
-    // (undocumented)
-    protected updateState(update: Partial<MutableWatchedQueryState<Data>>): Promise<void>;
-}
-
-// Warning: (ae-internal-missing-underscore) The name "AbstractQueryProcessorOptions" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export interface AbstractQueryProcessorOptions<Data, Settings extends WatchedQueryOptions = WatchedQueryOptions> {
-    // (undocumented)
-    db: AbstractPowerSyncDatabase;
-    // (undocumented)
-    placeholderData: Data;
-    // (undocumented)
-    watchOptions: Settings;
-}
-
-// Warning: (ae-internal-missing-underscore) The name "AbstractRemote" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export abstract class AbstractRemote {
-    constructor(connector: RemoteConnector, logger?: ILogger, options?: Partial<AbstractRemoteOptions>);
-    // (undocumented)
-    protected buildRequest(path: string): Promise<{
-        url: string;
-        headers: {
-            'content-type': string;
-            Authorization: string;
-            'x-user-agent': string;
-        };
-    }>;
-    // (undocumented)
-    protected connector: RemoteConnector;
-    // (undocumented)
-    protected createSocket(url: string): WebSocket;
-    // (undocumented)
-    createTextDecoder(): TextDecoder;
-    // (undocumented)
-    protected credentials: PowerSyncCredentials | null;
-    // (undocumented)
-    get fetch(): FetchImplementation;
-    fetchCredentials(): Promise<PowerSyncCredentials | null>;
-    fetchStream(options: SyncStreamOptions): Promise<SimpleAsyncIterator<Uint8Array | string>>;
-    protected fetchStreamRaw(options: SyncStreamOptions): Promise<{
-        isBson: boolean;
-        stream: SimpleAsyncIterator<Uint8Array>;
-    }>;
-    // (undocumented)
-    get(path: string, headers?: Record<string, string>): Promise<any>;
-    getCredentials(): Promise<PowerSyncCredentials | null>;
-    // (undocumented)
-    getUserAgent(): string;
-    invalidateCredentials(): void;
-    // (undocumented)
-    protected logger: ILogger;
-    // (undocumented)
-    protected options: AbstractRemoteOptions;
-    // (undocumented)
-    post(path: string, data: any, headers?: Record<string, string>): Promise<any>;
-    prefetchCredentials(): Promise<PowerSyncCredentials | null>;
-    socketStreamRaw(options: SocketSyncStreamOptions): Promise<SimpleAsyncIterator<Uint8Array>>;
-    // (undocumented)
-    protected get supportsStreamingBinaryResponses(): boolean;
-}
-
-// Warning: (ae-internal-missing-underscore) The name "AbstractRemoteOptions" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export type AbstractRemoteOptions = {
-    socketUrlTransformer: (url: string) => string;
-    fetchImplementation: FetchImplementation | FetchImplementationProvider;
-    fetchOptions?: {};
-};
-
-// Warning: (ae-internal-missing-underscore) The name "AbstractStreamingSyncImplementation" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export abstract class AbstractStreamingSyncImplementation extends BaseObserver<StreamingSyncImplementationListener> implements StreamingSyncImplementation {
-    constructor(options: AbstractStreamingSyncImplementationOptions);
-    // (undocumented)
-    protected abortController: AbortController | null;
-    // (undocumented)
-    connect(options?: PowerSyncConnectionOptions): Promise<void>;
-    // (undocumented)
-    protected crudUpdateListener?: () => void;
-    // (undocumented)
-    disconnect(): Promise<void>;
-    // (undocumented)
-    dispose(): Promise<void>;
-    // (undocumented)
-    getWriteCheckpoint(): Promise<string>;
-    // (undocumented)
-    get isConnected(): boolean;
-    // (undocumented)
-    get lastSyncedAt(): Date | undefined;
-    // (undocumented)
-    protected logger: ILogger;
-    // (undocumented)
-    markConnectionMayHaveChanged(): void;
-    // (undocumented)
-    abstract obtainLock<T>(lockOptions: LockOptions_2<T>): Promise<T>;
-    // (undocumented)
-    protected options: AbstractStreamingSyncImplementationOptions;
-    // Warning: (ae-forgotten-export) The symbol "RustIterationResult" needs to be exported by the entry point index.d.ts
-    //
-    // (undocumented)
-    protected streamingSyncIteration(signal: AbortSignal, options?: PowerSyncConnectionOptions): Promise<RustIterationResult | null>;
-    // (undocumented)
-    protected streamingSyncPromise?: Promise<[void, void]>;
-    // (undocumented)
-    syncStatus: SyncStatus;
-    // (undocumented)
-    triggerCrudUpload(): void;
-    // (undocumented)
-    updateSubscriptions(subscriptions: SubscribedStream[]): void;
-    // (undocumented)
-    protected updateSyncStatus(options: SyncStatusOptions): void;
-    // (undocumented)
-    waitForReady(): Promise<void>;
-    // (undocumented)
-    waitForStatus(status: SyncStatusOptions): Promise<void>;
-    // (undocumented)
-    waitUntilStatusMatches(predicate: (status: SyncStatus) => boolean): Promise<void>;
-}
-
-// Warning: (ae-internal-missing-underscore) The name "AbstractStreamingSyncImplementationOptions" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export interface AbstractStreamingSyncImplementationOptions extends RequiredAdditionalConnectionOptions {
-    // (undocumented)
-    adapter: BucketStorageAdapter;
-    identifier?: string;
-    // (undocumented)
-    logger?: ILogger;
-    // (undocumented)
-    remote: AbstractRemote;
-    // (undocumented)
-    subscriptions: SubscribedStream[];
-    // (undocumented)
-    uploadCrud: () => Promise<void>;
-}
-
-// Warning: (ae-internal-missing-underscore) The name "AdditionalConnectionOptions" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export interface AdditionalConnectionOptions {
-    crudUploadThrottleMs?: number;
-    retryDelayMs?: number;
-}
+// @public @deprecated (undocumented)
+export type AbstractPowerSyncDatabase = CommonPowerSyncDatabase;
 
 // @public
 export class ArrayComparator<ItemType> implements WatchedQueryComparator<ItemType[]> {
@@ -387,11 +47,11 @@ export const ATTACHMENT_TABLE_COLUMNS: {
 
 // @alpha
 export class AttachmentContext {
-    constructor(db: AbstractPowerSyncDatabase, tableName: string | undefined, logger: ILogger, archivedCacheLimit: number);
+    constructor(db: CommonPowerSyncDatabase, tableName: string | undefined, logger: PowerSyncLogger, archivedCacheLimit: number);
     readonly archivedCacheLimit: number;
     // (undocumented)
     clearQueue(): Promise<void>;
-    readonly db: AbstractPowerSyncDatabase;
+    readonly db: CommonPowerSyncDatabase;
     // (undocumented)
     deleteArchivedAttachments(callback?: (attachments: AttachmentRecord[]) => Promise<void>): Promise<boolean>;
     deleteAttachment(attachmentId: string): Promise<void>;
@@ -400,7 +60,7 @@ export class AttachmentContext {
     // (undocumented)
     getAttachment(id: string): Promise<AttachmentRecord | undefined>;
     getAttachments(): Promise<AttachmentRecord[]>;
-    readonly logger: ILogger;
+    readonly logger: PowerSyncLogger;
     saveAttachments(attachments: AttachmentRecord[]): Promise<void>;
     readonly tableName: string;
     upsertAttachment(attachment: AttachmentRecord, context: Transaction): Promise<void>;
@@ -435,7 +95,7 @@ export class AttachmentQueue {
     expireCache(): Promise<void>;
     generateAttachmentId(): Promise<string>;
     readonly localStorage: LocalStorageAdapter;
-    readonly logger: ILogger;
+    readonly logger: PowerSyncLogger;
     readonly remoteStorage: RemoteStorageAdapter;
     saveFile(input: {
         data: AttachmentData;
@@ -449,7 +109,7 @@ export class AttachmentQueue {
     stopSync(): Promise<void>;
     readonly syncIntervalMs: number;
     syncStorage(): Promise<void>;
-    readonly syncThrottleDuration: number;
+    readonly syncThrottleDuration?: number;
     readonly tableName: string;
     verifyAttachments(): Promise<void>;
     withAttachmentContext<T>(callback: (context: AttachmentContext) => Promise<T>): Promise<T>;
@@ -458,11 +118,11 @@ export class AttachmentQueue {
 // @alpha
 export interface AttachmentQueueOptions {
     archivedCacheLimit?: number;
-    db: AbstractPowerSyncDatabase;
+    db: CommonPowerSyncDatabase;
     downloadAttachments?: boolean;
     errorHandler?: AttachmentErrorHandler;
     localStorage: LocalStorageAdapter;
-    logger?: ILogger;
+    logger?: PowerSyncLogger;
     remoteStorage: RemoteStorageAdapter;
     syncIntervalMs?: number;
     syncThrottleDuration?: number;
@@ -492,17 +152,6 @@ export interface AttachmentRecord {
     timestamp?: number;
 }
 
-// Warning: (ae-internal-missing-underscore) The name "AttachmentService" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal
-export class AttachmentService {
-    constructor(db: AbstractPowerSyncDatabase, logger: ILogger, tableName?: string, archivedCacheLimit?: number);
-    watchActiveAttachments(input?: {
-        throttleMs?: number;
-    }): DifferentialWatchedQuery<AttachmentRecord>;
-    withContext<T>(callback: (context: AttachmentContext) => Promise<T>): Promise<T>;
-}
-
 // @alpha
 export enum AttachmentState {
     // (undocumented)
@@ -523,7 +172,7 @@ export class AttachmentTable extends Table<typeof ATTACHMENT_TABLE_COLUMNS> {
 }
 
 // @alpha (undocumented)
-export interface AttachmentTableOptions extends Omit<TableV2Options, 'name' | 'columns'> {
+export interface AttachmentTableOptions extends Omit<TableOptions, 'name' | 'columns'> {
 }
 
 // @alpha
@@ -534,24 +183,19 @@ export type BaseColumnType<T extends number | string | null> = {
     type: ColumnType;
 };
 
-// @public (undocumented)
-export interface BaseConnectionOptions {
-    appMetadata?: Record<string, string>;
-    // @deprecated (undocumented)
-    clientImplementation?: SyncClientImplementation;
-    connectionMethod?: SyncStreamConnectionMethod;
-    fetchStrategy?: FetchStrategy;
-    includeDefaultStreams?: boolean;
-    params?: Record<string, StreamingSyncRequestParameterType>;
-    serializedSchema?: any;
+// @alpha
+export interface BaseCreateDiffTriggerOptions {
+    columns?: string[];
+    hooks?: TriggerCreationHooks;
+    source: string;
+    useStorage?: boolean;
+    when: Partial<Record<DiffTriggerOperation, string>>;
 }
 
 // @public (undocumented)
 export type BaseListener = Record<string, ((...event: any) => any) | undefined>;
 
-// Warning: (ae-internal-missing-underscore) The name "BaseObserver" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
+// @public (undocumented)
 export class BaseObserver<T extends BaseListener = BaseListener> implements BaseObserverInterface<T> {
     constructor();
     // (undocumented)
@@ -571,15 +215,17 @@ export interface BaseObserverInterface<T extends BaseListener> {
     registerListener(listener: Partial<T>): () => void;
 }
 
-// Warning: (ae-incompatible-release-tags) The symbol "BasePowerSyncDatabaseOptions" is marked as @public, but its signature references "AdditionalConnectionOptions" which is marked as @internal
-//
-// @public (undocumented)
-export interface BasePowerSyncDatabaseOptions extends AdditionalConnectionOptions {
+// @public
+export interface BasePowerSyncDatabaseOptions {
     // (undocumented)
-    logger?: ILogger;
-    // @deprecated (undocumented)
-    retryDelay?: number;
+    logger?: PowerSyncLogger;
     schema: Schema;
+}
+
+// @public
+export interface BaseQueryResult {
+    insertId?: number;
+    rowsAffected?: number;
 }
 
 // @alpha
@@ -593,43 +239,7 @@ export interface BaseTriggerDiffRecord<TOperationId extends string | number = nu
 // @public (undocumented)
 export interface BatchedUpdateNotification {
     // (undocumented)
-    groupedUpdates: Record<string, TableUpdateOperation[]>;
-    // (undocumented)
-    rawUpdates: UpdateNotification[];
-    // (undocumented)
     tables: string[];
-}
-
-// Warning: (ae-internal-missing-underscore) The name "BucketStorageAdapter" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export interface BucketStorageAdapter extends BaseObserverInterface<BucketStorageListener>, Disposable_2 {
-    control(op: PowerSyncControlCommand, payload: string | Uint8Array | null): Promise<string>;
-    getClientId(): Promise<string>;
-    // (undocumented)
-    getCrudBatch(limit?: number): Promise<CrudBatch | null>;
-    // (undocumented)
-    getMaxOpId(): string;
-    // (undocumented)
-    hasCrud(): Promise<boolean>;
-    // (undocumented)
-    hasMigratedSubkeys(): Promise<boolean>;
-    // (undocumented)
-    init(): Promise<void>;
-    // (undocumented)
-    migrateToFixedSubkeys(): Promise<void>;
-    // (undocumented)
-    nextCrudItem(): Promise<CrudEntry | undefined>;
-    // (undocumented)
-    updateLocalTarget(cb: () => Promise<string>): Promise<boolean>;
-}
-
-// Warning: (ae-internal-missing-underscore) The name "BucketStorageListener" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export interface BucketStorageListener extends BaseListener {
-    // (undocumented)
-    crudUpdate: () => void;
 }
 
 // @public (undocumented)
@@ -677,6 +287,61 @@ export enum ColumnType {
 }
 
 // @public (undocumented)
+export interface CommonPowerSyncDatabase extends BaseObserverInterface<PowerSyncDBListener>, SqlExecutor, DBGetUtils {
+    close(options?: PowerSyncCloseOptions): Promise<void>;
+    readonly closed: boolean;
+    connect(connector: PowerSyncBackendConnector, options?: SyncOptions): Promise<void>;
+    get connected(): boolean;
+    // (undocumented)
+    get connecting(): boolean;
+    // @internal (undocumented)
+    createMutex(): Mutex;
+    readonly currentStatus: SyncStatus;
+    customQuery<RowType>(query: WatchCompatibleQuery<RowType[]>): Query<RowType>;
+    get database(): DBAdapter;
+    disconnect(): Promise<void>;
+    disconnectAndClear(options?: DisconnectAndClearOptions): Promise<void>;
+    getClientId(): Promise<string>;
+    getCrudBatch(limit?: number): Promise<CrudBatch | null>;
+    getCrudTransactions(): AsyncIterable<CrudTransaction, null>;
+    getNextCrudTransaction(): Promise<CrudTransaction | null>;
+    getUploadQueueStats(includeSize?: boolean): Promise<UploadQueueStats>;
+    init(): Promise<void>;
+    // (undocumented)
+    readonly logger: PowerSyncLogger;
+    onChange(options?: SQLOnChangeOptions): AsyncIterable<WatchOnChangeEvent>;
+    onChange(handler?: WatchOnChangeHandler, options?: SQLOnChangeOptions): () => void;
+    onChangeWithAsyncGenerator(options?: SQLWatchOptions): AsyncIterable<WatchOnChangeEvent>;
+    onChangeWithCallback(handler?: WatchOnChangeHandler, options?: SQLOnChangeOptions): () => void;
+    query<RowType>(query: ArrayQueryDefinition<RowType>): Query<RowType>;
+    readLock<T>(callback: (db: LockContext) => Promise<T>): Promise<T>;
+    readTransaction<T>(callback: (tx: Transaction) => Promise<T>, lockTimeout?: number): Promise<T>;
+    // (undocumented)
+    readonly ready: boolean;
+    resolveTables(sql: string, parameters?: any[], options?: SQLWatchOptions): Promise<string[]>;
+    readonly schema: Schema;
+    // (undocumented)
+    readonly sdkVersion: string;
+    syncStream(name: string, params?: Record<string, any>): SyncStream;
+    // @alpha
+    readonly triggers: TriggerManager;
+    updateSchema(schema: Schema): Promise<void>;
+    waitForFirstSync(request?: AbortSignal | {
+        signal?: AbortSignal;
+        priority?: number;
+    }): Promise<void>;
+    // (undocumented)
+    waitForReady(): Promise<void>;
+    waitForStatus(predicate: (status: SyncStatus) => any, signal?: AbortSignal): Promise<void>;
+    watch(sql: string, parameters?: any[], options?: SQLWatchOptions): AsyncIterable<QueryResult>;
+    watch(sql: string, parameters?: any[], handler?: WatchHandler, options?: SQLWatchOptions): void;
+    watchWithAsyncGenerator(sql: string, parameters?: any[], options?: SQLWatchOptions): AsyncIterable<QueryResult>;
+    watchWithCallback(sql: string, parameters?: any[], handler?: WatchHandler, options?: SQLWatchOptions): void;
+    writeLock<T>(callback: (db: LockContext) => Promise<T>): Promise<T>;
+    writeTransaction<T>(callback: (tx: Transaction) => Promise<T>, lockTimeout?: number): Promise<T>;
+}
+
+// @public (undocumented)
 export interface CompilableQuery<T> {
     // (undocumented)
     compile(): CompiledQuery;
@@ -685,7 +350,7 @@ export interface CompilableQuery<T> {
 }
 
 // @public (undocumented)
-export function compilableQueryWatch<T>(db: AbstractPowerSyncDatabase, query: CompilableQuery<T>, handler: CompilableQueryWatchHandler<T>, options?: SQLWatchOptions): void;
+export function compilableQueryWatch<T>(db: CommonPowerSyncDatabase, query: CompilableQuery<T>, handler: CompilableQueryWatchHandler<T>, options?: SQLWatchOptions): void;
 
 // @public (undocumented)
 export interface CompilableQueryWatchHandler<T> {
@@ -703,141 +368,19 @@ export interface CompiledQuery {
     readonly sql: string;
 }
 
-// Warning: (ae-internal-missing-underscore) The name "ConnectionClosedError" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal
-export class ConnectionClosedError extends Error {
-    constructor(message: string);
-    // (undocumented)
-    static MATCHES(input: any): boolean;
-    // (undocumented)
-    static NAME: string;
-}
-
-// Warning: (ae-internal-missing-underscore) The name "ConnectionManager" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
-    constructor(options: ConnectionManagerOptions);
-    get activeStreams(): {
-        name: string;
-        params: Record<string, any> | null;
-    }[];
-    // (undocumented)
-    close(): Promise<void>;
-    // (undocumented)
-    connect(connector: PowerSyncBackendConnector, options: InternalConnectionOptions): Promise<void>;
-    protected connectingPromise: Promise<void> | null;
-    // (undocumented)
-    protected connectInternal(): Promise<void>;
-    // (undocumented)
-    get connectionOptions(): InternalConnectionOptions | null;
-    // (undocumented)
-    get connector(): PowerSyncBackendConnector | null;
-    disconnect(): Promise<void>;
-    protected disconnectingPromise: Promise<void> | null;
-    // (undocumented)
-    protected disconnectInternal(): Promise<void>;
-    // (undocumented)
-    get logger(): ILogger;
-    // (undocumented)
-    protected options: ConnectionManagerOptions;
-    // Warning: (ae-forgotten-export) The symbol "StoredConnectionOptions" needs to be exported by the entry point index.d.ts
-    protected pendingConnectionOptions: StoredConnectionOptions | null;
-    // (undocumented)
-    protected performDisconnect(): Promise<void>;
-    // (undocumented)
-    stream(adapter: InternalSubscriptionAdapter, name: string, parameters: Record<string, any> | null): SyncStream;
-    protected syncDisposer: (() => Promise<void> | void) | null;
-    // (undocumented)
-    syncStreamImplementation: StreamingSyncImplementation | null;
-    protected syncStreamInitPromise: Promise<void> | null;
-}
-
-// Warning: (ae-internal-missing-underscore) The name "ConnectionManagerListener" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export interface ConnectionManagerListener extends BaseListener {
-    // (undocumented)
-    syncStreamCreated: (sync: StreamingSyncImplementation) => void;
-}
-
-// Warning: (ae-internal-missing-underscore) The name "ConnectionManagerOptions" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export interface ConnectionManagerOptions {
-    // (undocumented)
-    createSyncImplementation(connector: PowerSyncBackendConnector, options: CreateSyncImplementationOptions): Promise<ConnectionManagerSyncImplementationResult>;
-    // (undocumented)
-    logger: ILogger;
-}
-
-// Warning: (ae-internal-missing-underscore) The name "ConnectionManagerSyncImplementationResult" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export interface ConnectionManagerSyncImplementationResult {
-    onDispose: () => Promise<void> | void;
-    // (undocumented)
-    sync: StreamingSyncImplementation;
-}
-
-// @public (undocumented)
-export interface ConnectionPool extends BaseObserverInterface<DBAdapterListener> {
-    // (undocumented)
-    close: () => void | Promise<void>;
-    // (undocumented)
-    name: string;
-    // (undocumented)
-    readLock: <T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions) => Promise<T>;
-    refreshSchema: () => Promise<void>;
-    // (undocumented)
-    writeLock: <T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions) => Promise<T>;
-}
-
-// Warning: (ae-internal-missing-underscore) The name "ControlledExecutor" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export class ControlledExecutor<T> {
-    constructor(task: (param: T) => Promise<void> | void, options?: ControlledExecutorOptions);
-    // (undocumented)
-    dispose(): void;
-    // (undocumented)
-    schedule(param: T): void;
-}
-
-// Warning: (ae-internal-missing-underscore) The name "ControlledExecutorOptions" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export interface ControlledExecutorOptions {
-    throttleEnabled?: boolean;
-}
-
 // @public
-export function createBaseLogger(): typeof Logger;
+export function createConsoleLogger(options?: Partial<CreateLoggerOptions>): PowerSyncLogger & CreateLoggerOptions;
 
-// Warning: (ae-forgotten-export) The symbol "BaseCreateDiffTriggerOptions" needs to be exported by the entry point index.d.ts
-//
 // @alpha
 export interface CreateDiffTriggerOptions extends BaseCreateDiffTriggerOptions {
     destination: string;
     setupContext?: LockContext;
 }
 
-// @public
-export function createLogger(name: string, options?: CreateLoggerOptions): ILogger;
-
 // @public (undocumented)
 export interface CreateLoggerOptions {
-    // (undocumented)
-    logLevel?: ILogLevel;
-}
-
-// Warning: (ae-internal-missing-underscore) The name "CreateSyncImplementationOptions" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal
-export interface CreateSyncImplementationOptions extends AdditionalConnectionOptions {
-    // (undocumented)
-    subscriptions: SubscribedStream[];
+    minLevel: number;
+    prefix: string;
 }
 
 // @public
@@ -852,26 +395,18 @@ export class CrudBatch {
 }
 
 // @public
-export class CrudEntry {
-    constructor(clientId: number, op: UpdateType, table: string, id: string, transactionId?: number, opData?: Record<string, any>, previousValues?: Record<string, any>, metadata?: string);
+export interface CrudEntry {
     clientId: number;
     // (undocumented)
     equals(entry: CrudEntry): boolean;
-    // Warning: (ae-forgotten-export) The symbol "CrudEntryJSON" needs to be exported by the entry point index.d.ts
-    //
-    // (undocumented)
-    static fromRow(dbRow: CrudEntryJSON): CrudEntry;
-    // @deprecated
-    hashCode(): string;
     id: string;
     metadata?: string;
     op: UpdateType;
     opData?: Record<string, any>;
     previousValues?: Record<string, any>;
     table: string;
-    toComparisonArray(): (string | number | Record<string, any> | undefined)[];
-    // Warning: (ae-forgotten-export) The symbol "CrudEntryOutputJSON" needs to be exported by the entry point index.d.ts
-    toJSON(): CrudEntryOutputJSON;
+    toComparisonArray(): unknown[];
+    toJSON(): unknown;
     transactionId?: number;
 }
 
@@ -886,39 +421,47 @@ export class CrudTransaction extends CrudBatch {
     transactionId?: number | undefined;
 }
 
-// @public (undocumented)
-export interface DBAdapter extends ConnectionPool, SqlExecutor, DBGetUtils {
-    // (undocumented)
-    readTransaction: <T>(fn: (tx: Transaction) => Promise<T>, options?: DBLockOptions) => Promise<T>;
-    // (undocumented)
-    writeTransaction: <T>(fn: (tx: Transaction) => Promise<T>, options?: DBLockOptions) => Promise<T>;
-}
+// @public
+export type DatabaseSource<OpenOptions extends SQLOpenOptions = SQLOpenOptions> = {
+    opened: DBAdapter;
+} | {
+    factory: SQLOpenFactory;
+} | {
+    database: OpenOptions;
+};
 
-// Warning: (ae-internal-missing-underscore) The name "DBAdapterDefaultMixin" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal
-export function DBAdapterDefaultMixin<TBase extends new (...args: any[]) => ConnectionPool>(Base: TBase): {
-    new (...args: any[]): {
-        readTransaction<T>(fn: (tx: Transaction) => Promise<T>, options?: DBLockOptions): Promise<T>;
-        writeTransaction<T>(fn: (tx: Transaction) => Promise<T>, options?: DBLockOptions): Promise<T>;
-        getAll<T>(sql: string, parameters?: any[]): Promise<T[]>;
-        getOptional<T>(sql: string, parameters?: any[]): Promise<T | null>;
-        get<T>(sql: string, parameters?: any[]): Promise<T>;
-        execute(query: string, params?: any[]): Promise<QueryResult>;
-        executeRaw(query: string, params?: any[]): Promise<any[][]>;
-        executeBatch(query: string, params?: any[][]): Promise<QueryResult>;
-        name: string;
-        close: () => void | Promise<void>;
-        readLock: <T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions) => Promise<T>;
-        writeLock: <T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions) => Promise<T>;
-        refreshSchema: () => Promise<void>;
-        registerListener(listener: Partial<DBAdapterListener>): () => void;
-    };
-} & TBase;
+// @public (undocumented)
+export abstract class DBAdapter extends BaseObserver<DBAdapterListener> implements SqlExecutor, DBGetUtils {
+    // (undocumented)
+    abstract close(): void | Promise<void>;
+    // (undocumented)
+    execute<T>(query: string, params?: any[]): Promise<QueryResult<T>>;
+    // (undocumented)
+    executeBatch(query: string, params?: any[][]): Promise<QueryResult<never>>;
+    // (undocumented)
+    executeRaw(query: string, params?: any[]): Promise<RawQueryResult>;
+    // (undocumented)
+    get<T>(sql: string, parameters?: any[]): Promise<T>;
+    // (undocumented)
+    getAll<T>(sql: string, parameters?: any[]): Promise<T[]>;
+    // (undocumented)
+    getOptional<T>(sql: string, parameters?: any[]): Promise<T | null>;
+    // (undocumented)
+    abstract get name(): string;
+    // (undocumented)
+    abstract readLock<T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions): Promise<T>;
+    // (undocumented)
+    readTransaction<T>(fn: (tx: Transaction) => Promise<T>, options?: DBLockOptions): Promise<T>;
+    abstract refreshSchema(): Promise<void>;
+    // (undocumented)
+    abstract writeLock<T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions): Promise<T>;
+    // (undocumented)
+    writeTransaction<T>(fn: (tx: Transaction) => Promise<T>, options?: DBLockOptions): Promise<T>;
+}
 
 // @public (undocumented)
 export interface DBAdapterListener extends BaseListener {
-    tablesUpdated: (updateNotification: BatchedUpdateNotification | UpdateNotification) => void;
+    tablesUpdated: (updateNotification: BatchedUpdateNotification) => void;
 }
 
 // @public (undocumented)
@@ -928,149 +471,10 @@ export interface DBGetUtils {
     getOptional<T>(sql: string, parameters?: any[]): Promise<T | null>;
 }
 
-// Warning: (ae-internal-missing-underscore) The name "DBGetUtilsDefaultMixin" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal
-export function DBGetUtilsDefaultMixin<TBase extends new (...args: any[]) => Omit<SqlExecutor, 'executeBatch'>>(Base: TBase): {
-    new (...args: any[]): {
-        getAll<T>(sql: string, parameters?: any[]): Promise<T[]>;
-        getOptional<T>(sql: string, parameters?: any[]): Promise<T | null>;
-        get<T>(sql: string, parameters?: any[]): Promise<T>;
-        executeBatch(query: string, params?: any[][]): Promise<QueryResult>;
-        execute: (query: string, params?: any[] | undefined) => Promise<QueryResult>;
-        executeRaw: (query: string, params?: any[] | undefined) => Promise<any[][]>;
-    };
-} & TBase;
-
 // @public (undocumented)
 export interface DBLockOptions {
     // (undocumented)
     timeoutMs?: number;
-}
-
-// Warning: (ae-internal-missing-underscore) The name "DEFAULT_CRUD_BATCH_LIMIT" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export const DEFAULT_CRUD_BATCH_LIMIT = 100;
-
-// Warning: (ae-internal-missing-underscore) The name "DEFAULT_CRUD_UPLOAD_THROTTLE_MS" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export const DEFAULT_CRUD_UPLOAD_THROTTLE_MS = 1000;
-
-// Warning: (ae-internal-missing-underscore) The name "DEFAULT_INDEX_COLUMN_OPTIONS" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export const DEFAULT_INDEX_COLUMN_OPTIONS: Partial<IndexColumnOptions>;
-
-// Warning: (ae-internal-missing-underscore) The name "DEFAULT_INDEX_OPTIONS" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export const DEFAULT_INDEX_OPTIONS: Partial<IndexOptions>;
-
-// Warning: (ae-internal-missing-underscore) The name "DEFAULT_LOCK_TIMEOUT_MS" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal
-export const DEFAULT_LOCK_TIMEOUT_MS = 120000;
-
-// Warning: (ae-internal-missing-underscore) The name "DEFAULT_POWERSYNC_CLOSE_OPTIONS" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export const DEFAULT_POWERSYNC_CLOSE_OPTIONS: PowerSyncCloseOptions;
-
-// Warning: (ae-internal-missing-underscore) The name "DEFAULT_POWERSYNC_DB_OPTIONS" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export const DEFAULT_POWERSYNC_DB_OPTIONS: {
-    retryDelayMs: number;
-    crudUploadThrottleMs: number;
-};
-
-// Warning: (ae-internal-missing-underscore) The name "DEFAULT_REMOTE_LOGGER" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export const DEFAULT_REMOTE_LOGGER: Logger.ILogger;
-
-// Warning: (ae-internal-missing-underscore) The name "DEFAULT_REMOTE_OPTIONS" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export const DEFAULT_REMOTE_OPTIONS: AbstractRemoteOptions;
-
-// Warning: (ae-internal-missing-underscore) The name "DEFAULT_RETRY_DELAY_MS" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export const DEFAULT_RETRY_DELAY_MS = 5000;
-
-// Warning: (ae-internal-missing-underscore) The name "DEFAULT_ROW_COMPARATOR" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal
-export const DEFAULT_ROW_COMPARATOR: DifferentialWatchedQueryComparator<any>;
-
-// Warning: (ae-internal-missing-underscore) The name "DEFAULT_STREAM_CONNECTION_OPTIONS" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export const DEFAULT_STREAM_CONNECTION_OPTIONS: RequiredPowerSyncConnectionOptions;
-
-// Warning: (ae-internal-missing-underscore) The name "DEFAULT_STREAMING_SYNC_OPTIONS" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export const DEFAULT_STREAMING_SYNC_OPTIONS: {
-    retryDelayMs: number;
-    crudUploadThrottleMs: number;
-};
-
-// @public @deprecated
-export const DEFAULT_SYNC_CLIENT_IMPLEMENTATION = SyncClientImplementation.RUST;
-
-// Warning: (ae-internal-missing-underscore) The name "DEFAULT_TABLE_OPTIONS" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export const DEFAULT_TABLE_OPTIONS: {
-    indexes: never[];
-    insertOnly: boolean;
-    localOnly: boolean;
-    trackPrevious: boolean;
-    trackMetadata: boolean;
-    ignoreEmptyUpdates: boolean;
-};
-
-// Warning: (ae-internal-missing-underscore) The name "DEFAULT_WATCH_QUERY_OPTIONS" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export const DEFAULT_WATCH_QUERY_OPTIONS: WatchedQueryOptions;
-
-// Warning: (ae-internal-missing-underscore) The name "DEFAULT_WATCH_THROTTLE_MS" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export const DEFAULT_WATCH_THROTTLE_MS = 30;
-
-// Warning: (ae-internal-missing-underscore) The name "DifferentialQueryProcessor" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal
-export class DifferentialQueryProcessor<RowType> extends AbstractQueryProcessor<ReadonlyArray<Readonly<RowType>>, DifferentialWatchedQuerySettings<RowType>> implements DifferentialWatchedQuery<RowType> {
-    constructor(options: DifferentialQueryProcessorOptions<RowType>);
-    // (undocumented)
-    protected comparator: DifferentialWatchedQueryComparator<RowType>;
-    // Warning: (ae-forgotten-export) The symbol "DataHashMap" needs to be exported by the entry point index.d.ts
-    //
-    // (undocumented)
-    protected differentiate(current: RowType[], previousMap: DataHashMap<RowType>): {
-        diff: WatchedQueryDifferential<RowType>;
-        map: DataHashMap<RowType>;
-        hasChanged: boolean;
-    };
-    // (undocumented)
-    protected linkQuery(options: LinkQueryOptions<WatchedQueryDifferential<RowType>>): Promise<void>;
-    // (undocumented)
-    protected options: DifferentialQueryProcessorOptions<RowType>;
-}
-
-// Warning: (ae-internal-missing-underscore) The name "DifferentialQueryProcessorOptions" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export interface DifferentialQueryProcessorOptions<RowType> extends AbstractQueryProcessorOptions<RowType[], DifferentialWatchedQuerySettings<RowType>> {
-    // (undocumented)
-    rowComparator?: DifferentialWatchedQueryComparator<RowType>;
 }
 
 // @public (undocumented)
@@ -1121,17 +525,6 @@ interface Disposable_2 {
 }
 export { Disposable_2 as Disposable }
 
-// Warning: (ae-internal-missing-underscore) The name "EMPTY_DIFFERENTIAL" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal
-export const EMPTY_DIFFERENTIAL: {
-    added: never[];
-    all: never[];
-    removed: never[];
-    updated: never[];
-    unchanged: never[];
-};
-
 // @alpha (undocumented)
 export enum EncodingType {
     // (undocumented)
@@ -1150,26 +543,8 @@ export type ExtractedTriggerDiffRecord<T, TOperationId extends string | number =
     __previous_value?: string;
 };
 
-// Warning: (ae-internal-missing-underscore) The name "extractTableUpdates" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export function extractTableUpdates(update: BatchedUpdateNotification | UpdateNotification): string[];
-
 // @public
 export const FalsyComparator: WatchedQueryComparator<unknown>;
-
-// Warning: (ae-internal-missing-underscore) The name "FetchImplementation" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export type FetchImplementation = typeof fetch_2;
-
-// Warning: (ae-internal-missing-underscore) The name "FetchImplementationProvider" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal
-export class FetchImplementationProvider {
-    // (undocumented)
-    getFetch(): FetchImplementation;
-}
 
 // @public (undocumented)
 export enum FetchStrategy {
@@ -1184,7 +559,7 @@ export class GetAllQuery<RowType = unknown> implements WatchCompatibleQuery<RowT
     compile(): CompiledQuery;
     // (undocumented)
     execute(options: {
-        db: AbstractPowerSyncDatabase;
+        db: CommonPowerSyncDatabase;
     }): Promise<RowType[]>;
     // (undocumented)
     protected options: GetAllQueryOptions<RowType>;
@@ -1196,16 +571,6 @@ export type GetAllQueryOptions<RowType = unknown> = {
     parameters?: ReadonlyArray<unknown>;
     mapper?: (rawRow: Record<string, unknown>) => RowType;
 };
-
-export { GlobalLogger }
-
-export { ILogger }
-
-export { ILoggerOpts }
-
-export { ILogHandler }
-
-export { ILogLevel }
 
 // @public (undocumented)
 export class Index {
@@ -1219,7 +584,7 @@ export class Index {
     // (undocumented)
     protected options: IndexOptions;
     // (undocumented)
-    toJSON(table: Table): {
+    toJSON(table: ResolvedTable): {
         name: string;
         columns: {
             name: string;
@@ -1249,7 +614,7 @@ export class IndexedColumn {
     // (undocumented)
     protected options: IndexColumnOptions;
     // (undocumented)
-    toJSON(table: Table): {
+    toJSON(table: ResolvedTable): {
         name: string;
         ascending: boolean | undefined;
         type: ColumnType;
@@ -1265,64 +630,17 @@ export interface IndexOptions {
 }
 
 // @public (undocumented)
-export type IndexShorthand = Record<string, string[]>;
+export type IndexShorthand = Record<string, (string | IndexedColumn)[]>;
 
-// Warning: (ae-internal-missing-underscore) The name "InternalConnectionOptions" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export interface InternalConnectionOptions extends BaseConnectionOptions, AdditionalConnectionOptions {
-}
+// @public
+export type ListenerCounts<Listener extends BaseListener> = Partial<Record<keyof Listener, number>> & {
+    total: number;
+};
 
-// Warning: (ae-internal-missing-underscore) The name "InternalSubscriptionAdapter" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export interface InternalSubscriptionAdapter {
+// @public (undocumented)
+export interface ListenerMetaManager<Listener extends BaseListener> extends BaseObserverInterface<MetaListener<Listener>> {
     // (undocumented)
-    firstStatusMatching(predicate: (status: SyncStatus) => any, abort?: AbortSignal): Promise<void>;
-    // (undocumented)
-    resolveOfflineSyncStatus(): Promise<void>;
-    // (undocumented)
-    rustSubscriptionsCommand(payload: any): Promise<void>;
-}
-
-// Warning: (ae-internal-missing-underscore) The name "InvalidSQLCharacters" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export const InvalidSQLCharacters: RegExp;
-
-// Warning: (ae-internal-missing-underscore) The name "isBatchedUpdateNotification" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export function isBatchedUpdateNotification(update: BatchedUpdateNotification | UpdateNotification): update is BatchedUpdateNotification;
-
-// Warning: (ae-internal-missing-underscore) The name "isDBAdapter" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal
-export const isDBAdapter: (test: any) => test is DBAdapter;
-
-// Warning: (ae-internal-missing-underscore) The name "isPowerSyncDatabaseOptionsWithSettings" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal
-export const isPowerSyncDatabaseOptionsWithSettings: (test: any) => test is PowerSyncDatabaseOptionsWithSettings;
-
-// Warning: (ae-internal-missing-underscore) The name "isSQLOpenFactory" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal
-export const isSQLOpenFactory: (test: any) => test is SQLOpenFactory;
-
-// Warning: (ae-internal-missing-underscore) The name "isSQLOpenOptions" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal
-export const isSQLOpenOptions: (test: any) => test is SQLOpenOptions;
-
-// Warning: (ae-internal-missing-underscore) The name "LinkQueryOptions" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export interface LinkQueryOptions<Data, Settings extends WatchedQueryOptions = WatchedQueryOptions> {
-    // (undocumented)
-    abortSignal: AbortSignal;
-    // (undocumented)
-    settings: Settings;
+    counts: ListenerCounts<Listener>;
 }
 
 // @alpha
@@ -1339,115 +657,59 @@ export interface LocalStorageAdapter {
 }
 
 // @public (undocumented)
-export interface LockContext extends SqlExecutor, DBGetUtils {
-    connectionType?: 'writer' | 'queryOnly' | 'readOnly';
-}
-
-// @internal
-interface LockOptions_2<T> {
+export abstract class LockContext implements SqlExecutor, DBGetUtils {
     // (undocumented)
-    callback: () => Promise<T>;
+    execute<T = SqliteRecord>(query: string, params?: any[] | undefined): Promise<QueryResult<T>>;
     // (undocumented)
-    signal?: AbortSignal;
+    executeBatch(query: string, params?: any[][]): Promise<QueryResult<never>>;
     // (undocumented)
-    type: LockType;
-}
-
-// Warning: (ae-internal-missing-underscore) The name "LockOptions" should be prefixed with an underscore because the declaration is marked as @internal
-export { LockOptions_2 as LockOptions }
-
-// Warning: (ae-internal-missing-underscore) The name "LockType" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export enum LockType {
+    abstract executeRaw<T>(query: string, params?: any[] | undefined): Promise<RawQueryResult>;
     // (undocumented)
-    CRUD = "crud",
+    get<T>(sql: string, parameters?: any[]): Promise<T>;
     // (undocumented)
-    SYNC = "sync"
+    getAll<T>(sql: string, parameters?: any[]): Promise<T[]>;
+    // (undocumented)
+    getOptional<T>(sql: string, parameters?: any[]): Promise<T | null>;
 }
 
 // @public (undocumented)
-export const LogLevel: {
-    TRACE: Logger.ILogLevel;
-    DEBUG: Logger.ILogLevel;
-    INFO: Logger.ILogLevel;
-    TIME: Logger.ILogLevel;
-    WARN: Logger.ILogLevel;
-    ERROR: Logger.ILogLevel;
-    OFF: Logger.ILogLevel;
+export const LogLevels: {
+    readonly trace: 10;
+    readonly debug: 20;
+    readonly info: 30;
+    readonly warn: 40;
+    readonly error: 50;
 };
 
-// Warning: (ae-internal-missing-underscore) The name "MAX_AMOUNT_OF_COLUMNS" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal
-export const MAX_AMOUNT_OF_COLUMNS = 1999;
+// @public
+export interface LogRecord {
+    error?: unknown;
+    level: number;
+    message: string;
+}
 
-// Warning: (ae-internal-missing-underscore) The name "MAX_OP_ID" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export const MAX_OP_ID = "9223372036854775807";
+// @public (undocumented)
+export interface MetaBaseObserverInterface<Listener extends BaseListener> extends BaseObserverInterface<Listener> {
+    // (undocumented)
+    listenerMeta: ListenerMetaManager<Listener>;
+}
 
-// Warning: (ae-internal-missing-underscore) The name "MEMORY_TRIGGER_CLAIM_MANAGER" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export const MEMORY_TRIGGER_CLAIM_MANAGER: TriggerClaimManager;
-
-// Warning: (ae-forgotten-export) The symbol "MutableDeep" needs to be exported by the entry point index.d.ts
-// Warning: (ae-internal-missing-underscore) The name "MutableWatchedQueryState" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal
-export type MutableWatchedQueryState<Data> = {
-    -readonly [P in keyof WatchedQueryState<Data>]: MutableDeep<WatchedQueryState<Data>[P]>;
-};
+// @public
+export interface MetaListener<ParentListener extends BaseListener> extends BaseListener {
+    // (undocumented)
+    listenersChanged?: (counts: ListenerCounts<ParentListener>) => void;
+}
 
 // Warning: (ae-internal-missing-underscore) The name "Mutex" should be prefixed with an underscore because the declaration is marked as @internal
 //
 // @internal
-export class Mutex {
-    // (undocumented)
-    acquire(abort?: AbortSignal): Promise<UnlockFn>;
+export interface Mutex {
     // (undocumented)
     runExclusive<T>(fn: () => PromiseLike<T> | T, abort?: AbortSignal): Promise<T>;
 }
 
-// Warning: (ae-internal-missing-underscore) The name "OnChangeQueryProcessor" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal
-export class OnChangeQueryProcessor<Data> extends AbstractQueryProcessor<Data, WatchedQuerySettings<Data>> {
-    constructor(options: OnChangeQueryProcessorOptions<Data>);
-    // (undocumented)
-    protected checkEquality(current: Data, previous: Data): boolean;
-    // (undocumented)
-    protected linkQuery(options: LinkQueryOptions<Data>): Promise<void>;
-    // (undocumented)
-    protected options: OnChangeQueryProcessorOptions<Data>;
-}
-
-// Warning: (ae-internal-missing-underscore) The name "OnChangeQueryProcessorOptions" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export interface OnChangeQueryProcessorOptions<Data> extends AbstractQueryProcessorOptions<Data, WatchedQuerySettings<Data>> {
-    // (undocumented)
-    comparator?: WatchedQueryComparator<Data>;
-}
-
 // @public
 export type OpId = string;
-
-// Warning: (ae-internal-missing-underscore) The name "ParsedQuery" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export interface ParsedQuery {
-    // (undocumented)
-    parameters: any[];
-    // (undocumented)
-    sqlStatement: string;
-}
-
-// Warning: (ae-internal-missing-underscore) The name "parseQuery" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export const parseQuery: <T>(query: string | CompilableQuery<T>, parameters: any[]) => ParsedQuery;
 
 // @public
 export type PendingStatement = {
@@ -1463,38 +725,12 @@ export type PendingStatementParameter = 'Id' | {
 // @public (undocumented)
 export interface PowerSyncBackendConnector {
     fetchCredentials: () => Promise<PowerSyncCredentials | null>;
-    uploadData: (database: AbstractPowerSyncDatabase) => Promise<void>;
+    uploadData: (database: CommonPowerSyncDatabase) => Promise<void>;
 }
 
 // @public (undocumented)
 export interface PowerSyncCloseOptions {
     disconnect?: boolean;
-}
-
-// Warning: (ae-incompatible-release-tags) The symbol "PowerSyncConnectionOptions" is marked as @public, but its signature references "InternalConnectionOptions" which is marked as @internal
-//
-// @public
-export type PowerSyncConnectionOptions = Omit<InternalConnectionOptions, 'serializedSchema'>;
-
-// Warning: (ae-internal-missing-underscore) The name "PowerSyncControlCommand" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export enum PowerSyncControlCommand {
-    CONNECTION_STATE = "connection",
-    // (undocumented)
-    NOTIFY_CRUD_UPLOAD_COMPLETED = "completed_upload",
-    // (undocumented)
-    NOTIFY_TOKEN_REFRESHED = "refreshed_token",
-    // (undocumented)
-    PROCESS_BSON_LINE = "line_binary",
-    // (undocumented)
-    PROCESS_TEXT_LINE = "line_text",
-    // (undocumented)
-    START = "start",
-    // (undocumented)
-    STOP = "stop",
-    // (undocumented)
-    UPDATE_SUBSCRIPTIONS = "update_subscriptions"
 }
 
 // @public (undocumented)
@@ -1508,32 +744,16 @@ export interface PowerSyncCredentials {
 }
 
 // @public (undocumented)
-export interface PowerSyncDatabaseOptions extends BasePowerSyncDatabaseOptions {
-    database: DBAdapter | SQLOpenFactory | SQLOpenOptions;
-}
-
-// @public (undocumented)
-export interface PowerSyncDatabaseOptionsWithDBAdapter extends BasePowerSyncDatabaseOptions {
+export interface PowerSyncDatabaseConstructor<Options> {
     // (undocumented)
-    database: DBAdapter;
+    new (options: Options): CommonPowerSyncDatabase;
 }
 
 // @public (undocumented)
-export interface PowerSyncDatabaseOptionsWithOpenFactory extends BasePowerSyncDatabaseOptions {
-    // (undocumented)
-    database: SQLOpenFactory;
-}
+export type PowerSyncDatabaseOptions = BasePowerSyncDatabaseOptions & DatabaseSource;
 
 // @public (undocumented)
-export interface PowerSyncDatabaseOptionsWithSettings extends BasePowerSyncDatabaseOptions {
-    // (undocumented)
-    database: SQLOpenOptions;
-}
-
-// Warning: (ae-incompatible-release-tags) The symbol "PowerSyncDBListener" is marked as @public, but its signature references "StreamingSyncImplementationListener" which is marked as @internal
-//
-// @public (undocumented)
-export interface PowerSyncDBListener extends StreamingSyncImplementationListener {
+export interface PowerSyncDBListener extends BaseListener {
     // (undocumented)
     closed: () => Promise<void> | void;
     // (undocumented)
@@ -1542,13 +762,14 @@ export interface PowerSyncDBListener extends StreamingSyncImplementationListener
     initialized: () => void;
     // (undocumented)
     schemaChanged: (schema: Schema) => void;
+    // (undocumented)
+    statusChanged?: (status: SyncStatus) => void;
 }
 
-// Warning: (ae-internal-missing-underscore) The name "PowerSyncOpenFactoryOptions" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export interface PowerSyncOpenFactoryOptions extends Partial<PowerSyncDatabaseOptions>, SQLOpenOptions {
-    schema: Schema;
+// @public
+export interface PowerSyncLogger {
+    // (undocumented)
+    log(record: LogRecord): void;
 }
 
 // @public
@@ -1556,22 +777,6 @@ export interface ProgressWithOperations {
     downloadedFraction: number;
     downloadedOperations: number;
     totalOperations: number;
-}
-
-// Warning: (ae-internal-missing-underscore) The name "PSInternalTable" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export enum PSInternalTable {
-    // (undocumented)
-    BUCKETS = "ps_buckets",
-    // (undocumented)
-    CRUD = "ps_crud",
-    // (undocumented)
-    DATA = "ps_data",
-    // (undocumented)
-    OPLOG = "ps_oplog",
-    // (undocumented)
-    UNTYPED = "ps_untyped"
 }
 
 // @public (undocumented)
@@ -1584,29 +789,31 @@ export interface Query<RowType> {
 export type QueryParam = string | number | boolean | null | undefined | bigint | Uint8Array;
 
 // @public
-export type QueryResult = {
-    insertId?: number;
-    rowsAffected: number;
-    rows?: {
-        _array: any[];
-        length: number;
-        item: (idx: number) => any;
-    };
-};
+export interface QueryResult<T = SqliteRecord> extends BaseQueryResult, Iterable<T, undefined> {
+    array: T[];
+    rows?: ResultSet;
+}
+
+// @public
+export function queryResultFromMapped<T>(base: BaseQueryResult, rows?: T[]): QueryResult<T>;
+
+// @public
+export function queryResultFromRaw<T>(raw: RawQueryResult): QueryResult<T>;
+
+// @public
+export function queryResultWithoutRows(result: BaseQueryResult): QueryResult<never>;
+
+// @public
+export interface RawQueryResult extends BaseQueryResult {
+    columnNames: string[];
+    rawRows: SqliteValue[][];
+}
 
 // Warning: (ae-forgotten-export) The symbol "RawTableTypeWithStatements" needs to be exported by the entry point index.d.ts
 // Warning: (ae-forgotten-export) The symbol "InferredRawTableType" needs to be exported by the entry point index.d.ts
 //
 // @public
 export type RawTableType = RawTableTypeWithStatements | InferredRawTableType;
-
-// Warning: (ae-internal-missing-underscore) The name "RemoteConnector" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export type RemoteConnector = {
-    fetchCredentials: () => Promise<PowerSyncCredentials | null>;
-    invalidateCredentials?: () => void;
-};
 
 // @alpha
 export interface RemoteStorageAdapter {
@@ -1615,433 +822,11 @@ export interface RemoteStorageAdapter {
     uploadFile(fileData: ArrayBuffer, attachment: AttachmentRecord): Promise<void>;
 }
 
-// Warning: (ae-internal-missing-underscore) The name "RequiredAdditionalConnectionOptions" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export interface RequiredAdditionalConnectionOptions extends Required<AdditionalConnectionOptions> {
-    // (undocumented)
-    subscriptions: SubscribedStream[];
-}
-
-// Warning: (ae-internal-missing-underscore) The name "RequiredPowerSyncConnectionOptions" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export type RequiredPowerSyncConnectionOptions = Required<BaseConnectionOptions>;
-
-// @public (undocumented)
-export type RowType<T extends TableV2<any>> = {
-    [K in keyof T['columnMap']]: ExtractColumnValueType<T['columnMap'][K]>;
-} & {
-    id: string;
-};
-
 // @public
-export enum RowUpdateType {
-    // (undocumented)
-    SQLITE_DELETE = 9,
-    // (undocumented)
-    SQLITE_INSERT = 18,
-    // (undocumented)
-    SQLITE_UPDATE = 23
-}
-
-// Warning: (ae-internal-missing-underscore) The name "runOnSchemaChange" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export function runOnSchemaChange(callback: (signal: AbortSignal) => void, db: AbstractPowerSyncDatabase, options?: SQLWatchOptions): void;
-
-// @alpha
-export function sanitizeSQL(strings: TemplateStringsArray, ...values: any[]): string;
-
-// @alpha
-export function sanitizeUUID(uuid: string): string;
-
-// Warning: (ae-forgotten-export) The symbol "SchemaType" needs to be exported by the entry point index.d.ts
-//
-// @public
-export class Schema<S extends SchemaType = SchemaType> {
-    constructor(tables: Table[] | S);
-    // (undocumented)
-    readonly props: S;
-    // Warning: (ae-forgotten-export) The symbol "RawTable" needs to be exported by the entry point index.d.ts
-    //
-    // (undocumented)
-    readonly rawTables: RawTable[];
-    static rawTableToJson(table: RawTable): unknown;
-    // (undocumented)
-    readonly tables: Table[];
-    // (undocumented)
-    toJSON(): {
-        tables: {
-            local_only: boolean | undefined;
-            insert_only: boolean | undefined;
-            include_old: any;
-            include_old_only_when_changed: boolean;
-            include_metadata: boolean | undefined;
-            ignore_empty_update: boolean | undefined;
-            name: string;
-            view_name: string;
-            columns: {
-                name: string;
-                type: ColumnType | undefined;
-            }[];
-            indexes: {
-                name: string;
-                columns: {
-                    name: string;
-                    ascending: boolean | undefined;
-                    type: ColumnType;
-                }[];
-            }[];
-        }[];
-        raw_tables: unknown[];
-    };
-    // (undocumented)
-    readonly types: SchemaTableType<S>;
-    // (undocumented)
-    validate(): void;
-    withRawTables(tables: Record<string, RawTableType>): void;
-}
-
-// @public (undocumented)
-export type SchemaTableType<S extends SchemaType> = {
-    [K in keyof S]: RowType<S[K]>;
-};
-
-// Warning: (ae-internal-missing-underscore) The name "Semaphore" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal
-export class Semaphore<T> {
-    constructor(elements: Iterable<T>);
-    requestAll(abort?: AbortSignal): Promise<{
-        items: T[];
-        release: UnlockFn;
-    }>;
-    requestOne(abort?: AbortSignal): Promise<{
-        item: T;
-        release: UnlockFn;
-    }>;
-    // (undocumented)
-    readonly size: number;
-}
-
-// Warning: (ae-internal-missing-underscore) The name "SimpleAsyncIterator" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal
-export type SimpleAsyncIterator<T> = Pick<AsyncIterator<T>, 'next'>;
-
-// Warning: (ae-internal-missing-underscore) The name "SocketSyncStreamOptions" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export type SocketSyncStreamOptions = SyncStreamOptions & {
-    fetchStrategy: FetchStrategy;
-};
-
-// @public (undocumented)
-export interface SqlExecutor {
-    execute: (query: string, params?: any[] | undefined) => Promise<QueryResult>;
-    // (undocumented)
-    executeBatch: (query: string, params?: any[][]) => Promise<QueryResult>;
-    executeRaw: (query: string, params?: any[] | undefined) => Promise<any[][]>;
-}
-
-// Warning: (ae-internal-missing-underscore) The name "SqliteBucketStorage" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> implements BucketStorageAdapter {
-    constructor(db: DBAdapter, logger?: ILogger);
-    // (undocumented)
-    control(op: PowerSyncControlCommand, payload: string | Uint8Array | ArrayBuffer | null): Promise<string>;
-    // (undocumented)
-    dispose(): Promise<void>;
-    // (undocumented)
-    getClientId(): Promise<string>;
-    // (undocumented)
-    _getClientId(): Promise<string>;
-    getCrudBatch(limit?: number): Promise<CrudBatch | null>;
-    // (undocumented)
-    getMaxOpId(): string;
-    // (undocumented)
-    hasCrud(): Promise<boolean>;
-    // (undocumented)
-    hasMigratedSubkeys(): Promise<boolean>;
-    // (undocumented)
-    init(): Promise<void>;
-    // (undocumented)
-    migrateToFixedSubkeys(): Promise<void>;
-    // (undocumented)
-    nextCrudItem(): Promise<CrudEntry | undefined>;
-    // (undocumented)
-    static _subkeyMigrationKey: string;
-    // (undocumented)
-    tableNames: Set<string>;
-    // (undocumented)
-    updateLocalTarget(cb: () => Promise<string>): Promise<boolean>;
-    // (undocumented)
-    writeTransaction<T>(callback: (tx: Transaction) => Promise<T>, options?: {
-        timeoutMs: number;
-    }): Promise<T>;
-}
-
-// @public (undocumented)
-export interface SQLOnChangeOptions {
-    // @deprecated (undocumented)
-    rawTableNames?: boolean;
-    // (undocumented)
-    signal?: AbortSignal;
-    // (undocumented)
-    tables?: string[];
-    throttleMs?: number;
-    triggerImmediate?: boolean;
-}
-
-// @public (undocumented)
-export interface SQLOpenFactory {
-    openDB(): DBAdapter;
-}
-
-// @public (undocumented)
-export interface SQLOpenOptions {
-    dbFilename: string;
-    dbLocation?: string;
-    debugMode?: boolean;
-}
-
-// @public (undocumented)
-export interface SQLWatchOptions extends SQLOnChangeOptions {
-    comparator?: WatchedQueryComparator<QueryResult>;
-}
-
-// @public
-export type StandardWatchedQuery<DataType> = WatchedQuery<DataType, WatchedQuerySettings<DataType>>;
-
-// @public
-export interface StandardWatchedQueryOptions<RowType> extends WatchedQueryOptions {
-    comparator?: WatchedQueryComparator<RowType[]>;
-    placeholderData?: RowType[];
-}
-
-// Warning: (ae-internal-missing-underscore) The name "StreamingSyncImplementation" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export interface StreamingSyncImplementation extends BaseObserverInterface<StreamingSyncImplementationListener>, Disposable_2 {
-    connect(options?: InternalConnectionOptions): Promise<void>;
-    disconnect(): Promise<void>;
-    // (undocumented)
-    getWriteCheckpoint: () => Promise<string>;
-    // (undocumented)
-    isConnected: boolean;
-    // (undocumented)
-    markConnectionMayHaveChanged(): void;
-    // (undocumented)
-    syncStatus: SyncStatus;
-    // (undocumented)
-    triggerCrudUpload: () => void;
-    // (undocumented)
-    updateSubscriptions(subscriptions: SubscribedStream[]): void;
-    // (undocumented)
-    waitForReady(): Promise<void>;
-    // (undocumented)
-    waitForStatus(status: SyncStatusOptions): Promise<void>;
-    // (undocumented)
-    waitUntilStatusMatches(predicate: (status: SyncStatus) => boolean): Promise<void>;
-}
-
-// Warning: (ae-internal-missing-underscore) The name "StreamingSyncImplementationListener" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export interface StreamingSyncImplementationListener extends BaseListener {
-    statusChanged?: ((status: SyncStatus) => void) | undefined;
-    statusUpdated?: ((statusUpdate: SyncStatusOptions) => void) | undefined;
-}
-
-// Warning: (ae-forgotten-export) The symbol "JSONValue" needs to be exported by the entry point index.d.ts
-//
-// @public (undocumented)
-export type StreamingSyncRequestParameterType = JSONValue;
-
-// Warning: (ae-internal-missing-underscore) The name "SubscribedStream" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export type SubscribedStream = {
-    name: string;
-    params: Record<string, any> | null;
-};
-
-// @public @deprecated (undocumented)
-export enum SyncClientImplementation {
-    RUST = "rust"
-}
-
-// @public (undocumented)
-export type SyncDataFlowStatus = Partial<{
-    downloading: boolean;
-    uploading: boolean;
-    downloadError?: Error;
-    uploadError?: Error;
-    downloadProgress: InternalProgressInformation | null;
-    internalStreamSubscriptions: CoreStreamSubscription[] | null;
-}>;
-
-// Warning: (ae-internal-missing-underscore) The name "SyncingService" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal
-export class SyncingService {
-    constructor(attachmentService: AttachmentService, localStorage: LocalStorageAdapter, remoteStorage: RemoteStorageAdapter, logger: ILogger, errorHandler?: AttachmentErrorHandler);
-    deleteArchivedAttachments(context: AttachmentContext): Promise<boolean>;
-    deleteAttachment(attachment: AttachmentRecord, context: AttachmentContext): Promise<AttachmentRecord>;
-    downloadAttachment(attachment: AttachmentRecord): Promise<AttachmentRecord>;
-    processAttachments(attachments: AttachmentRecord[], options?: {
-        signal?: AbortSignal;
-    }): Promise<void>;
-    uploadAttachment(attachment: AttachmentRecord): Promise<AttachmentRecord>;
-}
-
-// @public (undocumented)
-export interface SyncPriorityStatus {
-    // (undocumented)
-    hasSynced?: boolean;
-    // (undocumented)
-    lastSyncedAt?: Date;
-    // (undocumented)
-    priority: number;
-}
-
-// @public
-export class SyncProgress implements ProgressWithOperations {
-    constructor(internal: InternalProgressInformation);
-    // (undocumented)
-    downloadedFraction: number;
-    // (undocumented)
-    downloadedOperations: number;
-    // (undocumented)
-    protected internal: InternalProgressInformation;
-    // (undocumented)
-    totalOperations: number;
-    untilPriority(priority: number): ProgressWithOperations;
-}
-
-// @public (undocumented)
-export class SyncStatus {
-    // Warning: (ae-incompatible-release-tags) The symbol "__constructor" is marked as @public, but its signature references "SyncStatusOptions" which is marked as @internal
-    constructor(options: SyncStatusOptions);
-    // @deprecated
-    get clientImplementation(): SyncClientImplementation | undefined;
-    get connected(): boolean;
-    get connecting(): boolean;
-    get dataFlowStatus(): SyncDataFlowStatus;
-    get downloadProgress(): SyncProgress | null;
-    forStream(stream: SyncStreamDescription): SyncStreamStatus | undefined;
-    getMessage(): string;
-    get hasSynced(): boolean | undefined;
-    isEqual(status: SyncStatus): boolean;
-    get lastSyncedAt(): Date | undefined;
-    // Warning: (ae-incompatible-release-tags) The symbol "options" is marked as @public, but its signature references "SyncStatusOptions" which is marked as @internal
-    //
-    // (undocumented)
-    protected options: SyncStatusOptions;
-    get priorityStatusEntries(): SyncPriorityStatus[];
-    protected serializeError(error?: Error): Error | undefined;
-    statusForPriority(priority: number): SyncPriorityStatus;
-    get syncStreams(): SyncStreamStatus[] | undefined;
-    // Warning: (ae-incompatible-release-tags) The symbol "toJSON" is marked as @public, but its signature references "SyncStatusOptions" which is marked as @internal
-    toJSON(): SyncStatusOptions;
-}
-
-// Warning: (ae-internal-missing-underscore) The name "SyncStatusOptions" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export type SyncStatusOptions = {
-    connected?: boolean;
-    connecting?: boolean;
-    dataFlow?: SyncDataFlowStatus;
-    lastSyncedAt?: Date;
-    hasSynced?: boolean;
-    priorityStatusEntries?: SyncPriorityStatus[];
-    clientImplementation?: SyncClientImplementation;
-};
-
-// @public
-export interface SyncStream extends SyncStreamDescription {
-    subscribe(options?: SyncStreamSubscribeOptions): Promise<SyncStreamSubscription>;
-    unsubscribeAll(): Promise<void>;
-}
-
-// @public (undocumented)
-export enum SyncStreamConnectionMethod {
-    // (undocumented)
-    HTTP = "http",
-    // (undocumented)
-    WEB_SOCKET = "web-socket"
-}
-
-// @public
-export interface SyncStreamDescription {
-    name: string;
-    parameters: Record<string, any> | null;
-}
-
-// Warning: (ae-internal-missing-underscore) The name "SyncStreamOptions" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export type SyncStreamOptions = {
-    path: string;
-    data: unknown;
-    headers?: Record<string, string>;
-    abortSignal: AbortSignal;
-    fetchOptions?: Request;
-};
-
-// @public
-export interface SyncStreamStatus {
-    // (undocumented)
-    priority: number | null;
-    // (undocumented)
-    progress: ProgressWithOperations | null;
-    // (undocumented)
-    subscription: SyncSubscriptionDescription;
-}
-
-// @public (undocumented)
-export interface SyncStreamSubscribeOptions {
-    priority?: 0 | 1 | 2 | 3;
-    ttl?: number;
-}
-
-// @public (undocumented)
-export interface SyncStreamSubscription extends SyncStreamDescription {
-    unsubscribe(): void;
-    waitForFirstSync(abort?: AbortSignal): Promise<void>;
-}
-
-// @public
-export interface SyncSubscriptionDescription extends SyncStreamDescription {
-    // (undocumented)
-    active: boolean;
-    expiresAt: Date | null;
-    hasExplicitSubscription: boolean;
-    hasSynced: boolean;
-    isDefault: boolean;
-    lastSyncedAt: Date | null;
-}
-
-// @public (undocumented)
-export class Table<Columns extends ColumnsType = ColumnsType> {
-    constructor(columns: Columns, options?: TableV2Options);
-    // @deprecated
-    constructor(options: TableOptions);
-    // (undocumented)
-    get columnMap(): Columns;
+export class ResolvedTable {
+    constructor(options: ResolvedTableOptions);
     // (undocumented)
     get columns(): Column[];
-    // (undocumented)
-    copyWithName(name: string): Table;
-    // (undocumented)
-    static createInsertOnly(options: TableOptions): Table<ColumnsType>;
-    // (undocumented)
-    static createLocalOnly(options: TableOptions): Table<ColumnsType>;
-    // @deprecated
-    static createTable(name: string, table: Table): Table<ColumnsType>;
     // (undocumented)
     get ignoreEmptyUpdates(): boolean;
     // (undocumented)
@@ -2053,11 +838,9 @@ export class Table<Columns extends ColumnsType = ColumnsType> {
     // (undocumented)
     get localOnly(): boolean;
     // (undocumented)
-    protected _mappedColumns: Columns;
-    // (undocumented)
     get name(): string;
     // (undocumented)
-    protected options: TableOptions;
+    readonly options: ResolvedTableOptions;
     // (undocumented)
     toJSON(): {
         local_only: boolean | undefined;
@@ -2098,12 +881,246 @@ export class Table<Columns extends ColumnsType = ColumnsType> {
 // Warning: (ae-forgotten-export) The symbol "SharedTableOptions" needs to be exported by the entry point index.d.ts
 //
 // @public (undocumented)
-export interface TableOptions extends SharedTableOptions {
+export interface ResolvedTableOptions extends SharedTableOptions {
     // (undocumented)
     columns: Column[];
     // (undocumented)
     indexes?: Index[];
     name: string;
+}
+
+// @public
+export interface ResultSet {
+    // @deprecated (undocumented)
+    get _array(): any[];
+    // @deprecated (undocumented)
+    item<T>(idx: number): T;
+    get length(): number;
+}
+
+// @public (undocumented)
+export type RowType<T extends Table<any>> = T extends Table<infer Columns> ? {
+    [K in keyof Columns]: ExtractColumnValueType<Columns[K]>;
+} & {
+    id: string;
+} : never;
+
+// @alpha
+export function sanitizeSQL(strings: TemplateStringsArray, ...values: any[]): string;
+
+// @alpha
+export function sanitizeUUID(uuid: string): string;
+
+// Warning: (ae-forgotten-export) The symbol "SchemaType" needs to be exported by the entry point index.d.ts
+//
+// @public
+export class Schema<S extends SchemaType = SchemaType> {
+    constructor(tables: ResolvedTable[] | S);
+    // (undocumented)
+    readonly props: S;
+    // Warning: (ae-forgotten-export) The symbol "RawTable" needs to be exported by the entry point index.d.ts
+    //
+    // (undocumented)
+    readonly rawTables: RawTable[];
+    static rawTableToJson(table: RawTable): unknown;
+    // (undocumented)
+    readonly tables: ResolvedTable[];
+    // (undocumented)
+    toJSON(): unknown;
+    // (undocumented)
+    readonly types: SchemaTableType<S>;
+    // (undocumented)
+    validate(): void;
+    withRawTables(tables: Record<string, RawTableType>): void;
+}
+
+// @public (undocumented)
+export type SchemaTableType<S extends SchemaType> = {
+    [K in keyof S]: RowType<S[K]>;
+};
+
+// @public (undocumented)
+export interface SqlExecutor {
+    execute: <T = SqliteRecord>(query: string, params?: any[] | undefined) => Promise<QueryResult<T>>;
+    executeBatch: (query: string, params?: any[][]) => Promise<QueryResult<never>>;
+    executeRaw: (query: string, params?: any[] | undefined) => Promise<RawQueryResult>;
+}
+
+// @public
+export type SqliteRecord = Record<string, SqliteValue>;
+
+// @public
+export type SqliteValue = string | number | bigint | number[] | Uint8Array | null;
+
+// @public (undocumented)
+export interface SQLOnChangeOptions {
+    // (undocumented)
+    signal?: AbortSignal;
+    // (undocumented)
+    tables?: string[];
+    throttleMs?: number;
+    triggerImmediate?: boolean;
+}
+
+// @public (undocumented)
+export interface SQLOpenFactory {
+    openDB(): DBAdapter;
+}
+
+// @public (undocumented)
+export interface SQLOpenOptions {
+    dbFilename: string;
+    dbLocation?: string;
+    debugMode?: boolean;
+}
+
+// @public (undocumented)
+export interface SQLWatchOptions extends SQLOnChangeOptions {
+    comparator?: WatchedQueryComparator<QueryResult>;
+}
+
+// @public
+export type StandardWatchedQuery<DataType> = WatchedQuery<DataType, WatchedQuerySettings<DataType>>;
+
+// @public
+export interface StandardWatchedQueryOptions<RowType> extends WatchedQueryOptions {
+    comparator?: WatchedQueryComparator<RowType[]>;
+    placeholderData?: RowType[];
+}
+
+// Warning: (ae-forgotten-export) The symbol "JSONValue" needs to be exported by the entry point index.d.ts
+//
+// @public (undocumented)
+export type StreamingSyncRequestParameterType = JSONValue;
+
+// @public @deprecated (undocumented)
+export interface SyncDataFlowStatus {
+    downloadError?: Error;
+    // (undocumented)
+    downloading: boolean;
+    uploadError?: Error;
+    // (undocumented)
+    uploading: boolean;
+}
+
+// @public
+export interface SyncOptions {
+    appMetadata?: Record<string, string>;
+    connectionMethod?: SyncStreamConnectionMethod;
+    crudUploadThrottleMs?: number;
+    // (undocumented)
+    fetchStrategy?: FetchStrategy;
+    includeDefaultStreams?: boolean;
+    params?: Record<string, StreamingSyncRequestParameterType>;
+    retryDelayMs?: number;
+}
+
+// @public (undocumented)
+export interface SyncPriorityStatus {
+    // (undocumented)
+    hasSynced?: boolean;
+    // (undocumented)
+    lastSyncedAt?: Date;
+    // (undocumented)
+    priority: number;
+}
+
+// @public
+export interface SyncProgress extends ProgressWithOperations {
+    untilPriority(priority: number): ProgressWithOperations;
+}
+
+// @public (undocumented)
+export interface SyncStatus {
+    get connected(): boolean;
+    get connecting(): boolean;
+    // @deprecated (undocumented)
+    get dataFlowStatus(): SyncDataFlowStatus;
+    get downloadError(): Error | undefined;
+    get downloading(): boolean;
+    get downloadProgress(): SyncProgress | null;
+    forStream(stream: SyncStreamDescription): SyncStreamStatus | undefined;
+    getMessage(): string;
+    get hasSynced(): boolean | undefined;
+    isEqual(status: SyncStatus): boolean;
+    get lastSyncedAt(): Date | undefined;
+    get priorityStatusEntries(): SyncPriorityStatus[] | undefined;
+    statusForPriority(priority: number): SyncPriorityStatus | undefined;
+    get syncStreams(): SyncStreamStatus[] | undefined;
+    get uploadError(): Error | undefined;
+    get uploading(): boolean;
+}
+
+// @public
+export interface SyncStream extends SyncStreamDescription {
+    subscribe(options?: SyncStreamSubscribeOptions): Promise<SyncStreamSubscription>;
+    unsubscribeAll(): Promise<void>;
+}
+
+// @public (undocumented)
+export enum SyncStreamConnectionMethod {
+    // (undocumented)
+    HTTP = "http",
+    // (undocumented)
+    WEB_SOCKET = "web-socket"
+}
+
+// @public
+export interface SyncStreamDescription {
+    name: string;
+    parameters: Record<string, any> | null;
+}
+
+// @public
+export interface SyncStreamStatus {
+    // (undocumented)
+    priority: number | null;
+    // (undocumented)
+    progress: ProgressWithOperations | null;
+    // (undocumented)
+    subscription: SyncSubscriptionDescription;
+}
+
+// @public (undocumented)
+export interface SyncStreamSubscribeOptions {
+    priority?: 0 | 1 | 2 | 3;
+    ttl?: number;
+}
+
+// @public (undocumented)
+export interface SyncStreamSubscription extends SyncStreamDescription {
+    unsubscribe(): void;
+    waitForFirstSync(abort?: AbortSignal): Promise<void>;
+}
+
+// @public
+export interface SyncSubscriptionDescription extends SyncStreamDescription {
+    // (undocumented)
+    active: boolean;
+    expiresAt: Date | null;
+    hasExplicitSubscription: boolean;
+    hasSynced: boolean;
+    isDefault: boolean;
+    lastSyncedAt: Date | null;
+}
+
+// @public
+export class Table<Columns extends ColumnsType = ColumnsType> extends ResolvedTable {
+    constructor(columns: Columns, options?: TableOptions);
+    // (undocumented)
+    copyWithName(name: string): ResolvedTable;
+    // (undocumented)
+    static createInsertOnly<Columns extends ColumnsType = ColumnsType>(columns: Columns, options?: TableOptions): Table<Columns>;
+    // (undocumented)
+    static createLocalOnly<Columns extends ColumnsType = ColumnsType>(columns: Columns, options?: TableOptions): Table<Columns>;
+    // (undocumented)
+    protected _mappedColumns: Columns;
+}
+
+// @public (undocumented)
+export interface TableOptions extends SharedTableOptions {
+    // (undocumented)
+    indexes?: IndexShorthand;
 }
 
 // @public
@@ -2120,32 +1137,6 @@ export interface TableOrRawTableOptions {
     trackPrevious?: boolean | TrackPreviousOptions;
 }
 
-// @public (undocumented)
-export interface TableUpdateOperation {
-    // (undocumented)
-    opType: RowUpdateType;
-    // (undocumented)
-    rowId: number;
-}
-
-// @public @deprecated
-export class TableV2<Columns extends ColumnsType = ColumnsType> extends Table<Columns> {
-}
-
-// @public (undocumented)
-export interface TableV2Options extends SharedTableOptions {
-    // (undocumented)
-    indexes?: IndexShorthand;
-}
-
-// Warning: (ae-internal-missing-underscore) The name "timeoutSignal" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal
-export function timeoutSignal(timeout: number): AbortSignal;
-
-// @internal (undocumented)
-export function timeoutSignal(timeout?: number): AbortSignal | undefined;
-
 // @alpha
 export interface TrackDiffOptions extends BaseCreateDiffTriggerOptions {
     onChange: (context: TriggerDiffHandlerContext) => Promise<void>;
@@ -2160,16 +1151,8 @@ export interface TrackPreviousOptions {
 
 // @public (undocumented)
 export interface Transaction extends LockContext {
-    commit: () => Promise<QueryResult>;
-    rollback: () => Promise<QueryResult>;
-}
-
-// Warning: (ae-internal-missing-underscore) The name "TriggerClaimManager" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal
-export interface TriggerClaimManager {
-    checkClaim: (identifier: string) => Promise<boolean>;
-    obtainClaim: (identifier: string) => Promise<() => Promise<void>>;
+    commit: () => Promise<void>;
+    rollback: () => Promise<void>;
 }
 
 // @alpha
@@ -2185,7 +1168,9 @@ export interface TriggerDiffDeleteRecord<TOperationId extends string | number = 
 }
 
 // @alpha
-export interface TriggerDiffHandlerContext extends LockContext {
+export interface TriggerDiffHandlerContext {
+    // (undocumented)
+    context: LockContext;
     destinationTable: string;
     withDiff: <T = any>(query: string, params?: ReadonlyArray<Readonly<any>>, options?: WithDiffOptions) => Promise<T[]>;
     withExtractedDiff: <T = any>(query: string, params?: ReadonlyArray<Readonly<any>>) => Promise<T[]>;
@@ -2215,51 +1200,6 @@ export interface TriggerManager {
     trackTableDiff(options: TrackDiffOptions): Promise<TriggerRemoveCallback>;
 }
 
-// Warning: (ae-internal-missing-underscore) The name "TriggerManagerConfig" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export interface TriggerManagerConfig {
-    // (undocumented)
-    claimManager: TriggerClaimManager;
-}
-
-// Warning: (ae-internal-missing-underscore) The name "TriggerManagerImpl" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export class TriggerManagerImpl implements TriggerManager {
-    constructor(options: TriggerManagerImplOptions);
-    cleanupResources(): Promise<void>;
-    // (undocumented)
-    protected cleanupTimeout: ReturnType<typeof setTimeout> | null;
-    // (undocumented)
-    createDiffTrigger(options: CreateDiffTriggerOptions): Promise<(options?: TriggerRemoveCallbackOptions) => Promise<void>>;
-    // (undocumented)
-    protected get db(): AbstractPowerSyncDatabase;
-    // Warning: (ae-forgotten-export) The symbol "TriggerManagerImplConfiguration" needs to be exported by the entry point index.d.ts
-    //
-    // (undocumented)
-    protected defaultConfig: TriggerManagerImplConfiguration;
-    // (undocumented)
-    dispose(): void;
-    // (undocumented)
-    protected generateTriggerName(operation: DiffTriggerOperation, destinationTable: string, triggerId: string): string;
-    // (undocumented)
-    protected getUUID(ctx?: LockContext): Promise<string>;
-    // (undocumented)
-    protected isDisposed: boolean;
-    // Warning: (ae-forgotten-export) The symbol "TriggerManagerImplOptions" needs to be exported by the entry point index.d.ts
-    //
-    // (undocumented)
-    protected options: TriggerManagerImplOptions;
-    // (undocumented)
-    protected removeTriggers(tx: LockContext, triggerIds: string[]): Promise<void>;
-    // (undocumented)
-    protected schema: Schema;
-    // (undocumented)
-    trackTableDiff(options: TrackDiffOptions): Promise<TriggerRemoveCallback>;
-    updateDefaults(config: TriggerManagerImplConfiguration): void;
-}
-
 // @alpha
 export type TriggerRemoveCallback = (options?: TriggerRemoveCallbackOptions) => Promise<void>;
 
@@ -2267,17 +1207,6 @@ export type TriggerRemoveCallback = (options?: TriggerRemoveCallbackOptions) => 
 export interface TriggerRemoveCallbackOptions {
     // (undocumented)
     context?: LockContext;
-}
-
-// Warning: (ae-internal-missing-underscore) The name "UnlockFn" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export type UnlockFn = () => void;
-
-// @public
-export interface UpdateNotification extends TableUpdateOperation {
-    // (undocumented)
-    table: string;
 }
 
 // @public
@@ -2321,8 +1250,6 @@ export type WatchedAttachmentItem = {
     mediaType?: string;
 };
 
-// Warning: (ae-forgotten-export) The symbol "MetaBaseObserverInterface" needs to be exported by the entry point index.d.ts
-//
 // @public (undocumented)
 export interface WatchedQuery<Data = unknown, Settings extends WatchedQueryOptions = WatchedQueryOptions, Listener extends WatchedQueryListener<Data> = WatchedQueryListener<Data>> extends MetaBaseObserverInterface<Listener> {
     close(): Promise<void>;
@@ -2413,7 +1340,7 @@ export interface WatchedQueryState<Data> {
 // @public
 export interface WatchExecuteOptions {
     // (undocumented)
-    db: AbstractPowerSyncDatabase;
+    db: CommonPowerSyncDatabase;
     // (undocumented)
     parameters: any[];
     // (undocumented)
@@ -2438,19 +1365,12 @@ export interface WatchOnChangeEvent {
 export interface WatchOnChangeHandler {
     // (undocumented)
     onChange: (event: WatchOnChangeEvent) => Promise<void> | void;
-    // (undocumented)
-    onError?: (error: Error) => void;
 }
 
 // @alpha
 export interface WithDiffOptions {
     castOperationIdAsText?: boolean;
 }
-
-// Warnings were encountered during analysis:
-//
-// lib/db/crud/SyncStatus.d.ts:27:5 - (ae-forgotten-export) The symbol "InternalProgressInformation" needs to be exported by the entry point index.d.ts
-// lib/db/crud/SyncStatus.d.ts:31:5 - (ae-forgotten-export) The symbol "CoreStreamSubscription" needs to be exported by the entry point index.d.ts
 
 // (No @packageDocumentation comment for this package)
 

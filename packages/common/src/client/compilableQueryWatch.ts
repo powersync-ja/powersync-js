@@ -1,5 +1,5 @@
 import { CompilableQuery } from './../types/types.js';
-import { AbstractPowerSyncDatabase, SQLWatchOptions } from './AbstractPowerSyncDatabase.js';
+import { CommonPowerSyncDatabase, SQLWatchOptions } from './CommonPowerSyncDatabase.js';
 import { runOnSchemaChange } from './runOnSchemaChange.js';
 
 /**
@@ -14,7 +14,7 @@ export interface CompilableQueryWatchHandler<T> {
  * @public
  */
 export function compilableQueryWatch<T>(
-  db: AbstractPowerSyncDatabase,
+  db: CommonPowerSyncDatabase,
   query: CompilableQuery<T>,
   handler: CompilableQueryWatchHandler<T>,
   options?: SQLWatchOptions
@@ -42,8 +42,7 @@ export function compilableQueryWatch<T>(
             } catch (error: any) {
               onError(error);
             }
-          },
-          onError
+          }
         },
         {
           ...(options ?? {}),

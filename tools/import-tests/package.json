@@ -15,6 +15,7 @@
     "@powersync/kysely-driver": "workspace:*",
     "@powersync/node": "workspace:*",
     "@powersync/capacitor": "workspace:*",
-    "@powersync/web": "workspace:*"
+    "@powersync/web": "workspace:*",
+    "@powersync/common": "workspace:*"
   }
 }

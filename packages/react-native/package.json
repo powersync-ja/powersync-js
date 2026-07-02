@@ -6,21 +6,23 @@
     "access": "public"
   },
   "description": "PowerSync React Native SDK",
-  "main": "./dist/index.js",
-  "module": "./dist/index.js",
+  "type": "module",
+  "main": "./lib/index.js",
+  "module": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "files": [
     "lib",
-    "dist",
-    "src"
+    "src",
+    "android",
+    "ios",
+    "*.podspec"
   ],
   "scripts": {
-    "build": "tsc -b && rollup -c rollup.config.mjs",
-    "build:prod": "tsc -b && rollup -c rollup.config.mjs",
-    "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
+    "build": "tsc -b",
+    "build:prod": "tsc -b",
+    "clean": "rm -rf lib tsconfig.tsbuildinfo",
     "test": "vitest --config vitest.config.ts",
-    "watch": "tsc -b -w",
-    "test:exports": "attw --pack ."
+    "watch": "tsc -b -w"
   },
   "repository": {
     "type": "git",
@@ -33,37 +35,22 @@
   },
   "homepage": "https://docs.powersync.com/",
   "peerDependencies": {
-    "@journeyapps/react-native-quick-sqlite": "^2.5.2",
+    "@op-engineering/op-sqlite": "^17.1.0",
     "@powersync/common": "workspace:^1.57.0",
     "react": "*",
     "react-native": "*"
   },
-  "peerDependenciesMeta": {
-    "@journeyapps/react-native-quick-sqlite": {
-      "optional": true
-    }
-  },
   "dependencies": {
     "@powersync/common": "workspace:*",
-    "@powersync/react": "workspace:*"
+    "@powersync/react": "workspace:*",
+    "@powersync/shared-internals": "workspace:*"
   },
   "devDependencies": {
-    "@craftzdog/react-native-buffer": "^6.0.5",
-    "@journeyapps/react-native-quick-sqlite": "^2.5.2",
-    "@rollup/plugin-alias": "catalog:",
-    "@rollup/plugin-commonjs": "catalog:",
-    "@rollup/plugin-inject": "catalog:",
-    "@rollup/plugin-json": "catalog:",
-    "@rollup/plugin-node-resolve": "catalog:",
-    "@rollup/plugin-replace": "catalog:",
-    "@rollup/plugin-terser": "catalog:",
+    "@op-engineering/op-sqlite": "catalog:",
+    "expo": "catalog:",
     "@types/react": "^19.1.1",
     "react": "^19.2.0",
-    "react-native": "0.83.1",
-    "react-native-fetch-api": "^3.0.0",
-    "rollup": "catalog:",
-    "text-encoding": "^0.7.0",
-    "web-streams-polyfill": "3.2.1"
+    "react-native": "^0.85.0"
   },
   "keywords": [
     "data sync",

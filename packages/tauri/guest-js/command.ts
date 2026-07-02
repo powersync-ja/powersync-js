@@ -1,4 +1,5 @@
-import { SyncStatusOptions, SyncStreamDescription, SyncStreamSubscribeOptions } from '@powersync/common';
+import { SqliteValue, SyncStreamDescription, SyncStreamSubscribeOptions } from '@powersync/common';
+import { SyncStatusJson } from '@powersync/shared-internals';
 import { invoke } from '@tauri-apps/api/core';
 
 export interface OpenDatabase {
@@ -6,9 +7,6 @@ export interface OpenDatabase {
   // Serialized schema for core extension
   schema: unknown;
 }
-
-// todo: serialize and parse bigints for i64?
-export type SqliteValue = string | number | number[] | null;
 
 export interface ExecuteSql {
   connection: number;
@@ -67,7 +65,7 @@ export type CommandResult =
   | { CreatedHandle: number }
   | { ExecuteSqlResult: ExecuteSqlResult }
   | { ExecuteBatchResult: ExecuteBatchResult }
-  | { SyncStatus: SyncStatusOptions }
+  | { SyncStatus: SyncStatusJson }
   | 'Void';
 
 export async function powersyncCommand(command: Command): Promise<CommandResult> {

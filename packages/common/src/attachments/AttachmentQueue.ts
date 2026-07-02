@@ -1,9 +1,7 @@
-import { AbstractPowerSyncDatabase } from '../client/AbstractPowerSyncDatabase.js';
-import { DEFAULT_WATCH_THROTTLE_MS } from '../client/watched/WatchedQuery.js';
 import { DifferentialWatchedQuery } from '../client/watched/processors/DifferentialQueryProcessor.js';
 import { Mutex } from '../utils/mutex.js';
+import { LogLevels, PowerSyncLogger } from '../utils/Logger.js';
 import { Transaction } from '../db/DBAdapter.js';
-import { ILogger } from '../utils/Logger.js';
 import { AttachmentContext } from './AttachmentContext.js';
 import { AttachmentErrorHandler } from './AttachmentErrorHandler.js';
 import { AttachmentService } from './AttachmentService.js';
@@ -12,6 +10,7 @@ import { RemoteStorageAdapter } from './RemoteStorageAdapter.js';
 import { ATTACHMENT_TABLE, AttachmentRecord, AttachmentState } from './Schema.js';
 import { SyncingService } from './SyncingService.js';
 import { WatchedAttachmentItem } from './WatchedAttachmentItem.js';
+import { CommonPowerSyncDatabase } from '../client/CommonPowerSyncDatabase.js';
 
 /**
  * Configuration options for {@link AttachmentQueue}.
@@ -23,7 +22,7 @@ export interface AttachmentQueueOptions {
   /**
    * PowerSync database instance
    */
-  db: AbstractPowerSyncDatabase;
+  db: CommonPowerSyncDatabase;
   /**
    * Remote storage adapter for upload/download operations
    */
@@ -43,7 +42,7 @@ export interface AttachmentQueueOptions {
   /**
    * Logger instance. Defaults to db.logger
    */
-  logger?: ILogger;
+  logger?: PowerSyncLogger;
   /**
    * Periodic polling interval in milliseconds for retrying failed uploads/downloads. Default: 30000
    */
@@ -103,7 +102,7 @@ export class AttachmentQueue {
   readonly tableName: string;
 
   /** Logger instance for diagnostic information */
-  readonly logger: ILogger;
+  readonly logger: PowerSyncLogger;
 
   /** Interval in milliseconds between periodic sync operations. Acts as a polling timer to retry
    *  failed uploads/downloads, especially after the app goes offline. Default: 30000 (30 seconds) */
@@ -115,7 +114,7 @@ export class AttachmentQueue {
    *  quick succession (e.g., bulk inserts). This is distinct from syncIntervalMs — it controls
    *  how quickly the queue reacts to changes, while syncIntervalMs controls how often it polls
    *  for retries. Default: 30 (from DEFAULT_WATCH_THROTTLE_MS) */
-  readonly syncThrottleDuration: number;
+  readonly syncThrottleDuration?: number;
 
   /** Whether to automatically download remote attachments. Default: true */
   readonly downloadAttachments: boolean = true;
@@ -127,7 +126,7 @@ export class AttachmentQueue {
   private readonly attachmentService: AttachmentService;
 
   /** PowerSync database instance */
-  private readonly db: AbstractPowerSyncDatabase;
+  private readonly db: CommonPowerSyncDatabase;
 
   /** Cleanup function for status change listener */
   private statusListenerDispose?: () => void;
@@ -143,7 +142,7 @@ export class AttachmentQueue {
    * processing don't take this lock and proceed in parallel via the
    * `AttachmentService` mutex, which is acquired only briefly per row.
    */
-  private syncLoopMutex = new Mutex();
+  private syncLoopMutex: Mutex;
 
   /**
    * Aborted by `stopSync()` to interrupt an in-flight batch within one
@@ -164,12 +163,13 @@ export class AttachmentQueue {
     logger,
     tableName = ATTACHMENT_TABLE,
     syncIntervalMs = 30 * 1000,
-    syncThrottleDuration = DEFAULT_WATCH_THROTTLE_MS,
+    syncThrottleDuration,
     downloadAttachments = true,
     archivedCacheLimit = 100,
     errorHandler
   }: AttachmentQueueOptions) {
     this.db = db;
+    this.syncLoopMutex = db.createMutex();
     this.remoteStorage = remoteStorage;
     this.localStorage = localStorage;
     this.watchAttachments = watchAttachments;
@@ -239,7 +239,7 @@ export class AttachmentQueue {
         if (status.connected) {
           // Device came online, process attachments immediately
           this.syncStorage().catch((error) => {
-            this.logger.error('Error syncing storage on connection:', error);
+            this.logger.log({ level: LogLevels.error, message: 'Error syncing storage on connection', error });
           });
         }
       }

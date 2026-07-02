@@ -15,17 +15,83 @@ See a summary of features [here](https://docs.powersync.co/client-sdk-references
 ## Install Package
 
 ```bash
-npx expo install @powersync/react-native
+npx expo install @powersync/react-native @op-engineering/op-sqlite
 ```
 
-## Install Peer Dependency: SQLite
+## Configuration options
 
-By default, this SDK requires `@journeyapps/react-native-quick-sqlite` as a peer dependency. Alternatively, you can install OP-SQLite from the [PowerSync OP-SQLite package](https://github.com/powersync-ja/powersync-js/tree/main/packages/powersync-op-sqlite) (currently in Beta).
+### Encryption with SQLCipher
 
-Install it in your app with:
+To enable SQLCipher you need to add the following configuration option to your application's `package.json`. Note that for [monorepos](https://op-engineering.github.io/op-sqlite/docs/installation) you may have to add this configuration to the monorepo root `package.json` instead, this depends on where your package manager tool hoists modules.
 
-```bash
-npx expo install @journeyapps/react-native-quick-sqlite
+```json
+{
+  // your normal package.json
+  // ...
+  "op-sqlite": {
+    "sqlcipher": true
+  }
+}
+```
+
+Additionally you will need to add an [encryption key](https://www.zetetic.net/sqlcipher/sqlcipher-api/#key) to the OPSQLite factory constructor
+
+```typescript
+const db = new PowerSyncDatabase({
+  schema: new Schema(...),
+  database: {
+    dbFilename: 'sqlite.db',
+    sqliteOptions: {
+      encryptionKey: 'your-encryption-key'
+    }
+  }
+});
+```
+
+### Full-Text Search
+
+To enable the `fts5` extension, configure OP-SQLite in your (or for monorepos, the root) `package.json`:
+
+```json
+{
+  // your normal package.json
+  // ...
+  "op-sqlite": {
+    "fts5": true
+  }
+}
+```
+
+### Loading SQLite extensions
+
+To load additional SQLite extensions include the `extensions` option in `sqliteOptions` which expects an array of objects with a `path` and an `entryPoint`:
+
+```js
+sqliteOptions: {
+  extensions: [{ path: libPath, entryPoint: 'sqlite3_powersync_init' }];
+}
+```
+
+More info can be found in the [OP-SQLite docs](https://op-engineering.github.io/op-sqlite/docs/api/#loading-extensions).
+
+Example usage:
+
+```ts
+import { getDylibPath } from '@op-engineering/op-sqlite';
+
+let libPath: string;
+if (Platform.OS === 'ios') {
+  libPath = getDylibPath('co.powersync.sqlitecore', 'powersync-sqlite-core');
+} else {
+  libPath = 'libpowersync';
+}
+
+const factory = new OPSqliteOpenFactory({
+  dbFilename: 'sqlite.db',
+  sqliteOptions: {
+    extensions: [{ path: libPath, entryPoint: 'sqlite3_powersync_init' }]
+  }
+});
 ```
 
 ## Install Polyfills

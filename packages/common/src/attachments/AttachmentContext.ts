@@ -1,7 +1,7 @@
-import { AbstractPowerSyncDatabase } from '../client/AbstractPowerSyncDatabase.js';
+import { LogLevels, PowerSyncLogger } from '../utils/Logger.js';
 import { Transaction } from '../db/DBAdapter.js';
-import { ILogger } from '../utils/Logger.js';
 import { AttachmentRecord, AttachmentState, attachmentFromSql } from './Schema.js';
+import { CommonPowerSyncDatabase } from '../client/CommonPowerSyncDatabase.js';
 
 /**
  * AttachmentContext provides database operations for managing attachment records.
@@ -14,13 +14,13 @@ import { AttachmentRecord, AttachmentState, attachmentFromSql } from './Schema.j
  */
 export class AttachmentContext {
   /** PowerSync database instance for executing queries */
-  readonly db: AbstractPowerSyncDatabase;
+  readonly db: CommonPowerSyncDatabase;
 
   /** Name of the database table storing attachment records */
   readonly tableName: string;
 
   /** Logger instance for diagnostic information */
-  readonly logger: ILogger;
+  readonly logger: PowerSyncLogger;
 
   /** Maximum number of archived attachments to keep before cleanup */
   readonly archivedCacheLimit: number = 100;
@@ -33,9 +33,9 @@ export class AttachmentContext {
    * @param logger - Logger instance for diagnostic output
    */
   constructor(
-    db: AbstractPowerSyncDatabase,
+    db: CommonPowerSyncDatabase,
     tableName: string = 'attachments',
-    logger: ILogger,
+    logger: PowerSyncLogger,
     archivedCacheLimit: number
   ) {
     this.db = db;
@@ -234,9 +234,10 @@ export class AttachmentContext {
     if (archivedAttachments.length === 0) return false;
 
     await callback?.(archivedAttachments);
-    this.logger.info(
-      `Deleting ${archivedAttachments.length} archived attachments. Archived attachment exceeds cache archiveCacheLimit of ${this.archivedCacheLimit}.`
-    );
+    this.logger.log({
+      level: LogLevels.info,
+      message: `Deleting ${archivedAttachments.length} archived attachments. Archived attachment exceeds cache archiveCacheLimit of ${this.archivedCacheLimit}.`
+    });
 
     const ids = archivedAttachments.map((attachment) => attachment.id);
 
@@ -255,7 +256,7 @@ export class AttachmentContext {
       [JSON.stringify(ids)]
     );
 
-    this.logger.info(`Deleted ${archivedAttachments.length} archived attachments`);
+    this.logger.log({ level: LogLevels.info, message: `Deleted ${archivedAttachments.length} archived attachments` });
     return archivedAttachments.length < limit;
   }
 

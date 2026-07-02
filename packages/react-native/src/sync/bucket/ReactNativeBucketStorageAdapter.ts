@@ -1,4 +1,4 @@
-import { PowerSyncControlCommand, SqliteBucketStorage } from '@powersync/common';
+import { PowerSyncControlCommand, SqliteBucketStorage } from '@powersync/shared-internals';
 
 export class ReactNativeBucketStorageAdapter extends SqliteBucketStorage {
   control(op: PowerSyncControlCommand, payload: string | Uint8Array | ArrayBuffer | null): Promise<string> {

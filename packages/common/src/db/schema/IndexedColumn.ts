@@ -1,5 +1,5 @@
 import { ColumnType } from './Column.js';
-import { Table } from './Table.js';
+import { ResolvedTable } from './Table.js';
 
 /**
  * @public
@@ -9,10 +9,7 @@ export interface IndexColumnOptions {
   ascending?: boolean;
 }
 
-/**
- * @internal
- */
-export const DEFAULT_INDEX_COLUMN_OPTIONS: Partial<IndexColumnOptions> = {
+const DEFAULT_INDEX_COLUMN_OPTIONS: Partial<IndexColumnOptions> = {
   ascending: true
 };
 
@@ -41,7 +38,7 @@ export class IndexedColumn {
     return this.options.ascending;
   }
 
-  toJSON(table: Table) {
+  toJSON(table: ResolvedTable) {
     return {
       name: this.name,
       ascending: this.ascending,

@@ -35,7 +35,8 @@
   },
   "dependencies": {
     "@tauri-apps/api": "^2.0.0",
-    "@powersync/common": "workspace:"
+    "@powersync/common": "workspace:",
+    "@powersync/shared-internals": "workspace:"
   },
   "devDependencies": {
     "typescript": "catalog:",

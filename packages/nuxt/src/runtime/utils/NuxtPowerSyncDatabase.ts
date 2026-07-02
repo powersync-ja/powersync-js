@@ -1,18 +1,20 @@
 import {
-  DEFAULT_SYNC_CLIENT_IMPLEMENTATION,
-  PowerSyncDatabase,
+  WebPowerSyncDatabase,
   Schema,
   SharedWebStreamingSyncImplementation,
   WebRemote,
   WebStreamingSyncImplementation,
   type DisconnectAndClearOptions,
   type PowerSyncBackendConnector,
-  type PowerSyncConnectionOptions,
-  type RequiredAdditionalConnectionOptions,
-  type StreamingSyncImplementation,
   type WebPowerSyncDatabaseOptions,
-  type WebDBAdapter
+  type WebDBAdapter,
+  LogLevels,
+  type SyncOptions,
+  type CommonPowerSyncDatabase,
+  type PowerSyncDatabaseConstructor,
+  PowerSyncDatabase
 } from '@powersync/web';
+import { type StreamingSyncImplementation, type CreateSyncImplementationOptions } from '@powersync/shared-internals';
 import type { DynamicSchemaManager } from './DynamicSchemaManager';
 import { usePowerSyncInspector } from '../composables/usePowerSyncInspector';
 import { useDiagnosticsLogger } from '../composables/useDiagnosticsLogger';
@@ -20,6 +22,120 @@ import { shallowRef, type ShallowRef } from 'vue';
 // @ts-ignore
 import { useRuntimeConfig } from '#app';
 import { RustClientInterceptor } from './RustClientInterceptor';
+
+export class NuxtDatabaseImplementation extends WebPowerSyncDatabase {
+  private schemaManager!: DynamicSchemaManager;
+  private _connector: PowerSyncBackendConnector | null = null;
+  private useDiagnostics: boolean = false;
+
+  get dbOptions(): WebPowerSyncDatabaseOptions {
+    return this.options;
+  }
+
+  override get connector() {
+    return this._connector ?? super.connector;
+  }
+
+  constructor(options: WebPowerSyncDatabaseOptions) {
+    const useDiagnostics = useRuntimeConfig().public.powerSyncModuleOptions.useDiagnostics ?? false;
+    if (useDiagnostics) {
+      const { logger } = useDiagnosticsLogger();
+      const { getCurrentSchemaManager, diagnosticsSchema } = usePowerSyncInspector();
+      // Create schema manager before calling super
+      const currentSchemaManager = getCurrentSchemaManager();
+
+      // we need to force multitabe as the devtools is basically another tab running in the same browser context
+      if ('database' in options) {
+        options.database.enableMultiTabs = true;
+        options.broadcastLogs = true;
+      }
+
+      // override logger to use the logger from the utils/Logger.ts file
+      options.logger = logger;
+      // add diagnostics schema to the app schema
+      options.schema = new Schema([...options.schema.tables, ...diagnosticsSchema.tables]);
+      super(options);
+
+      // Set instance property and clear global
+      this.schemaManager = currentSchemaManager;
+      this.useDiagnostics = true;
+    } else {
+      super(options);
+      this.useDiagnostics = false;
+    }
+  }
+
+  protected override generateSyncStreamImplementation(
+    connector: PowerSyncBackendConnector,
+    options: CreateSyncImplementationOptions
+  ): StreamingSyncImplementation {
+    if (this.useDiagnostics) {
+      const { logger } = useDiagnosticsLogger();
+      const { getCurrentSchemaManager } = usePowerSyncInspector();
+
+      const currentSchemaManager = getCurrentSchemaManager();
+      const schemaManager = currentSchemaManager || this.schemaManager;
+
+      const adapter = new RustClientInterceptor(
+        shallowRef(this) as ShallowRef<PowerSyncDatabase>,
+        shallowRef(schemaManager) as ShallowRef<DynamicSchemaManager>
+      );
+
+      if (this.resolvedOpenOptions.enableMultiTabs) {
+        if (!this.enableBroadcastLogs) {
+          const warning = `
+            Multiple tabs are enabled, but broadcasting of logs is disabled.
+            Logs for shared sync worker will only be available in the shared worker context
+          `;
+          logger ? logger.log({ level: LogLevels.warn, message: warning }) : console.warn(warning);
+        }
+        return new SharedWebStreamingSyncImplementation({
+          ...options,
+          adapter,
+          remote: new WebRemote(connector, logger),
+          uploadCrud: async () => {
+            await this.waitForReady();
+            await connector.uploadData(this);
+          },
+          logger,
+          db: this.database as WebDBAdapter,
+          logLevel: this.resolvedOpenOptions.databaseWorkerLogLevel ?? LogLevels.info,
+          enableBroadcastLogs: this.enableBroadcastLogs
+        });
+      } else {
+        return new WebStreamingSyncImplementation({
+          ...options,
+          adapter,
+          remote: new WebRemote(connector, logger),
+          uploadCrud: async () => {
+            await this.waitForReady();
+            await connector.uploadData(this);
+          },
+          identifier: 'database' in this.options ? this.options.database.dbFilename : 'diagnostics-sync',
+          logger
+        });
+      }
+    } else {
+      return super.generateSyncStreamImplementation(connector, options);
+    }
+  }
+
+  override async connect(connector: PowerSyncBackendConnector, options?: SyncOptions) {
+    // Override client implementation when in diagnostics
+    this._connector = connector;
+    await super.connect(connector, options);
+  }
+
+  override async disconnect() {
+    this._connector = null;
+    await super.disconnect();
+  }
+
+  override async disconnectAndClear(options?: DisconnectAndClearOptions) {
+    this._connector = null;
+    await super.disconnectAndClear(options);
+  }
+}
 
 /**
  * An extended PowerSync database class that includes diagnostic capabilities for use with the PowerSync Inspector.
@@ -46,123 +162,7 @@ import { RustClientInterceptor } from './RustClientInterceptor';
  * - Automatically configures logging when diagnostics are enabled
  * - When diagnostics are disabled, behaves like a standard `PowerSyncDatabase`
  */
-export class NuxtPowerSyncDatabase extends PowerSyncDatabase {
-  private schemaManager!: DynamicSchemaManager;
-  private _connector: PowerSyncBackendConnector | null = null;
-  private _connectionOptions: PowerSyncConnectionOptions | null = null;
-  private useDiagnostics: boolean = false;
+export const NuxtPowerSyncDatabase: PowerSyncDatabaseConstructor<WebPowerSyncDatabaseOptions> =
+  NuxtDatabaseImplementation;
 
-  get dbOptions(): WebPowerSyncDatabaseOptions {
-    return this.options;
-  }
-
-  override get connector() {
-    return this._connector ?? super.connector;
-  }
-
-  override get connectionOptions() {
-    return this._connectionOptions ?? super.connectionOptions;
-  }
-
-  constructor(options: WebPowerSyncDatabaseOptions) {
-    const useDiagnostics = useRuntimeConfig().public.powerSyncModuleOptions.useDiagnostics ?? false;
-    if (useDiagnostics) {
-      const { logger } = useDiagnosticsLogger();
-      const { getCurrentSchemaManager, diagnosticsSchema } = usePowerSyncInspector();
-      // Create schema manager before calling super
-      const currentSchemaManager = getCurrentSchemaManager();
-
-      // we need to force multitabe as the devtools is basically another tab running in the same browser context
-      options.flags = {
-        ...options.flags,
-        enableMultiTabs: true,
-        broadcastLogs: true
-      };
-
-      // override logger to use the logger from the utils/Logger.ts file
-      options.logger = logger;
-      // add diagnostics schema to the app schema
-      options.schema = new Schema([...options.schema.tables, ...diagnosticsSchema.tables]);
-      super(options);
-
-      // Set instance property and clear global
-      this.schemaManager = currentSchemaManager;
-      this.useDiagnostics = true;
-    } else {
-      super(options);
-      this.useDiagnostics = false;
-    }
-  }
-
-  protected override generateSyncStreamImplementation(
-    connector: PowerSyncBackendConnector,
-    options: RequiredAdditionalConnectionOptions
-  ): StreamingSyncImplementation {
-    if (this.useDiagnostics) {
-      const { logger } = useDiagnosticsLogger();
-      const { getCurrentSchemaManager } = usePowerSyncInspector();
-
-      const currentSchemaManager = getCurrentSchemaManager();
-      const schemaManager = currentSchemaManager || this.schemaManager;
-
-      const adapter = new RustClientInterceptor(
-        shallowRef(this) as ShallowRef<PowerSyncDatabase>,
-        shallowRef(schemaManager) as ShallowRef<DynamicSchemaManager>
-      );
-
-      if (this.options.flags?.enableMultiTabs) {
-        if (!this.resolvedFlags.broadcastLogs) {
-          const warning = `
-            Multiple tabs are enabled, but broadcasting of logs is disabled.
-            Logs for shared sync worker will only be available in the shared worker context
-          `;
-          logger ? logger.warn(warning) : console.warn(warning);
-        }
-        return new SharedWebStreamingSyncImplementation({
-          ...options,
-          adapter,
-          remote: new WebRemote(connector, logger),
-          uploadCrud: async () => {
-            await this.waitForReady();
-            await connector.uploadData(this);
-          },
-          logger,
-          db: this.database as WebDBAdapter
-        });
-      } else {
-        return new WebStreamingSyncImplementation({
-          ...options,
-          adapter,
-          remote: new WebRemote(connector, logger),
-          uploadCrud: async () => {
-            await this.waitForReady();
-            await connector.uploadData(this);
-          },
-          identifier: 'dbFilename' in this.options.database ? this.options.database.dbFilename : 'diagnostics-sync',
-          logger
-        });
-      }
-    } else {
-      return super.generateSyncStreamImplementation(connector, options);
-    }
-  }
-
-  override async connect(connector: PowerSyncBackendConnector, options?: PowerSyncConnectionOptions) {
-    // Override client implementation when in diagnostics
-    this._connector = connector;
-    this._connectionOptions = options ?? null;
-    await super.connect(connector, options);
-  }
-
-  override async disconnect() {
-    this._connector = null;
-    this._connectionOptions = null;
-    await super.disconnect();
-  }
-
-  override async disconnectAndClear(options?: DisconnectAndClearOptions) {
-    this._connector = null;
-    this._connectionOptions = null;
-    await super.disconnectAndClear(options);
-  }
-}
+export interface NuxtPowerSyncDatabase extends CommonPowerSyncDatabase {}

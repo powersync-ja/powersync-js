@@ -1,18 +1,28 @@
 import { Factory as WaSqliteFactory, SQLITE_ROW } from '@journeyapps/wa-sqlite';
 
-import { DEFAULT_MODULE_FACTORIES, WASQLiteModuleFactory } from './vfs.js';
-import { ResolvedWASQLiteOpenFactoryOptions } from './WASQLiteOpenFactory.js';
+import { DEFAULT_MODULE_FACTORIES, WASQLiteModuleFactory, WASQLiteVFS } from './vfs.js';
+import { TemporaryStorageOption } from '../options.js';
+import { RawQueryResult, SqliteValue } from '@powersync/common';
 
-export interface RawResultSet {
-  columns: string[];
-  rows: SQLiteCompatibleType[][];
+export interface RawWebResult extends Required<RawQueryResult> {
+  autocommit: boolean;
 }
 
-export interface RawQueryResult {
-  changes: number;
-  lastInsertRowId: number;
-  autocommit: boolean;
-  resultSet: RawResultSet | undefined;
+export interface RawResultSet {
+  columnNames: string[];
+  rawRows: SqliteValue[][];
+}
+
+/**
+ * @internal
+ */
+export interface RawWaSqliteDatabaseOptions {
+  filename: string;
+  readonly: boolean;
+  vfs: WASQLiteVFS;
+  encryptionKey: string | undefined;
+  temporaryStorage: TemporaryStorageOption;
+  cacheSizeKb: number;
 }
 
 /**
@@ -29,7 +39,7 @@ export class RawSqliteConnection {
   private db: number = 0;
   private _moduleFactory: WASQLiteModuleFactory;
 
-  constructor(readonly options: ResolvedWASQLiteOpenFactoryOptions) {
+  constructor(readonly options: RawWaSqliteDatabaseOptions) {
     this._moduleFactory = DEFAULT_MODULE_FACTORIES[this.options.vfs];
   }
 
@@ -40,13 +50,13 @@ export class RawSqliteConnection {
   async init() {
     const api = (this._sqliteAPI = await this.openSQLiteAPI());
     this.db = await api.open_v2(
-      this.options.dbFilename,
-      this.options.isReadOnly ? 1 /* SQLITE_OPEN_READONLY */ : 6 /* SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE */
+      this.options.filename,
+      this.options.readonly ? 1 /* SQLITE_OPEN_READONLY */ : 6 /* SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE */
     );
     await this.executeRaw(`PRAGMA temp_store = ${this.options.temporaryStorage};`);
     if (this.options.encryptionKey) {
-      const escapedKey = this.options.encryptionKey.replace("'", "''");
-      await this.executeRaw(`PRAGMA key = '${escapedKey}'`);
+      const escapedKey = this.options.encryptionKey.replaceAll("'", "''");
+      await this.executeRaw(`PRAGMA key = '${escapedKey}';`);
     }
     await this.executeRaw(`PRAGMA cache_size = -${this.options.cacheSizeKb};`);
 
@@ -55,7 +65,7 @@ export class RawSqliteConnection {
 
   private async openSQLiteAPI(): Promise<SQLiteAPI> {
     const { module, vfs } = await this._moduleFactory({
-      dbFileName: this.options.dbFilename,
+      dbFileName: this.options.filename,
       encryptionKey: this.options.encryptionKey
     });
     const sqlite3 = WaSqliteFactory(module);
@@ -69,7 +79,7 @@ export class RawSqliteConnection {
      * Create the multiple cipher vfs if an encryption key is provided
      */
     if (this.options.encryptionKey) {
-      const createResult = module.ccall('sqlite3mc_vfs_create', 'int', ['string', 'int'], [this.options.dbFilename, 1]);
+      const createResult = module.ccall('sqlite3mc_vfs_create', 'int', ['string', 'int'], [this.options.filename, 1]);
       if (createResult !== 0) {
         throw new Error('Failed to create multiple cipher vfs, Database encryption will not work');
       }
@@ -93,12 +103,12 @@ export class RawSqliteConnection {
     return this.requireSqlite().get_autocommit(this.db) != 0;
   }
 
-  async execute(sql: string, bindings?: any[]): Promise<RawQueryResult> {
+  async execute(sql: string, bindings?: any[]): Promise<RawWebResult> {
     const resultSet = await this.executeSingleStatementRaw(sql, bindings);
     return this.wrapQueryResults(this.requireSqlite(), resultSet);
   }
 
-  async executeBatch(sql: string, bindings: any[][]): Promise<RawQueryResult[]> {
+  async executeBatch(sql: string, bindings: any[][]): Promise<RawWebResult[]> {
     const results = [];
     const api = this.requireSqlite();
     for await (const stmt of api.statements(this.db, sql)) {
@@ -116,21 +126,22 @@ export class RawSqliteConnection {
     return results;
   }
 
-  private wrapQueryResults(api: SQLiteAPI, rs: RawResultSet | undefined): RawQueryResult {
+  private wrapQueryResults(api: SQLiteAPI, { rawRows, columnNames }: RawResultSet): RawWebResult {
     return {
-      changes: api.changes(this.db),
-      lastInsertRowId: api.last_insert_id(this.db),
+      rowsAffected: api.changes(this.db),
+      insertId: api.last_insert_id(this.db),
       autocommit: api.get_autocommit(this.db) != 0,
-      resultSet: rs
+      rawRows,
+      columnNames
     };
   }
 
   /**
    * This executes a single statement using SQLite3 and returns the results as a {@link RawResultSet}.
    */
-  private async executeSingleStatementRaw(sql: string, bindings?: any[]): Promise<RawResultSet | undefined> {
+  private async executeSingleStatementRaw(sql: string, bindings?: any[]): Promise<RawResultSet> {
     const results = await this.executeRaw(sql, bindings);
-    return results.length ? results[0] : undefined;
+    return results.length ? results[0] : { columnNames: [], rawRows: [] };
   }
 
   async executeRaw(sql: string, bindings?: any[]): Promise<RawResultSet[]> {
@@ -140,7 +151,7 @@ export class RawSqliteConnection {
       let columns;
 
       const rs = await this.stepThroughStatement(api, stmt, bindings ?? [], columns);
-      columns = rs.columns;
+      columns = rs.columnNames;
       if (columns.length) {
         results.push(rs);
       }
@@ -182,7 +193,7 @@ export class RawSqliteConnection {
     }
 
     knownColumns ??= api.column_names(stmt);
-    return { columns: knownColumns, rows };
+    return { columnNames: knownColumns, rawRows: rows };
   }
 
   async close() {

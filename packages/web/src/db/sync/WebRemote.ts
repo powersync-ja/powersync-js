@@ -1,43 +1,40 @@
-import {
-  AbstractRemote,
-  AbstractRemoteOptions,
-  DEFAULT_REMOTE_LOGGER,
-  FetchImplementation,
-  FetchImplementationProvider,
-  ILogger,
-  RemoteConnector
-} from '@powersync/common';
+import { LogLevels, PowerSyncLogger } from '@powersync/common';
+import { AbstractRemote, FetchOptions, RemoteConnector } from '@powersync/shared-internals';
 
 import { getUserAgentInfo } from './userAgent.js';
-
-/*
- * Depends on browser's implementation of global fetch.
- */
-class WebFetchProvider extends FetchImplementationProvider {
-  getFetch(): FetchImplementation {
-    return fetch.bind(globalThis);
-  }
-}
+import type { WebSocketSyncStreamPlatform, WebSocketSupport } from '@powersync/shared-internals/websockets';
 
 export class WebRemote extends AbstractRemote {
   constructor(
     protected connector: RemoteConnector,
-    protected logger: ILogger = DEFAULT_REMOTE_LOGGER,
-    options?: Partial<AbstractRemoteOptions>
+    logger: PowerSyncLogger
   ) {
-    super(connector, logger, {
-      ...(options ?? {}),
-      fetchImplementation: options?.fetchImplementation ?? new WebFetchProvider()
-    });
+    super(connector, logger);
+  }
+
+  protected fetch({ resource, request }: FetchOptions): Promise<Response> {
+    return fetch(resource, request);
+  }
+
+  protected async loadWebSocketSupport(platform: WebSocketSyncStreamPlatform): Promise<WebSocketSupport> {
+    if (!websockets) {
+      // loadWebSocketSupport being called concurrently is safe, the import resolves to the same module in that case.
+      const module = await import('@powersync/shared-internals/websockets');
+      websockets = new module.WebSocketSupport(platform);
+    }
+
+    return websockets;
   }
 
   getUserAgent(): string {
     let ua = [super.getUserAgent(), `powersync-web`];
     try {
       ua.push(...getUserAgentInfo());
-    } catch (e) {
-      this.logger.warn('Failed to get user agent info', e);
+    } catch (error) {
+      this.logger.log({ level: LogLevels.warn, message: 'Failed to get user agent info', error });
     }
     return ua.join(' ');
   }
 }
+
+let websockets: WebSocketSupport | undefined;

@@ -1,16 +1,13 @@
 'use client';
-import { TimedPowerSyncDBFactory } from '@/library/PowerSyncDBFactory';
 import { TimedPowerSyncDatabase } from '@/library/TimedPowerSyncDatabase';
 import React, { PropsWithChildren } from 'react';
 import { PowerSyncContext, usePowerSync as _usePowerSync } from '@powersync/react';
 import { AppSchema } from '@/definitions/Schema';
 import { SupabaseConnector } from '@/library/SupabaseConnector';
 import { useSupabase } from './SupabaseProvider';
-import { createBaseLogger, LogLevel } from '@powersync/web';
+import { createConsoleLogger, LogLevels } from '@powersync/web';
 
-const logger = createBaseLogger();
-logger.useDefaults();
-logger.setLevel(LogLevel.DEBUG);
+const logger = createConsoleLogger({ minLevel: LogLevels.debug });
 
 export interface SystemProviderProps {
   dbFilename: string;
@@ -19,23 +16,24 @@ export interface SystemProviderProps {
 const SystemProvider: React.FC<PropsWithChildren<SystemProviderProps>> = (props) => {
   const { client } = useSupabase();
 
-  const [connector] = React.useState(new SupabaseConnector(client));
-
   const [powersync] = React.useState(
-    new TimedPowerSyncDBFactory({
-      dbFilename: props.dbFilename,
-      schema: AppSchema,
-      flags: {
+    new TimedPowerSyncDatabase({
+      database: {
+        dbFilename: props.dbFilename,
         disableSSRWarning: false
-      }
-    }).getInstance()
+      },
+      schema: AppSchema,
+      logger: logger
+    })
   );
+
+  const [connector] = React.useState(new SupabaseConnector(client, powersync));
 
   React.useEffect(() => {
     powersync.init();
 
     const l = connector.registerListener({
-      initialized: () => { },
+      initialized: () => {},
       sessionStarted: async () => {
         await powersync.connect(connector);
       }

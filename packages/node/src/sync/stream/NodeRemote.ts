@@ -1,25 +1,18 @@
 import * as os from 'node:os';
 
-import {
-  type ILogger,
-  AbstractRemote,
-  AbstractRemoteOptions,
-  DEFAULT_REMOTE_LOGGER,
-  FetchImplementation,
-  FetchImplementationProvider,
-  RemoteConnector
-} from '@powersync/common';
+import { AbstractRemote, FetchOptions, RemoteConnector } from '@powersync/shared-internals';
 import { Dispatcher, EnvHttpProxyAgent, getGlobalDispatcher, ProxyAgent, WebSocket as UndiciWebSocket } from 'undici';
+import { PowerSyncLogger } from '@powersync/common';
+import type { WebSocketSyncStreamPlatform, WebSocketSupport } from '@powersync/shared-internals/websockets';
 
 export const STREAMING_POST_TIMEOUT_MS = 30_000;
 
-class NodeFetchProvider extends FetchImplementationProvider {
-  getFetch(): FetchImplementation {
-    return fetch.bind(globalThis);
-  }
-}
+export interface NodeRemoteOptions {
+  /**
+   * @internal Only meant to be used for tests.
+   */
+  customFetch?: typeof fetch;
 
-export type NodeCustomConnectionOptions = {
   /**
    * Optional custom dispatcher for HTTP or WEB_SOCKET connections.
    *
@@ -27,32 +20,49 @@ export type NodeCustomConnectionOptions = {
    * or other connection options.
    */
   dispatcher?: Dispatcher;
-};
-
-export type NodeRemoteOptions = AbstractRemoteOptions & NodeCustomConnectionOptions;
+}
 
 export class NodeRemote extends AbstractRemote {
   private wsDispatcher: Dispatcher | undefined;
+  private fetchImpl: typeof fetch;
 
   constructor(
     protected connector: RemoteConnector,
-    protected logger: ILogger = DEFAULT_REMOTE_LOGGER,
-    options?: Partial<NodeRemoteOptions>
+    logger: PowerSyncLogger,
+    options?: NodeRemoteOptions
   ) {
-    const fetchDispatcher = options?.dispatcher ?? defaultFetchDispatcher();
+    super(connector, logger);
 
-    super(connector, logger, {
-      fetchImplementation: options?.fetchImplementation ?? new NodeFetchProvider(),
-      fetchOptions: {
-        dispatcher: fetchDispatcher
-      },
-      ...(options ?? {})
-    });
+    this.fetchImpl =
+      options?.customFetch ??
+      ((resource, init) => {
+        const dispatcher = options?.dispatcher ?? defaultFetchDispatcher();
+
+        return fetch(resource, {
+          // @ts-expect-error
+          dispatcher,
+          ...init
+        });
+      });
 
     this.wsDispatcher = options?.dispatcher;
   }
 
-  protected createSocket(url: string): globalThis.WebSocket {
+  protected fetch({ resource, request }: FetchOptions): Promise<Response> {
+    return this.fetchImpl(resource, request);
+  }
+
+  protected async loadWebSocketSupport(platform: WebSocketSyncStreamPlatform): Promise<WebSocketSupport> {
+    if (!websockets) {
+      // loadWebSocketSupport being called concurrently is safe, the import resolves to the same module in that case.
+      const module = await import('@powersync/shared-internals/websockets');
+      websockets = new module.WebSocketSupport(platform);
+    }
+
+    return websockets;
+  }
+
+  createSocket(url: string): globalThis.WebSocket {
     // Create dedicated dispatcher for this WebSocket
     const baseDispatcher = this.getWebsocketDispatcher(url);
 
@@ -108,3 +118,5 @@ function getProxyForProtocol(protocol: string): string | undefined {
     process.env[`ALL_PROXY`]
   );
 }
+
+let websockets: WebSocketSupport | undefined;

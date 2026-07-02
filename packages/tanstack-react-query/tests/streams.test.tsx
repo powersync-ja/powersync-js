@@ -1,7 +1,8 @@
 import { cleanup, renderHook, waitFor } from '@testing-library/react';
 import { describe, expect, vi } from 'vitest';
 import React, { act, useSyncExternalStore } from 'react';
-import { AbstractPowerSyncDatabase, ConnectionManager, SyncStatus } from '@powersync/common';
+import { CommonPowerSyncDatabase } from '@powersync/common';
+import { BasePowerSyncDatabase, ConnectionManager, SyncStatusSnapshot } from '@powersync/shared-internals';
 import { openPowerSync } from './utils';
 import { PowerSyncContext } from '@powersync/react';
 import { useQuery } from '../src/hooks/useQuery';
@@ -10,7 +11,7 @@ import { QuerySyncStreamOptions } from '@powersync/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 describe('stream hooks', () => {
-  let db: AbstractPowerSyncDatabase;
+  let db: CommonPowerSyncDatabase;
   let queryClient = new QueryClient({
     defaultOptions: {
       queries: {
@@ -52,9 +53,12 @@ describe('stream hooks', () => {
     testCases.forEach(({ mode, wrapper: testWrapper }) => {
       describe(`in ${mode}`, () => {
         it('can take syncStream instance', async () => {
-          const { result } = renderHook(() => useQuery({ queryKey: ['test'], query: 'SELECT 1', streams: [db.syncStream('a')] }), {
-            wrapper: testWrapper
-          });
+          const { result } = renderHook(
+            () => useQuery({ queryKey: ['test'], query: 'SELECT 1', streams: [db.syncStream('a')] }),
+            {
+              wrapper: testWrapper
+            }
+          );
 
           // Not resolving the subscription.
           await waitFor(() => expect(result.current.data).toHaveLength(1), { timeout: 1000, interval: 100 });
@@ -79,8 +83,8 @@ describe('stream hooks', () => {
           expect(getAllSpy).not.toHaveBeenCalledWith('SELECT 1', expect.anything());
 
           // Set last_synced_at for the subscription
-          db.currentStatus = _testStatus;
-          db.iterateListeners((l) => l.statusChanged?.(_testStatus));
+          (db as unknown as BasePowerSyncDatabase).currentStatus = _testStatus;
+          (db as unknown as BasePowerSyncDatabase).iterateListeners((l) => l.statusChanged?.(_testStatus));
 
           // Which should eventually run the query.
           await waitFor(() => expect(result.current.data).toHaveLength(1), { timeout: 1000, interval: 100 });
@@ -90,18 +94,24 @@ describe('stream hooks', () => {
 
         it('not waiting on stream', async () => {
           // By default, it should still run the query immediately instead of waiting for the stream to resolve.
-          const { result } = renderHook(() => useQuery({ queryKey: ['test'], query: 'SELECT 1', streams: [{ name: 'a' }] }), {
-            wrapper: testWrapper
-          });
+          const { result } = renderHook(
+            () => useQuery({ queryKey: ['test'], query: 'SELECT 1', streams: [{ name: 'a' }] }),
+            {
+              wrapper: testWrapper
+            }
+          );
 
           // Not resolving the subscription.
           await waitFor(() => expect(result.current.data).toHaveLength(1), { timeout: 1000, interval: 100 });
         });
 
         it('unsubscribes on unmount', async () => {
-          const { unmount } = renderHook(() => useQuery({ queryKey: ['test'], query: 'SELECT 1', streams: [{ name: 'a' }, { name: 'b' }] }), {
-            wrapper: testWrapper
-          });
+          const { unmount } = renderHook(
+            () => useQuery({ queryKey: ['test'], query: 'SELECT 1', streams: [{ name: 'a' }, { name: 'b' }] }),
+            {
+              wrapper: testWrapper
+            }
+          );
           await waitFor(() => expect(currentStreams()).toHaveLength(2), { timeout: 1000, interval: 100 });
 
           unmount();
@@ -205,8 +215,8 @@ describe('stream hooks', () => {
           expect(getAllSpy).not.toHaveBeenCalledWith('SELECT 2', expect.anything());
 
           // Set last_synced_at for the subscription
-          db.currentStatus = _testStatus;
-          db.iterateListeners((l) => l.statusChanged?.(_testStatus));
+          (db as unknown as BasePowerSyncDatabase).currentStatus = _testStatus;
+          (db as unknown as BasePowerSyncDatabase).iterateListeners((l) => l.statusChanged?.(_testStatus));
 
           // Which should eventually run both queries.
           await waitFor(
@@ -360,9 +370,13 @@ describe('stream hooks', () => {
   });
 });
 
-const _testStatus = new SyncStatus({
-  dataFlow: {
-    internalStreamSubscriptions: [
+const _testStatus = new SyncStatusSnapshot(
+  {
+    connected: true,
+    connecting: false,
+    downloading: { buckets: {} },
+    priority_status: [],
+    streams: [
       {
         name: 'a',
         parameters: null,
@@ -375,5 +389,6 @@ const _testStatus = new SyncStatus({
         priority: 1
       }
     ]
-  }
-});
+  },
+  {}
+);

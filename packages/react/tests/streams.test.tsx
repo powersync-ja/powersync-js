@@ -1,7 +1,8 @@
 import { cleanup, renderHook, waitFor } from '@testing-library/react';
-import { describe, expect, vi } from 'vitest';
+import { describe, expect, vi, beforeEach, it } from 'vitest';
 import React, { act, useSyncExternalStore } from 'react';
-import { AbstractPowerSyncDatabase, ConnectionManager, SyncStatus } from '@powersync/common';
+import { CommonPowerSyncDatabase } from '@powersync/common';
+import { BasePowerSyncDatabase, ConnectionManager, SyncStatusSnapshot } from '@powersync/shared-internals';
 import { openPowerSync } from './utils';
 import { PowerSyncContext } from '../src/hooks/PowerSyncContext';
 import { useSyncStream, useSyncStreams, UseSyncStreamOptions } from '../src/hooks/streams';
@@ -9,7 +10,7 @@ import { useQuery } from '../src/hooks/watched/useQuery';
 import { QuerySyncStreamOptions } from '../src/hooks/watched/watch-types';
 
 describe('stream hooks', () => {
-  let db: AbstractPowerSyncDatabase;
+  let db: CommonPowerSyncDatabase;
 
   beforeEach(() => {
     db = openPowerSync();
@@ -86,8 +87,8 @@ describe('stream hooks', () => {
         expect(result.current).toMatchObject({ isLoading: true });
 
         // Set last_synced_at for the subscription
-        db.currentStatus = _testStatus;
-        db.iterateListeners((l) => l.statusChanged?.(_testStatus));
+        (db as unknown as BasePowerSyncDatabase).currentStatus = _testStatus;
+        (db as unknown as BasePowerSyncDatabase).iterateListeners((l) => l.statusChanged?.(_testStatus));
 
         // Which should eventually run the query.
         await waitFor(() => expect(result.current.data).toHaveLength(1), { timeout: 1000, interval: 100 });
@@ -110,15 +111,19 @@ describe('stream hooks', () => {
         await waitFor(() => expect(currentStreams()).toHaveLength(1), { timeout: 1000, interval: 100 });
 
         // Trigger sync — this causes streamsHaveSynced to transition to true
-        db.currentStatus = _testStatus;
-        db.iterateListeners((l) => l.statusChanged?.(_testStatus));
+        (db as unknown as BasePowerSyncDatabase).currentStatus = _testStatus;
+        (db as unknown as BasePowerSyncDatabase).iterateListeners((l) => l.statusChanged?.(_testStatus));
 
         // Wait for the query to eventually resolve
         await waitFor(() => expect(result.current.data).toHaveLength(1), { timeout: 1000, interval: 100 });
 
         // Every intermediate render result should have the complete shape
         for (const r of allResults) {
-          expect(r).toMatchObject({ data: expect.any(Array), isLoading: expect.any(Boolean), isFetching: expect.any(Boolean) });
+          expect(r).toMatchObject({
+            data: expect.any(Array),
+            isLoading: expect.any(Boolean),
+            isFetching: expect.any(Boolean)
+          });
         }
       });
 
@@ -285,9 +290,13 @@ describe('stream hooks', () => {
   });
 });
 
-const _testStatus = new SyncStatus({
-  dataFlow: {
-    internalStreamSubscriptions: [
+const _testStatus = new SyncStatusSnapshot(
+  {
+    connected: true,
+    connecting: false,
+    downloading: { buckets: {} },
+    priority_status: [],
+    streams: [
       {
         name: 'a',
         parameters: null,
@@ -300,6 +309,6 @@ const _testStatus = new SyncStatus({
         priority: 1
       }
     ]
-  }
-});
-
+  },
+  {}
+);
