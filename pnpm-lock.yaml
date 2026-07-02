@@ -671,6 +671,9 @@ importers:
       '@op-engineering/op-sqlite':
         specifier: 'catalog:'
         version: 15.2.7(react-native@0.83.1(@babel/core@7.29.7)(@react-native-community/cli@20.0.0(typescript@6.0.3))(@react-native/metro-config@0.83.1(@babel/core@7.29.7))(@types/react@19.2.14)(react@19.2.4))(react@19.2.4)
+      '@react-native-community/cli':
+        specifier: ^20.0.0
+        version: 20.0.0(typescript@6.0.3)
       '@react-native/eslint-config':
         specifier: ^0.83.1
         version: 0.83.1(eslint@8.57.1)(jest@29.7.0(@types/node@24.10.13))(prettier@3.8.1)(typescript@6.0.3)
@@ -18020,17 +18023,6 @@ packages:
     resolution: {integrity: sha512-FdNA4RyH1L43TlvGG8qOMIfcEczwA5ij+zLXUy3Z83CjxhLvcV7/Q/8pk22wnCgYw7PJhtK+7lhO+qqyT4NdvQ==}
     engines: {node: '>=16.14'}
 
-  ws@6.2.3:
-    resolution: {integrity: sha512-jmTjYU0j60B+vHey6TfR3Z7RD61z/hmxBS3VMSGIrroOWXQEneK1zNuotOUrGyBHQj0yrpsLHPWtigEFd13ndA==}
-    peerDependencies:
-      bufferutil: ^4.0.1
-      utf-8-validate: ^5.0.2
-    peerDependenciesMeta:
-      bufferutil:
-        optional: true
-      utf-8-validate:
-        optional: true
-
   ws@6.2.4:
     resolution: {integrity: sha512-PNIUUyLI5YpkJZj60YBzX1o0ByQ4ovvfmq9N/Kig/PAYbVlGyz4R6G0SEWrD0O9acc0sT2+IdMBVLFv8FSi0Nw==}
     peerDependencies:
@@ -25405,7 +25397,7 @@ snapshots:
       ora: 5.4.1
       semver: 7.8.1
       wcwidth: 1.0.1
-      yaml: 2.8.2
+      yaml: 2.9.0
     transitivePeerDependencies:
       - typescript
 
@@ -25440,7 +25432,7 @@ snapshots:
       open: 6.4.0
       pretty-format: 29.7.0
       serve-static: 1.16.3
-      ws: 6.2.3
+      ws: 6.2.4
     transitivePeerDependencies:
       - bufferutil
       - supports-color
@@ -25479,7 +25471,7 @@ snapshots:
       fs-extra: 8.1.0
       graceful-fs: 4.2.11
       prompts: 2.4.2
-      semver: 7.7.4
+      semver: 7.8.1
     transitivePeerDependencies:
       - bufferutil
       - supports-color
@@ -40906,10 +40898,6 @@ snapshots:
     dependencies:
       js-yaml: 4.2.0
       write-file-atomic: 5.0.1
-
-  ws@6.2.3:
-    dependencies:
-      async-limiter: 1.0.1
 
   ws@6.2.4:
     dependencies:
