@@ -111,15 +111,16 @@ export class OPSQLiteDBAdapter extends DBAdapter {
       readOnly
     };
 
+    const helper: NativePowerSyncHelper | undefined = NativeModules.NativePowerSyncHelper;
+
     if (this.options.dbLocation) {
       openOptions.location = this.options.dbLocation;
-    } else if ('NativePowerSyncHelper' in NativeModules) {
+    } else if (helper) {
       // In older versions of the PowerSync React Native SDK, we used React Native Quick SQLite instead of OP-SQLite.
       // On Android, RQNS uses context.getFilesDir() instead of context.getDatabasePath() (which OP-SQLite uses as a
       // default). So, to ensure that databases opened with RNQS continue to work with OP-SQLite, we have a native
       // helper method that checks whether the database exists in the old path and would apply that as an explicit
       // location in that case.
-      const helper: NativePowerSyncHelper = NativeModules.NativePowerSyncHelper;
       const defaultLocation = helper.resolveDefaultDatabaseLocation(dbFilename);
       if (defaultLocation) {
         openOptions.location = defaultLocation;
