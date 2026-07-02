@@ -1,12 +1,10 @@
 # Sync Diagnostics Client
 
-A browser-based tool for inspecting PowerSync databases. Both live (via sync) and offline (via SQLite file upload).
+A browser-based tool for inspecting PowerSync sync behavior and databases. Supports both live syncing from a PowerSync instance, and offline inspection of a SQLite database (by uploading a file).
 
-The app is available at [https://diagnostics-app.powersync.com/](https://diagnostics-app.powersync.com/)
+A hosted version of the Sync Diagnostics Client is available at [https://diagnostics-app.powersync.com/](https://diagnostics-app.powersync.com/). It can also be run as a local standalone web app. It is based on the [PowerSync Web SDK](/packages/web/).
 
-It can also be run as a local standalone web app, and is based on the [web SDK](/packages/web/).
-
-## Running the App
+## Running the Sync Diagnostics Client
 
 ### Docker
 
@@ -18,7 +16,7 @@ The app will be available on http://localhost:8082.
 
 ### Local Development
 
-In the root of the repository, run:
+In the **root of the repository**, run:
 
 ```sh
 pnpm install
@@ -39,8 +37,8 @@ The landing page offers two paths:
 
 ![](public/images/landing-page.png)
 
-- **Connect to PowerSync**: Live sync diagnostics using a JWT token. View real-time sync status, bucket data, and manage client parameters.
-- **Inspect SQLite File**: Offline inspection of a local `SQLite` file. No authentication required.
+- **Connect to PowerSync**: Live sync diagnostics using a JWT token. View real-time sync status, bucket data, and manage connection/client parameters.
+- **Inspect SQLite File**: Offline inspection of a local SQLite database file. No authentication required.
 
 ---
 
@@ -77,10 +75,10 @@ The main dashboard after connecting:
 
 ![](public/images/sync-streams.png)
 
-Manage sync stream subscriptions directly from the Sync Overview page:
+Manage Sync Stream subscriptions directly from the _Sync Overview_ page:
 
-- View all active stream subscriptions with their parameters, priority, sync time, and eviction time.
-- **Add Subscription**: Subscribe to a new stream with optional parameters and priority.
+- View all active Sync Stream subscriptions with their parameters, priority, sync time, and eviction time.
+- **Add Subscription**: Subscribe to a new Sync Stream with optional subscription parameters and priority.
 - **Unsubscribe**: Remove explicit subscriptions (triggers a reconnect to apply the change).
 
 ### SQL Console
@@ -99,13 +97,13 @@ Execute read-only SQL queries against the live PowerSync database:
 
 The schema is dynamically inferred from downloaded data and automatically updated as new data arrives. This page displays the current inferred schema for reference.
 
-Note: Tables with 0 synced rows won't appear in the schema. To refresh after sync rule/stream changes, use "Clear & Redownload" on the Sync Overview page.
+Note: Tables with 0 synced rows won't appear in the schema. To refresh after Sync Streams / Sync Rules changes, use "Clear & Redownload" on the _Sync Overview_ page.
 
-### Client Parameters
+### Connection Parameters / Client Parameters
 
 ![](public/images/client-parameters.png)
 
-Manage client parameters that are sent with sync requests:
+Manage [Connection Parameters](https://docs.powersync.com/sync/streams/parameters#connection-parameters) (Sync Streams) / [Client Parameters](https://docs.powersync.com/sync/rules/client-parameters) (Sync Rules) that are sent with sync requests:
 
 - Add, edit, and delete key-value parameters.
 - Supports string, number, boolean, array, and object types.
@@ -115,13 +113,13 @@ Manage client parameters that are sent with sync requests:
 
 ## SQLite File Inspector
 
-The File Inspector allows offline inspection of SQLite database files. It is useful for post-mortem analysis of database files extracted from devices. No authentication is required.
+The File Inspector allows offline inspection of SQLite database files. It is useful for analysis of database files extracted from devices. No authentication is required.
 
 ### Opening a File
 
 ![](public/images/inspector-drop-zone.png)
 
-Drag and drop a `SQLite` file, or click to browse. The file is opened in-browser using wa-sqlite - nothing is uploaded to a server.
+Drag and drop a SQLite database file, or click to browse. The file is opened in-browser using `wa-sqlite` - nothing is uploaded to a server.
 
 ### Database Overview
 
@@ -135,7 +133,7 @@ Drag and drop a `SQLite` file, or click to browse. The file is opened in-browser
 
 ![](public/images/inspector-sql-console.png)
 
-Execute read-only SQL queries against the uploaded file. Works the same as the sync SQL console, with separate query history.
+Execute read-only SQL queries against the uploaded file. Works the same as the _SQL Console_ for live synced databases, with separate query history.
 
 ---
 

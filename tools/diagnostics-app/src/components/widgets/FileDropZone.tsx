@@ -84,7 +84,7 @@ export function FileDropZone({ onFileSelected, isLoading, error }: FileDropZoneP
   const displayError = validationError || error;
 
   return (
-    <div className="fixed inset-0 flex flex-col items-center justify-center p-6 overflow-hidden">
+    <div className="flex min-h-full flex-col items-center justify-center p-6">
       <div className="w-full max-w-2xl space-y-5">
         {/* Logo & title */}
         <div className="flex flex-col items-center gap-2">

@@ -295,15 +295,23 @@ export default function SyncDiagnosticsPage() {
                         </span>
                       </TooltipTrigger>
                       <TooltipContent className="max-w-92">
-                        Two separate limits apply (both PSYNC_S2305, default {DEFAULT_SYNC_LIMIT.toLocaleString()}{' '}
-                        each): <strong>bucket count</strong> and <strong>parameter query results</strong>.
+                        Two separate limits apply: <strong>bucket count</strong> and <strong>parameter query results</strong>. 
+                        Both yield a PSYNC_S2305 error when exceeded. Both <a
+                            href="https://docs.powersync.com/debugging/troubleshooting#too-many-buckets-psync_s2305"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="underline hover:text-primary-foreground/80"
+                          >
+                            default
+                          </a>{' '}
+                          to a limit of {DEFAULT_SYNC_LIMIT.toLocaleString()}.
                         <div className="mt-2">
                           Global buckets count only toward bucket count. Parameter query buckets (in either{' '}
                           <a
                             href="https://docs.powersync.com/sync/rules/parameter-queries"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="underline hover:text-foreground"
+                            className="underline hover:text-primary-foreground/80"
                           >
                             Sync Rules
                           </a>{' '}
@@ -312,12 +320,12 @@ export default function SyncDiagnosticsPage() {
                             href="https://docs.powersync.com/sync/streams/parameters"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="underline hover:text-foreground"
+                            className="underline hover:text-primary-foreground/80"
                           >
                             Sync Streams
                           </a>
-                          ) count toward both, but are de-duplicated client-side, so the server's parameter result count
-                          may be higher.
+                          ) count toward both, but are de-duplicated client-side, so the parameter result count 
+                          on the PowerSync Service side may be higher.
                         </div>
                       </TooltipContent>
                     </Tooltip>
@@ -516,10 +524,10 @@ export default function SyncDiagnosticsPage() {
                 <span className={cn('font-medium', totals.buckets >= 900 ? 'text-destructive' : 'text-amber-600')}>
                   {totals.buckets >= 900 ? 'Critical: ' : 'Warning: '}
                 </span>
-                {totals.buckets.toLocaleString()} of {DEFAULT_SYNC_LIMIT.toLocaleString()} buckets used (PSYNC_S2305,
-                default limit). {totals.parameterized_buckets.toLocaleString()} are parameterized - at least that many
-                parameter query results on the server. Review your Sync Config to reduce buckets and parameter query
-                results for this user.{' '}
+                {totals.buckets.toLocaleString()} buckets used (PSYNC_S2305, default limit of {DEFAULT_SYNC_LIMIT.toLocaleString()} unless specifically
+                configured higher for your instance). {totals.parameterized_buckets.toLocaleString()} are parameterized - at least that many
+                parameter query results on the server. Depending on your configuration ({DEFAULT_SYNC_LIMIT.toLocaleString()} is the default limit), you may
+                need to adjust your Sync Config to reduce the numbe rof buckets and parameter query results for this user.{' '}
                 <a
                   href="https://docs.powersync.com/debugging/troubleshooting#too-many-buckets-psync_s2305"
                   target="_blank"

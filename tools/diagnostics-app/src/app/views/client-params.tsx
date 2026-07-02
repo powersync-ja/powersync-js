@@ -150,12 +150,12 @@ function ClientParamsContent() {
   };
 
   return (
-    <NavigationPage title="Client Parameters">
+    <NavigationPage title="Connection/Client Parameters">
       <div className="min-w-0 max-w-full overflow-x-hidden p-6">
         <Card>
           <CardHeader>
-            <CardTitle className="text-xl">Parameters</CardTitle>
-            <CardDescription>Configure key-value parameters that will be sent with sync requests.</CardDescription>
+            <CardTitle className="text-xl">Connection Parameters / Client Parameters</CardTitle>
+            <CardDescription>Configure key-value Connection Parameters (Sync Streams) / Client Parameters (Sync Rules) that will be sent with sync requests.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {(storedParams ?? []).length === 0 ? (
