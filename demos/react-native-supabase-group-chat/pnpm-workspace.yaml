@@ -6,7 +6,3 @@ allowBuilds:
   unrs-resolver: false
 
 nodeLinker: hoisted
-
-# TEMPORARY / DO NOT COMMIT: relaxes the pnpm minimumReleaseAge gate so freshly-published SDK 57
-# packages install/build locally. Remove before committing (packages age past the gate by then).
-minimumReleaseAge: 0
