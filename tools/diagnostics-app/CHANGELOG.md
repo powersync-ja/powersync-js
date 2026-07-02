@@ -1,11 +1,5 @@
 # diagnostics-app
 
-## 0.13.14
-
-### Patch Changes
-
-- 2574af8: Polish UI, terminology, and documentation.
-
 ## 0.13.13
 
 ### Patch Changes
