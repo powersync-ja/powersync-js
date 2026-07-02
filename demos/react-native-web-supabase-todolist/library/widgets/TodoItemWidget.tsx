@@ -2,6 +2,7 @@ import { CameraCapturedPicture } from 'expo-camera';
 import React from 'react';
 import { ActivityIndicator, View, Modal, StyleSheet, Platform } from 'react-native';
 import { ListItem, Button, Image } from '@rneui/themed';
+import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
 import { CameraWidget } from './CameraWidget';
 import { TodoRecord } from '../powersync/AppSchema';
 import { AppConfig } from '../supabase/AppConfig';
@@ -83,7 +84,7 @@ export const TodoItemWidget: React.FC<TodoItemWidgetProps> = (props) => {
               backgroundColor: '#d3d3d3'
             }}
             type="clear"
-            icon={{ name: 'delete', color: 'red' }}
+            icon={<MaterialIcons name="delete" color="red" size={24} />}
             onPress={() => {
               alert('Confirm', 'This item will be permanently deleted', {
                 confirmation: true,
@@ -119,12 +120,7 @@ export const TodoItemWidget: React.FC<TodoItemWidgetProps> = (props) => {
                 buttonStyle={{ borderColor: 'transparent' }}
                 containerStyle={styles.trailingButton}
                 onPress={() => setCameraVisible(true)}
-                icon={{
-                  name: 'camera',
-                  type: 'font-awesome',
-                  color: 'black',
-                  size: 24
-                }}
+                icon={<FontAwesome name="camera" color="black" size={24} />}
               />
             ) : imageUri != null ? (
               <Image

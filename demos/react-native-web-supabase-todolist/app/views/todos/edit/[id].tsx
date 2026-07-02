@@ -5,6 +5,7 @@ import * as React from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { ScrollView, View, Text } from 'react-native';
 import { FAB } from '@rneui/themed';
+import { MaterialIcons } from '@expo/vector-icons';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { TODO_TABLE, TodoRecord, LIST_TABLE } from '../../../../library/powersync/AppSchema';
 import { useSystem } from '../../../../library/powersync/system';
@@ -129,7 +130,7 @@ const TodoView: React.FC = () => {
       />
       <FAB
         style={{ zIndex: 99, bottom: 0 }}
-        icon={{ name: 'add', color: 'white' }}
+        icon={<MaterialIcons name="add" color="white" size={20} />}
         size="small"
         placement="right"
         onPress={() => {

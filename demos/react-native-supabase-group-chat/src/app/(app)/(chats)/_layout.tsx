@@ -22,7 +22,7 @@ export default function ChatsLayout() {
           title: 'Group',
           headerRight: (props) => (
             <Link href={`/(app)/(chats)/g/${groupId}/settings`}>
-              <UserCog size="$1.5" color={props.tintColor} />
+              <UserCog size="$1.5" color={props.tintColor as string | undefined} />
             </Link>
           )
         }}

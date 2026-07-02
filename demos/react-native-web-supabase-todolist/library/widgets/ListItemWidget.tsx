@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { ListItem, Icon, Button } from '@rneui/themed';
+import { MaterialIcons } from '@expo/vector-icons';
 import { alert } from '../utils/alert';
 
 const SPACING = 12;
@@ -29,7 +30,7 @@ export const ListItemWidget: React.FC<ListItemWidgetProps> = (props) => {
               backgroundColor: '#d3d3d3'
             }}
             type="clear"
-            icon={{ name: 'delete', color: 'red' }}
+            icon={<MaterialIcons name="delete" color="red" size={24} />}
             onPress={() => {
               alert('Confirm', 'This list will be permanently deleted', {
                 confirmation: true,

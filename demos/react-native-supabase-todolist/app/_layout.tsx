@@ -4,6 +4,7 @@ import { useSystem } from '../library/powersync/system';
 import { PowerSyncContext } from '@powersync/react-native';
 import { Pressable } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+import { PromptProvider } from '../library/utils/prompt';
 
 /**
  * This App uses a nested navigation stack.
@@ -26,7 +27,8 @@ const HomeLayout = () => {
   }, []);
   return (
     <PowerSyncContext.Provider value={db}>
-      <Stack screenOptions={{ headerTintColor: '#fff', headerStyle: { backgroundColor: '#2196f3' } }}>
+      <PromptProvider>
+        <Stack screenOptions={{ headerTintColor: '#fff', headerStyle: { backgroundColor: '#2196f3' } }}>
         <Stack.Screen name="signin" options={{ title: 'Supabase Login' }} />
         <Stack.Screen name="register" options={{ title: 'Register' }} />
 
@@ -47,7 +49,8 @@ const HomeLayout = () => {
             presentation: 'fullScreenModal'
           }}
         />
-      </Stack>
+        </Stack>
+      </PromptProvider>
     </PowerSyncContext.Provider>
   );
 };

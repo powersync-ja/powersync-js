@@ -1,11 +1,10 @@
 import React from 'react';
 import { Alert, View, StyleSheet } from 'react-native';
-import { router, useNavigation } from 'expo-router';
+import { router, useNavigation, usePathname } from 'expo-router';
 import { Icon, Header } from '@rneui/themed';
 import { useStatus } from '@powersync/react';
-import { DrawerActions } from '@react-navigation/native';
+import { DrawerActions } from "expo-router/react-navigation";
 import { useSystem } from '../powersync/system';
-import { usePathname } from 'expo-router';
 
 export const HeaderWidget: React.FC<{
   title?: string;
@@ -51,8 +50,8 @@ export const HeaderWidget: React.FC<{
             size={24}
             style={{ padding: 5 }}
             onPress={() => {
-              if (system.attachmentQueue) {
-                system.attachmentQueue.trigger();
+              if (system.photoAttachmentQueue) {
+                system.photoAttachmentQueue.syncStorage();
               }
               Alert.alert(
                 'Status',
