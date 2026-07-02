@@ -3,7 +3,7 @@ import { Text } from 'react-native';
 import { Icon, Header } from '@rneui/themed';
 import { useNavigation } from 'expo-router';
 import { useStatus } from '@powersync/react';
-import { DrawerActions } from '@react-navigation/native';
+import { DrawerActions } from "expo-router/react-navigation";
 import { useSystem } from '../powersync/system';
 import { alert } from '../utils/alert';
 

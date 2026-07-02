@@ -18,12 +18,6 @@ const config: ExpoConfig = {
   icon: './assets/icon.png',
   userInterfaceStyle: 'automatic',
   scheme: 'powersync',
-  newArchEnabled: true,
-  splash: {
-    image: './assets/splash.png',
-    resizeMode: 'contain',
-    backgroundColor: '#cb62ff'
-  },
   updates: {
     url: `https://u.expo.dev/${projectId}`
   },
@@ -53,16 +47,24 @@ const config: ExpoConfig = {
     'expo-router',
     'expo-font',
     [
+      'expo-splash-screen',
+      {
+        image: './assets/splash.png',
+        resizeMode: 'contain',
+        backgroundColor: '#cb62ff'
+      }
+    ],
+    [
       'expo-build-properties',
       {
         ios: {
-          deploymentTarget: '15.1'
+          deploymentTarget: '16.4'
         },
         android: {
           minSdkVersion: 24,
-          compileSdkVersion: 35,
-          targetSdkVersion: 35,
-          buildToolsVersion: '35.0.0'
+          compileSdkVersion: 36,
+          targetSdkVersion: 36,
+          buildToolsVersion: '36.0.0'
         }
       }
     ],
