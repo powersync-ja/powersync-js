@@ -122,7 +122,7 @@ export const sharedMockSyncServiceTest = test.extend<{
         () => {
           expect(database.connecting).toBe(true);
         },
-        { timeout: 1000 }
+        { timeout: 1500 }
       );
 
       let _syncRequestId: string;

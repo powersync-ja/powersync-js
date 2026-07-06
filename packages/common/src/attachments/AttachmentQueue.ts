@@ -348,7 +348,8 @@ export class AttachmentQueue {
    */
   async syncStorage(): Promise<void> {
     const signal = this.syncAbortController?.signal;
-    if (signal?.aborted) return;
+    // We have a signal from startSync() to stopSync(), so treat the absence of one like an aborted sync.
+    if (signal == null || signal?.aborted) return;
 
     try {
       await this.syncLoopMutex.runExclusive(async () => {
@@ -357,13 +358,13 @@ export class AttachmentQueue {
 
         await this.syncingService.processAttachments(activeAttachments, { signal });
 
-        if (signal?.aborted) return;
+        if (signal.aborted) return;
 
         await this.attachmentService.withContext((ctx) => this.syncingService.deleteArchivedAttachments(ctx));
       }, signal);
     } catch (error) {
       // A queued batch's acquire rejects when `stopSync` aborts — expected, not an error.
-      if (signal?.aborted) return;
+      if (signal.aborted) return;
       throw error;
     }
   }

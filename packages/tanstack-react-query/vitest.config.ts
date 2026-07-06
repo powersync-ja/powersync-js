@@ -19,12 +19,12 @@ const config: ViteUserConfig = {
       shuffle: false, // Disable shuffling of test files
       concurrent: false // Run test files sequentially
     },
+    /**
+     * Starts each test in a new iFrame
+     */
+    isolate: true,
     browser: {
       enabled: true,
-      /**
-       * Starts each test in a new iFrame
-       */
-      isolate: true,
       provider: playwright(),
       headless: true,
       instances: [
