@@ -619,6 +619,31 @@ export function registerBaseTests() {
       expect(duration).lessThan(2000);
     });
 
+    it('can run triggers', async () => {
+      let resolve: () => void;
+      const promise = new Promise<void>((r) => {
+        resolve =r;
+      });
+
+      const stop = await db.triggers.trackTableDiff({
+        source: 'users',
+        columns: [],
+        when: {INSERT:'TRUE', UPDATE:'TRUE' },
+        onChange: async (context) => {
+          console.log('running diff trigger onChange');
+          const list = await context.withDiff('SELECT id FROM diff');
+          console.log('diff trigger has diff', list);
+          await context.execute('SELECT 1');
+          console.log('context was able to execute');
+          resolve();
+        },
+      });
+
+      await db.execute('INSERT INTO users (id, name) VALUES (uuid(), ?)', ['Test user']);
+      await promise;
+      stop();
+    });
+
     it('should compare results with old watch method', async () => {
       const controller = new AbortController();
 

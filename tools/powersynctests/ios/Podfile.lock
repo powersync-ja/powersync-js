@@ -25,7 +25,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - powersync-op-sqlite (0.9.5):
+  - powersync-op-sqlite (0.9.13):
     - hermes-engine
     - powersync-sqlite-core (~> 0.4.12)
     - RCTRequired
@@ -2105,9 +2105,9 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   FBLazyVector: e97c19a5a442429d1988f182a1940fb08df514da
-  hermes-engine: b5555460cb791d3acfd49f24b91800b2a048aff2
+  hermes-engine: 2c58a3e153695bd00bbae30847acd6d7694c30af
   op-sqlite: 9ad0095f12c88397bccd86e912a018049eb1caf5
-  powersync-op-sqlite: ded3f2cca36ca661f2f2ac2b8b2fb33306dee2ae
+  powersync-op-sqlite: 97ee73a7f2e8c1ef745fd9b1a83156a89ab106b8
   powersync-sqlite-core: 116ecf3391859445f1477f8c230914e04d9874e7
   RCTDeprecation: af44b104091a34482596cd9bd7e8d90c4e9b4bd7
   RCTRequired: bb77b070f75f53398ce43c0aaaa58337cebe2bf6
@@ -2117,7 +2117,7 @@ SPEC CHECKSUMS:
   React: 1ba7d364ade7d883a1ec055bfc3606f35fdee17b
   React-callinvoker: bc2a26f8d84fb01f003fc6de6c9337b64715f95b
   React-Core: 7840d3a80b43a95c5e80ef75146bd70925ebab0f
-  React-Core-prebuilt: 64dd17af5ac8046297502e83291c6d2a699659d7
+  React-Core-prebuilt: 0af50eb9549f52cf7e198a4a10d8564c5d4b965f
   React-CoreModules: 2eb010400b63b89e53a324ffb3c112e4c7c3ce42
   React-cxxreact: a558e92199d26f145afa9e62c4233cf8e7950efe
   React-debug: 755200a6e7f5e6e0a40ff8d215493d43cce285fc
@@ -2179,9 +2179,9 @@ SPEC CHECKSUMS:
   React-utils: 8d888b379f0808bfabaea03d85f9e8dd9b8548da
   React-webperformancenativemodule: c10016db7f1bb1153060d4aa9f7dbde2c88c845d
   ReactAppDependencyProvider: e96e93b493d8d86eeaee3e590ba0be53f6abe46f
-  ReactCodegen: 190b409cd854eac9fd7e1ab0254c8eda3fb8b983
+  ReactCodegen: d8ea744149cb52385a4042aef8c1c8304ba24446
   ReactCommon: 07572bf9e687c8a52fbe4a3641e9e3a1a477c78e
-  ReactNativeDependencies: ec77c2f367814afd0649b49561313382d61355d1
+  ReactNativeDependencies: 359749f7b94e6051c15020745611e58a3d4c751c
   Yoga: c0b3f2c7e8d3e327e450223a2414ca3fa296b9a2
 
 PODFILE CHECKSUM: a15b54e8d191759ce7fcccb262b8753851ec9fde

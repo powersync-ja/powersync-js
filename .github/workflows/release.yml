@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     branches:
-      - main
+      - v1
   workflow_dispatch: # For dev publishing
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
