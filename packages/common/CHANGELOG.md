@@ -1,5 +1,11 @@
 # @powersync/common
 
+## 1.57.1
+
+### Patch Changes
+
+- Fix not being able to run queries in the `onChange` callback of `createDiffTrigger`.
+
 ## 1.57.0
 
 ### Minor Changes
