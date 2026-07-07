@@ -45,6 +45,57 @@ describe(
   )
 );
 
+describe('Basic - with in-memory', () => {
+  const defaultOptions = {
+    dbFilename: 'in-memory.db',
+    vfs: WASQLiteVFS.InMemoryVfs,
+    databaseWorkerLogLevel: defaultLogLevel
+  };
+
+  describe(
+    'in shared worker',
+    { sequential: true },
+    describeBasicTests(() =>
+      generateTestDb({
+        schema: TEST_SCHEMA,
+        logger: defaultTestLogger,
+        database: {
+          ...defaultOptions
+        }
+      })
+    )
+  );
+
+  describe(
+    'in dedicated worker',
+    describeBasicTests(() =>
+      generateTestDb({
+        schema: TEST_SCHEMA,
+        logger: defaultTestLogger,
+        database: {
+          ...defaultOptions,
+          enableMultiTabs: false
+        }
+      })
+    )
+  );
+
+  describe(
+    'in local tab',
+    describeBasicTests(() =>
+      generateTestDb({
+        schema: TEST_SCHEMA,
+        logger: defaultTestLogger,
+        database: {
+          ...defaultOptions,
+          enableMultiTabs: false,
+          useWebWorker: false
+        }
+      })
+    )
+  );
+});
+
 function describeBasicTests(generateDB: () => PowerSyncDatabase) {
   return () => {
     it('should execute a select query using getAll', async () => {
