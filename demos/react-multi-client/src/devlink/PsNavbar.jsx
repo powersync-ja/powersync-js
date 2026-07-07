@@ -29,7 +29,7 @@ export function PsNavbar({ as: _Component = _Builtin.NavbarWrapper }) {
             height="auto"
             loading="lazy"
             alt=""
-            src="https://uploads-ssl.webflow.com/655cae9c85d542976fbd4b10/655cae9c85d542976fbd4b49_powersync-logo-horizontal-all-white.svg"
+            src="https://cdn.prod.website-files.com/655cae9c85d542976fbd4b10/655cae9c85d542976fbd4b49_powersync-logo-horizontal-all-white.svg"
           />
         </_Builtin.NavbarBrand>
         <_Builtin.Block className="ps-nav-links-div w-clearfix" tag="div">
@@ -93,7 +93,7 @@ export function PsNavbar({ as: _Component = _Builtin.NavbarWrapper }) {
                 height="24"
                 loading="lazy"
                 alt=""
-                src="https://uploads-ssl.webflow.com/655cae9c85d542976fbd4b10/655cae9c85d542976fbd4b48_github-white.svg"
+                src="https://cdn.prod.website-files.com/655cae9c85d542976fbd4b10/655cae9c85d542976fbd4b48_github-white.svg"
               />
             </_Builtin.Link>
             <_Builtin.Link
@@ -111,7 +111,7 @@ export function PsNavbar({ as: _Component = _Builtin.NavbarWrapper }) {
                 height="24"
                 loading="lazy"
                 alt=""
-                src="https://uploads-ssl.webflow.com/655cae9c85d542976fbd4b10/655cae9c85d542976fbd4b4d_discord-white.svg"
+                src="https://cdn.prod.website-files.com/655cae9c85d542976fbd4b10/655cae9c85d542976fbd4b4d_discord-white.svg"
               />
             </_Builtin.Link>
             <_Builtin.Link
@@ -129,7 +129,7 @@ export function PsNavbar({ as: _Component = _Builtin.NavbarWrapper }) {
                 height="20"
                 loading="lazy"
                 alt=""
-                src="https://uploads-ssl.webflow.com/655cae9c85d542976fbd4b10/655cae9c85d542976fbd4bc1_x-white.svg"
+                src="https://cdn.prod.website-files.com/655cae9c85d542976fbd4b10/655cae9c85d542976fbd4bc1_x-white.svg"
               />
             </_Builtin.Link>
             <_Builtin.Link
@@ -147,7 +147,7 @@ export function PsNavbar({ as: _Component = _Builtin.NavbarWrapper }) {
                 height="24"
                 loading="lazy"
                 alt=""
-                src="https://uploads-ssl.webflow.com/655cae9c85d542976fbd4b10/655cae9c85d542976fbd4b80_youtube-white.svg"
+                src="https://cdn.prod.website-files.com/655cae9c85d542976fbd4b10/655cae9c85d542976fbd4b80_youtube-white.svg"
               />
             </_Builtin.Link>
             <_Builtin.NavbarLink

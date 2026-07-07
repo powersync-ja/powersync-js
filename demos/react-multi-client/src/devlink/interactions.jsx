@@ -80,17 +80,17 @@ export const InteractionsProvider = ({ children, createEngine }) => {
     }
     debouncedInit.current(ixData.current, ixStyles.current);
   }, []);
-  return (
-    <IXContext.Provider
-      value={{
+  return React.createElement(
+    IXContext.Provider,
+    {
+      value: {
         initEngine,
         restartEngine: () =>
           debouncedInit.current &&
           debouncedInit.current(ixData.current, ixStyles.current),
-      }}
-    >
-      {children}
-    </IXContext.Provider>
+      },
+    },
+    children
   );
 };
 export const useInteractions = (data, styles) => {

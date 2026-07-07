@@ -35,7 +35,7 @@ export function PsFooter({ as: _Component = _Builtin.Block }) {
                 width="auto"
                 height="auto"
                 alt=""
-                src="https://uploads-ssl.webflow.com/655cae9c85d542976fbd4b10/655cae9c85d542976fbd4b9a_powersync-logo-color.svg"
+                src="https://cdn.prod.website-files.com/655cae9c85d542976fbd4b10/655cae9c85d542976fbd4b9a_powersync-logo-color.svg"
               />
             </_Builtin.Column>
             <_Builtin.Column className="ps-footer-column-dev" tag="div">
@@ -219,7 +219,7 @@ export function PsFooter({ as: _Component = _Builtin.Block }) {
                   width="auto"
                   height="24"
                   alt=""
-                  src="https://uploads-ssl.webflow.com/655cae9c85d542976fbd4b10/655cae9c85d542976fbd4b48_github-white.svg"
+                  src="https://cdn.prod.website-files.com/655cae9c85d542976fbd4b10/655cae9c85d542976fbd4b48_github-white.svg"
                 />
               </_Builtin.Link>
               <_Builtin.Link
@@ -237,7 +237,7 @@ export function PsFooter({ as: _Component = _Builtin.Block }) {
                   width="auto"
                   height="24"
                   alt=""
-                  src="https://uploads-ssl.webflow.com/655cae9c85d542976fbd4b10/655cae9c85d542976fbd4b4d_discord-white.svg"
+                  src="https://cdn.prod.website-files.com/655cae9c85d542976fbd4b10/655cae9c85d542976fbd4b4d_discord-white.svg"
                 />
               </_Builtin.Link>
               <_Builtin.Link
@@ -255,7 +255,7 @@ export function PsFooter({ as: _Component = _Builtin.Block }) {
                   width="auto"
                   height="20"
                   alt=""
-                  src="https://uploads-ssl.webflow.com/655cae9c85d542976fbd4b10/655cae9c85d542976fbd4ba3_x-white.svg"
+                  src="https://cdn.prod.website-files.com/655cae9c85d542976fbd4b10/655cae9c85d542976fbd4ba3_x-white.svg"
                 />
               </_Builtin.Link>
               <_Builtin.Link
@@ -273,7 +273,7 @@ export function PsFooter({ as: _Component = _Builtin.Block }) {
                   width="32"
                   height="24"
                   alt=""
-                  src="https://uploads-ssl.webflow.com/655cae9c85d542976fbd4b10/655cae9c85d542976fbd4b80_youtube-white.svg"
+                  src="https://cdn.prod.website-files.com/655cae9c85d542976fbd4b10/655cae9c85d542976fbd4b80_youtube-white.svg"
                 />
               </_Builtin.Link>
               <_Builtin.Link
@@ -291,7 +291,7 @@ export function PsFooter({ as: _Component = _Builtin.Block }) {
                   width="auto"
                   height="24"
                   alt=""
-                  src="https://uploads-ssl.webflow.com/655cae9c85d542976fbd4b10/655cae9c85d542976fbd4ba6_linkedin-icon-white.svg"
+                  src="https://cdn.prod.website-files.com/655cae9c85d542976fbd4b10/655cae9c85d542976fbd4ba6_linkedin-icon-white.svg"
                 />
               </_Builtin.Link>
             </_Builtin.Block>

@@ -89,10 +89,14 @@ export const TabsWrapper = React.forwardRef(function TabsWrapper(
     })();
     if (nextTab) changeTab(nextTab.getAttribute("data-w-tab"));
   });
-  return (
-    <tabsContext.Provider value={{ current, onTabClick, onLinkKeyDown }}>
-      <div {...props} className={cj(className, "w-tabs")} ref={ref} />
-    </tabsContext.Provider>
+  return React.createElement(
+    tabsContext.Provider,
+    { value: { current, onTabClick, onLinkKeyDown } },
+    React.createElement("div", {
+      ...props,
+      className: cj(className, "w-tabs"),
+      ref: ref,
+    })
   );
 });
 export const TabsMenu = React.forwardRef(function TabsMenu(
@@ -126,24 +130,24 @@ export const TabsLink = React.forwardRef(function TabsLink(
     },
     [isCurrent, ref]
   );
-  return (
-    <a
-      {...props}
-      ref={innerRef}
-      className={cj(
+  return React.createElement(
+    "a",
+    {
+      ...props,
+      ref: innerRef,
+      className: cj(
         className,
         "w-inline-block w-tab-link",
         isCurrent && "w--current"
-      )}
-      onClick={() => onTabClick(props["data-w-tab"])}
-      onKeyDown={onLinkKeyDown}
-      role="tab"
-      tabIndex={isCurrent ? 0 : -1}
-      aria-selected={isCurrent}
-      aria-controls={props["data-w-tab"]}
-    >
-      {children}
-    </a>
+      ),
+      onClick: () => onTabClick(props["data-w-tab"]),
+      onKeyDown: onLinkKeyDown,
+      role: "tab",
+      tabIndex: isCurrent ? 0 : -1,
+      "aria-selected": isCurrent,
+      "aria-controls": props["data-w-tab"],
+    },
+    children
   );
 });
 export const TabsContent = React.forwardRef(function TabsContent(

@@ -80,12 +80,10 @@ export const MapWidget = React.forwardRef(function MapWidget(
     enableTouch,
     mapRef,
   ]);
-  return (
-    <div
-      {...props}
-      className={cj(className, "w-widget w-widget-map")}
-      role="region"
-      ref={mapRef}
-    />
-  );
+  return React.createElement("div", {
+    ...props,
+    className: cj(className, "w-widget w-widget-map"),
+    role: "region",
+    ref: mapRef,
+  });
 });

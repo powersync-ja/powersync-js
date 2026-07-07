@@ -32,17 +32,17 @@ export const Facebook = React.forwardRef(function Facebook(
   const frameSrc = `https://www.facebook.com/plugins/like.php?${queryParams.join(
     "&"
   )}`;
-  return (
-    <div
-      {...props}
-      className={className + " w-widget w-widget-facebook"}
-      ref={ref}
-    >
-      <iframe
-        title="Facebook Like Button"
-        src={frameSrc}
-        style={{ border: "none", overflow: "hidden", width, height }}
-      ></iframe>
-    </div>
+  return React.createElement(
+    "div",
+    {
+      ...props,
+      className: className + " w-widget w-widget-facebook",
+      ref: ref,
+    },
+    React.createElement("iframe", {
+      title: "Facebook Like Button",
+      src: frameSrc,
+      style: { border: "none", overflow: "hidden", width, height },
+    })
   );
 });

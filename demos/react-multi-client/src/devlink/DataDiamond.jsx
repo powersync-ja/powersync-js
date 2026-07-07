@@ -13,7 +13,7 @@ export function DataDiamond({
       width="auto"
       height="auto"
       alt=""
-      src="https://uploads-ssl.webflow.com/655cae9c85d542976fbd4b10/655f57b9e62706ef1d8fcba1_icon-widget-square-large.svg"
+      src="https://cdn.prod.website-files.com/655cae9c85d542976fbd4b10/680f7438dbb31f989889a490_icon-widget-square-large.svg"
       {...diamondProps}
     />
   );

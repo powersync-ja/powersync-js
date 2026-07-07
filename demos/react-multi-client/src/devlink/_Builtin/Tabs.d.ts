@@ -8,17 +8,10 @@ export declare const TabsWrapper: React.ForwardRefExoticComponent<
     fadeIn: number;
     fadeOut: number;
     children?:
-      | React.ReactElement<
-          TabsMenuProps | TabsContentProps,
-          string | React.JSXElementConstructor<any>
-        >
-      | React.ReactElement<
-          TabsMenuProps | TabsContentProps,
-          string | React.JSXElementConstructor<any>
-        >[]
-      | undefined;
+      | React.ReactElement<TabsMenuProps | TabsContentProps>[]
+      | React.ReactElement<TabsMenuProps | TabsContentProps>;
   } & {
-    children?: React.ReactNode;
+    children?: React.ReactNode | undefined;
   } & React.RefAttributes<HTMLDivElement>
 >;
 type TabsMenuProps = {
@@ -39,7 +32,7 @@ export declare const TabsLink: React.ForwardRefExoticComponent<
   import("./Basic").ElementProps<"a"> & {
     "data-w-tab": string;
   } & {
-    children?: React.ReactNode;
+    children?: React.ReactNode | undefined;
   } & React.RefAttributes<HTMLAnchorElement>
 >;
 type TabsContentProps = {
@@ -59,11 +52,11 @@ type TabsPaneProps = React.PropsWithChildren<{
 }>;
 export declare const TabsPane: React.ForwardRefExoticComponent<
   {
-    tag?: React.ElementType<any> | undefined;
-    className?: string | undefined;
+    tag?: React.ElementType;
+    className?: string;
     "data-w-tab": string;
   } & {
-    children?: React.ReactNode;
+    children?: React.ReactNode | undefined;
   } & React.RefAttributes<unknown>
 >;
 export {};

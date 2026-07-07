@@ -37,22 +37,23 @@ export const YouTubeVideo = React.forwardRef(function YouTubeVideo(
     height: "100%",
     pointerEvents: "auto",
   };
-  return (
-    <div
-      {...props}
-      style={{ paddingTop: `${aspectRatio * 100}%` }}
-      className={cj("w-embed-youtubevideo", className)}
-      ref={ref}
-    >
-      <iframe
-        src={`${baseUrl}/${videoId}?${urlParams}`}
-        title={title}
-        allowFullScreen
-        scrolling="no"
-        frameBorder="0"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-        style={iframeStyle}
-      />
-    </div>
+  return React.createElement(
+    "div",
+    {
+      ...props,
+      style: { paddingTop: `${aspectRatio * 100}%` },
+      className: cj("w-embed-youtubevideo", className),
+      ref: ref,
+    },
+    React.createElement("iframe", {
+      src: `${baseUrl}/${videoId}?${urlParams}`,
+      title: title,
+      allowFullScreen: true,
+      scrolling: "no",
+      frameBorder: "0",
+      allow:
+        "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share",
+      style: iframeStyle,
+    })
   );
 });

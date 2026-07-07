@@ -50,7 +50,7 @@ export function UserB({
               <_Builtin.Block className="user-b-write-path" tag="div">
                 <_Builtin.HtmlEmbed
                   className="user-b-write-svg"
-                  value="%3Csvg%20id%3D%22user-b-write-arrow%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20168%2024%22%3E%0A%3Cdefs%3E%0A%3Cstyle%3E%0A%3Aroot%20%7B%0A--animation-stroke-dasharray%3A%2012%3B%0A--animation-stroke-dashoffset%3A%20100%3B%0A%7D%0A.user-b-write-line%7Bfill%3Anone%3Bstroke%3Avar(--user-pink)%3Bstroke-miterlimit%3A10%3Bstroke-width%3A2px%3Banimation%3Anone%202s%20linear%20infinite%20reverse%3B%7D%0A.line-animate%20%7B%0A%09stroke-dasharray%3A%20var(--animation-stroke-dasharray)%3B%0A%09stroke-dashoffset%3A%20var(--animation-stroke-dashoffset)%3B%0A%20%20animation-name%3A%20flow%3B%0A%7D%0A%40keyframes%20flow%20%7B%0A%20%20%20%20100%25%20%7B%0A%20%20%20%20%20%20%20%20stroke-dashoffset%3A%200%3B%0A%20%20%20%20%7D%0A%7D%0A.user-b-write-arrowhead%7Bfill%3Avar(--user-pink)%3Bstroke-width%3A0px%3B%7D%0A%3C%2Fstyle%3E%0A%3C%2Fdefs%3E%0A%3Cline%20id%3D%22animate-arrows%22%20class%3D%22user-b-write-line%22%20x1%3D%222.4%22%20y1%3D%2212%22%20x2%3D%22168%22%20y2%3D%2212%22%2F%3E%0A%3Cpath%20class%3D%22user-b-write-arrowhead%22%20d%3D%22m16.07%2C21.6c.3-.46.16-1.08-.31-1.38L2.86%2C12%2C15.77%2C3.78c.47-.3.6-.92.31-1.38-.3-.46-.92-.6-1.38-.31L.46%2C11.16c-.29.18-.46.5-.46.84s.17.66.46.84l14.23%2C9.06c.17.11.35.16.54.16.33%2C0%2C.65-.16.84-.46Z%22%2F%3E%3C%2Fsvg%3E"
+                  value="%3Csvg%20id%3D%22user-b-write-arrow%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20120%2024%22%3E%0A%3Cdefs%3E%0A%3Cstyle%3E%0A%3Aroot%20%7B%0A--animation-stroke-dasharray%3A%2012%3B%0A--animation-stroke-dashoffset%3A%20100%3B%0A%7D%0A.user-b-write-line%7Bfill%3Anone%3Bstroke%3Avar(--orange)%3Bstroke-miterlimit%3A10%3Bstroke-width%3A2px%3Banimation%3Anone%202s%20linear%20infinite%20reverse%3B%7D%0A.line-animate%20%7B%0A%09stroke-dasharray%3A%20var(--animation-stroke-dasharray)%3B%0A%09stroke-dashoffset%3A%20var(--animation-stroke-dashoffset)%3B%0A%20%20animation-name%3A%20flow%3B%0A%7D%0A%40keyframes%20flow%20%7B%0A%20%20%20%20100%25%20%7B%0A%20%20%20%20%20%20%20%20stroke-dashoffset%3A%200%3B%0A%20%20%20%20%7D%0A%7D%0A.user-b-write-arrowhead%7Bfill%3Avar(--orange)%3Bstroke-width%3A0px%3B%7D%0A%3C%2Fstyle%3E%0A%3C%2Fdefs%3E%0A%3Cline%20id%3D%22animate-arrows%22%20class%3D%22user-b-write-line%22%20x1%3D%222.4%22%20y1%3D%2212%22%20x2%3D%22120%22%20y2%3D%2212%22%2F%3E%0A%3Cpath%20class%3D%22user-b-write-arrowhead%22%20d%3D%22M16.1%2C21.6c.3-.5.2-1.1-.3-1.4L2.9%2C12%2C15.8%2C3.8c.5-.3.6-.9.3-1.4-.3-.5-.9-.6-1.4-.3L.5%2C11.2c-.3.2-.5.5-.5.8s.2.7.5.8l14.2%2C9.1c.2.1.4.2.5.2.3%2C0%2C.6-.2.8-.5Z%22%2F%3E%3C%2Fsvg%3E"
                   {...writePath}
                 />
               </_Builtin.Block>
@@ -74,7 +74,7 @@ export function UserB({
               <_Builtin.Block className="user-b-read-path" tag="div">
                 <_Builtin.HtmlEmbed
                   className="user-b-read-svg"
-                  value="%3Csvg%20id%3D%22user-b-read-arrow%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20168%2024%22%3E%0A%3Cdefs%3E%0A%3Cstyle%3E%0A%3Aroot%20%7B%0A--animation-stroke-dasharray%3A%2012%3B%0A--animation-stroke-dashoffset%3A%20100%3B%0A%7D%0A.user-b-read-line%7Bfill%3Anone%3Bstroke%3Avar(--user-pink)%3Bstroke-miterlimit%3A10%3Bstroke-width%3A2px%3Banimation%3Anone%202s%20linear%20infinite%20reverse%3B%7D%0A.line-animate%20%7B%0A%09stroke-dasharray%3A%20var(--animation-stroke-dasharray)%3B%0A%09stroke-dashoffset%3A%20var(--animation-stroke-dashoffset)%3B%0A%20%20animation-name%3A%20flow%3B%0A%7D%0A%40keyframes%20flow%20%7B%0A%20%20%20%20100%25%20%7B%0A%20%20%20%20%20%20%20%20stroke-dashoffset%3A%200%3B%0A%20%20%20%20%7D%0A%7D%0A.user-b-read-arrowhead%7Bfill%3Avar(--user-pink)%3Bstroke-width%3A0px%3B%7D%0A%3C%2Fstyle%3E%0A%3C%2Fdefs%3E%0A%3Cline%20id%3D%22animate-arrows%22%20class%3D%22user-b-read-line%22%20x1%3D%22165.6%22%20y1%3D%2212%22%20y2%3D%2212%22%2F%3E%0A%3Cpath%20class%3D%22user-b-read-arrowhead%22%20d%3D%22m151.93%2C2.4c-.3.46-.16%2C1.08.31%2C1.38l12.91%2C8.22-12.91%2C8.22c-.47.3-.6.92-.31%2C1.38.3.46.92.6%2C1.38.31l14.23-9.06c.29-.18.46-.5.46-.84s-.17-.66-.46-.84l-14.23-9.06c-.17-.11-.35-.16-.54-.16-.33%2C0-.65.16-.84.46Z%22%2F%3E%0A%3C%2Fsvg%3E"
+                  value="%3Csvg%20id%3D%22user-b-read-arrow%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20120%2024%22%3E%0A%3Cdefs%3E%0A%3Cstyle%3E%0A%3Aroot%20%7B%0A--animation-stroke-dasharray%3A%2012%3B%0A--animation-stroke-dashoffset%3A%20100%3B%0A%7D%0A.user-b-read-line%7Bfill%3Anone%3Bstroke%3Avar(--orange)%3Bstroke-miterlimit%3A10%3Bstroke-width%3A2px%3Banimation%3Anone%202s%20linear%20infinite%20reverse%3B%7D%0A.line-animate%20%7B%0A%09stroke-dasharray%3A%20var(--animation-stroke-dasharray)%3B%0A%09stroke-dashoffset%3A%20var(--animation-stroke-dashoffset)%3B%0A%20%20animation-name%3A%20flow%3B%0A%7D%0A%40keyframes%20flow%20%7B%0A%20%20%20%20100%25%20%7B%0A%20%20%20%20%20%20%20%20stroke-dashoffset%3A%200%3B%0A%20%20%20%20%7D%0A%7D%0A.user-b-read-arrowhead%7Bfill%3Avar(--orange)%3Bstroke-width%3A0px%3B%7D%0A%3C%2Fstyle%3E%0A%3C%2Fdefs%3E%0A%3Cline%20id%3D%22animate-arrows%22%20class%3D%22user-b-read-line%22%20x1%3D%22117.6%22%20y1%3D%2212%22%20y2%3D%2212%22%2F%3E%0A%3Cpath%20class%3D%22user-b-read-arrowhead%22%20d%3D%22M103.9%2C2.4c-.3.5-.2%2C1.1.3%2C1.4l12.9%2C8.2-12.9%2C8.2c-.5.3-.6.9-.3%2C1.4.3.5.9.6%2C1.4.3l14.2-9.1c.3-.2.5-.5.5-.8s-.2-.7-.5-.8l-14.2-9.1c-.2-.1-.4-.2-.5-.2-.3%2C0-.6.2-.8.5h-.1Z%22%2F%3E%0A%3C%2Fsvg%3E"
                   {...readPath}
                 />
               </_Builtin.Block>
@@ -124,7 +124,7 @@ export function UserB({
                         width="auto"
                         height="auto"
                         alt=""
-                        src="https://uploads-ssl.webflow.com/655cae9c85d542976fbd4b10/655f54b39092ef46920edbfb_icon-sync.svg"
+                        src="https://cdn.prod.website-files.com/655cae9c85d542976fbd4b10/680f7adbb98bdc020552a29b_icon-sync.svg"
                       />
                     ) : null}
                     {online ? (
@@ -134,7 +134,7 @@ export function UserB({
                         width="auto"
                         height="auto"
                         alt=""
-                        src="https://uploads-ssl.webflow.com/655cae9c85d542976fbd4b10/655f54b3969fccde5401be3a_icon-online.svg"
+                        src="https://cdn.prod.website-files.com/655cae9c85d542976fbd4b10/680f7adcd0dad68923e7484c_icon-online.svg"
                       />
                     ) : null}
                     {offline ? (
@@ -144,7 +144,7 @@ export function UserB({
                         width="auto"
                         height="auto"
                         alt=""
-                        src="https://uploads-ssl.webflow.com/655cae9c85d542976fbd4b10/655f54b3e6277e3be843c635_icon-offline.svg"
+                        src="https://cdn.prod.website-files.com/655cae9c85d542976fbd4b10/655f54b3e6277e3be843c635_icon-offline.svg"
                       />
                     ) : null}
                   </_Builtin.Block>

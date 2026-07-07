@@ -13,7 +13,7 @@ export function DataTriangle({
       width="auto"
       height="auto"
       alt=""
-      src="https://uploads-ssl.webflow.com/655cae9c85d542976fbd4b10/655f57b99d657cf4c47a85cb_icon-widget-triangle-large.svg"
+      src="https://cdn.prod.website-files.com/655cae9c85d542976fbd4b10/680f7438cdd5f52443af7cfe_icon-widget-triangle-large.svg"
       {...triProps}
     />
   );

@@ -11,23 +11,23 @@ export const Video = React.forwardRef(function Video(
   ref
 ) {
   const { height, title, url, width } = options;
-  return (
-    <div
-      {...props}
-      style={{ paddingTop: `${getAspectRatio(options) * 100}%` }}
-      className={cj("w-video", "w-embed", className)}
-      ref={ref}
-    >
-      <iframe
-        className="embedly-embed"
-        src={url}
-        width={width}
-        height={height}
-        title={title}
-        allowFullScreen
-        scrolling="no"
-        frameBorder="0"
-      />
-    </div>
+  return React.createElement(
+    "div",
+    {
+      ...props,
+      style: { paddingTop: `${getAspectRatio(options) * 100}%` },
+      className: cj("w-video", "w-embed", className),
+      ref: ref,
+    },
+    React.createElement("iframe", {
+      className: "embedly-embed",
+      src: url,
+      width: width,
+      height: height,
+      title: title,
+      allowFullScreen: true,
+      scrolling: "no",
+      frameBorder: "0",
+    })
   );
 });

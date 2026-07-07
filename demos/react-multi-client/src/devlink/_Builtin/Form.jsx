@@ -205,45 +205,46 @@ export const FormBooleanInput = React.forwardRef(function FormBooleanInput(
       customClassName ?? ""
     }`;
     const currentClassName = `${className}${pseudoModeClasses}`;
-    return (
-      <>
-        <div className={currentClassName} />
-        <input
-          ref={ref}
-          {...props}
-          {...inputProps}
-          style={HIDE_DEFAULT_INPUT_STYLES}
-        />
-      </>
+    return React.createElement(
+      React.Fragment,
+      null,
+      React.createElement("div", { className: currentClassName }),
+      React.createElement("input", {
+        ref: ref,
+        ...props,
+        ...inputProps,
+        style: HIDE_DEFAULT_INPUT_STYLES,
+      })
     );
   }
-  return <input ref={ref} className={className} {...props} {...inputProps} />;
+  return React.createElement("input", {
+    ref: ref,
+    className: className,
+    ...props,
+    ...inputProps,
+  });
 });
 export const FormCheckboxInput = React.forwardRef(function FormCheckboxInput(
   { className = "", ...props },
   ref
 ) {
-  return (
-    <FormBooleanInput
-      {...props}
-      ref={ref}
-      type="checkbox"
-      className={className + " w-checkbox-input"}
-    />
-  );
+  return React.createElement(FormBooleanInput, {
+    ...props,
+    ref: ref,
+    type: "checkbox",
+    className: className + " w-checkbox-input",
+  });
 });
 export const FormRadioInput = React.forwardRef(function FormRadioInput(
   { className = "", ...props },
   ref
 ) {
-  return (
-    <FormBooleanInput
-      {...props}
-      ref={ref}
-      type="radio"
-      className={className + " w-radio-input"}
-    />
-  );
+  return React.createElement(FormBooleanInput, {
+    ...props,
+    ref: ref,
+    type: "radio",
+    className: className + " w-radio-input",
+  });
 });
 const MAX_FILE_SIZE_DEFAULT = 10485760;
 const FileUploadContext = React.createContext({
@@ -369,28 +370,32 @@ export const FormFileUploadUploadingIcon = React.forwardRef(
         ...props,
         ref,
       },
-      <>
-        <path
-          fill="currentColor"
-          opacity=".2"
-          d="M15 30a15 15 0 1 1 0-30 15 15 0 0 1 0 30zm0-3a12 12 0 1 0 0-24 12 12 0 0 0 0 24z"
-        ></path>
-        <path
-          fill="currentColor"
-          opacity=".75"
-          d="M0 15A15 15 0 0 1 15 0v3A12 12 0 0 0 3 15H0z"
-        >
-          <animateTransform
-            attributeName="transform"
-            attributeType="XML"
-            dur="0.6s"
-            from="0 15 15"
-            repeatCount="indefinite"
-            to="360 15 15"
-            type="rotate"
-          ></animateTransform>
-        </path>
-      </>
+      React.createElement(
+        React.Fragment,
+        null,
+        React.createElement("path", {
+          fill: "currentColor",
+          opacity: ".2",
+          d: "M15 30a15 15 0 1 1 0-30 15 15 0 0 1 0 30zm0-3a12 12 0 1 0 0-24 12 12 0 0 0 0 24z",
+        }),
+        React.createElement(
+          "path",
+          {
+            fill: "currentColor",
+            opacity: ".75",
+            d: "M0 15A15 15 0 0 1 15 0v3A12 12 0 0 0 3 15H0z",
+          },
+          React.createElement("animateTransform", {
+            attributeName: "transform",
+            attributeType: "XML",
+            dur: "0.6s",
+            from: "0 15 15",
+            repeatCount: "indefinite",
+            to: "360 15 15",
+            type: "rotate",
+          })
+        )
+      )
     );
   }
 );
@@ -563,13 +568,11 @@ export const FormReCaptcha = React.forwardRef(function FormReCaptcha(
       cacheRegex: /(http|https):\/\/(www)?.+\/recaptcha/,
     });
   }, []);
-  return (
-    <div
-      ref={ref}
-      className="g-recaptcha"
-      data-sitekey={siteKey}
-      data-theme={theme}
-      data-size={size}
-    />
-  );
+  return React.createElement("div", {
+    ref: ref,
+    className: "g-recaptcha",
+    "data-sitekey": siteKey,
+    "data-theme": theme,
+    "data-size": size,
+  });
 });
