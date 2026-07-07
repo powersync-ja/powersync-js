@@ -4,7 +4,7 @@ import {
   WebPowerSyncDatabaseOptions,
   PowerSyncBackendConnector,
   LockContext,
-  WebPowerSyncDatabase
+  PowerSyncDatabase
 } from '@powersync/web';
 
 export enum OperationType {
@@ -24,7 +24,7 @@ export interface TimedPowerSyncListener extends PowerSyncDBListener {
   operationCompleted: (event: TimedOperation) => void;
 }
 
-export class TimedPowerSyncDatabase extends WebPowerSyncDatabase {
+export class TimedPowerSyncDatabase extends PowerSyncDatabase {
   localKey: string;
 
   constructor(options: WebPowerSyncDatabaseOptions) {
@@ -40,8 +40,8 @@ export class TimedPowerSyncDatabase extends WebPowerSyncDatabase {
     return this.timed(() => super.execute(sql, parameters));
   }
 
-  async execute<T>(sql: string, parameters?: any[]) {
-    return this.timedOperation(OperationType.EXECUTE, () => super.execute<T>(sql, parameters));
+  async execute(sql: string, parameters?: any[]) {
+    return this.timedOperation(OperationType.EXECUTE, () => super.execute(sql, parameters));
   }
 
   async getAll<T>(sql: string, parameters?: any[]): Promise<T[]> {

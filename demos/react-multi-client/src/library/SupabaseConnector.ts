@@ -1,11 +1,11 @@
 import {
-  CommonPowerSyncDatabase,
   BaseListener,
   BaseObserver,
   CrudEntry,
   PowerSyncBackendConnector,
   UpdateType,
-  Mutex
+  Mutex,
+  AbstractPowerSyncDatabase
 } from '@powersync/web';
 
 import { Session, SupabaseClient } from '@supabase/supabase-js';
@@ -16,17 +16,16 @@ export interface SupabaseConnectorListener extends BaseListener {
 }
 
 export class SupabaseConnector extends BaseObserver<SupabaseConnectorListener> implements PowerSyncBackendConnector {
-  static SHARED_MUTEX: Mutex | null = null;
+  static SHARED_MUTEX: Mutex = new Mutex();
   readonly client: SupabaseClient;
 
   ready: boolean;
 
   currentSession: Session | null;
 
-  constructor(client: SupabaseClient, db: CommonPowerSyncDatabase) {
+  constructor(client: SupabaseClient) {
     super();
 
-    SupabaseConnector.SHARED_MUTEX ??= db.createMutex();
     this.client = client;
     this.currentSession = null;
     this.ready = false;
@@ -38,7 +37,7 @@ export class SupabaseConnector extends BaseObserver<SupabaseConnectorListener> i
     }
 
     // Ensures that we don't accidentally check/create multiple anon sessions during initialization
-    await SupabaseConnector.SHARED_MUTEX!.runExclusive(async () => {
+    await SupabaseConnector.SHARED_MUTEX.runExclusive(async () => {
       let sessionResponse = await this.client.auth.getSession();
       if (sessionResponse.error) {
         console.error(sessionResponse.error);
@@ -73,7 +72,7 @@ export class SupabaseConnector extends BaseObserver<SupabaseConnectorListener> i
     };
   }
 
-  async uploadData(database: CommonPowerSyncDatabase): Promise<void> {
+  async uploadData(database: AbstractPowerSyncDatabase): Promise<void> {
     const transaction = await database.getNextCrudTransaction();
     if (!transaction) {
       return;

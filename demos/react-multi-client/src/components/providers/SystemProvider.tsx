@@ -5,9 +5,10 @@ import { PowerSyncContext, usePowerSync as _usePowerSync } from '@powersync/reac
 import { AppSchema } from '@/definitions/Schema';
 import { SupabaseConnector } from '@/library/SupabaseConnector';
 import { useSupabase } from './SupabaseProvider';
-import { createConsoleLogger, LogLevels } from '@powersync/web';
+import { createBaseLogger, LogLevel } from '@powersync/web';
 
-const logger = createConsoleLogger({ minLevel: LogLevels.debug });
+const logger = createBaseLogger();
+logger.setLevel(LogLevel.DEBUG);
 
 export interface SystemProviderProps {
   dbFilename: string;
@@ -19,15 +20,14 @@ const SystemProvider: React.FC<PropsWithChildren<SystemProviderProps>> = (props)
   const [powersync] = React.useState(
     new TimedPowerSyncDatabase({
       database: {
-        dbFilename: props.dbFilename,
-        disableSSRWarning: false
+        dbFilename: props.dbFilename
       },
-      schema: AppSchema,
-      logger: logger
+      logger: logger,
+      schema: AppSchema
     })
   );
 
-  const [connector] = React.useState(new SupabaseConnector(client, powersync));
+  const [connector] = React.useState(new SupabaseConnector(client));
 
   React.useEffect(() => {
     powersync.init();
