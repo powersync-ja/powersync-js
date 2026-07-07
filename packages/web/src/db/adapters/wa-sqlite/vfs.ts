@@ -71,10 +71,10 @@ export async function loadModuleAndVfs({
   encryptionKey
 }: RawWaSqliteDatabaseOptions): Promise<{ module: SQLiteModule; vfs: SQLiteVFS }> {
   let moduleFactory = syncModuleFactory;
-  let resolveVfs: (module: any) => Promise<any>;
+  let resolveVfs: (module: any) => Promise<SQLiteVFS>;
 
   switch (vfs) {
-    case WASQLiteVFS.IDBBatchAtomicVFS:
+    case WASQLiteVFS.IDBBatchAtomicVFS: {
       moduleFactory = asyncModuleFactory;
       const { IDBBatchAtomicVFS } = await import('@journeyapps/wa-sqlite/src/examples/IDBBatchAtomicVFS.js');
       resolveVfs = (module) => {
@@ -82,26 +82,31 @@ export async function loadModuleAndVfs({
         return IDBBatchAtomicVFS.create(filename, module, { lockPolicy: 'exclusive' });
       };
       break;
-    case WASQLiteVFS.AccessHandlePoolVFS:
+    }
+    case WASQLiteVFS.AccessHandlePoolVFS: {
       // @ts-expect-error The types for this import are missing upstream
       const { AccessHandlePoolVFS } = await import('@journeyapps/wa-sqlite/src/examples/AccessHandlePoolVFS.js');
       resolveVfs = (module) => AccessHandlePoolVFS.create(filename, module);
       break;
-    case WASQLiteVFS.OPFSCoopSyncVFS:
+    }
+    case WASQLiteVFS.OPFSCoopSyncVFS: {
       // @ts-expect-error The types for this import are missing upstream
       const { OPFSCoopSyncVFS } = await import('@journeyapps/wa-sqlite/src/examples/OPFSCoopSyncVFS.js');
       resolveVfs = (module) => OPFSCoopSyncVFS.create(filename, module);
       break;
-    case WASQLiteVFS.OPFSWriteAheadVFS:
+    }
+    case WASQLiteVFS.OPFSWriteAheadVFS: {
       // @ts-expect-error The types for this import are missing upstream
       const { OPFSWriteAheadVFS } = await import('@journeyapps/wa-sqlite/src/examples/OPFSWriteAheadVFS.js');
       resolveVfs = (module) => OPFSWriteAheadVFS.create(filename, module, {});
       break;
-    case WASQLiteVFS.InMemoryVfs:
+    }
+    case WASQLiteVFS.InMemoryVfs: {
       const { MemoryVFS } = await import('@journeyapps/wa-sqlite/src/examples/MemoryVFS.js');
       // @ts-expect-error The types for this static method are missing upstream
       resolveVfs = (module) => MemoryVFS.create(filename, module);
       break;
+    }
   }
 
   const module = await moduleFactory(encryptionKey);
