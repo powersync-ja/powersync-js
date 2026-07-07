@@ -10,6 +10,19 @@ import { createBaseLogger, LogLevel } from '@powersync/web';
 const logger = createBaseLogger();
 logger.setLevel(LogLevel.DEBUG);
 
+/**
+ * In Safari, navigator.locks.request() never resolves inside a SharedWorker
+ * created from a cross-site iframe. When embedded, fall back to dedicated
+ * workers, where Web Locks work.
+ */
+const isEmbedded = (() => {
+  try {
+    return window.self !== window.top;
+  } catch {
+    return true; // cross-origin access to window.top throws → we are embedded
+  }
+})();
+
 export interface SystemProviderProps {
   dbFilename: string;
 }
@@ -21,6 +34,9 @@ const SystemProvider: React.FC<PropsWithChildren<SystemProviderProps>> = (props)
     new TimedPowerSyncDatabase({
       database: {
         dbFilename: props.dbFilename
+      },
+      flags: {
+        enableMultiTabs: !isEmbedded
       },
       logger: logger,
       schema: AppSchema
