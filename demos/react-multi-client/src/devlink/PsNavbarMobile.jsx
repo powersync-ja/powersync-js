@@ -29,7 +29,7 @@ export function PsNavbarMobile({ as: _Component = _Builtin.NavbarWrapper }) {
             height="auto"
             loading="lazy"
             alt=""
-            src="https://uploads-ssl.webflow.com/655cae9c85d542976fbd4b10/655cae9c85d542976fbd4b49_powersync-logo-horizontal-all-white.svg"
+            src="https://cdn.prod.website-files.com/655cae9c85d542976fbd4b10/655cae9c85d542976fbd4b49_powersync-logo-horizontal-all-white.svg"
           />
         </_Builtin.NavbarBrand>
         <_Builtin.NavbarMenu

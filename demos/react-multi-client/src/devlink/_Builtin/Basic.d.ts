@@ -7,9 +7,9 @@ export type Props<
 > = ElementProps<T> & React.PropsWithChildren<U>;
 export declare const Block: React.ForwardRefExoticComponent<
   {
-    tag?: React.ElementType<any> | undefined;
+    tag?: React.ElementType;
   } & {
-    children?: React.ReactNode;
+    children?: React.ReactNode | undefined;
   } & React.HTMLAttributes<HTMLOrSVGElement> &
     React.RefAttributes<unknown>
 >;
@@ -34,31 +34,29 @@ export type LinkProps = Props<
 >;
 export declare const Link: React.ForwardRefExoticComponent<
   ElementProps<"a"> & {
-    options?:
-      | {
-          href: string;
-          target?: "_self" | "_blank" | undefined;
-          preload?: "none" | "prerender" | "prefetch" | undefined;
-        }
-      | undefined;
-    className?: string | undefined;
-    button?: boolean | undefined;
-    block?: string | undefined;
+    options?: {
+      href: string;
+      target?: "_self" | "_blank";
+      preload?: "none" | "prefetch" | "prerender";
+    };
+    className?: string;
+    button?: boolean;
+    block?: string;
   } & {
-    children?: React.ReactNode;
+    children?: React.ReactNode | undefined;
   } & React.RefAttributes<HTMLAnchorElement>
 >;
 export declare const List: React.ForwardRefExoticComponent<
   ElementProps<"ul"> & {
-    tag?: React.ElementType<any> | undefined;
-    unstyled?: boolean | undefined;
+    tag?: React.ElementType;
+    unstyled?: boolean;
   } & {
-    children?: React.ReactNode;
+    children?: React.ReactNode | undefined;
   } & React.RefAttributes<unknown>
 >;
 export declare const ListItem: React.ForwardRefExoticComponent<
   ElementProps<"li"> & {
-    children?: React.ReactNode;
+    children?: React.ReactNode | undefined;
   } & React.RefAttributes<unknown>
 >;
 type ImageProps = React.DetailedHTMLProps<
@@ -72,7 +70,7 @@ export declare const Section: React.ForwardRefExoticComponent<
   ElementProps<"section"> & {
     tag: React.ElementType;
   } & {
-    children?: React.ReactNode;
+    children?: React.ReactNode | undefined;
   } & React.RefAttributes<unknown>
 >;
 export type TagProps = Props<
@@ -83,59 +81,59 @@ export type TagProps = Props<
 >;
 export declare const Container: React.ForwardRefExoticComponent<
   ElementProps<keyof HTMLElementTagNameMap> & {
-    tag?: React.ElementType<any> | undefined;
+    tag?: React.ElementType;
   } & {
-    children?: React.ReactNode;
+    children?: React.ReactNode | undefined;
   } & React.RefAttributes<unknown>
 >;
 export declare const BlockContainer: React.ForwardRefExoticComponent<
   ElementProps<keyof HTMLElementTagNameMap> & {
-    tag?: React.ElementType<any> | undefined;
+    tag?: React.ElementType;
   } & {
-    children?: React.ReactNode;
+    children?: React.ReactNode | undefined;
   } & React.RefAttributes<unknown>
 >;
 export declare const HFlex: React.ForwardRefExoticComponent<
   ElementProps<keyof HTMLElementTagNameMap> & {
-    tag?: React.ElementType<any> | undefined;
+    tag?: React.ElementType;
   } & {
-    children?: React.ReactNode;
+    children?: React.ReactNode | undefined;
   } & React.RefAttributes<unknown>
 >;
 export declare const VFlex: React.ForwardRefExoticComponent<
   ElementProps<keyof HTMLElementTagNameMap> & {
-    tag?: React.ElementType<any> | undefined;
+    tag?: React.ElementType;
   } & {
-    children?: React.ReactNode;
+    children?: React.ReactNode | undefined;
   } & React.RefAttributes<unknown>
 >;
 export declare const Layout: React.ForwardRefExoticComponent<
   ElementProps<keyof HTMLElementTagNameMap> & {
-    tag?: React.ElementType<any> | undefined;
+    tag?: React.ElementType;
   } & {
-    children?: React.ReactNode;
+    children?: React.ReactNode | undefined;
   } & React.RefAttributes<unknown>
 >;
 export declare const Cell: React.ForwardRefExoticComponent<
   ElementProps<keyof HTMLElementTagNameMap> & {
-    tag?: React.ElementType<any> | undefined;
+    tag?: React.ElementType;
   } & {
-    children?: React.ReactNode;
+    children?: React.ReactNode | undefined;
   } & React.RefAttributes<unknown>
 >;
 export declare const HtmlEmbed: React.ForwardRefExoticComponent<
   ElementProps<"div"> & {
-    tag?: React.ElementType<any> | undefined;
+    tag?: React.ElementType;
     value: string;
   } & {
-    children?: React.ReactNode;
+    children?: React.ReactNode | undefined;
   } & React.RefAttributes<unknown>
 >;
 export declare const Grid: React.ForwardRefExoticComponent<
   ElementProps<keyof HTMLElementTagNameMap> & {
-    tag?: React.ElementType<any> | undefined;
+    tag?: React.ElementType;
   } & {
-    children?: React.ReactNode;
+    children?: React.ReactNode | undefined;
   } & React.RefAttributes<unknown>
 >;
 export declare const Icon: React.ForwardRefExoticComponent<
@@ -144,7 +142,7 @@ export declare const Icon: React.ForwardRefExoticComponent<
       icon: string;
     };
   } & {
-    children?: React.ReactNode;
+    children?: React.ReactNode | undefined;
   } & React.RefAttributes<unknown>
 >;
 type ColumnProps = Props<
@@ -157,9 +155,9 @@ type ColumnProps = Props<
 export declare const Column: React.ForwardRefExoticComponent<
   ElementProps<"div"> & {
     tag: React.ElementType;
-    columnClasses?: string | undefined;
+    columnClasses?: string;
   } & {
-    children?: React.ReactNode;
+    children?: React.ReactNode | undefined;
   } & React.RefAttributes<unknown>
 >;
 export declare const Row: React.ForwardRefExoticComponent<
@@ -171,7 +169,7 @@ export declare const Row: React.ForwardRefExoticComponent<
     };
     value: string;
   } & {
-    children?: React.ReactNode;
+    children?: React.ReactNode | undefined;
   } & React.RefAttributes<unknown>
 >;
 export declare const NotSupported: React.ForwardRefExoticComponent<

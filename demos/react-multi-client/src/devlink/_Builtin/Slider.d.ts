@@ -40,17 +40,10 @@ type SliderChildrenType =
   | SliderMaskProps;
 export declare const SliderWrapper: React.ForwardRefExoticComponent<
   SliderConfig & {
-    className?: string | undefined;
+    className?: string;
     children?:
-      | React.ReactElement<
-          SliderChildrenType,
-          string | React.JSXElementConstructor<any>
-        >
-      | React.ReactElement<
-          SliderChildrenType,
-          string | React.JSXElementConstructor<any>
-        >[]
-      | undefined;
+      | React.ReactElement<SliderChildrenType>[]
+      | React.ReactElement<SliderChildrenType>;
   } & React.RefAttributes<HTMLDivElement>
 >;
 type SliderMaskProps = React.PropsWithChildren<{
@@ -58,9 +51,9 @@ type SliderMaskProps = React.PropsWithChildren<{
 }>;
 export declare const SliderMask: React.ForwardRefExoticComponent<
   {
-    className?: string | undefined;
+    className?: string;
   } & {
-    children?: React.ReactNode;
+    children?: React.ReactNode | undefined;
   } & React.RefAttributes<HTMLDivElement>
 >;
 type SliderSlideProps = React.PropsWithChildren<{
@@ -71,12 +64,12 @@ type SliderSlideProps = React.PropsWithChildren<{
 }>;
 export declare const SliderSlide: React.ForwardRefExoticComponent<
   {
-    style?: React.CSSProperties | undefined;
-    tag?: string | undefined;
-    className?: string | undefined;
+    style?: React.CSSProperties;
+    tag?: string;
+    className?: string;
     index: number;
   } & {
-    children?: React.ReactNode;
+    children?: React.ReactNode | undefined;
   } & React.RefAttributes<unknown>
 >;
 type SliderArrowProps = React.PropsWithChildren<{
@@ -85,10 +78,10 @@ type SliderArrowProps = React.PropsWithChildren<{
 }>;
 export declare const SliderArrow: React.ForwardRefExoticComponent<
   {
-    className?: string | undefined;
+    className?: string;
     dir: "left" | "right";
   } & {
-    children?: React.ReactNode;
+    children?: React.ReactNode | undefined;
   } & React.RefAttributes<HTMLDivElement>
 >;
 type SliderNavProps = {

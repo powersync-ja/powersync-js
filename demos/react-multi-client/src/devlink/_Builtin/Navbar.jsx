@@ -142,9 +142,10 @@ export const NavbarWrapper = React.forwardRef(function NavbarWrapper(
       links[focusedLink ?? 0]?.focus();
     }
   }, [focusedLink]);
-  return (
-    <NavbarContext.Provider
-      value={{
+  return React.createElement(
+    NavbarContext.Provider,
+    {
+      value: {
         ...props.config,
         root,
         menu,
@@ -156,10 +157,9 @@ export const NavbarWrapper = React.forwardRef(function NavbarWrapper(
         toggleOpen,
         navbarMounted: true,
         setFocusedLink,
-      }}
-    >
-      <Navbar {...props} />
-    </NavbarContext.Provider>
+      },
+    },
+    React.createElement(Navbar, { ...props })
   );
 });
 const maybeExtractChildMenu = (children, isOpen) => {
@@ -188,19 +188,25 @@ function Navbar({ tag = "div", className = "", children, config, ...props }) {
     [children, shouldExtractMenu]
   );
   const handleFocus = (e) => {
+    const inputFocused =
+      document.activeElement?.tagName.toLowerCase() === "input";
     const linkList = root.current ? Array.from(getLinksList(root.current)) : [];
     const linkAmount = linkList.length;
     switch (e.key) {
       case KEY_CODES.ARROW_LEFT:
       case KEY_CODES.ARROW_UP: {
-        e.preventDefault();
-        setFocusedLink((prev) => Math.max(prev - 1, 0));
+        if (!inputFocused) {
+          e.preventDefault();
+          setFocusedLink((prev) => Math.max(prev - 1, 0));
+        }
         break;
       }
       case KEY_CODES.ARROW_RIGHT:
       case KEY_CODES.ARROW_DOWN: {
-        e.preventDefault();
-        setFocusedLink((prev) => Math.min(prev + 1, linkAmount - 1));
+        if (!inputFocused) {
+          e.preventDefault();
+          setFocusedLink((prev) => Math.min(prev + 1, linkAmount - 1));
+        }
         break;
       }
       case KEY_CODES.HOME: {
@@ -222,7 +228,9 @@ function Navbar({ tag = "div", className = "", children, config, ...props }) {
         break;
       }
       case KEY_CODES.SPACE: {
-        e.preventDefault();
+        if (!inputFocused) {
+          e.preventDefault();
+        }
         break;
       }
       default: {
@@ -240,11 +248,12 @@ function Navbar({ tag = "div", className = "", children, config, ...props }) {
       ref: root,
       onKeyDown: handleFocus,
     },
-    <>
-      {rest}
-
-      <NavbarOverlay>{childMenu}</NavbarOverlay>
-    </>
+    React.createElement(
+      React.Fragment,
+      null,
+      rest,
+      React.createElement(NavbarOverlay, null, childMenu)
+    )
   );
 }
 function NavbarOverlay({ children }) {
@@ -259,20 +268,20 @@ function NavbarOverlay({ children }) {
     [toggleOpen]
   );
   const overlayHeight = getOverlayHeight();
-  return (
-    <div
-      className="w-nav-overlay"
-      id="w-nav-overlay"
-      style={{
+  return React.createElement(
+    "div",
+    {
+      className: "w-nav-overlay",
+      id: "w-nav-overlay",
+      style: {
         display: isOpen ? "block" : "none",
         height: overlayHeight ? overlayHeight : undefined,
         width: isOpen ? "100%" : 0,
-      }}
-      onClick={overlayToggleOpen}
-      onKeyDown={overlayToggleOpen}
-    >
-      {children}
-    </div>
+      },
+      onClick: overlayToggleOpen,
+      onKeyDown: overlayToggleOpen,
+    },
+    children
   );
 }
 export const NavbarContainer = React.forwardRef(function NavbarContainer(
@@ -303,17 +312,17 @@ export const NavbarContainer = React.forwardRef(function NavbarContainer(
     [isOpen]
   );
   useResizeObserver(innerRef, updateLinkStyles);
-  return (
-    <Container {...props} ref={innerRef}>
-      {children}
-    </Container>
-  );
+  return React.createElement(Container, { ...props, ref: innerRef }, children);
 });
 export const NavbarBrand = React.forwardRef(function NavbarBrand(
   { className = "", ...props },
   ref
 ) {
-  return <Link {...props} className={cj(className, "w-nav-brand")} ref={ref} />;
+  return React.createElement(Link, {
+    ...props,
+    className: cj(className, "w-nav-brand"),
+    ref: ref,
+  });
 });
 export const NavbarMenu = React.forwardRef(function NavbarMenu(
   { tag = "nav", className = "", ...props },
@@ -335,13 +344,11 @@ export const NavbarLink = React.forwardRef(function NavbarLink(
   ref
 ) {
   const { isOpen } = React.useContext(NavbarContext);
-  return (
-    <Link
-      {...props}
-      className={cj(className, "w-nav-link", isOpen && "w--nav-link-open")}
-      ref={ref}
-    />
-  );
+  return React.createElement(Link, {
+    ...props,
+    className: cj(className, "w-nav-link", isOpen && "w--nav-link-open"),
+    ref: ref,
+  });
 });
 export const NavbarButton = React.forwardRef(function NavbarButton(
   { tag = "div", className = "", ...props },

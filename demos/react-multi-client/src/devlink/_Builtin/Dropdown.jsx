@@ -64,18 +64,18 @@ export const DropdownWrapper = React.forwardRef(function DropdownWrapper(
       links[focusedLink ?? 0]?.focus();
     }
   }, [focusedLink]);
-  return (
-    <DropdownContext.Provider
-      value={{
+  return React.createElement(
+    DropdownContext.Provider,
+    {
+      value: {
         root,
         isOpen,
         toggleOpen,
         setFocusedLink,
         hover,
-      }}
-    >
-      <Dropdown {...props} />
-    </DropdownContext.Provider>
+      },
+    },
+    React.createElement(Dropdown, { ...props })
   );
 });
 function Dropdown({ tag = "div", className = "", ...props }) {

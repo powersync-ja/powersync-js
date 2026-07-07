@@ -11,10 +11,10 @@ export const Block = React.forwardRef(function Block(
   });
 });
 export const Span = React.forwardRef(function Span(props, ref) {
-  return <span {...props} ref={ref} />;
+  return React.createElement("span", { ...props, ref: ref });
 });
 export const Blockquote = React.forwardRef(function Blockquote(props, ref) {
-  return <blockquote {...props} ref={ref} />;
+  return React.createElement("blockquote", { ...props, ref: ref });
 });
 export const Link = React.forwardRef(function Link(
   {
@@ -31,22 +31,25 @@ export const Link = React.forwardRef(function Link(
   if (button) className += " w-button";
   if (block === "inline") className += " w-inline-block";
   if (UserLink) {
-    return (
-      <UserLink className={className} {...options} {...props} ref={ref}>
-        {children}
-      </UserLink>
+    return React.createElement(
+      UserLink,
+      { className: className, ...options, ...props, ref: ref },
+      children
     );
   }
   const { href, target, preload = "none" } = options;
   const shouldRenderResource =
     preload !== "none" && typeof href === "string" && !href.startsWith("#");
-  return (
-    <>
-      <a href={href} target={target} className={className} {...props} ref={ref}>
-        {children}
-      </a>
-      {shouldRenderResource && <link rel={preload} href={href} />}
-    </>
+  return React.createElement(
+    React.Fragment,
+    null,
+    React.createElement(
+      "a",
+      { href: href, target: target, className: className, ...props, ref: ref },
+      children
+    ),
+    shouldRenderResource &&
+      React.createElement("link", { rel: preload, href: href })
   );
 });
 export const List = React.forwardRef(function List(
@@ -68,11 +71,9 @@ export const ListItem = React.forwardRef(function ListItem(props, ref) {
 });
 export const Image = React.forwardRef(function Image({ alt, ...props }, ref) {
   const { renderImage: UserImage } = React.useContext(DevLinkContext);
-  return UserImage ? (
-    <UserImage alt={alt || ""} {...props} ref={ref} />
-  ) : (
-    <img alt={alt || ""} {...props} ref={ref} />
-  );
+  return UserImage
+    ? React.createElement(UserImage, { alt: alt || "", ...props, ref: ref })
+    : React.createElement("img", { alt: alt || "", ...props, ref: ref });
 });
 export const Section = React.forwardRef(function Section(
   { tag = "section", ...props },
@@ -227,7 +228,9 @@ export const NotSupported = React.forwardRef(function NotSupported(
   { _atom = "" },
   ref
 ) {
-  return (
-    <div ref={ref}>{`This builtin is not currently supported: ${_atom}`}</div>
+  return React.createElement(
+    "div",
+    { ref: ref },
+    `This builtin is not currently supported: ${_atom}`
   );
 });

@@ -52,9 +52,9 @@ type NavbarContainerProps = TagProps & {
 };
 export declare const NavbarContainer: React.ForwardRefExoticComponent<
   import("./Basic").ElementProps<keyof HTMLElementTagNameMap> & {
-    tag?: React.ElementType<any> | undefined;
+    tag?: React.ElementType;
   } & {
-    children?: React.ReactNode;
+    children?: React.ReactNode | undefined;
   } & {
     toggleOpen: () => void;
     isOpen: boolean;
@@ -64,18 +64,16 @@ export declare const NavbarContainer: React.ForwardRefExoticComponent<
 type NavbarBrandProps = LinkProps;
 export declare const NavbarBrand: React.ForwardRefExoticComponent<
   import("./Basic").ElementProps<"a"> & {
-    options?:
-      | {
-          href: string;
-          target?: "_self" | "_blank" | undefined;
-          preload?: "none" | "prerender" | "prefetch" | undefined;
-        }
-      | undefined;
-    className?: string | undefined;
-    button?: boolean | undefined;
-    block?: string | undefined;
+    options?: {
+      href: string;
+      target?: "_self" | "_blank";
+      preload?: "none" | "prefetch" | "prerender";
+    };
+    className?: string;
+    button?: boolean;
+    block?: string;
   } & {
-    children?: React.ReactNode;
+    children?: React.ReactNode | undefined;
   } & React.RefAttributes<HTMLAnchorElement>
 >;
 type NavbarMenuProps = React.PropsWithChildren<{
@@ -85,27 +83,25 @@ type NavbarMenuProps = React.PropsWithChildren<{
 }>;
 export declare const NavbarMenu: React.ForwardRefExoticComponent<
   {
-    tag?: React.ElementType<any> | undefined;
-    className?: string | undefined;
-    isOpen?: boolean | undefined;
+    tag?: React.ElementType;
+    className?: string;
+    isOpen?: boolean;
   } & {
-    children?: React.ReactNode;
+    children?: React.ReactNode | undefined;
   } & React.RefAttributes<unknown>
 >;
 export declare const NavbarLink: React.ForwardRefExoticComponent<
   import("./Basic").ElementProps<"a"> & {
-    options?:
-      | {
-          href: string;
-          target?: "_self" | "_blank" | undefined;
-          preload?: "none" | "prerender" | "prefetch" | undefined;
-        }
-      | undefined;
-    className?: string | undefined;
-    button?: boolean | undefined;
-    block?: string | undefined;
+    options?: {
+      href: string;
+      target?: "_self" | "_blank";
+      preload?: "none" | "prefetch" | "prerender";
+    };
+    className?: string;
+    button?: boolean;
+    block?: string;
   } & {
-    children?: React.ReactNode;
+    children?: React.ReactNode | undefined;
   } & React.RefAttributes<HTMLAnchorElement>
 >;
 type NavbarButtonProps = React.PropsWithChildren<{
@@ -114,10 +110,10 @@ type NavbarButtonProps = React.PropsWithChildren<{
 }>;
 export declare const NavbarButton: React.ForwardRefExoticComponent<
   {
-    tag?: React.ElementType<any> | undefined;
-    className?: string | undefined;
+    tag?: React.ElementType;
+    className?: string;
   } & {
-    children?: React.ReactNode;
+    children?: React.ReactNode | undefined;
   } & React.RefAttributes<unknown>
 >;
 export {};

@@ -13,7 +13,7 @@ export function DataPentagon({
       width="auto"
       height="auto"
       alt=""
-      src="https://uploads-ssl.webflow.com/655cae9c85d542976fbd4b10/655f57b9f18bd001f68a31e2_icon-widget-pentagon-large.svg"
+      src="https://cdn.prod.website-files.com/655cae9c85d542976fbd4b10/680f7438b0fce4c6fa593482_icon-widget-pentagon-large.svg"
       {...pentaProps}
     />
   );

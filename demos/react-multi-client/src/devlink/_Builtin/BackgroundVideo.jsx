@@ -29,77 +29,79 @@ export const BackgroundVideoWrapper = React.forwardRef(
         video.current.pause();
       }
     });
-    return (
-      <BgVideoContext.Provider value={{ isPlaying, togglePlay }}>
-        {React.createElement(
-          tag,
+    return React.createElement(
+      BgVideoContext.Provider,
+      { value: { isPlaying, togglePlay } },
+      React.createElement(
+        tag,
+        {
+          className: cj(
+            className,
+            "w-background-video",
+            "w-background-video-atom"
+          ),
+        },
+        React.createElement(
+          "video",
           {
-            className: cj(
-              className,
-              "w-background-video",
-              "w-background-video-atom"
-            ),
+            ref: video,
+            autoPlay: autoPlay,
+            loop: loop,
+            style: posterImage
+              ? { backgroundImage: `url("${posterImage}")` }
+              : undefined,
+            muted: true,
+            playsInline: true,
           },
-          <video
-            ref={video}
-            autoPlay={autoPlay}
-            loop={loop}
-            style={
-              posterImage
-                ? { backgroundImage: `url("${posterImage}")` }
-                : undefined
-            }
-            muted
-            playsInline
-          >
-            {sources.map((url) => (
-              <source src={url} key={url} />
-            ))}
-          </video>
-        )}
-        {children}
-      </BgVideoContext.Provider>
+          sources.map((url) =>
+            React.createElement("source", { src: url, key: url })
+          )
+        )
+      ),
+      children
     );
   }
 );
 export const BackgroundVideoPlayPauseButton = React.forwardRef(
   function BackgroundVideoPlayPauseButton({ children, className }, ref) {
     const { togglePlay } = React.useContext(BgVideoContext);
-    return (
-      <div aria-live="polite">
-        <button
-          type="button"
-          className={cj(
+    return React.createElement(
+      "div",
+      { "aria-live": "polite" },
+      React.createElement(
+        "button",
+        {
+          type: "button",
+          className: cj(
             className,
             "w-backgroundvideo-backgroundvideoplaypausebutton",
             "w-background-video--control"
-          )}
-          onClick={togglePlay}
-          ref={ref}
-        >
-          {children}
-        </button>
-      </div>
+          ),
+          onClick: togglePlay,
+          ref: ref,
+        },
+        children
+      )
     );
   }
 );
 export const BackgroundVideoPlayPauseButtonPlaying = React.forwardRef(
   function BackgroundVideoPlayPauseButtonPlaying({ children }, ref) {
     const { isPlaying } = React.useContext(BgVideoContext);
-    return (
-      <span hidden={!isPlaying} ref={ref}>
-        {children}
-      </span>
+    return React.createElement(
+      "span",
+      { hidden: !isPlaying, ref: ref },
+      children
     );
   }
 );
 export const BackgroundVideoPlayPauseButtonPaused = React.forwardRef(
   function BackgroundVideoPlayPauseButtonPaused({ children }, ref) {
     const { isPlaying } = React.useContext(BgVideoContext);
-    return (
-      <span hidden={isPlaying} ref={ref}>
-        {children}
-      </span>
+    return React.createElement(
+      "span",
+      { hidden: isPlaying, ref: ref },
+      children
     );
   }
 );

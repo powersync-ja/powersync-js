@@ -13,7 +13,7 @@ export function DataHexagon({
       width="auto"
       height="auto"
       alt=""
-      src="https://uploads-ssl.webflow.com/655cae9c85d542976fbd4b10/655f57b966f71e6a07b0124f_icon-widget-hexagon-large.svg"
+      src="https://cdn.prod.website-files.com/655cae9c85d542976fbd4b10/680f7438912b0b330aeaac5a_icon-widget-hexagon-large.svg"
       {...hexProps}
     />
   );

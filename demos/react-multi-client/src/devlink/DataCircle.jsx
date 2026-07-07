@@ -13,7 +13,7 @@ export function DataCircle({
       width="auto"
       height="auto"
       alt=""
-      src="https://uploads-ssl.webflow.com/655cae9c85d542976fbd4b10/655f57b904865e6f8cb24022_icon-widget-circle-large.svg"
+      src="https://cdn.prod.website-files.com/655cae9c85d542976fbd4b10/680f7438a9ba1e9ff1277615_icon-widget-circle-large.svg"
       {...circleProps}
     />
   );

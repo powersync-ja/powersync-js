@@ -86,9 +86,10 @@ export const SliderWrapper = React.forwardRef(function SlideWrapper(
     onSwipeLeft: goToNextSlide,
     onSwipeRight: goToPreviousSlide,
   });
-  return (
-    <SliderContext.Provider
-      value={{
+  return React.createElement(
+    SliderContext.Provider,
+    {
+      value: {
         ...props,
         slideAmount,
         setSlideAmount,
@@ -98,18 +99,19 @@ export const SliderWrapper = React.forwardRef(function SlideWrapper(
         goToPreviousSlide,
         isAutoplayPaused,
         setAutoplayPause,
-      }}
-    >
-      <div
-        {...swipeHandlers}
-        className={cj(className, "w-slider")}
-        role="region"
-        aria-label="carousel"
-        ref={ref}
-      >
-        {props.children}
-      </div>
-    </SliderContext.Provider>
+      },
+    },
+    React.createElement(
+      "div",
+      {
+        ...swipeHandlers,
+        className: cj(className, "w-slider"),
+        role: "region",
+        "aria-label": "carousel",
+        ref: ref,
+      },
+      props.children
+    )
   );
 });
 function useAutoplay() {
@@ -166,34 +168,34 @@ export const SliderMask = React.forwardRef(function SliderMask(
     setSlideAmount(_slides.length);
     setSlides(_slides);
   }, [children]);
-  return (
-    <div
-      {...props}
-      className={cj(className, "w-slider-mask")}
-      onMouseEnter={() => {
+  return React.createElement(
+    "div",
+    {
+      ...props,
+      className: cj(className, "w-slider-mask"),
+      onMouseEnter: () => {
         pauseAutoplay();
         setHovered(true);
-      }}
-      onMouseLeave={() => {
+      },
+      onMouseLeave: () => {
         resumeAutoplay();
         setHovered(false);
-      }}
-      onFocus={() => pauseAutoplay()}
-      onBlur={() => resumeAutoplay()}
-      ref={ref}
-    >
-      {slides.map((child, index) => {
-        return React.cloneElement(child, {
-          ...child.props,
-          index,
-        });
-      })}
-      <div
-        aria-live={isHovered ? "polite" : "off"}
-        aria-atomic="true"
-        className="w-slider-aria-label"
-      />
-    </div>
+      },
+      onFocus: () => pauseAutoplay(),
+      onBlur: () => resumeAutoplay(),
+      ref: ref,
+    },
+    slides.map((child, index) => {
+      return React.cloneElement(child, {
+        ...child.props,
+        index,
+      });
+    }),
+    React.createElement("div", {
+      "aria-live": isHovered ? "polite" : "off",
+      "aria-atomic": "true",
+      className: "w-slider-aria-label",
+    })
   );
 });
 export const SliderSlide = React.forwardRef(function SliderSlide(
@@ -306,26 +308,26 @@ export const SliderArrow = React.forwardRef(function SliderArrow(
       return true;
     return false;
   }, [dir, hideArrows, current, slideAmount]);
-  return (
-    <div
-      {...props}
-      onClick={handleSlideChange}
-      onKeyDown={(e) => {
+  return React.createElement(
+    "div",
+    {
+      ...props,
+      onClick: handleSlideChange,
+      onKeyDown: (e) => {
         e.stopPropagation();
         if (e.key === KEY_CODES.ENTER || e.key === KEY_CODES.SPACE) {
           e.preventDefault();
           handleSlideChange();
         }
-      }}
-      role="button"
-      tabIndex={0}
-      className={cj(className, `w-slider-arrow-${dir}`)}
-      aria-label={`${dir === "left" ? "previous" : "next"} slide`}
-      style={{ display: isHidden ? "none" : "block" }}
-      ref={ref}
-    >
-      {children}
-    </div>
+      },
+      role: "button",
+      tabIndex: 0,
+      className: cj(className, `w-slider-arrow-${dir}`),
+      "aria-label": `${dir === "left" ? "previous" : "next"} slide`,
+      style: { display: isHidden ? "none" : "block" },
+      ref: ref,
+    },
+    children
   );
 });
 export const SliderNav = React.forwardRef(function SliderNav(
@@ -380,37 +382,35 @@ export const SliderNav = React.forwardRef(function SliderNav(
     }
   };
   const dots = [...Array(slideAmount).keys()].map((_, i) => {
-    return (
-      <SliderDot
-        key={i}
-        index={i}
-        focusedDot={focusedDot}
-        handleFocus={handleFocus}
-        setFocusedDot={setFocusedDot}
-      />
-    );
+    return React.createElement(SliderDot, {
+      key: i,
+      index: i,
+      focusedDot: focusedDot,
+      handleFocus: handleFocus,
+      setFocusedDot: setFocusedDot,
+    });
   });
-  return (
-    <div
-      {...props}
-      onFocus={(e) => {
+  return React.createElement(
+    "div",
+    {
+      ...props,
+      onFocus: (e) => {
         e.stopPropagation();
         setAutoplayPause(true);
-      }}
-      onBlur={() => {
+      },
+      onBlur: () => {
         setAutoplayPause(false);
-      }}
-      onMouseLeave={(e) => e.stopPropagation()}
-      className={cj(
+      },
+      onMouseLeave: (e) => e.stopPropagation(),
+      className: cj(
         className,
         `w-slider-nav ${navInvert ? "w-slider-nav-invert" : ""} ${
           navShadow ? "w-shadow" : ""
         } ${navRound ? "w-round" : ""} ${navNumbers ? "w-num" : ""}`
-      )}
-      ref={ref}
-    >
-      {dots}
-    </div>
+      ),
+      ref: ref,
+    },
+    dots
   );
 });
 const SliderDot = React.forwardRef(function SliderDot(
@@ -433,26 +433,26 @@ const SliderDot = React.forwardRef(function SliderDot(
   }, [focusedDot, index]);
   const isSlideActive = selectedSlide === index;
   const label = navNumbers ? index + 1 : "";
-  return (
-    <div
-      className={`w-slider-dot ${isSlideActive ? "w-active" : ""}`}
-      aria-label={`Show slide ${index + 1} of ${slideAmount}`}
-      aria-pressed={isSlideActive}
-      role="button"
-      tabIndex={isSlideActive ? 0 : -1}
-      style={{
+  return React.createElement(
+    "div",
+    {
+      className: `w-slider-dot ${isSlideActive ? "w-active" : ""}`,
+      "aria-label": `Show slide ${index + 1} of ${slideAmount}`,
+      "aria-pressed": isSlideActive,
+      role: "button",
+      tabIndex: isSlideActive ? 0 : -1,
+      style: {
         marginRight: `${navSpacing}px`,
         marginLeft: `${navSpacing}px`,
-      }}
-      onClick={(e) => {
+      },
+      onClick: (e) => {
         e.stopPropagation();
         setFocusedDot(index);
         setCurrentSlide(index);
-      }}
-      ref={innerRef}
-      onKeyDown={handleFocus}
-    >
-      {label}
-    </div>
+      },
+      ref: innerRef,
+      onKeyDown: handleFocus,
+    },
+    label
   );
 });

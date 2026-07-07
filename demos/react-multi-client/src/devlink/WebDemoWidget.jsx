@@ -77,17 +77,17 @@ export function WebDemoWidget({
             </_Builtin.Block>
           </_Builtin.Block>
           <_Builtin.Block
-            className="component-arrow-backend-to-db"
+            className="component-arrow-backend"
             tag="div"
             {...writeBackendToDb}
           >
             <_Builtin.Image
-              className="arrow-backend-db"
+              className="arrow-backend"
               loading="lazy"
               width="auto"
-              height="24"
+              height="auto"
               alt=""
-              src="https://uploads-ssl.webflow.com/655cae9c85d542976fbd4b10/655f8d9dcee745a0be785a3c_path-arrow-component-001.svg"
+              src="https://cdn.prod.website-files.com/655cae9c85d542976fbd4b10/680f72926a59d991aa4e8a28_path-arrow-component.svg"
             />
           </_Builtin.Block>
           <_Builtin.Block
@@ -99,17 +99,17 @@ export function WebDemoWidget({
             </_Builtin.Block>
           </_Builtin.Block>
           <_Builtin.Block
-            className="component-arrow-db-to-ps"
+            className="component-arrow-backend"
             tag="div"
-            {...readDbToPs}
+            {...writeBackendToDb}
           >
             <_Builtin.Image
-              className="arrow-db-ps"
+              className="arrow-backend"
               loading="lazy"
-              width="Auto"
-              height="24"
+              width="auto"
+              height="auto"
               alt=""
-              src="https://uploads-ssl.webflow.com/655cae9c85d542976fbd4b10/655f8d9dcee745a0be785a3c_path-arrow-component-001.svg"
+              src="https://cdn.prod.website-files.com/655cae9c85d542976fbd4b10/680f72926a59d991aa4e8a28_path-arrow-component.svg"
             />
           </_Builtin.Block>
           <_Builtin.Block
@@ -122,7 +122,7 @@ export function WebDemoWidget({
               width="auto"
               height="auto"
               alt=""
-              src="https://uploads-ssl.webflow.com/655cae9c85d542976fbd4b10/655f556ea234aa0d222e5917_icon-powersync.svg"
+              src="https://cdn.prod.website-files.com/655cae9c85d542976fbd4b10/665873bf54214e78336ae933_powersync-logo-icon.svg"
             />
             <_Builtin.Block className="component-label" tag="div">
               {"POWERSYNC"}

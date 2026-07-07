@@ -8,13 +8,13 @@ declare global {
 }
 export declare const Twitter: React.ForwardRefExoticComponent<
   {
-    className?: string | undefined;
-    mode?: TwitterMode | undefined;
-    url?: string | undefined;
-    text?: string | undefined;
-    size?: TwitterSize | undefined;
+    className?: string;
+    mode?: TwitterMode;
+    url?: string;
+    text?: string;
+    size?: TwitterSize;
   } & {
-    children?: React.ReactNode;
+    children?: React.ReactNode | undefined;
   } & React.RefAttributes<HTMLDivElement>
 >;
 export {};

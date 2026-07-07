@@ -15,7 +15,7 @@ export const Paragraph = React.forwardRef(function Paragraph(props, ref) {
   });
 });
 export const Emphasized = React.forwardRef(function Emphasized(props, ref) {
-  return <em {...props} ref={ref} />;
+  return React.createElement("em", { ...props, ref: ref });
 });
 export const Strong = React.forwardRef(function Strong(props, ref) {
   return React.createElement("strong", {
@@ -34,16 +34,20 @@ export const Figure = React.forwardRef(function Figure(
   if (type) {
     className += `w-richtext-align-${type} `;
   }
-  return <figure className={className} {...props} ref={ref} />;
+  return React.createElement("figure", {
+    className: className,
+    ...props,
+    ref: ref,
+  });
 });
 export const Figcaption = React.forwardRef(function Figcaption(props, ref) {
-  return <figcaption {...props} ref={ref} />;
+  return React.createElement("figcaption", { ...props, ref: ref });
 });
 export const Subscript = React.forwardRef(function Subscript(props, ref) {
-  return <sub {...props} ref={ref} />;
+  return React.createElement("sub", { ...props, ref: ref });
 });
 export const Superscript = React.forwardRef(function Superrscript(props, ref) {
-  return <sup {...props} ref={ref} />;
+  return React.createElement("sup", { ...props, ref: ref });
 });
 export const RichText = React.forwardRef(function RichText(
   { tag = "div", className = "", ...props },
