@@ -52,7 +52,11 @@ export const UserComponent: React.FC<UserComponentProps> = (props) => {
         if (!!e.oldValue && !e.newValue) {
           if (!connecting && !status.connected) {
             setConnecting(true);
-            await powersync.connect(connector);
+            await powersync.connect(connector, {
+              appMetadata: {
+                app_version: APP_VERSION
+              }
+            });
           }
         }
       }
@@ -188,7 +192,11 @@ export const UserComponent: React.FC<UserComponentProps> = (props) => {
       await powersync.disconnect();
     } else {
       setConnecting(true);
-      await powersync.connect(connector);
+      await powersync.connect(connector, {
+        appMetadata: {
+          app_version: APP_VERSION
+        }
+      });
     }
   }, [status.connected, connecting]);
 

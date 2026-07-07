@@ -17,6 +17,9 @@ export default defineConfig({
   resolve: {
     alias: [{ find: '@', replacement: fileURLToPath(new URL('./src', import.meta.url)) }]
   },
+  define: {
+    APP_VERSION: JSON.stringify(process.env.npm_package_version)
+  },
   publicDir: '../public',
   envDir: '..', // Use this dir for env vars, not 'src'.
   optimizeDeps: {

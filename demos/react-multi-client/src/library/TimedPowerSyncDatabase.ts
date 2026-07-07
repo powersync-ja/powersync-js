@@ -3,6 +3,7 @@ import {
   Transaction,
   WebPowerSyncDatabaseOptions,
   PowerSyncBackendConnector,
+  PowerSyncConnectionOptions,
   LockContext,
   PowerSyncDatabase
 } from '@powersync/web';
@@ -89,12 +90,12 @@ export class TimedPowerSyncDatabase extends PowerSyncDatabase {
     return { elapsedTime, result };
   }
 
-  async connect(connector: PowerSyncBackendConnector) {
+  async connect(connector: PowerSyncBackendConnector, options?: PowerSyncConnectionOptions) {
     // We toggle this localStorage key to indicate that we are currently connecting
     // This will fire a `onStorage` event in other tabs, triggering a reconnect if needed
     // We don't need the same for disconnect, as it is triggered with an Abort Signal
     localStorage.setItem(this.localKey, 'true');
-    return super.connect(connector).finally(() => {
+    return super.connect(connector, options).finally(() => {
       localStorage.removeItem(this.localKey);
     });
   }

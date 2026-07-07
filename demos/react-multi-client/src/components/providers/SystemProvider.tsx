@@ -35,7 +35,11 @@ const SystemProvider: React.FC<PropsWithChildren<SystemProviderProps>> = (props)
     const l = connector.registerListener({
       initialized: () => {},
       sessionStarted: async () => {
-        await powersync.connect(connector);
+        await powersync.connect(connector, {
+          appMetadata: {
+            app_version: APP_VERSION
+          }
+        });
       }
     });
     connector.init();
