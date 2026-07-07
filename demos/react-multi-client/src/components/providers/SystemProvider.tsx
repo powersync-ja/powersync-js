@@ -2,7 +2,7 @@
 import { TimedPowerSyncDatabase } from '@/library/TimedPowerSyncDatabase';
 import React, { PropsWithChildren } from 'react';
 import { PowerSyncContext, usePowerSync as _usePowerSync } from '@powersync/react';
-import { AppSchema } from '@/definitions/Schema';
+import { AppSchema } from '@/library/powersync/AppSchema';
 import { SupabaseConnector } from '@/library/SupabaseConnector';
 import { useSupabase } from './SupabaseProvider';
 import { createBaseLogger, LogLevel } from '@powersync/web';

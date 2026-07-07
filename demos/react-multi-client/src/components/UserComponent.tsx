@@ -1,7 +1,7 @@
 import { PebbleBoxWidget } from '@/components/PebbleBoxWidget';
 import { useConsoleLines } from '@/components/hooks/useConsoleLines';
 import { useSystem, useTimedPowerSync } from '@/components/providers/SystemProvider';
-import { MAX_PEBBLES, NUM_INIT_PEBBLES, PebbleDef, TABLE_NAME, randomPebbleShape } from '@/definitions/Schema';
+import { MAX_PEBBLES, NUM_INIT_PEBBLES, PebbleRecord, PEBBLES_TABLE, randomPebbleShape } from '@/library/powersync/AppSchema';
 import { useStatus } from '@powersync/react';
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { LogDisplayWidget } from './LogDisplayWidget';
@@ -89,10 +89,10 @@ export const UserComponent: React.FC<UserComponentProps> = (props) => {
           return;
         }
         // Only clear and init DB if we have not been initialized yet
-        await powersync.execute(`DELETE FROM ${TABLE_NAME}`);
+        await powersync.execute(`DELETE FROM ${PEBBLES_TABLE}`);
         await powersync.writeTransaction(async (tx) => {
           for (let i = 0; i < NUM_INIT_PEBBLES; i++) {
-            await tx.execute(`INSERT INTO ${TABLE_NAME} (id, user_id, shape) VALUES (uuid(), ?, ?)`, [
+            await tx.execute(`INSERT INTO ${PEBBLES_TABLE} (id, user_id, shape) VALUES (uuid(), ?, ?)`, [
               userID,
               randomPebbleShape()
             ]);
@@ -106,10 +106,10 @@ export const UserComponent: React.FC<UserComponentProps> = (props) => {
   const checkMaxPebbles = async () => {
     // Deletes any pebble if we have more than MAX_PEBBLES,
     // this is caused by creating pebbles while pebbles are added to the internal DB by PowerSync sync
-    await powersync.execute(`DELETE FROM ${TABLE_NAME}
+    await powersync.execute(`DELETE FROM ${PEBBLES_TABLE}
                                   WHERE id NOT IN (
                                     SELECT id
-                                    FROM ${TABLE_NAME}
+                                    FROM ${PEBBLES_TABLE}
                                     ORDER BY shape ASC
                                     LIMIT ${MAX_PEBBLES}
                                   )`);
@@ -126,14 +126,14 @@ export const UserComponent: React.FC<UserComponentProps> = (props) => {
   );
 
   const handleCreate = useCallback(async () => {
-    const { count } = await powersync.get<{ count: number }>(`SELECT COUNT(*) as count FROM ${TABLE_NAME}`, []);
+    const { count } = await powersync.get<{ count: number }>(`SELECT COUNT(*) as count FROM ${PEBBLES_TABLE}`, []);
 
     if (count >= MAX_PEBBLES) {
       return;
     }
 
     const { elapsedTime } = await powersync.timedExecute(
-      `INSERT INTO ${TABLE_NAME} (id, created_at, user_id, shape) VALUES (uuid(), datetime(), ?, ?)`,
+      `INSERT INTO ${PEBBLES_TABLE} (id, created_at, user_id, shape) VALUES (uuid(), datetime(), ?, ?)`,
       [userID, randomPebbleShape()]
     );
 
@@ -143,8 +143,8 @@ export const UserComponent: React.FC<UserComponentProps> = (props) => {
 
   const handleUpdate = useCallback(async () => {
     await checkMaxPebbles();
-    const setOfPebbles = await powersync.getAll<PebbleDef>(
-      `SELECT id FROM ${TABLE_NAME} ORDER BY RANDOM() LIMIT 3`,
+    const setOfPebbles = await powersync.getAll<PebbleRecord>(
+      `SELECT id FROM ${PEBBLES_TABLE} ORDER BY RANDOM() LIMIT 3`,
       []
     );
 
@@ -153,7 +153,7 @@ export const UserComponent: React.FC<UserComponentProps> = (props) => {
     }
     const { elapsedTime } = await powersync.timedWriteTransaction(async (tx) => {
       setOfPebbles.forEach((pebble) => {
-        tx.execute(`UPDATE ${TABLE_NAME} SET shape = ? WHERE id = ?`, [randomPebbleShape(), pebble.id]);
+        tx.execute(`UPDATE ${PEBBLES_TABLE} SET shape = ? WHERE id = ?`, [randomPebbleShape(), pebble.id]);
       });
     });
 
@@ -167,10 +167,10 @@ export const UserComponent: React.FC<UserComponentProps> = (props) => {
     const { elapsedTime } = await powersync.timedExecute(
       // Delete the right-most pebble ordered by shape
       `
-      DELETE FROM ${TABLE_NAME} 
+      DELETE FROM ${PEBBLES_TABLE} 
       WHERE id = (
         SELECT id 
-        FROM ${TABLE_NAME} 
+        FROM ${PEBBLES_TABLE} 
         ORDER BY shape DESC
         LIMIT 1
       )`

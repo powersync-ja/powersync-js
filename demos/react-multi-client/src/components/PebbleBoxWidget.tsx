@@ -1,4 +1,4 @@
-import { MAX_PEBBLES, PebbleDef, Shape, TABLE_NAME } from '@/definitions/Schema';
+import { MAX_PEBBLES, PebbleRecord, Shape, PEBBLES_TABLE } from '@/library/powersync/AppSchema';
 import { useQuery } from '@powersync/react';
 import React from 'react';
 import {
@@ -18,8 +18,8 @@ const ShapeWidgetMap = {
 };
 
 export const PebbleBoxWidget: React.FC = () => {
-  const { data: pebbles } = useQuery<PebbleDef>(
-    `SELECT * FROM ${TABLE_NAME} ORDER BY shape ASC LIMIT ${MAX_PEBBLES}`,
+  const { data: pebbles } = useQuery<PebbleRecord>(
+    `SELECT * FROM ${PEBBLES_TABLE} ORDER BY shape ASC LIMIT ${MAX_PEBBLES}`,
     []
   );
 
