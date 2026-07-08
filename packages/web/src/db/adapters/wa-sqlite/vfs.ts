@@ -74,7 +74,7 @@ export async function loadModuleAndVfs({
       const { IDBBatchAtomicVFS } = await import('@journeyapps/wa-sqlite/src/examples/IDBBatchAtomicVFS.js');
       resolveVfs = (module) => {
         // @ts-expect-error The types for this static method are missing upstream
-        return IDBBatchAtomicVFS.create(filename, module, { lockPolicy: 'exclusive' });
+        return IDBBatchAtomicVFS.create(dbFilename, module, { lockPolicy: 'exclusive' });
       };
       break;
     }
@@ -99,7 +99,7 @@ export async function loadModuleAndVfs({
     case WASQLiteVFS.InMemoryVfs: {
       const { MemoryVFS } = await import('@journeyapps/wa-sqlite/src/examples/MemoryVFS.js');
       // @ts-expect-error The types for this static method are missing upstream
-      resolveVfs = (module) => MemoryVFS.create(filename, module);
+      resolveVfs = (module) => MemoryVFS.create(dbFilename, module);
       break;
     }
   }

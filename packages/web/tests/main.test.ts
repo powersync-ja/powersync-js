@@ -42,11 +42,12 @@ describe(
 );
 
 describe('Basic - with in-memory', () => {
-  const defaultOptions = {
-    dbFilename: 'in-memory.db',
-    vfs: WASQLiteVFS.InMemoryVfs,
-    databaseWorkerLogLevel: defaultLogLevel
-  };
+  function generateFactory() {
+    return new WASQLiteOpenFactory({
+      dbFilename: 'in-memory.db',
+      vfs: WASQLiteVFS.InMemoryVfs
+    });
+  }
 
   describe(
     'in shared worker',
@@ -54,10 +55,7 @@ describe('Basic - with in-memory', () => {
     describeBasicTests(() =>
       generateTestDb({
         schema: TEST_SCHEMA,
-        logger: defaultTestLogger,
-        database: {
-          ...defaultOptions
-        }
+        database: generateFactory()
       })
     )
   );
@@ -67,9 +65,8 @@ describe('Basic - with in-memory', () => {
     describeBasicTests(() =>
       generateTestDb({
         schema: TEST_SCHEMA,
-        logger: defaultTestLogger,
-        database: {
-          ...defaultOptions,
+        database: generateFactory(),
+        flags: {
           enableMultiTabs: false
         }
       })
@@ -81,9 +78,8 @@ describe('Basic - with in-memory', () => {
     describeBasicTests(() =>
       generateTestDb({
         schema: TEST_SCHEMA,
-        logger: defaultTestLogger,
-        database: {
-          ...defaultOptions,
+        database: generateFactory(),
+        flags: {
           enableMultiTabs: false,
           useWebWorker: false
         }
