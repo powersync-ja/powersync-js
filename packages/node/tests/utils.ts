@@ -106,11 +106,14 @@ export function createMockSyncServiceTest(bson: boolean) {
       const databaseName = `test-${crypto.randomUUID()}.db`;
 
       const listeners: Listener[] = [];
-      let requestInterceptor: (request: Request) => Promise<void> = async () => {};
+      let requestInterceptor: (request: Request) => Promise<Response | void> = async () => {};
 
       const inMemoryFetch: typeof fetch = async (info, init?) => {
         const request = new Request(info, init);
-        await requestInterceptor(request);
+        const intercepted = await requestInterceptor(request);
+        if (intercepted) {
+          return intercepted;
+        }
 
         if (request.url.endsWith('/sync/stream')) {
           const body = await request.json();
@@ -197,7 +200,7 @@ export function createMockSyncServiceTest(bson: boolean) {
 export const mockSyncServiceTest = createMockSyncServiceTest(false);
 
 export interface MockSyncService {
-  installRequestInterceptor(interceptor: (request: Request) => Promise<void>): void;
+  installRequestInterceptor(interceptor: (request: Request) => Promise<Response | void>): void;
   pushLine: (line: StreamingSyncLine) => void;
   connectedListeners: any[];
   createDatabase: (options?: Partial<NodePowerSyncDatabaseOptions>) => Promise<PowerSyncDatabase>;
