@@ -1,5 +1,17 @@
 # @powersync/web
 
+## 1.39.0
+
+### Minor Changes
+
+- b097a7f: Allow using in-memory databases with `WASQLiteVFS.InMemoryVFS`.
+
+### Patch Changes
+
+- Updated dependencies [5966708]
+- Updated dependencies [0746836]
+  - @powersync/common@1.57.2
+
 ## 1.38.7
 
 ### Patch Changes

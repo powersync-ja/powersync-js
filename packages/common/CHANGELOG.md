@@ -1,5 +1,12 @@
 # @powersync/common
 
+## 1.57.2
+
+### Patch Changes
+
+- 5966708: Fixed an issue where clients using the HTTP connection method could get stuck in an endless auth-error retry loop when their token expired while disconnected (e.g. after network interruptions or device sleep).
+- 0746836: fix typescript error on ILogLevel types
+
 ## 1.57.1
 
 ### Patch Changes
