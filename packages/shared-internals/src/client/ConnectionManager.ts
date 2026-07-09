@@ -231,7 +231,10 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
         });
         this.iterateListeners((l) => l.syncStreamCreated?.(sync));
         this.syncStreamImplementation = sync;
-        this.syncDisposer = onDispose;
+        this.syncDisposer = () => {
+          onDispose();
+          sync.dispose();
+        };
         await this.syncStreamImplementation.waitForReady();
         resolve();
       } catch (error) {

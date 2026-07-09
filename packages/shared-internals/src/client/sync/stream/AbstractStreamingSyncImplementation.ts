@@ -27,7 +27,7 @@ import {
   valueResult
 } from '../../../utils/stream_transform.js';
 import { asyncNotifier } from '../../../utils/async.js';
-import { JavaScriptSyncState, SyncStatusJson, SyncStatusSnapshot } from '../../../db/crud/SyncStatus.js';
+import { JavaScriptSyncState, SyncStatusSnapshot } from '../../../db/crud/SyncStatus.js';
 import { ResolvedSyncOptions } from '../options.js';
 
 /**
@@ -122,7 +122,7 @@ export abstract class AbstractStreamingSyncImplementation
   protected crudUpdateListener?: () => void;
   protected streamingSyncPromise?: Promise<[void, void]>;
   protected logger: PowerSyncLogger;
-  private activeStreams: SubscribedStream[];
+  protected activeStreams: SubscribedStream[];
   private connectionMayHaveChanged = false;
   private crudUploadNotifier = asyncNotifier();
 
