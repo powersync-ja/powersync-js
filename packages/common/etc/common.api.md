@@ -989,7 +989,7 @@ export const DEFAULT_POWERSYNC_DB_OPTIONS: {
 // Warning: (ae-internal-missing-underscore) The name "DEFAULT_REMOTE_LOGGER" should be prefixed with an underscore because the declaration is marked as @internal
 //
 // @internal (undocumented)
-export const DEFAULT_REMOTE_LOGGER: Logger.ILogger;
+export const DEFAULT_REMOTE_LOGGER: ILogger;
 
 // Warning: (ae-internal-missing-underscore) The name "DEFAULT_REMOTE_OPTIONS" should be prefixed with an underscore because the declaration is marked as @internal
 //
@@ -1368,13 +1368,13 @@ export enum LockType {
 
 // @public (undocumented)
 export const LogLevel: {
-    TRACE: Logger.ILogLevel;
-    DEBUG: Logger.ILogLevel;
-    INFO: Logger.ILogLevel;
-    TIME: Logger.ILogLevel;
-    WARN: Logger.ILogLevel;
-    ERROR: Logger.ILogLevel;
-    OFF: Logger.ILogLevel;
+    TRACE: ILogLevel;
+    DEBUG: ILogLevel;
+    INFO: ILogLevel;
+    TIME: ILogLevel;
+    WARN: ILogLevel;
+    ERROR: ILogLevel;
+    OFF: ILogLevel;
 };
 
 // Warning: (ae-internal-missing-underscore) The name "MAX_AMOUNT_OF_COLUMNS" should be prefixed with an underscore because the declaration is marked as @internal

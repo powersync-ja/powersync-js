@@ -588,6 +588,10 @@ export abstract class AbstractRemote {
       if (!res.ok || !res.body) {
         const text = await res.text();
         this.logger.error(`Could not POST streaming to ${path} - ${res.status} - ${res.statusText}: ${text}`);
+
+        if (res.status === 401) {
+          this.invalidateCredentials();
+        }
         const error: any = new Error(`HTTP ${res.statusText}: ${text}`);
         error.status = res.status;
         throw error;
