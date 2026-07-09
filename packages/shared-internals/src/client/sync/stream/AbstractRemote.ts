@@ -315,6 +315,11 @@ export abstract class AbstractRemote {
           message: `Could not POST streaming to ${path} - ${res.status} - ${res.statusText}: ${text}`,
           error
         });
+
+        if (res.status === 401) {
+          this.invalidateCredentials();
+        }
+
         throw error;
       }
 
