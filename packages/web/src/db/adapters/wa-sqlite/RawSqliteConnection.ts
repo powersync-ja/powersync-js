@@ -1,6 +1,6 @@
 import { Factory as WaSqliteFactory, SQLITE_ROW } from '@journeyapps/wa-sqlite';
 
-import { DEFAULT_MODULE_FACTORIES, WASQLiteModuleFactory } from './vfs.js';
+import { loadModuleAndVfs } from './vfs.js';
 import { ResolvedWASQLiteOpenFactoryOptions } from './WASQLiteOpenFactory.js';
 
 export interface RawResultSet {
@@ -27,11 +27,8 @@ export class RawSqliteConnection {
    * The `sqlite3*` connection pointer.
    */
   private db: number = 0;
-  private _moduleFactory: WASQLiteModuleFactory;
 
-  constructor(readonly options: ResolvedWASQLiteOpenFactoryOptions) {
-    this._moduleFactory = DEFAULT_MODULE_FACTORIES[this.options.vfs];
-  }
+  constructor(readonly options: ResolvedWASQLiteOpenFactoryOptions) {}
 
   get isOpen(): boolean {
     return this.db != 0;
@@ -45,8 +42,8 @@ export class RawSqliteConnection {
     );
     await this.executeRaw(`PRAGMA temp_store = ${this.options.temporaryStorage};`);
     if (this.options.encryptionKey) {
-      const escapedKey = this.options.encryptionKey.replace("'", "''");
-      await this.executeRaw(`PRAGMA key = '${escapedKey}'`);
+      const escapedKey = this.options.encryptionKey.replaceAll("'", "''");
+      await this.executeRaw(`PRAGMA key = '${escapedKey}';`);
     }
     await this.executeRaw(`PRAGMA cache_size = -${this.options.cacheSizeKb};`);
 
@@ -54,10 +51,7 @@ export class RawSqliteConnection {
   }
 
   private async openSQLiteAPI(): Promise<SQLiteAPI> {
-    const { module, vfs } = await this._moduleFactory({
-      dbFileName: this.options.dbFilename,
-      encryptionKey: this.options.encryptionKey
-    });
+    const { module, vfs } = await loadModuleAndVfs(this.options);
     const sqlite3 = WaSqliteFactory(module);
     sqlite3.vfs_register(vfs, true);
     /**

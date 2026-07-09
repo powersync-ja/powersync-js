@@ -41,6 +41,53 @@ describe(
   )
 );
 
+describe('Basic - with in-memory', () => {
+  function generateFactory() {
+    return new WASQLiteOpenFactory({
+      dbFilename: 'in-memory.db',
+      vfs: WASQLiteVFS.InMemoryVfs
+    });
+  }
+
+  describe(
+    'in shared worker',
+    { sequential: true },
+    describeBasicTests(() =>
+      generateTestDb({
+        schema: TEST_SCHEMA,
+        database: generateFactory()
+      })
+    )
+  );
+
+  describe(
+    'in dedicated worker',
+    describeBasicTests(() =>
+      generateTestDb({
+        schema: TEST_SCHEMA,
+        database: generateFactory(),
+        flags: {
+          enableMultiTabs: false
+        }
+      })
+    )
+  );
+
+  describe(
+    'in local tab',
+    describeBasicTests(() =>
+      generateTestDb({
+        schema: TEST_SCHEMA,
+        database: generateFactory(),
+        flags: {
+          enableMultiTabs: false,
+          useWebWorker: false
+        }
+      })
+    )
+  );
+});
+
 function describeBasicTests(generateDB: () => PowerSyncDatabase) {
   return () => {
     it('should execute a select query using getAll', async () => {

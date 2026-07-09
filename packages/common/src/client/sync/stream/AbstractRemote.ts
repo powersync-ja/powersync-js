@@ -42,7 +42,7 @@ const KEEP_ALIVE_LIFETIME_MS = 90_000;
 /**
  * @internal
  */
-export const DEFAULT_REMOTE_LOGGER = Logger.get('PowerSyncRemote');
+export const DEFAULT_REMOTE_LOGGER: ILogger = Logger.get('PowerSyncRemote');
 
 /**
  * @internal
