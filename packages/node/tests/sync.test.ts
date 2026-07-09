@@ -92,6 +92,43 @@ describe('Sync', () => {
     ]);
   });
 
+  mockSyncServiceTest('refetches credentials when HTTP stream returns 401', async ({ syncService }) => {
+    // The /sync/stream 401 should invalidate the cached credentials so the retry fetches a fresh token.
+    let fetchCredentialsCount = 0;
+    const connector = new TestConnector();
+    connector.fetchCredentials = async () => {
+      fetchCredentialsCount++;
+      return {
+        endpoint: 'https://powersync.example.org',
+        token: `token-${fetchCredentialsCount}`
+      };
+    };
+
+    syncService.installRequestInterceptor(async (request) => {
+      if (request.url.endsWith('/sync/stream') && request.headers.get('Authorization') === 'Token token-1') {
+        return new Response(
+          JSON.stringify({ error: { code: 'PSYNC_S2103', description: 'Authentication required' } }),
+          {
+            status: 401,
+            headers: { 'content-type': 'application/json' }
+          }
+        );
+      }
+      return undefined;
+    });
+
+    const database = await syncService.createDatabase();
+    database.connect(connector, {
+      connectionMethod: SyncStreamConnectionMethod.HTTP,
+      retryDelayMs: 100
+    });
+
+    // The first attempt uses token-1 and gets a 401. The SDK must invalidate the cached
+    // credentials and retry with a freshly fetched token-2, which connects successfully.
+    await vi.waitFor(() => expect(fetchCredentialsCount).toBeGreaterThanOrEqual(2), { timeout: 2000 });
+    await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1), { timeout: 2000 });
+  });
+
   mockSyncServiceTest('reconnects immediately after changed connection', async ({ syncService }) => {
     let database = await syncService.createDatabase();
     database.connect(new TestConnector(), {
