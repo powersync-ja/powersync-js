@@ -45,8 +45,8 @@ export class RawSqliteConnection {
     );
     await this.executeRaw(`PRAGMA temp_store = ${this.options.temporaryStorage};`);
     if (this.options.encryptionKey) {
-      const escapedKey = this.options.encryptionKey.replace("'", "''");
-      await this.executeRaw(`PRAGMA key = '${escapedKey}'`);
+      const escapedKey = this.options.encryptionKey.replaceAll("'", "''");
+      await this.executeRaw(`PRAGMA key = '${escapedKey}';`);
     }
     await this.executeRaw(`PRAGMA cache_size = -${this.options.cacheSizeKb};`);
 
