@@ -8,6 +8,7 @@ import {
 import { getNavigatorLocks } from '../../shared/navigator.js';
 import { RawSqliteConnection } from '../../db/adapters/wa-sqlite/RawSqliteConnection.js';
 import { ConcurrentSqliteConnection } from '../../db/adapters/wa-sqlite/ConcurrentConnection.js';
+import { WASQLiteVFS } from '../../db/adapters/wa-sqlite/vfs.js';
 
 const OPEN_DB_LOCK = 'open-wasqlite-db';
 
@@ -57,14 +58,15 @@ export class MultiDatabaseServer {
 
   private async databaseOpenAttempt(options: ResolvedWASQLiteOpenFactoryOptions): Promise<DatabaseServer> {
     return getNavigatorLocks().request(OPEN_DB_LOCK, async () => {
-      const { dbFilename } = options;
+      const { dbFilename, isReadOnly, vfs } = options;
 
       let server: DatabaseServer | undefined = this.activeDatabases.get(dbFilename);
       if (server == null) {
         // We don't need navigator locks for shared workers because all queries run in this shared worker exclusively.
         // For read-only connections, we use a VFS that supports concurrent reads (so a single lock on the connection is
-        // fine).
-        const needsNavigatorLocks = !(isSharedWorker || options.isReadOnly);
+        // fine). In-memory databases either run in a shared worker or aren't shared across tabs at all, so the internal
+        // lock is enough.
+        const needsNavigatorLocks = !(isSharedWorker || isReadOnly || vfs == WASQLiteVFS.InMemoryVfs);
         const connection = new RawSqliteConnection(options);
         const withSafeConcurrency = new ConcurrentSqliteConnection(connection, needsNavigatorLocks);
 
