@@ -151,3 +151,68 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
         })
         .build()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn temp_db_path(label: &str) -> std::path::PathBuf {
+        std::env::temp_dir().join(format!(
+            "tauri-plugin-powersync-test-{}-{}.sqlite",
+            label,
+            std::process::id()
+        ))
+    }
+
+    #[test]
+    fn encrypted_pool_round_trips_with_correct_key() {
+        PowerSyncEnvironment::powersync_auto_extension().unwrap();
+        let path = temp_db_path("roundtrip");
+        let _ = std::fs::remove_file(&path);
+
+        {
+            let pool = open_encrypted_pool(path.to_str().unwrap(), "correct-horse-battery-staple").unwrap();
+            pool.writer_sync()
+                .execute("CREATE TABLE t (id INTEGER PRIMARY KEY)", [])
+                .unwrap();
+        }
+
+        // Reopening with the SAME key must see the table that was just created.
+        let pool = open_encrypted_pool(path.to_str().unwrap(), "correct-horse-battery-staple").unwrap();
+        let count: i64 = pool
+            .writer_sync()
+            .query_row(
+                "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='t'",
+                [],
+                |row| row.get(0),
+            )
+            .unwrap();
+        assert_eq!(count, 1);
+
+        let _ = std::fs::remove_file(&path);
+    }
+
+    #[test]
+    fn encrypted_pool_rejects_wrong_key() {
+        PowerSyncEnvironment::powersync_auto_extension().unwrap();
+        let path = temp_db_path("wrongkey");
+        let _ = std::fs::remove_file(&path);
+
+        {
+            let pool = open_encrypted_pool(path.to_str().unwrap(), "right-key").unwrap();
+            pool.writer_sync()
+                .execute("CREATE TABLE t (id INTEGER PRIMARY KEY)", [])
+                .unwrap();
+        }
+
+        // Reopening with the WRONG key must fail to read the schema — SQLCipher
+        // returns a "not a database" / decryption error on the first real read.
+        // That read happens inside `open_encrypted_pool` itself (it installs update
+        // hooks via a query against the writer connection right after keying it),
+        // so the error surfaces from `open_encrypted_pool`, not a later query.
+        let result = open_encrypted_pool(path.to_str().unwrap(), "wrong-key");
+        assert!(result.is_err(), "wrong key must not be able to read the schema");
+
+        let _ = std::fs::remove_file(&path);
+    }
+}
