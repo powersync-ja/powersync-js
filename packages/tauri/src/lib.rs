@@ -100,6 +100,7 @@ impl<R: Runtime> PowerSync<R> {
 /// `ConnectionPool::open` cannot do, because it runs `PRAGMA journal_mode=WAL`
 /// first, and that reads the encrypted file header and fails before a key can
 /// be set.
+#[cfg(feature = "encryption")]
 fn open_encrypted_pool(name: &str, key: &str) -> Result<ConnectionPool> {
     // Writer — key first, then replicate the pragmas `ConnectionPool::open` sets on its writer.
     let writer = Connection::open(name).map_err(PowerSyncError::from)?;
@@ -135,6 +136,13 @@ fn open_encrypted_pool(name: &str, key: &str) -> Result<ConnectionPool> {
     Ok(ConnectionPool::wrap_connections(writer, readers))
 }
 
+#[cfg(not(feature = "encryption"))]
+fn open_encrypted_pool(_name: &str, _key: &str) -> Result<ConnectionPool> {
+    Err(crate::error::PowerSyncTauriError::EncryptionUnavailable(
+        "encryption_key was supplied but this build lacks the `encryption` feature; rebuild tauri-plugin-powersync with features = [\"encryption\"]".into(),
+    ))
+}
+
 /// Initializes the plugin.
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
     Builder::new("powersync")
@@ -152,7 +160,7 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
         .build()
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "encryption"))]
 mod tests {
     use super::*;
 
@@ -212,6 +220,29 @@ mod tests {
         // so the error surfaces from `open_encrypted_pool`, not a later query.
         let result = open_encrypted_pool(path.to_str().unwrap(), "wrong-key");
         assert!(result.is_err(), "wrong key must not be able to read the schema");
+
+        let _ = std::fs::remove_file(&path);
+    }
+}
+
+#[cfg(all(test, not(feature = "encryption")))]
+mod feature_off_tests {
+    use super::*;
+
+    #[test]
+    fn open_encrypted_pool_hard_errors_without_encryption_feature() {
+        let path = std::env::temp_dir().join(format!(
+            "tauri-plugin-powersync-test-feature-off-{}.sqlite",
+            std::process::id()
+        ));
+        let _ = std::fs::remove_file(&path);
+
+        let result = open_encrypted_pool(path.to_str().unwrap(), "some-key");
+        assert!(
+            matches!(result, Err(crate::error::PowerSyncTauriError::EncryptionUnavailable(_))),
+            "expected a hard EncryptionUnavailable error when the `encryption` feature is off, got {:?}",
+            result.map(|_| ())
+        );
 
         let _ = std::fs::remove_file(&path);
     }

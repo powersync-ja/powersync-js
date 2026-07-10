@@ -41,6 +41,11 @@ export interface TauriSQLOpenOptions extends SQLOpenOptions {
    * which link plain (unencrypted) SQLite. Callers are responsible for
    * deriving and persisting this key themselves; the plugin does not manage
    * key storage.
+   *
+   * Requires the Rust crate to be built with `features = ["encryption"]`
+   * (SQLCipher is opt-in, off by default). If that feature is not enabled,
+   * `_initialize()` rejects with a clear error instead of silently opening
+   * an unencrypted database.
    */
   encryptionKey?: string;
 }
