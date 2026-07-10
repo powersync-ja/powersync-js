@@ -46,6 +46,7 @@ impl<R: Runtime> PowerSync<R> {
         app: AppHandle<R>,
         name: &str,
         schema: SchemaOrCustom,
+        encryption_key: Option<&str>,
     ) -> Result<Arc<TauriDatabaseState>> {
         let mut map = self.databases.lock().unwrap();
         let mut entry = map.entry(name.to_owned());
@@ -58,10 +59,14 @@ impl<R: Runtime> PowerSync<R> {
 
         PowerSyncEnvironment::powersync_auto_extension()?;
         let pool = if name == ":memory:" {
+            // In-memory DBs are never encrypted — nothing persisted for a key to protect.
             ConnectionPool::single_connection(
                 Connection::open_in_memory().map_err(PowerSyncError::from)?,
             )
+        } else if let Some(key) = encryption_key {
+            open_encrypted_pool(name, key)?
         } else {
+            // No key supplied: byte-for-byte the pre-existing path.
             ConnectionPool::open(name)?
         };
 
@@ -87,6 +92,47 @@ impl<R: Runtime> PowerSync<R> {
         let handle = self.handles.lookup(handle)?;
         Ok(handle.as_database()?.clone())
     }
+}
+
+/// Builds a connection pool whose every connection is keyed with SQLCipher
+/// BEFORE any other statement runs. This mirrors `ConnectionPool::open`'s
+/// pragmas, but injects `PRAGMA key` as statement #1 — which
+/// `ConnectionPool::open` cannot do, because it runs `PRAGMA journal_mode=WAL`
+/// first, and that reads the encrypted file header and fails before a key can
+/// be set.
+fn open_encrypted_pool(name: &str, key: &str) -> Result<ConnectionPool> {
+    // Writer — key first, then replicate the pragmas `ConnectionPool::open` sets on its writer.
+    let writer = Connection::open(name).map_err(PowerSyncError::from)?;
+    writer
+        .pragma_update(None, "key", key)
+        .map_err(PowerSyncError::from)?;
+    writer
+        .pragma_update(None, "journal_mode", "WAL")
+        .map_err(PowerSyncError::from)?;
+    writer
+        .pragma_update(None, "journal_size_limit", 6 * 1024 * 1024)
+        .map_err(PowerSyncError::from)?;
+    writer
+        .pragma_update(None, "busy_timeout", 30_000)
+        .map_err(PowerSyncError::from)?;
+    writer
+        .pragma_update(None, "cache_size", 50 * 1024)
+        .map_err(PowerSyncError::from)?;
+
+    // 5 readers — key first, then query_only.
+    let mut readers = Vec::with_capacity(5);
+    for _ in 0..5 {
+        let reader = Connection::open(name).map_err(PowerSyncError::from)?;
+        reader
+            .pragma_update(None, "key", key)
+            .map_err(PowerSyncError::from)?;
+        reader
+            .pragma_update(None, "query_only", true)
+            .map_err(PowerSyncError::from)?;
+        readers.push(reader);
+    }
+
+    Ok(ConnectionPool::wrap_connections(writer, readers))
 }
 
 /// Initializes the plugin.
