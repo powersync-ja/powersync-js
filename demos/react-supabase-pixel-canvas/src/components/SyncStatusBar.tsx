@@ -43,12 +43,12 @@ export const SyncStatusBar: React.FC = () => {
     <div className="sync-bar">
       <span className={`sync-bar__dot sync-bar__dot--${stateClass}`} />
       <span className="sync-bar__state">{stateLabel}</span>
+      <span className="sync-bar__spacer" />
       {pendingCount > 0 && (
         <span className="sync-bar__pending">
           {pendingCount} pixel{pendingCount === 1 ? '' : 's'} queued
         </span>
       )}
-      <span className="sync-bar__spacer" />
       {backendConfigured ? (
         <button type="button" className="sync-bar__toggle" onClick={toggleConnection}>
           {status.connected ? 'Go offline' : 'Go online'}
