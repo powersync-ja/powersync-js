@@ -105,6 +105,14 @@ export class AttachmentQueue {
         id?: string;
         updateHook?: (transaction: Transaction, attachment: AttachmentRecord) => Promise<void>;
     }): Promise<AttachmentRecord>;
+    saveFileFromUri(input: {
+        localUri: string;
+        fileExtension: string;
+        mediaType?: string;
+        metaData?: string;
+        id?: string;
+        updateHook?: (transaction: Transaction, attachment: AttachmentRecord) => Promise<void>;
+    }): Promise<AttachmentRecord>;
     startSync(): Promise<void>;
     stopSync(): Promise<void>;
     readonly syncIntervalMs: number;
@@ -127,6 +135,7 @@ export interface AttachmentQueueOptions {
     syncIntervalMs?: number;
     syncThrottleDuration?: number;
     tableName?: string;
+    transportAdapter?: AttachmentTransportAdapter;
     watchAttachments: (onUpdate: (attachment: WatchedAttachmentItem[]) => Promise<void>, signal: AbortSignal) => void;
 }
 
@@ -177,6 +186,12 @@ export interface AttachmentTableOptions extends Omit<TableOptions, 'name' | 'col
 
 // @alpha
 export type AttachmentTableRecord = RowType<AttachmentTable>;
+
+// @alpha
+export interface AttachmentTransportAdapter {
+    download(attachment: LocatedAttachmentRecord): Promise<void>;
+    upload(attachment: LocatedAttachmentRecord): Promise<void>;
+}
 
 // @public (undocumented)
 export type BaseColumnType<T extends number | string | null> = {
@@ -240,6 +255,15 @@ export interface BaseTriggerDiffRecord<TOperationId extends string | number = nu
 export interface BatchedUpdateNotification {
     // (undocumented)
     tables: string[];
+}
+
+// @alpha
+export class BufferedAttachmentTransport implements AttachmentTransportAdapter {
+    constructor(localStorage: LocalStorageAdapter, remoteStorage: RemoteStorageAdapter);
+    // (undocumented)
+    download(attachment: LocatedAttachmentRecord): Promise<void>;
+    // (undocumented)
+    upload(attachment: LocatedAttachmentRecord): Promise<void>;
 }
 
 // @public (undocumented)
@@ -651,10 +675,16 @@ export interface LocalStorageAdapter {
     getLocalUri(filename: string): string;
     initialize(): Promise<void>;
     makeDir(path: string): Promise<void>;
+    moveFile?(sourceUri: string, targetUri: string): Promise<number>;
     readFile(filePath: string): Promise<ArrayBuffer>;
     rmDir(path: string): Promise<void>;
     saveFile(filePath: string, data: AttachmentData): Promise<number>;
 }
+
+// @alpha
+export type LocatedAttachmentRecord = AttachmentRecord & {
+    localUri: string;
+};
 
 // @public (undocumented)
 export abstract class LockContext implements SqlExecutor, DBGetUtils {

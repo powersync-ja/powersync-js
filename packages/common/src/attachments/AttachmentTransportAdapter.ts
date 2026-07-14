@@ -5,6 +5,8 @@ import { AttachmentRecord } from './Schema.js';
  *
  * The syncing service assigns `localUri` before invoking a transport download,
  * so implementations always receive both the metadata and the destination path.
+ *
+ * @alpha
  */
 export type LocatedAttachmentRecord = AttachmentRecord & { localUri: string };
 

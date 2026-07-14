@@ -489,9 +489,9 @@ export class AttachmentQueue {
    * Registers a file that already exists on disk and queues it for upload, moving it
    * into managed storage without loading it into memory.
    *
-   * Prefer this over {@link saveFile} for large, app-originated files (recordings,
-   * videos): it avoids reading the file into an `ArrayBuffer` just to write it back to
-   * disk. Requires the local storage adapter to implement `moveFile`.
+   * Prefer this over {@link AttachmentQueue.saveFile} for large, app-originated files
+   * (recordings, videos): it avoids reading the file into an `ArrayBuffer` just to write
+   * it back to disk. Requires the local storage adapter to implement `moveFile`.
    *
    * @param options - File registration options
    * @returns Promise resolving to the created attachment record
