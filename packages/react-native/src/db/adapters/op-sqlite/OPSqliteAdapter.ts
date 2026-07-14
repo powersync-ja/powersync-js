@@ -214,7 +214,8 @@ export class OPSQLiteDBAdapter extends DBAdapter {
     const { signal, cleanUpInnerSignal } = this.generateNestedAbortSignal(options);
     const { item, release } = await this.writeConnection!.requestOne(signal);
     try {
-      return await fn(item).finally(() => item.flushUpdates());
+      // Update notifications are flushed by the connection's commitHook.
+      return await fn(item);
     } finally {
       release();
       cleanUpInnerSignal?.();

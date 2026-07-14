@@ -38,6 +38,16 @@ export class OPSQLiteConnection extends LockContext {
     this.DB.updateHook((update) => {
       this.addTableUpdate(update);
     });
+
+    // Hook callbacks arrive on a FIFO async queue and the native commit hook
+    // cannot veto the commit, so flushing here never announces uncommitted
+    // data. Unlike flushing at writeLock release, this also covers synchronous
+    // writes on the raw handle (whose updateHook callbacks arrive after the
+    // release-time flush) and flushes committed updates before a later
+    // rollbackHook can discard them.
+    this.DB.commitHook(() => {
+      this.flushUpdates();
+    });
   }
 
   addTableUpdate(update: OPSQLiteUpdateNotification) {
