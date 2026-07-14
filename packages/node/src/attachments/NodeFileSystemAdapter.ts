@@ -60,6 +60,14 @@ export class NodeFileSystemAdapter implements LocalStorageAdapter {
     }
   }
 
+  async moveFile(sourceUri: string, targetUri: string): Promise<number> {
+    if (sourceUri !== targetUri) {
+      await fs.rename(sourceUri, targetUri);
+    }
+    const stats = await fs.stat(targetUri);
+    return stats.size;
+  }
+
   async deleteFile(path: string, options?: { filename?: string }): Promise<void> {
     await fs.unlink(path).catch((err) => {
       if (err.code !== 'ENOENT') {

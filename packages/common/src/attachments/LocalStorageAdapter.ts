@@ -35,6 +35,20 @@ export interface LocalStorageAdapter {
   readFile(filePath: string): Promise<ArrayBuffer>;
 
   /**
+   * Moves a file into managed storage without loading it into memory.
+   * Used by {@link AttachmentQueue.saveFileFromUri} to register a file that already
+   * exists on disk. Overwrites any existing file at the target. When source and
+   * target are the same path, this is a no-op that just reports the size.
+   *
+   * Optional: adapters that cannot move files natively may omit this, in which case
+   * {@link AttachmentQueue.saveFileFromUri} is unavailable.
+   * @param sourceUri - Path of the existing file
+   * @param targetUri - Destination path within managed storage
+   * @returns Number of bytes in the moved file
+   */
+  moveFile?(sourceUri: string, targetUri: string): Promise<number>;
+
+  /**
    * Deletes the file at the given path.
    * @param filePath - Path where the file is stored
    */

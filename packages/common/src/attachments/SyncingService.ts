@@ -1,5 +1,6 @@
 import { LogLevels, PowerSyncLogger } from '../utils/Logger.js';
 import { AttachmentService } from './AttachmentService.js';
+import { AttachmentTransportAdapter } from './AttachmentTransportAdapter.js';
 import { LocalStorageAdapter } from './LocalStorageAdapter.js';
 import { RemoteStorageAdapter } from './RemoteStorageAdapter.js';
 import { AttachmentRecord, AttachmentState } from './Schema.js';
@@ -16,6 +17,7 @@ export class SyncingService {
   private attachmentService: AttachmentService;
   private localStorage: LocalStorageAdapter;
   private remoteStorage: RemoteStorageAdapter;
+  private transport: AttachmentTransportAdapter;
   private logger: PowerSyncLogger;
   private errorHandler?: AttachmentErrorHandler;
 
@@ -23,12 +25,14 @@ export class SyncingService {
     attachmentService: AttachmentService,
     localStorage: LocalStorageAdapter,
     remoteStorage: RemoteStorageAdapter,
+    transport: AttachmentTransportAdapter,
     logger: PowerSyncLogger,
     errorHandler?: AttachmentErrorHandler
   ) {
     this.attachmentService = attachmentService;
     this.localStorage = localStorage;
     this.remoteStorage = remoteStorage;
+    this.transport = transport;
     this.logger = logger;
     this.errorHandler = errorHandler;
   }
@@ -114,8 +118,7 @@ export class SyncingService {
         throw new Error(`No localUri for attachment ${attachment.id}`);
       }
 
-      const fileBlob = await this.localStorage.readFile(attachment.localUri);
-      await this.remoteStorage.uploadFile(fileBlob, attachment);
+      await this.transport.upload({ ...attachment, localUri: attachment.localUri });
 
       return {
         ...attachment,
@@ -137,7 +140,7 @@ export class SyncingService {
 
   /**
    * Downloads an attachment from remote storage to local storage.
-   * Retrieves the file, converts to base64, and saves locally.
+   * The destination `localUri` is assigned here and the transport writes the file to it.
    * On success, marks as SYNCED. On failure, defers to error handler or archives.
    *
    * @param attachment - The attachment record to download
@@ -146,10 +149,8 @@ export class SyncingService {
   async downloadAttachment(attachment: AttachmentRecord): Promise<AttachmentRecord> {
     this.logger.log({ level: LogLevels.info, message: `Downloading attachment ${attachment.filename}` });
     try {
-      const fileData = await this.remoteStorage.downloadFile(attachment);
-
       const localUri = this.localStorage.getLocalUri(attachment.filename);
-      await this.localStorage.saveFile(localUri, fileData);
+      await this.transport.download({ ...attachment, localUri });
 
       return {
         ...attachment,

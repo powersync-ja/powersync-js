@@ -5,6 +5,8 @@ import { Transaction } from '../db/DBAdapter.js';
 import { AttachmentContext } from './AttachmentContext.js';
 import { AttachmentErrorHandler } from './AttachmentErrorHandler.js';
 import { AttachmentService } from './AttachmentService.js';
+import { AttachmentTransportAdapter } from './AttachmentTransportAdapter.js';
+import { BufferedAttachmentTransport } from './BufferedAttachmentTransport.js';
 import { AttachmentData, LocalStorageAdapter } from './LocalStorageAdapter.js';
 import { RemoteStorageAdapter } from './RemoteStorageAdapter.js';
 import { ATTACHMENT_TABLE, AttachmentRecord, AttachmentState } from './Schema.js';
@@ -31,6 +33,13 @@ export interface AttachmentQueueOptions {
    * Local storage adapter for file persistence
    */
   localStorage: LocalStorageAdapter;
+  /**
+   * Transport responsible for moving attachment bytes between local and remote storage.
+   * Defaults to a {@link BufferedAttachmentTransport} composed from `localStorage` and
+   * `remoteStorage`. Provide a custom transport (e.g. a native file-URI implementation)
+   * to transfer large files without materializing them in JS memory.
+   */
+  transportAdapter?: AttachmentTransportAdapter;
   /**
    * Callback for monitoring attachment changes in your data model
    */
@@ -159,6 +168,7 @@ export class AttachmentQueue {
     db,
     localStorage,
     remoteStorage,
+    transportAdapter,
     watchAttachments,
     logger,
     tableName = ATTACHMENT_TABLE,
@@ -184,6 +194,7 @@ export class AttachmentQueue {
       this.attachmentService,
       localStorage,
       remoteStorage,
+      transportAdapter ?? new BufferedAttachmentTransport(localStorage, remoteStorage),
       this.logger,
       errorHandler
     );
@@ -457,6 +468,83 @@ export class AttachmentQueue {
       filename,
       mediaType,
       localUri,
+      state: AttachmentState.QUEUED_UPLOAD,
+      hasSynced: false,
+      size,
+      timestamp: new Date().getTime(),
+      metaData
+    };
+
+    await this.attachmentService.withContext(async (ctx) => {
+      await ctx.db.writeTransaction(async (tx) => {
+        await updateHook?.(tx, attachment);
+        await ctx.upsertAttachment(attachment, tx);
+      });
+    });
+
+    return attachment;
+  }
+
+  /**
+   * Registers a file that already exists on disk and queues it for upload, moving it
+   * into managed storage without loading it into memory.
+   *
+   * Prefer this over {@link saveFile} for large, app-originated files (recordings,
+   * videos): it avoids reading the file into an `ArrayBuffer` just to write it back to
+   * disk. Requires the local storage adapter to implement `moveFile`.
+   *
+   * @param options - File registration options
+   * @returns Promise resolving to the created attachment record
+   * @throws Error if the local storage adapter does not support moving files
+   */
+  async saveFileFromUri({
+    localUri,
+    fileExtension,
+    mediaType,
+    metaData,
+    id,
+    updateHook
+  }: {
+    /**
+     * Path to the existing file on disk
+     */
+    localUri: string;
+    /**
+     * File extension (e.g., 'jpg', 'pdf')
+     */
+    fileExtension: string;
+    /**
+     * MIME type of the file (e.g., 'image/jpeg')
+     */
+    mediaType?: string;
+    /**
+     * Optional metadata to associate with the attachment
+     */
+    metaData?: string;
+    /**
+     * Optional custom ID. If not provided, a UUID will be generated
+     */
+    id?: string;
+    /**
+     * Optional callback to execute additional database operations within the same transaction as the attachment
+     * creation.
+     */
+    updateHook?: (transaction: Transaction, attachment: AttachmentRecord) => Promise<void>;
+  }): Promise<AttachmentRecord> {
+    if (!this.localStorage.moveFile) {
+      throw new Error('The configured local storage adapter does not support moveFile, required by saveFileFromUri.');
+    }
+
+    const resolvedId = id ?? (await this.generateAttachmentId());
+    const filename = `${resolvedId}.${fileExtension}`;
+    const targetUri = this.localStorage.getLocalUri(filename);
+    const size = await this.localStorage.moveFile(localUri, targetUri);
+
+    const attachment: AttachmentRecord = {
+      id: resolvedId,
+      filename,
+      mediaType,
+      localUri: targetUri,
       state: AttachmentState.QUEUED_UPLOAD,
       hasSynced: false,
       size,
