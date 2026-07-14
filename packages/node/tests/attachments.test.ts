@@ -13,7 +13,8 @@ import {
   AttachmentState,
   RemoteStorageAdapter,
   WatchedAttachmentItem,
-  AttachmentErrorHandler
+  AttachmentErrorHandler,
+  AttachmentTransportAdapter
 } from '../lib/index.js';
 
 const MOCK_JPEG_U8A = [
@@ -467,7 +468,8 @@ describe('attachment queue', () => {
       filename: `${id}.jpg`,
       hasSynced: false,
       id: id,
-      localUri: null,
+      // The destination localUri is assigned before the transfer.
+      localUri: expect.any(String),
       mediaType: null,
       metaData: null,
       size: null,
@@ -499,7 +501,7 @@ describe('attachment queue', () => {
       filename: `${id}.jpg`,
       hasSynced: false,
       id: id,
-      localUri: null,
+      localUri: expect.any(String),
       mediaType: null,
       metaData: null,
       size: null,
@@ -754,4 +756,211 @@ describe('attachment queue', () => {
       await queuedSync;
     }
   );
+});
+
+describe('attachment queue - transport', () => {
+  const linkUser = (id: string) => async (tx: any, attachment: AttachmentRecord) => {
+    await tx.execute('INSERT INTO users (id, name, email, photo_id) VALUES (uuid(), ?, ?, ?)', [
+      'transport',
+      'transport@example.com',
+      attachment.id
+    ]);
+  };
+
+  it('default transport round-trips upload through localStorage.readFile', async () => {
+    const readFileSpy = vi.spyOn(mockLocalStorage, 'readFile');
+    onTestFinished(() => readFileSpy.mockRestore());
+
+    await queue.startSync();
+
+    const record = await queue.saveFile({
+      data: new Uint8Array(64).fill(9).buffer,
+      fileExtension: 'jpg',
+      updateHook: linkUser('')
+    });
+
+    await waitForMatchCondition(
+      () => watchAttachmentsTable(),
+      (results) => results.some((r) => r.id === record.id && r.state === AttachmentState.SYNCED),
+      5
+    );
+
+    expect(mockUploadFile).toHaveBeenCalled();
+    expect(readFileSpy).toHaveBeenCalledWith(record.localUri);
+
+    await queue.stopSync();
+  });
+
+  it('custom transport handles upload and bypasses the buffer round-trip', async () => {
+    const readFileSpy = vi.spyOn(mockLocalStorage, 'readFile');
+    const transportUpload = vi.fn().mockResolvedValue(undefined);
+    const transportAdapter: AttachmentTransportAdapter = {
+      upload: transportUpload,
+      download: vi.fn().mockResolvedValue(undefined)
+    };
+
+    const q = new AttachmentQueue({
+      db,
+      watchAttachments,
+      remoteStorage: mockRemoteStorage,
+      localStorage: mockLocalStorage,
+      transportAdapter,
+      syncIntervalMs: INTERVAL_MILLISECONDS,
+      archivedCacheLimit: 0
+    });
+    onTestFinished(async () => {
+      await q.stopSync();
+      readFileSpy.mockRestore();
+    });
+
+    await q.startSync();
+
+    const record = await q.saveFile({
+      data: new Uint8Array(64).fill(9).buffer,
+      fileExtension: 'jpg',
+      updateHook: linkUser('')
+    });
+
+    await waitForMatchCondition(
+      () => watchAttachmentsTable(),
+      (results) => results.some((r) => r.id === record.id && r.state === AttachmentState.SYNCED),
+      5
+    );
+
+    // The transport owns the transfer; the buffer path is never touched.
+    expect(transportUpload).toHaveBeenCalled();
+    expect(transportUpload.mock.calls[0][0].localUri).toBe(record.localUri);
+    expect(mockUploadFile).not.toHaveBeenCalled();
+    expect(readFileSpy).not.toHaveBeenCalled();
+  });
+
+  it('custom transport handles download with a pre-assigned localUri', async () => {
+    const transportDownload = vi.fn(async (attachment: AttachmentRecord & { localUri: string }) => {
+      // A native transport writes directly to the destination, no buffer returned.
+      await mockLocalStorage.saveFile(attachment.localUri, createMockJpegBuffer());
+    });
+    const transportAdapter: AttachmentTransportAdapter = {
+      upload: vi.fn().mockResolvedValue(undefined),
+      download: transportDownload
+    };
+
+    const q = new AttachmentQueue({
+      db,
+      watchAttachments,
+      remoteStorage: mockRemoteStorage,
+      localStorage: mockLocalStorage,
+      transportAdapter,
+      syncIntervalMs: INTERVAL_MILLISECONDS,
+      archivedCacheLimit: 0
+    });
+    onTestFinished(() => q.stopSync());
+
+    await q.startSync();
+
+    const id = await q.generateAttachmentId();
+    await db.execute('INSERT INTO users (id, name, email, photo_id) VALUES (uuid(), ?, ?, ?)', [
+      'downloader',
+      'downloader@example.com',
+      id
+    ]);
+
+    const attachments = await waitForMatchCondition(
+      () => watchAttachmentsTable(),
+      (results) => results.some((r) => r.id === id && r.state === AttachmentState.SYNCED),
+      5
+    );
+
+    // localUri is assigned before download and the buffer download path is skipped.
+    expect(transportDownload).toHaveBeenCalled();
+    expect(transportDownload.mock.calls[0][0].localUri).toBeTruthy();
+    expect(mockDownloadFile).not.toHaveBeenCalled();
+
+    const record = attachments.find((r) => r.id === id)!;
+    expect(await mockLocalStorage.fileExists(record.localUri!)).toBe(true);
+  });
+});
+
+describe('attachment queue - saveFileFromUri', () => {
+  it('registers an on-disk file into managed storage without buffering', async () => {
+    await mockLocalStorage.initialize();
+
+    // Simulate an app that has already written a recording to disk.
+    const sourceUri = mockLocalStorage.getLocalUri('incoming-recording.m4a');
+    await mockLocalStorage.saveFile(sourceUri, new Uint8Array(256).fill(7).buffer);
+
+    const readFileSpy = vi.spyOn(mockLocalStorage, 'readFile');
+    const saveFileSpy = vi.spyOn(mockLocalStorage, 'saveFile');
+    onTestFinished(() => {
+      readFileSpy.mockRestore();
+      saveFileSpy.mockRestore();
+    });
+
+    // No startSync, so nothing uploads: this isolates the registration step.
+    const record = await queue.saveFileFromUri({
+      localUri: sourceUri,
+      fileExtension: 'm4a',
+      mediaType: 'audio/m4a'
+    });
+
+    expect(record.state).toBe(AttachmentState.QUEUED_UPLOAD);
+    expect(record.size).toBe(256);
+    expect(record.localUri).toBe(mockLocalStorage.getLocalUri(`${record.id}.m4a`));
+
+    // Registration never reads or rewrites the bytes.
+    expect(readFileSpy).not.toHaveBeenCalled();
+    expect(saveFileSpy).not.toHaveBeenCalled();
+
+    // The file was moved from the source path to the managed path.
+    expect(await mockLocalStorage.fileExists(sourceUri)).toBe(false);
+    expect(await mockLocalStorage.fileExists(record.localUri!)).toBe(true);
+  });
+
+  it('queues the registered file for upload like any other attachment', async () => {
+    await mockLocalStorage.initialize();
+
+    const sourceUri = mockLocalStorage.getLocalUri('incoming-clip.m4a');
+    await mockLocalStorage.saveFile(sourceUri, new Uint8Array(128).fill(3).buffer);
+
+    await queue.startSync();
+
+    const record = await queue.saveFileFromUri({
+      localUri: sourceUri,
+      fileExtension: 'm4a',
+      updateHook: async (tx, attachment) => {
+        await tx.execute('INSERT INTO users (id, name, email, photo_id) VALUES (uuid(), ?, ?, ?)', [
+          'recorder',
+          'recorder@example.com',
+          attachment.id
+        ]);
+      }
+    });
+
+    await waitForMatchCondition(
+      () => watchAttachmentsTable(),
+      (results) => results.some((r) => r.id === record.id && r.state === AttachmentState.SYNCED),
+      5
+    );
+
+    expect(mockUploadFile).toHaveBeenCalled();
+    expect(mockUploadFile.mock.calls[0][1].id).toBe(record.id);
+
+    await queue.stopSync();
+  });
+
+  it('throws when the local storage adapter cannot move files', async () => {
+    const noMove: any = Object.create(mockLocalStorage);
+    noMove.moveFile = undefined;
+
+    const q = new AttachmentQueue({
+      db,
+      watchAttachments,
+      remoteStorage: mockRemoteStorage,
+      localStorage: noMove,
+      syncIntervalMs: INTERVAL_MILLISECONDS,
+      archivedCacheLimit: 0
+    });
+    onTestFinished(() => q.stopSync());
+
+    await expect(q.saveFileFromUri({ localUri: 'anywhere.m4a', fileExtension: 'm4a' })).rejects.toThrow(/moveFile/);
+  });
 });

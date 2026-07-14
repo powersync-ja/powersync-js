@@ -81,6 +81,17 @@ To use the Expo File System attachment adapter please install expo-file-system (
     return buffer;
   }
 
+  async moveFile(sourceUri: string, targetUri: string): Promise<number> {
+    if (sourceUri !== targetUri) {
+      const target = new this.File(targetUri);
+      if (target.exists) {
+        target.delete();
+      }
+      new this.File(sourceUri).move(target);
+    }
+    return new this.File(targetUri).size ?? 0;
+  }
+
   async deleteFile(filePath: string): Promise<void> {
     try {
       const file = new this.File(filePath);

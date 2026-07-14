@@ -71,6 +71,17 @@ To use the React Native File System attachment adapter please install @dr.pogodi
     return decodeBase64(content);
   }
 
+  async moveFile(sourceUri: string, targetUri: string): Promise<number> {
+    if (sourceUri !== targetUri) {
+      if (await this.rnfs.exists(targetUri)) {
+        await this.rnfs.unlink(targetUri);
+      }
+      await this.rnfs.moveFile(sourceUri, targetUri);
+    }
+    const stat = await this.rnfs.stat(targetUri);
+    return Number(stat.size);
+  }
+
   async deleteFile(filePath: string): Promise<void> {
     try {
       await this.rnfs.unlink(filePath);
