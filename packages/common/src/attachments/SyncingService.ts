@@ -2,7 +2,6 @@ import { LogLevels, PowerSyncLogger } from '../utils/Logger.js';
 import { AttachmentService } from './AttachmentService.js';
 import { AttachmentTransportAdapter } from './AttachmentTransportAdapter.js';
 import { LocalStorageAdapter } from './LocalStorageAdapter.js';
-import { RemoteStorageAdapter } from './RemoteStorageAdapter.js';
 import { AttachmentRecord, AttachmentState } from './Schema.js';
 import { AttachmentErrorHandler } from './AttachmentErrorHandler.js';
 import { AttachmentContext } from './AttachmentContext.js';
@@ -11,12 +10,14 @@ import { AttachmentContext } from './AttachmentContext.js';
  * Orchestrates attachment synchronization between local and remote storage.
  * Handles uploads, downloads, deletions, and state transitions.
  *
+ * Remote operations (upload/download/delete) go through the {@link AttachmentTransportAdapter};
+ * local file operations use the {@link LocalStorageAdapter}.
+ *
  * @internal
  */
 export class SyncingService {
   private attachmentService: AttachmentService;
   private localStorage: LocalStorageAdapter;
-  private remoteStorage: RemoteStorageAdapter;
   private transport: AttachmentTransportAdapter;
   private logger: PowerSyncLogger;
   private errorHandler?: AttachmentErrorHandler;
@@ -24,14 +25,12 @@ export class SyncingService {
   constructor(
     attachmentService: AttachmentService,
     localStorage: LocalStorageAdapter,
-    remoteStorage: RemoteStorageAdapter,
     transport: AttachmentTransportAdapter,
     logger: PowerSyncLogger,
     errorHandler?: AttachmentErrorHandler
   ) {
     this.attachmentService = attachmentService;
     this.localStorage = localStorage;
-    this.remoteStorage = remoteStorage;
     this.transport = transport;
     this.logger = logger;
     this.errorHandler = errorHandler;
@@ -182,7 +181,7 @@ export class SyncingService {
    */
   async deleteAttachment(attachment: AttachmentRecord, context: AttachmentContext): Promise<AttachmentRecord> {
     try {
-      await this.remoteStorage.deleteFile(attachment);
+      await this.transport.delete(attachment);
       if (attachment.localUri) {
         await this.localStorage.deleteFile(attachment.localUri);
       }

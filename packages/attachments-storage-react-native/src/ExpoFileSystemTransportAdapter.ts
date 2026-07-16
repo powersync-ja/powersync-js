@@ -1,4 +1,4 @@
-import type { AttachmentTransportAdapter, LocatedAttachmentRecord } from '@powersync/common';
+import type { AttachmentRecord, AttachmentTransportAdapter, LocatedAttachmentRecord } from '@powersync/common';
 
 /**
  * Describes the HTTP request used to upload a file's bytes to remote storage.
@@ -44,6 +44,11 @@ export interface ExpoFileSystemTransportAdapterOptions {
   resolveUpload: (attachment: LocatedAttachmentRecord) => Promise<ExpoUploadRequest> | ExpoUploadRequest;
   /** Resolves the download request (e.g. a presigned URL) for an attachment. */
   resolveDownload: (attachment: LocatedAttachmentRecord) => Promise<ExpoDownloadRequest> | ExpoDownloadRequest;
+  /**
+   * Deletes the attachment's file from remote storage (e.g. a storage SDK call or a
+   * `DELETE` request). Delete is a plain remote operation, not a file transfer.
+   */
+  deleteFile: (attachment: AttachmentRecord) => Promise<void>;
 }
 
 type ExpoUploadResult = { status: number; body?: string };
@@ -132,6 +137,10 @@ To use the Expo File System transport please install expo-file-system.`);
     if (!this.isOk(result.status)) {
       throw new Error(`Download for ${attachment.id} failed with status ${result.status}`);
     }
+  }
+
+  async delete(attachment: AttachmentRecord): Promise<void> {
+    await this.options.deleteFile(attachment);
   }
 
   private isOk(status: number): boolean {

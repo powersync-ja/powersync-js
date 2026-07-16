@@ -11,8 +11,8 @@ import { AttachmentRecord } from './Schema.js';
 export type LocatedAttachmentRecord = AttachmentRecord & { localUri: string };
 
 /**
- * AttachmentTransportAdapter models the movement of an attachment's bytes between
- * local storage and remote storage as a single operation.
+ * AttachmentTransportAdapter owns all remote-side operations for an attachment —
+ * transfer (upload/download) and delete — as single operations.
  *
  * A transport owns the entire transfer, letting implementations pick the most
  * efficient mechanism available (buffer, stream, or a platform-native file-URI
@@ -20,7 +20,9 @@ export type LocatedAttachmentRecord = AttachmentRecord & { localUri: string };
  * be transferred without ever materializing them in the JS heap.
  *
  * {@link BufferedAttachmentTransport} is the default, composing the local and
- * remote storage adapters.
+ * remote storage adapters. Provide a custom transport (via
+ * `AttachmentQueue`'s `transportAdapter` option) to own the whole remote side; in
+ * that case a separate `remoteStorage` is not required.
  *
  * @experimental
  * @alpha This is currently experimental and may change without a major version bump.
@@ -38,4 +40,11 @@ export interface AttachmentTransportAdapter {
    *                      assigned by the syncing service before this call.
    */
   download(attachment: LocatedAttachmentRecord): Promise<void>;
+
+  /**
+   * Deletes the attachment's file from remote storage. Local file removal is handled
+   * separately by the syncing service.
+   * @param attachment - The attachment to delete.
+   */
+  delete(attachment: AttachmentRecord): Promise<void>;
 }

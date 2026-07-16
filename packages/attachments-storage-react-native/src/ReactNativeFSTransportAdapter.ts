@@ -1,4 +1,4 @@
-import type { AttachmentTransportAdapter, LocatedAttachmentRecord } from '@powersync/common';
+import type { AttachmentRecord, AttachmentTransportAdapter, LocatedAttachmentRecord } from '@powersync/common';
 
 /**
  * Describes the HTTP request used to upload a file's bytes to remote storage.
@@ -44,6 +44,11 @@ export interface ReactNativeFSTransportAdapterOptions {
   resolveDownload: (
     attachment: LocatedAttachmentRecord
   ) => Promise<ReactNativeFSDownloadRequest> | ReactNativeFSDownloadRequest;
+  /**
+   * Deletes the attachment's file from remote storage (e.g. a storage SDK call or a
+   * `DELETE` request). Delete is a plain remote operation, not a file transfer.
+   */
+  deleteFile: (attachment: AttachmentRecord) => Promise<void>;
 }
 
 /**
@@ -110,6 +115,10 @@ To use the React Native File System transport please install @dr.pogodin/react-n
     if (!this.isOk(result.statusCode)) {
       throw new Error(`Download for ${attachment.id} failed with status ${result.statusCode}`);
     }
+  }
+
+  async delete(attachment: AttachmentRecord): Promise<void> {
+    await this.options.deleteFile(attachment);
   }
 
   /** react-native-fs expects plain filesystem paths, not `file://` URIs. */

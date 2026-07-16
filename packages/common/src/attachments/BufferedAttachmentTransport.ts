@@ -1,6 +1,7 @@
 import { AttachmentTransportAdapter, LocatedAttachmentRecord } from './AttachmentTransportAdapter.js';
 import { LocalStorageAdapter } from './LocalStorageAdapter.js';
 import { RemoteStorageAdapter } from './RemoteStorageAdapter.js';
+import { AttachmentRecord } from './Schema.js';
 
 /**
  * Default {@link AttachmentTransportAdapter}, composing the local and remote
@@ -28,5 +29,9 @@ export class BufferedAttachmentTransport implements AttachmentTransportAdapter {
   async download(attachment: LocatedAttachmentRecord): Promise<void> {
     const fileData = await this.remoteStorage.downloadFile(attachment);
     await this.localStorage.saveFile(attachment.localUri, fileData);
+  }
+
+  async delete(attachment: AttachmentRecord): Promise<void> {
+    await this.remoteStorage.deleteFile(attachment);
   }
 }
