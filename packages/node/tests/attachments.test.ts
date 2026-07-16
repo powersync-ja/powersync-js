@@ -796,7 +796,8 @@ describe('attachment queue - transport', () => {
     const transportUpload = vi.fn().mockResolvedValue(undefined);
     const transportAdapter: AttachmentTransportAdapter = {
       upload: transportUpload,
-      download: vi.fn().mockResolvedValue(undefined)
+      download: vi.fn().mockResolvedValue(undefined),
+      delete: vi.fn().mockResolvedValue(undefined)
     };
 
     const q = new AttachmentQueue({
@@ -841,7 +842,8 @@ describe('attachment queue - transport', () => {
     });
     const transportAdapter: AttachmentTransportAdapter = {
       upload: vi.fn().mockResolvedValue(undefined),
-      download: transportDownload
+      download: transportDownload,
+      delete: vi.fn().mockResolvedValue(undefined)
     };
 
     const q = new AttachmentQueue({
@@ -877,6 +879,75 @@ describe('attachment queue - transport', () => {
 
     const record = attachments.find((r) => r.id === id)!;
     expect(await mockLocalStorage.fileExists(record.localUri!)).toBe(true);
+  });
+
+  // A custom transport replaces remoteStorage for ALL remote operations. Upload and
+  // download are covered by the two tests above; this covers the delete slice.
+  it('delete goes through the custom transport (not remoteStorage)', async () => {
+    const transportDelete = vi.fn().mockResolvedValue(undefined);
+    const transportAdapter: AttachmentTransportAdapter = {
+      upload: vi.fn().mockResolvedValue(undefined),
+      download: vi.fn(async (attachment: AttachmentRecord & { localUri: string }) => {
+        await mockLocalStorage.saveFile(attachment.localUri, createMockJpegBuffer());
+      }),
+      delete: transportDelete
+    };
+
+    const q = new AttachmentQueue({
+      db,
+      watchAttachments,
+      remoteStorage: mockRemoteStorage,
+      localStorage: mockLocalStorage,
+      transportAdapter,
+      syncIntervalMs: INTERVAL_MILLISECONDS,
+      archivedCacheLimit: 0
+    });
+    onTestFinished(() => q.stopSync());
+
+    await q.startSync();
+
+    const id = await q.generateAttachmentId();
+    await db.execute('INSERT INTO users (id, name, email, photo_id) VALUES (uuid(), ?, ?, ?)', [
+      'deleter',
+      'deleter@example.com',
+      id
+    ]);
+    await waitForMatchCondition(
+      () => watchAttachmentsTable(),
+      (results) => results.some((r) => r.id === id && r.state === AttachmentState.SYNCED),
+      5
+    );
+
+    await q.deleteFile({
+      id,
+      updateHook: async (tx) => {
+        await tx.execute('UPDATE users SET photo_id = NULL WHERE photo_id = ?', [id]);
+      }
+    });
+
+    await waitForMatchCondition(
+      () => watchAttachmentsTable(),
+      (results) => !results.some((r) => r.id === id),
+      5
+    );
+
+    // With a custom transport present, it owns delete; the passed-alongside
+    // remoteStorage.deleteFile is not used.
+    expect(transportDelete).toHaveBeenCalled();
+    expect(mockDeleteFile).not.toHaveBeenCalled();
+  });
+
+  it('throws when neither remoteStorage nor transportAdapter is provided', () => {
+    expect(
+      () =>
+        new AttachmentQueue({
+          db,
+          watchAttachments,
+          localStorage: mockLocalStorage,
+          syncIntervalMs: INTERVAL_MILLISECONDS,
+          archivedCacheLimit: 0
+        })
+    ).toThrow(/remoteStorage/);
   });
 });
 

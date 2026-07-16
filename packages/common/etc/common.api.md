@@ -96,7 +96,7 @@ export class AttachmentQueue {
     generateAttachmentId(): Promise<string>;
     readonly localStorage: LocalStorageAdapter;
     readonly logger: PowerSyncLogger;
-    readonly remoteStorage: RemoteStorageAdapter;
+    readonly remoteStorage?: RemoteStorageAdapter;
     saveFile(input: {
         data: AttachmentData;
         fileExtension: string;
@@ -131,7 +131,7 @@ export interface AttachmentQueueOptions {
     errorHandler?: AttachmentErrorHandler;
     localStorage: LocalStorageAdapter;
     logger?: PowerSyncLogger;
-    remoteStorage: RemoteStorageAdapter;
+    remoteStorage?: RemoteStorageAdapter;
     syncIntervalMs?: number;
     syncThrottleDuration?: number;
     tableName?: string;
@@ -189,6 +189,7 @@ export type AttachmentTableRecord = RowType<AttachmentTable>;
 
 // @alpha
 export interface AttachmentTransportAdapter {
+    delete(attachment: AttachmentRecord): Promise<void>;
     download(attachment: LocatedAttachmentRecord): Promise<void>;
     upload(attachment: LocatedAttachmentRecord): Promise<void>;
 }
@@ -260,6 +261,8 @@ export interface BatchedUpdateNotification {
 // @alpha
 export class BufferedAttachmentTransport implements AttachmentTransportAdapter {
     constructor(localStorage: LocalStorageAdapter, remoteStorage: RemoteStorageAdapter);
+    // (undocumented)
+    delete(attachment: AttachmentRecord): Promise<void>;
     // (undocumented)
     download(attachment: LocatedAttachmentRecord): Promise<void>;
     // (undocumented)

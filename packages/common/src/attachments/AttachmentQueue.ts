@@ -26,18 +26,29 @@ export interface AttachmentQueueOptions {
    */
   db: CommonPowerSyncDatabase;
   /**
-   * Remote storage adapter for upload/download operations
+   * Remote storage adapter for upload/download/delete operations. Used to build the
+   * default {@link BufferedAttachmentTransport}, which delegates all three operations
+   * to it.
+   *
+   * Required unless a {@link AttachmentQueueOptions.transportAdapter} is provided. If
+   * both are provided, `transportAdapter` takes precedence and `remoteStorage` is
+   * completely unused.
    */
-  remoteStorage: RemoteStorageAdapter;
+  remoteStorage?: RemoteStorageAdapter;
   /**
    * Local storage adapter for file persistence
    */
   localStorage: LocalStorageAdapter;
   /**
-   * Transport responsible for moving attachment bytes between local and remote storage.
+   * Transport responsible for all remote attachment operations (upload/download/delete).
+   *
    * Defaults to a {@link BufferedAttachmentTransport} composed from `localStorage` and
    * `remoteStorage`. Provide a custom transport (e.g. a native file-URI implementation)
    * to transfer large files without materializing them in JS memory.
+   *
+   * When provided, the transport handles **all** remote operations directly and does
+   * not use `remoteStorage` — any `remoteStorage` passed alongside it is ignored, so
+   * implement delete on the transport itself.
    */
   transportAdapter?: AttachmentTransportAdapter;
   /**
@@ -92,8 +103,8 @@ export class AttachmentQueue {
   /** Adapter for local file storage operations */
   readonly localStorage: LocalStorageAdapter;
 
-  /** Adapter for remote file storage operations */
-  readonly remoteStorage: RemoteStorageAdapter;
+  /** Adapter for remote file storage operations. Undefined when a custom `transportAdapter` is used. */
+  readonly remoteStorage?: RemoteStorageAdapter;
 
   /**
    * Callback function to watch for changes in attachment references in your data model.
@@ -190,11 +201,16 @@ export class AttachmentQueue {
     this.downloadAttachments = downloadAttachments;
     this.logger = logger ?? db.logger;
     this.attachmentService = new AttachmentService(db, this.logger, tableName, archivedCacheLimit);
+
+    if (!transportAdapter && !remoteStorage) {
+      throw new Error('AttachmentQueue requires either a `remoteStorage` or a `transportAdapter`.');
+    }
+    const transport = transportAdapter ?? new BufferedAttachmentTransport(localStorage, remoteStorage!);
+
     this.syncingService = new SyncingService(
       this.attachmentService,
       localStorage,
-      remoteStorage,
-      transportAdapter ?? new BufferedAttachmentTransport(localStorage, remoteStorage),
+      transport,
       this.logger,
       errorHandler
     );
