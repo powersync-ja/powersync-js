@@ -155,10 +155,10 @@ class PoolWorker extends LockContext {
     if (changes.cleared) {
       this.#outstandingChanges = { fileSize: changes.fileSize, walEnd: 0, cleared: true, added: [] };
     } else {
-      const changes = (this.#outstandingChanges ??= { fileSize: 0, walEnd: 0, added: [], cleared: false });
-      changes.fileSize = changes.fileSize;
-      changes.walEnd = changes.walEnd;
-      changes.added = changes.added;
+      const outstandingChanges = (this.#outstandingChanges ??= { fileSize: 0, walEnd: 0, added: [], cleared: false });
+      outstandingChanges.fileSize = changes.fileSize;
+      outstandingChanges.walEnd = changes.walEnd;
+      outstandingChanges.added.push(...changes.added);
     }
   }
 
