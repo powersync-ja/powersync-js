@@ -17,6 +17,7 @@ const config: ViteUserConfigExport = {
        * first. This is required due to the format of Webworker URIs
        * they link to `.js` files.
        */
+      '@powersync/web/in-memory-wal-experiment': path.resolve(__dirname, './lib/db/adapters/memory/client.js'),
       '@powersync/web': path.resolve(__dirname, './lib'),
       // Mock WebRemote to throw 401 errors for all HTTP requests in tests
       '../../db/sync/WebRemote.js': path.resolve(__dirname, './tests/mocks/MockWebRemote.ts')

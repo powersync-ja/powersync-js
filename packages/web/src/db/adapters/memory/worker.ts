@@ -1,5 +1,5 @@
 import * as Comlink from 'comlink';
-import { DatabaseServer, WalIndexChange, WriteAheadBuffers } from './shared.js';
+import { applyWalChanges, DatabaseServer, WalIndexChange, WriteAheadBuffers } from './shared.js';
 import { RawQueryResult } from '@powersync/common';
 import { InMemoryWriteAheadLog } from './vfs.js';
 import { RawSqliteConnection } from '../wa-sqlite/RawSqliteConnection.js';
@@ -30,23 +30,11 @@ class MemoryDatabaseServer implements DatabaseServer {
 
   async updateWalState(overlay: WalIndexChange): Promise<void> {
     const currentState = this.#vfs.writeAheadState;
-    currentState.fileSize = overlay.fileSize;
-    currentState.walEnd = overlay.walEnd;
-
-    if (overlay.cleared) {
-      currentState.overlay.clear();
-    }
-
-    for (let i = 0; i < overlay.added.length; i += 2) {
-      const dbOffset = overlay.added[i];
-      const walOffset = overlay.added[i + 1];
-      currentState.overlay.set(dbOffset, walOffset);
-    }
+    applyWalChanges(currentState, overlay);
   }
 
   async executeRaw(query: string, params?: any[] | undefined): Promise<RawQueryResult> {
-    const results = await this.#connection.executeRaw(query, params);
-    return results[0];
+    return await this.#connection.execute(query, params);
   }
 
   async takeWalChanges(): Promise<WalIndexChange> {

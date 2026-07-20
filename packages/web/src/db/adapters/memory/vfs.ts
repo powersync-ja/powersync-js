@@ -1,7 +1,7 @@
 // @ts-ignore
 import { FacadeVFS } from '@journeyapps/wa-sqlite/src/FacadeVFS.js';
 import * as VFS from '@journeyapps/wa-sqlite/src/VFS.js';
-import { emptyWalState, WalIndexChange, WriteAheadBuffers, WriteAheadState } from './shared.js';
+import { emptyWalState, WalIndexChange, WalOverlayEntry, WriteAheadBuffers, WriteAheadState } from './shared.js';
 
 const mainDbSentinel = Symbol();
 
@@ -10,7 +10,7 @@ export class InMemoryWriteAheadLog extends FacadeVFS {
   #files = new Map<string, LocalFile | typeof mainDbSentinel>();
 
   #tx: WriteAheadTransaction | undefined = undefined;
-  #newOverlayPagesToSendToMainTab = new Map<number, number>();
+  #newOverlayPagesToSendToMainTab = new Map<number, WalOverlayEntry>();
 
   writeAheadState: WriteAheadState = emptyWalState();
 
@@ -23,7 +23,7 @@ export class InMemoryWriteAheadLog extends FacadeVFS {
   }
 
   takeChanges(): WalIndexChange {
-    const added: number[] = [];
+    const added: (number | WalOverlayEntry)[] = [];
     this.#newOverlayPagesToSendToMainTab.forEach((v, k) => {
       added.push(k);
       added.push(v);
@@ -40,7 +40,7 @@ export class InMemoryWriteAheadLog extends FacadeVFS {
 
   jAccess(zName: string, _pFlags: number, pResOut: DataView) {
     const file = this.#files.get(zName);
-    pResOut.setInt32(0, file ? 1 : 0, true);
+    pResOut.setInt32(0, file != null ? 1 : 0, true);
     return VFS.SQLITE_OK;
   }
 
@@ -97,7 +97,12 @@ export class InMemoryWriteAheadLog extends FacadeVFS {
       const page = overlay.get(offset < 100 ? 0 : offset);
 
       if (page != null) {
-        const source = new Uint8Array(this.buffers.writeAheadLog, offset < 100 ? page + offset : page, readableBytes);
+        const pageOffset = page.logOffset;
+        const source = new Uint8Array(
+          this.buffers.writeAheadLog,
+          offset < 100 ? pageOffset + offset : pageOffset,
+          readableBytes
+        );
         data.set(source);
       } else {
         // Page is not in WAL overlay, read directly from underlying in-memory buffer.
@@ -114,7 +119,7 @@ export class InMemoryWriteAheadLog extends FacadeVFS {
       }
     }
 
-    if (endOffset < data.byteLength) {
+    if (readableBytes < data.byteLength) {
       data.fill(0, readableBytes); // Fill rest with zeroes.
       return VFS.SQLITE_IOERR_SHORT_READ;
     }
@@ -179,6 +184,15 @@ export class InMemoryWriteAheadLog extends FacadeVFS {
     return VFS.SQLITE_OK;
   }
 
+  jDelete(name: string) {
+    if (name === '/database') {
+      return VFS.SQLITE_IOERR_DELETE;
+    }
+
+    this.#files.delete(name);
+    return VFS.SQLITE_OK;
+  }
+
   jDeviceCharacteristics(): number {
     return VFS.SQLITE_IOCAP_UNDELETABLE_WHEN_OPEN | VFS.SQLITE_IOCAP_BATCH_ATOMIC;
   }
@@ -208,9 +222,9 @@ export class InMemoryWriteAheadLog extends FacadeVFS {
   #commit(tx: WriteAheadTransaction) {
     this.writeAheadState.walEnd = tx.walEndOffset;
     this.writeAheadState.fileSize = tx.fileSize;
-    tx.changedPages.forEach((walOffset, databaseOffset) => {
-      this.#newOverlayPagesToSendToMainTab.set(databaseOffset, walOffset);
-      this.writeAheadState.overlay.set(databaseOffset, walOffset);
+    tx.changedPages.forEach((walEntry, databaseOffset) => {
+      this.#newOverlayPagesToSendToMainTab.set(databaseOffset, walEntry);
+      this.writeAheadState.overlay.set(databaseOffset, walEntry);
     });
   }
 }
@@ -218,7 +232,7 @@ export class InMemoryWriteAheadLog extends FacadeVFS {
 class WriteAheadTransaction {
   walEndOffset: number;
   fileSize: number;
-  changedPages = new Map<number, number>();
+  changedPages = new Map<number, WalOverlayEntry>();
 
   constructor(
     endOffset: number,
@@ -241,7 +255,7 @@ class WriteAheadTransaction {
     new Uint8Array(wal, currentEnd, data.length).set(data);
 
     this.walEndOffset = newEnd;
-    this.changedPages.set(offset, currentEnd);
+    this.changedPages.set(offset, { logOffset: currentEnd, size: data.length });
     return true;
   }
 

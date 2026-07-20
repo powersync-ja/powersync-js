@@ -14,14 +14,19 @@ export interface WriteAheadState {
   /**
    * A map of database position offsets to offsets in the WAL logs at which position contents of the page are stored.
    */
-  overlay: Map<number, number>;
+  overlay: Map<number, WalOverlayEntry>;
+}
+
+export interface WalOverlayEntry {
+  logOffset: number;
+  size: number;
 }
 
 export interface WalIndexChange {
   fileSize: number;
   walEnd: number;
 
-  added: number[];
+  added: (number | WalOverlayEntry)[];
   cleared: boolean;
 }
 
@@ -37,29 +42,17 @@ export function emptyWalState(): WriteAheadState {
   return { fileSize: 0, walEnd: 0, overlay: new Map() };
 }
 
-/**
+export function applyWalChanges(state: WriteAheadState, changes: WalIndexChange) {
+  state.fileSize = changes.fileSize;
+  state.walEnd = changes.walEnd;
 
-Main tab:
+  if (changes.cleared) {
+    state.overlay.clear();
+  }
 
-state:
- - mutex around writer
- - semaphore around readers
-
-to start read:
- - acquire from semaphore.
- - send a wal patch if necessary.
- - ... use!
-
-to start write:
-  - acquire from mutex
-  - ... use, updating write-ahead log offset
-  - update overlay index if offset has changed
-  - if len(overlay) > 500
-    - acquire all readers
-    - checkpoint, incrementing epoch
-
-Reader:
-
- - obtain overlay from main tab
-
- */
+  for (let i = 0; i < changes.added.length; i += 2) {
+    const dbOffset = changes.added[i] as number;
+    const walOffset = changes.added[i + 1] as WalOverlayEntry;
+    state.overlay.set(dbOffset, walOffset);
+  }
+}

@@ -1,6 +1,6 @@
 import * as Comlink from 'comlink';
 import { DBAdapter, DBLockOptions, LockContext, RawQueryResult } from '@powersync/common';
-import { DatabaseServer, emptyWalState, WalIndexChange, WriteAheadBuffers, WriteAheadState } from './shared.js';
+import { applyWalChanges, DatabaseServer, emptyWalState, WalIndexChange, WriteAheadBuffers } from './shared.js';
 import { Mutex, Semaphore } from '@powersync/shared-internals';
 
 function createWriteAheadLogBuffers(): WriteAheadBuffers {
@@ -23,6 +23,7 @@ export class InMemoryWriteAheadLogPool extends DBAdapter {
   readonly #rawWorkers: PoolWorker[] = [];
   readonly #workers: Semaphore<PoolWorker>;
   readonly #writeLock = new Mutex();
+  readonly #walState = emptyWalState();
 
   constructor(options: InMemoryOptions) {
     super();
@@ -58,6 +59,26 @@ export class InMemoryWriteAheadLogPool extends DBAdapter {
     }, options);
   }
 
+  #checkpoint() {
+    const walBuffer = this.#buffers.writeAheadLog;
+    const databaseBuffer = this.#buffers.database;
+    const newFileSize = this.#walState.fileSize;
+    if (databaseBuffer.byteLength < newFileSize) {
+      databaseBuffer.grow(newFileSize);
+    }
+
+    for (const [pageOffset, overlayEntry] of this.#walState.overlay.entries()) {
+      const source = new Uint8Array(walBuffer, overlayEntry.logOffset, overlayEntry.size);
+      new Uint8Array(databaseBuffer, pageOffset).set(source);
+    }
+
+    const cleared: WalIndexChange = { cleared: true, fileSize: newFileSize, walEnd: 0, added: [] };
+    applyWalChanges(this.#walState, cleared);
+    for (const worker of this.#rawWorkers) {
+      worker.addChanges(cleared);
+    }
+  }
+
   writeLock<T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions): Promise<T> {
     return this.#writeLock.runExclusive(() => {
       return this.#withWorker(async (worker) => {
@@ -65,13 +86,23 @@ export class InMemoryWriteAheadLogPool extends DBAdapter {
           return await fn(worker);
         } finally {
           const changes = await worker.takeWalChanges();
+          applyWalChanges(this.#walState, changes);
 
           if (changes.walEnd > 4096 * 128) {
-          }
-
-          for (const otherWorker of this.#rawWorkers) {
-            if (otherWorker !== worker) {
-              otherWorker.addChanges(changes);
+            // Checkpoint. This can't run concurrently to anything else, so acquire remaining workers.
+            const remainingWorkers = this.#workers.size - 1;
+            if (remainingWorkers) {
+              const { release } = await this.#workers.requestPermits(this.#workers.size - 1);
+              this.#checkpoint();
+              release();
+            } else {
+              this.#checkpoint();
+            }
+          } else {
+            for (const otherWorker of this.#rawWorkers) {
+              if (otherWorker !== worker) {
+                otherWorker.addChanges(changes);
+              }
             }
           }
         }
@@ -113,7 +144,10 @@ class PoolWorker extends LockContext {
   constructor(buffers: WriteAheadBuffers) {
     super();
     this.#buffers = buffers;
-    this.#worker = new Worker('./worker.js', { type: 'module' });
+    this.#worker = new Worker(new URL('./worker.js', import.meta.url), { type: 'module' });
+    this.#worker.onerror = (e) => {
+      console.error('Worker error', e);
+    };
     this.#server = Comlink.wrap(this.#worker);
   }
 

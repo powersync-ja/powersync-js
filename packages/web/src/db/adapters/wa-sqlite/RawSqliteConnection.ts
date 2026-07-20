@@ -61,7 +61,7 @@ export class RawSqliteConnection {
   }
 
   async initWithModule(module: any, vfs: any) {
-    const api = await this.openSQLiteAPI(module, vfs);
+    const api = (this._sqliteAPI = await this.openSQLiteAPI(module, vfs));
     this.db = await api.open_v2(
       this.options.filename,
       this.options.readonly ? 1 /* SQLITE_OPEN_READONLY */ : 6 /* SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE */
