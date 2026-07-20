@@ -26,15 +26,33 @@ export interface WalIndexChange {
   fileSize: number;
   walEnd: number;
 
+  /**
+   * New overlay entries to add, encoded as (key, value) pairs of {@link WriteAheadState.overlay}.
+   */
   added: (number | WalOverlayEntry)[];
+
+  /**
+   * Whether to clear the overlay (meaning that we ran a checkpoint).
+   */
   cleared: boolean;
 }
 
 export interface DatabaseServer {
+  /**
+   * Open a database connection from the given database and write-ahead log buffers.
+   */
   open(buffers: WriteAheadBuffers): Promise<void>;
+
+  /**
+   * Push new wal changes to this worker.
+   */
   updateWalState(overlay: WalIndexChange): Promise<void>;
 
   executeRaw(query: string, params?: any[] | undefined): Promise<RawQueryResult>;
+
+  /**
+   * Takes WAL changes made by this worker during its active write iteration.
+   */
   takeWalChanges(): Promise<WalIndexChange>;
 }
 

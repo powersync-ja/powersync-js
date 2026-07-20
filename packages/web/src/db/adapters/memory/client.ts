@@ -13,9 +13,29 @@ function createWriteAheadLogBuffers(): WriteAheadBuffers {
 }
 
 interface InMemoryOptions {
+  /**
+   * The amount of workers to use, must at least be `1`.
+   */
   numWorkers: number;
 }
 
+/**
+ * An in-memory database backed by a pool of workers.
+ *
+ * Multiple workers can execute readonly transactions in parallel, and a single writer is allowed to write to the
+ * database in parallel to readers. To allow multiple workers to access the same database, this is based on shared array
+ * buffers and requires the page to be [cross-origin isolated](https://web.dev/articles/cross-origin-isolation-guide?hl=en).
+ *
+ * This database uses a concept known as a write-ahead log: Instead of writing changes directly to the database (which
+ * would cause conflicts with readers), the writer appends modified database pages into an append-only overlay log. When
+ * readers start a transaction, they consider the main database and items from the log until a specific position,
+ * meaning that future appends won't discrupt existing readers.
+ *
+ * To avoid the write-ahead log from growing indefinitely, it is regularly copied back into the main database file. This
+ * process is called a checkpoint, and in this implementation it blocks all other database access. However, it only
+ * needs to copy between memory and is usually fairly fast. This implementation checkpoints after the write-ahead log
+ * has grown to 512 KiB or larger. We might want to fine-tune that later.
+ */
 export class InMemoryWriteAheadLogPool extends DBAdapter {
   readonly name: string = `in-memory-${crypto.randomUUID()}`;
 

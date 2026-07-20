@@ -6,6 +6,8 @@ import { emptyWalState, WalIndexChange, WalOverlayEntry, WriteAheadBuffers, Writ
 const mainDbSentinel = Symbol();
 
 export class InMemoryWriteAheadLog extends FacadeVFS {
+  // The main /database file is the only file for which we create a write-ahead log. All other files (including the
+  // journal) are local-only.
   #openedFiles = new Map<number, LocalFile | typeof mainDbSentinel>();
   #files = new Map<string, LocalFile | typeof mainDbSentinel>();
 
