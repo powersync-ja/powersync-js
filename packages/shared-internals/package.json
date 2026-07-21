@@ -1,6 +1,6 @@
 {
   "name": "@powersync/shared-internals",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"

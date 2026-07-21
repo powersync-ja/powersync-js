@@ -25,7 +25,7 @@
     "@expo/vector-icons": "^15.0.3",
     "@faker-js/faker": "^10.1.0",
     "@op-engineering/op-sqlite": "^17.0.0",
-    "@powersync/react-native": "^1.35.7",
+    "@powersync/react-native": "^2.0.0",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@shopify/flash-list": "2.0.2",
     "@supabase/supabase-js": "^2.86.0",

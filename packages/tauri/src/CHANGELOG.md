@@ -1,5 +1,11 @@
 # tauri-plugin-powersync
 
+## 0.0.5
+
+### Patch Changes
+
+- 2c3370d: Make `DBAdapter` and `LockContext` abstract classes, refactor `QueryResult` to provide column names and raw data.
+
 ## 0.0.4
 
 ### Patch Changes
