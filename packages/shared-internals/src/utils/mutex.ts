@@ -49,7 +49,7 @@ export class Semaphore<T> {
     if (waiter == this.lastWaiter) this.lastWaiter = prev;
   }
 
-  private requestPermits(amount: number, abort?: AbortSignal): Promise<{ items: T[]; release: UnlockFn }> {
+  requestPermits(amount: number, abort?: AbortSignal): Promise<{ items: T[]; release: UnlockFn }> {
     if (amount <= 0 || amount > this.size) {
       throw new Error(`Invalid amount of items requested (${amount}), must be between 1 and ${this.size}`);
     }

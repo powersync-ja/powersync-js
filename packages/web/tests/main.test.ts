@@ -1,4 +1,5 @@
 import { PowerSyncDatabase, WASQLiteOpenFactory, WASQLiteVFS } from '@powersync/web';
+import { InMemoryWriteAheadLogPool } from '@powersync/web/in-memory-wal-experiment';
 import { v4 as uuid } from 'uuid';
 import { describe, expect, it } from 'vitest';
 import { TEST_SCHEMA, TestDatabase } from './utils/test-schema.js';
@@ -92,6 +93,13 @@ describe('Basic - with in-memory', () => {
           useWebWorker: false
         }
       })
+    )
+  );
+
+  describe(
+    'wal',
+    describeBasicTests(() =>
+      generateTestDb({ schema: TEST_SCHEMA, opened: new InMemoryWriteAheadLogPool({ numWorkers: 1 }) })
     )
   );
 });

@@ -23,6 +23,10 @@
       "react-native": "./dist/index.react_native_web.js",
       "default": "./lib/index.js"
     },
+    "./in-memory-wal-experiment": {
+      "types": "./lib/db/adapters/memory/client.d.ts",
+      "default": "./lib/db/adapters/memory/client.js"
+    },
     "./bundled_worker": {
       "types": "./lib/worker/worker.d.ts",
       "default": "./dist/worker/worker.js"
