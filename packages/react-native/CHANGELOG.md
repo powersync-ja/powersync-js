@@ -1,5 +1,70 @@
 # @powersync/react-native
 
+## 2.0.0
+
+### Major Changes
+
+- 57373f9: Remove the deprecated table v1 syntax. To create tables based on column arrays, use the new ResolvedTable class.
+- 1a644f9: This release removes polyfills previously embedded into the React Native SDK to support
+  older React Native versions.
+
+  In particular, the following polyfills have been removed:
+  - `TextEncoder` and `TextDecoder`: Support for `TextDecoder` has recently been added to React Native,
+    and the SDK only uses it with very old PowerSync service versions as binary streams are preferred.
+  - `react-native-fetch-api`: The package was effectively unmaintained. We now use `expo/fetch` as a default
+    HTTP client. When unavailable, we fall back to the builtin `fetch` polyfill in React Native.
+    Note that this doesn't support streams, so we recommend enabling `{ connectionMethod: SyncStreamConnectionMethod.WEB_SOCKET }` for non-Expo apps with PowerSync.
+  - `ReadableStream`: We expect that `fetch` implementations correctly implement `Response.getReader()`.
+
+- 299adaf: Remove `SQLOnChangeOptions.rawTableNames` and `WatchOnChangeHandler.onError` - both were already ignored before.
+- 5650e7f: Rename `AbstractPowerSyncDatabase` to `CommonPowerSyncDatabase`, make it a TypeScript interface.
+
+  `CrudEntry` is now a TypeScript interface, remove it's constructor and `CrudEntry.fromRow`.
+
+  `SyncStatus` is no longer constructable in user code.
+
+  Deprecate `DataFlowStatus`. Use fields on `SyncStatus` directly instead.
+
+- 2c3370d: Make `DBAdapter` and `LockContext` abstract classes, refactor `QueryResult` to provide column names and raw data.
+- 1a644f9: Remove support for React Native Quick SQLite (RNQS). Additionally, `OPSqliteOpenFactory` is now the default and part
+  of the `@powersync/react-native` package.
+
+  To upgrade, drop dependencies on `@powersync/op-sqlite`. If you've previously used RNQS, also add a dependency on
+  `@op-engineering/op-sqlite`.
+
+  If you've previously used a `OPSqliteOpenFactory`, all options are now available on the `PowerSyncDatabase`
+  constructor directly:
+
+  ```TypeScript
+  // Before
+  const db = new PowerSyncDatabase({
+    database: new OPSqliteOpenFactory({dbFilename: 'test.db'})
+  });
+
+  // After
+  const db = new PowerSyncDatabase({
+    database: { dbFilename: 'test.db' }
+  });
+  ```
+
+### Minor Changes
+
+- 9caca19: Internal: Refactor remote to load WebSocket support lazily, reducing the size of the main PowerSync SDK.
+
+### Patch Changes
+
+- Updated dependencies [ce608a0]
+- Updated dependencies [57373f9]
+- Updated dependencies [299adaf]
+- Updated dependencies [299adaf]
+- Updated dependencies [5650e7f]
+- Updated dependencies [2c3370d]
+- Updated dependencies [06db9d8]
+- Updated dependencies [6aef3ac]
+  - @powersync/common@2.0.0
+  - @powersync/react@2.0.0
+  - @powersync/shared-internals@1.0.1
+
 ## 1.35.7
 
 ### Patch Changes

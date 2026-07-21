@@ -1,5 +1,21 @@
 # @powersync/react
 
+## 2.0.0
+
+### Major Changes
+
+- 299adaf: Breaking: Remove `usePowerSyncQuery` and `usePowerSyncWatchedQuery` (use `useQuery` instead) and `usePowerSyncStatus` (use `useStatus` instead).
+
+### Patch Changes
+
+- Updated dependencies [ce608a0]
+- Updated dependencies [57373f9]
+- Updated dependencies [299adaf]
+- Updated dependencies [5650e7f]
+- Updated dependencies [2c3370d]
+- Updated dependencies [06db9d8]
+  - @powersync/common@2.0.0
+
 ## 1.10.0
 
 ### Minor Changes
