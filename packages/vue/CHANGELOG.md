@@ -1,5 +1,30 @@
 # @powersync/vue
 
+## 1.0.0
+
+### Minor Changes
+
+- 299adaf: Breaking: Remove `usePowerSyncQuery` and `usePowerSyncWatchedQuery` (use `useQuery` instead) and `usePowerSyncStatus` (use `useStatus` instead).
+- 5650e7f: Rename `AbstractPowerSyncDatabase` to `CommonPowerSyncDatabase`, make it a TypeScript interface.
+
+  `CrudEntry` is now a TypeScript interface, remove it's constructor and `CrudEntry.fromRow`.
+
+  `SyncStatus` is no longer constructable in user code.
+
+  Deprecate `DataFlowStatus`. Use fields on `SyncStatus` directly instead.
+
+### Patch Changes
+
+- Updated dependencies [ce608a0]
+- Updated dependencies [57373f9]
+- Updated dependencies [299adaf]
+- Updated dependencies [5650e7f]
+- Updated dependencies [2c3370d]
+- Updated dependencies [06db9d8]
+- Updated dependencies [6aef3ac]
+  - @powersync/common@2.0.0
+  - @powersync/shared-internals@1.0.1
+
 ## 0.5.1
 
 ### Patch Changes

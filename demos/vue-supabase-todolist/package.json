@@ -11,8 +11,8 @@
     "test:build": "pnpm build"
   },
   "dependencies": {
-    "@powersync/web": "^1.38.6",
-    "@powersync/vue": "^0.5.1",
+    "@powersync/web": "^2.0.0",
+    "@powersync/vue": "^1.0.0",
     "@mdi/font": "7.4.47",
     "@supabase/supabase-js": "^2.39.7",
     "@vuelidate/core": "^2.0.3",

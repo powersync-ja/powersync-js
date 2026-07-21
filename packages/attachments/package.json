@@ -1,6 +1,6 @@
 {
   "name": "@powersync/attachments",
-  "version": "2.4.3",
+  "version": "3.0.0",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
@@ -39,7 +39,7 @@
     "test:exports": "attw --pack . --ignore-rules cjs-resolves-to-esm"
   },
   "peerDependencies": {
-    "@powersync/common": "workspace:^1.57.0"
+    "@powersync/common": "workspace:^2.0.0"
   },
   "devDependencies": {
     "@powersync/common": "workspace:*",

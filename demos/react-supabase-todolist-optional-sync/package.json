@@ -9,8 +9,8 @@
     "start": "pnpm build && pnpm preview"
   },
   "dependencies": {
-    "@powersync/react": "^1.10.0",
-    "@powersync/web": "^1.38.6",
+    "@powersync/react": "^2.0.0",
+    "@powersync/web": "^2.0.0",
     "@emotion/react": "11.11.4",
     "@emotion/styled": "11.11.5",
     "@journeyapps/wa-sqlite": "^1.7.0",
