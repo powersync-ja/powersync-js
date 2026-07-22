@@ -51,6 +51,7 @@ export interface ExpoFileSystemTransportAdapterOptions {
   deleteFile: (attachment: AttachmentRecord) => Promise<void>;
 }
 
+/** The `expo-file-system` legacy API surface this adapter resolves and uses at runtime. */
 type ExpoUploadResult = { status: number; body?: string };
 type ExpoDownloadResult = { status: number; uri: string };
 

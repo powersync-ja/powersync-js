@@ -85,7 +85,9 @@ const localStorage = new ExpoFileSystemStorageAdapter('/custom/path/to/attachmen
 
 ## Streaming transport adapters
 
-A transport adapter owns **all** remote operations (`upload` / `download` / `delete`) and transfers bytes natively — the file never enters the JS heap. When a `transportAdapter` is provided it fully replaces `remoteStorage` (which is no longer required); implement remote delete via the `deleteFile` callback.
+A transport adapter owns **all** remote operations (`upload` / `download` / `delete`) and transfers bytes natively — the file never enters the JS heap. Implement remote delete via the `deleteFile` callback.
+
+The queue takes **exactly one** remote mechanism: either `remoteStorage` or `transportAdapter`. A `transportAdapter` replaces `remoteStorage` entirely, so none is needed alongside it.
 
 Both transports are backend-agnostic: you supply resolver callbacks that map an attachment to a request (typically a presigned URL from your backend).
 

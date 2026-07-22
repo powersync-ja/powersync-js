@@ -19,8 +19,7 @@ export type LocatedAttachmentRecord = AttachmentRecord & { localUri: string };
  * upload/download API). On platforms like React Native this allows large files to
  * be transferred without ever materializing them in the JS heap.
  *
- * {@link BufferedAttachmentTransport} is the default, composing the local and
- * remote storage adapters. Provide a custom transport (via
+ * The default transport composes the local and remote storage adapters. Provide a custom transport (via
  * `AttachmentQueue`'s `transportAdapter` option) to own the whole remote side; in
  * that case a separate `remoteStorage` is not required.
  *
