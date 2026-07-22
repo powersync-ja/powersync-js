@@ -28,7 +28,7 @@ describe('PowerSyncDialect', () => {
       dialect: {
         createQueryCompiler: vitest.fn(),
         createDriver: vitest.fn(),
-        createAdapter: vitest.fn(),
+        createAdapter: () => new SqliteAdapter(),
         createIntrospector: vitest.fn()
       }
     });
