@@ -12,15 +12,14 @@ import {
 
 /**
  * When multi-tab support is disabled and we don't use a shared worker for sync, only a single tab will be able to
- * acquire the sync navigator lock and drive the sync.
+ * acquire the sync navigator lock and start a sync iteration.
  *
- * To provide _some_ multi-tab support in that configuration, this utility:
+ * To be able to provide _some_ multi-tab support in that configuration, this utility:
  *
  * 1. Sends sync status updates from the syncing tab to others.
  * 2. Allows other tabs to send notifications when their active sync stream subscriptions update, allowing the active
  *    tab to take those subscriptions into account.
  */
-
 export class TabLocalStreamingSyncImplementation extends WebStreamingSyncImplementation {
   #statusUpdated: BroadcastChannel;
   #subscriptionsChanged: BroadcastChannel;
@@ -64,12 +63,12 @@ export class TabLocalStreamingSyncImplementation extends WebStreamingSyncImpleme
     }
   }
 
-  updateSubscriptions(subscriptions: SubscribedStream[]): void {
+  override updateSubscriptions(subscriptions: SubscribedStream[]): void {
     super.updateSubscriptions(subscriptions);
     this.#subscriptionsChanged.postMessage('');
   }
 
-  obtainLock<T>({ callback, type, signal }: LockOptions<T>): Promise<T> {
+  override obtainLock<T>({ callback, type, signal }: LockOptions<T>): Promise<T> {
     const wrappedCallback = async (): Promise<T> => {
       this.#hasSyncLock = true;
 
@@ -83,7 +82,7 @@ export class TabLocalStreamingSyncImplementation extends WebStreamingSyncImpleme
     return super.obtainLock({ callback: type == LockType.SYNC ? wrappedCallback : callback, type, signal });
   }
 
-  async dispose(): Promise<void> {
+  override async dispose(): Promise<void> {
     this.#statusUpdated.close();
     this.#subscriptionsChanged.close();
     await super.dispose();
