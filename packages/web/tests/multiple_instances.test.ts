@@ -356,6 +356,7 @@ describe('Multiple Instances', { sequential: true }, () => {
       const a = new PowerSyncDatabase({ database: { dbFilename, enableMultiTabs: false }, schema: TEST_SCHEMA });
       const connectPromise = a.connect(createTestConnector());
       onTestFinished(() => a.close());
+      await a.init();
 
       const b = new PowerSyncDatabase({ database: { dbFilename, enableMultiTabs: false }, schema: TEST_SCHEMA });
       onTestFinished(() => b.close());
@@ -380,6 +381,7 @@ describe('Multiple Instances', { sequential: true }, () => {
       const a = new PowerSyncDatabase({ database: { dbFilename, enableMultiTabs: false }, schema: TEST_SCHEMA });
       a.connect(createTestConnector());
       onTestFinished(() => a.close());
+      await a.init();
 
       const b = new PowerSyncDatabase({ database: { dbFilename, enableMultiTabs: false }, schema: TEST_SCHEMA });
       b.connect(createTestConnector());
