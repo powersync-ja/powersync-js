@@ -1,12 +1,12 @@
 import { promises as fs } from 'fs';
 import * as path from 'path';
-import { AttachmentData, EncodingType, LocalStorageAdapter } from '@powersync/common';
+import { AttachmentData, EncodingType, StreamingLocalStorageAdapter } from '@powersync/common';
 
 /**
  * NodeFileSystemAdapter implements LocalStorageAdapter using Node.js filesystem.
  * Suitable for Node.js environments and Electron applications.
  */
-export class NodeFileSystemAdapter implements LocalStorageAdapter {
+export class NodeFileSystemAdapter implements StreamingLocalStorageAdapter {
   constructor(private storageDirectory: string = './user_data') {}
 
   async initialize(): Promise<void> {

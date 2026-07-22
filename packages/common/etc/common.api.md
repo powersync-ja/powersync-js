@@ -80,8 +80,8 @@ export interface AttachmentErrorHandler {
 export function attachmentFromSql(row: any): AttachmentRecord;
 
 // @alpha
-export class AttachmentQueue {
-    constructor(input: AttachmentQueueOptions);
+export class AttachmentQueue<TLocal extends LocalStorageAdapter = LocalStorageAdapter> {
+    constructor(input: AttachmentQueueOptions<TLocal>);
     readonly archivedCacheLimit: number;
     // (undocumented)
     clearQueue(): Promise<void>;
@@ -94,12 +94,12 @@ export class AttachmentQueue {
     // (undocumented)
     expireCache(): Promise<void>;
     generateAttachmentId(): Promise<string>;
-    readonly localStorage: LocalStorageAdapter;
+    readonly localStorage: TLocal;
     readonly logger: PowerSyncLogger;
     saveFile(options: SaveAttachmentOptions & {
         data: AttachmentData;
     }): Promise<AttachmentRecord>;
-    saveFileFromUri(options: SaveAttachmentOptions & {
+    saveFileFromUri(this: AttachmentQueue<StreamingLocalStorageAdapter>, options: SaveAttachmentOptions & {
         localUri: string;
     }): Promise<AttachmentRecord>;
     startSync(): Promise<void>;
@@ -113,7 +113,7 @@ export class AttachmentQueue {
 }
 
 // @alpha
-export type AttachmentQueueOptions = BaseAttachmentQueueOptions & ({
+export type AttachmentQueueOptions<TLocal extends LocalStorageAdapter = LocalStorageAdapter> = BaseAttachmentQueueOptions<TLocal> & ({
     remoteStorage: RemoteStorageAdapter;
     transportAdapter?: never;
 } | {
@@ -177,12 +177,12 @@ export interface AttachmentTransportAdapter {
 }
 
 // @alpha
-export interface BaseAttachmentQueueOptions {
+export interface BaseAttachmentQueueOptions<TLocal extends LocalStorageAdapter = LocalStorageAdapter> {
     archivedCacheLimit?: number;
     db: CommonPowerSyncDatabase;
     downloadAttachments?: boolean;
     errorHandler?: AttachmentErrorHandler;
-    localStorage: LocalStorageAdapter;
+    localStorage: TLocal;
     logger?: PowerSyncLogger;
     syncIntervalMs?: number;
     syncThrottleDuration?: number;
@@ -663,7 +663,6 @@ export interface LocalStorageAdapter {
     getLocalUri(filename: string): string;
     initialize(): Promise<void>;
     makeDir(path: string): Promise<void>;
-    moveFile?(sourceUri: string, targetUri: string): Promise<number>;
     readFile(filePath: string): Promise<ArrayBuffer>;
     rmDir(path: string): Promise<void>;
     saveFile(filePath: string, data: AttachmentData): Promise<number>;
@@ -1013,6 +1012,11 @@ export type StandardWatchedQuery<DataType> = WatchedQuery<DataType, WatchedQuery
 export interface StandardWatchedQueryOptions<RowType> extends WatchedQueryOptions {
     comparator?: WatchedQueryComparator<RowType[]>;
     placeholderData?: RowType[];
+}
+
+// @alpha
+export interface StreamingLocalStorageAdapter extends LocalStorageAdapter {
+    moveFile(sourceUri: string, targetUri: string): Promise<number>;
 }
 
 // Warning: (ae-forgotten-export) The symbol "JSONValue" needs to be exported by the entry point index.d.ts
