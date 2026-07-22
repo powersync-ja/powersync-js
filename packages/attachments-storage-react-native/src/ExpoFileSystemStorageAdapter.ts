@@ -1,5 +1,5 @@
 import { decode as decodeBase64 } from 'base64-arraybuffer';
-import type { AttachmentData, LocalStorageAdapter } from '@powersync/common';
+import type { AttachmentData, StreamingLocalStorageAdapter } from '@powersync/common';
 import type { File, Directory } from 'expo-file-system';
 
 /**
@@ -9,7 +9,7 @@ import type { File, Directory } from 'expo-file-system';
  * @experimental
  * @alpha This is currently experimental and may change without a major version bump.
  */
-export class ExpoFileSystemStorageAdapter implements LocalStorageAdapter {
+export class ExpoFileSystemStorageAdapter implements StreamingLocalStorageAdapter {
   private File: typeof File;
   private Directory: typeof Directory;
   private storageDir: Directory;

@@ -7,7 +7,7 @@ import { AttachmentErrorHandler } from './AttachmentErrorHandler.js';
 import { AttachmentService } from './AttachmentService.js';
 import { AttachmentTransportAdapter } from './AttachmentTransportAdapter.js';
 import { BufferedAttachmentTransport } from './BufferedAttachmentTransport.js';
-import { AttachmentData, LocalStorageAdapter } from './LocalStorageAdapter.js';
+import { AttachmentData, LocalStorageAdapter, StreamingLocalStorageAdapter } from './LocalStorageAdapter.js';
 import { RemoteStorageAdapter } from './RemoteStorageAdapter.js';
 import { ATTACHMENT_TABLE, AttachmentRecord, AttachmentState } from './Schema.js';
 import { SyncingService } from './SyncingService.js';
@@ -20,15 +20,17 @@ import { CommonPowerSyncDatabase } from '../client/CommonPowerSyncDatabase.js';
  * @experimental
  * @alpha This is currently experimental and may change without a major version bump.
  */
-export interface BaseAttachmentQueueOptions {
+export interface BaseAttachmentQueueOptions<TLocal extends LocalStorageAdapter = LocalStorageAdapter> {
   /**
    * PowerSync database instance
    */
   db: CommonPowerSyncDatabase;
   /**
-   * Local storage adapter for file persistence
+   * Local storage adapter for file persistence. Its type determines whether
+   * {@link AttachmentQueue.saveFileFromUri} is available (a
+   * {@link StreamingLocalStorageAdapter} enables it).
    */
-  localStorage: LocalStorageAdapter;
+  localStorage: TLocal;
   /**
    * Callback for monitoring attachment changes in your data model
    */
@@ -77,11 +79,12 @@ export interface BaseAttachmentQueueOptions {
  * @experimental
  * @alpha This is currently experimental and may change without a major version bump.
  */
-export type AttachmentQueueOptions = BaseAttachmentQueueOptions &
-  (
-    | { remoteStorage: RemoteStorageAdapter; transportAdapter?: never }
-    | { transportAdapter: AttachmentTransportAdapter; remoteStorage?: never }
-  );
+export type AttachmentQueueOptions<TLocal extends LocalStorageAdapter = LocalStorageAdapter> =
+  BaseAttachmentQueueOptions<TLocal> &
+    (
+      | { remoteStorage: RemoteStorageAdapter; transportAdapter?: never }
+      | { transportAdapter: AttachmentTransportAdapter; remoteStorage?: never }
+    );
 
 /**
  * Fields shared by {@link AttachmentQueue.saveFile} and {@link AttachmentQueue.saveFileFromUri}.
@@ -116,7 +119,7 @@ type AttachmentSource = { kind: 'data'; data: AttachmentData } | { kind: 'uri'; 
  * @experimental
  * @alpha This is currently experimental and may change without a major version bump.
  */
-export class AttachmentQueue {
+export class AttachmentQueue<TLocal extends LocalStorageAdapter = LocalStorageAdapter> {
   /** Timer for periodic synchronization operations */
   private periodicSyncTimer?: ReturnType<typeof setInterval>;
 
@@ -124,7 +127,7 @@ export class AttachmentQueue {
   private readonly syncingService: SyncingService;
 
   /** Adapter for local file storage operations */
-  readonly localStorage: LocalStorageAdapter;
+  readonly localStorage: TLocal;
 
   /**
    * Callback function to watch for changes in attachment references in your data model.
@@ -208,7 +211,7 @@ export class AttachmentQueue {
     downloadAttachments = true,
     archivedCacheLimit = 100,
     errorHandler
-  }: AttachmentQueueOptions) {
+  }: AttachmentQueueOptions<TLocal>) {
     this.db = db;
     this.syncLoopMutex = db.createMutex();
     this.localStorage = localStorage;
@@ -470,10 +473,13 @@ export class AttachmentQueue {
     if (source.kind === 'data') {
       size = await this.localStorage.saveFile(localUri, source.data);
     } else {
-      if (!this.localStorage.moveFile) {
+      // saveFileFromUri is only exposed for streaming-capable local adapters; guard at
+      // runtime too for plain-JS callers.
+      const localStorage = this.localStorage as Partial<StreamingLocalStorageAdapter>;
+      if (!localStorage.moveFile) {
         throw new Error('The configured local storage adapter does not support moveFile, required by saveFileFromUri.');
       }
-      size = await this.localStorage.moveFile(source.localUri, localUri);
+      size = await localStorage.moveFile(source.localUri, localUri);
     }
 
     const attachment: AttachmentRecord = {
@@ -516,11 +522,16 @@ export class AttachmentQueue {
    * (recordings, videos): it avoids reading the file into an `ArrayBuffer` just to write
    * it back to disk. Requires the local storage adapter to implement `moveFile`.
    *
+   * Only available when the queue is configured with a {@link StreamingLocalStorageAdapter}
+   * (one that implements `moveFile`).
+   *
    * @param options - The existing file's `localUri` plus {@link SaveAttachmentOptions}
    * @returns Promise resolving to the created attachment record
-   * @throws Error if the local storage adapter does not support moving files
    */
-  async saveFileFromUri(options: SaveAttachmentOptions & { localUri: string }): Promise<AttachmentRecord> {
+  async saveFileFromUri(
+    this: AttachmentQueue<StreamingLocalStorageAdapter>,
+    options: SaveAttachmentOptions & { localUri: string }
+  ): Promise<AttachmentRecord> {
     return this.createUploadAttachment(options, { kind: 'uri', localUri: options.localUri });
   }
 
