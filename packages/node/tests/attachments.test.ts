@@ -39,7 +39,7 @@ const mockRemoteStorage: RemoteStorageAdapter = {
 const mockLocalStorage = new NodeFileSystemAdapter('./temp/attachments');
 
 let db: AbstractPowerSyncDatabase;
-let queue: AttachmentQueue;
+let queue: AttachmentQueue<NodeFileSystemAdapter>;
 const schema = new Schema({
   users: new Table({
     name: column.text,
