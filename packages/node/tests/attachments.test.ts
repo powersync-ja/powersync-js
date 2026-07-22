@@ -803,7 +803,6 @@ describe('attachment queue - transport', () => {
     const q = new AttachmentQueue({
       db,
       watchAttachments,
-      remoteStorage: mockRemoteStorage,
       localStorage: mockLocalStorage,
       transportAdapter,
       syncIntervalMs: INTERVAL_MILLISECONDS,
@@ -849,7 +848,6 @@ describe('attachment queue - transport', () => {
     const q = new AttachmentQueue({
       db,
       watchAttachments,
-      remoteStorage: mockRemoteStorage,
       localStorage: mockLocalStorage,
       transportAdapter,
       syncIntervalMs: INTERVAL_MILLISECONDS,
@@ -896,7 +894,6 @@ describe('attachment queue - transport', () => {
     const q = new AttachmentQueue({
       db,
       watchAttachments,
-      remoteStorage: mockRemoteStorage,
       localStorage: mockLocalStorage,
       transportAdapter,
       syncIntervalMs: INTERVAL_MILLISECONDS,
@@ -938,6 +935,8 @@ describe('attachment queue - transport', () => {
   });
 
   it('throws when neither remoteStorage nor transportAdapter is provided', () => {
+    // The options type makes this a compile error; cast to exercise the runtime guard
+    // that protects plain-JS callers.
     expect(
       () =>
         new AttachmentQueue({
@@ -946,7 +945,7 @@ describe('attachment queue - transport', () => {
           localStorage: mockLocalStorage,
           syncIntervalMs: INTERVAL_MILLISECONDS,
           archivedCacheLimit: 0
-        })
+        } as any)
     ).toThrow(/remoteStorage/);
   });
 });

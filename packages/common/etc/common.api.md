@@ -96,22 +96,11 @@ export class AttachmentQueue {
     generateAttachmentId(): Promise<string>;
     readonly localStorage: LocalStorageAdapter;
     readonly logger: PowerSyncLogger;
-    readonly remoteStorage?: RemoteStorageAdapter;
-    saveFile(input: {
+    saveFile(options: SaveAttachmentOptions & {
         data: AttachmentData;
-        fileExtension: string;
-        mediaType?: string;
-        metaData?: string;
-        id?: string;
-        updateHook?: (transaction: Transaction, attachment: AttachmentRecord) => Promise<void>;
     }): Promise<AttachmentRecord>;
-    saveFileFromUri(input: {
+    saveFileFromUri(options: SaveAttachmentOptions & {
         localUri: string;
-        fileExtension: string;
-        mediaType?: string;
-        metaData?: string;
-        id?: string;
-        updateHook?: (transaction: Transaction, attachment: AttachmentRecord) => Promise<void>;
     }): Promise<AttachmentRecord>;
     startSync(): Promise<void>;
     stopSync(): Promise<void>;
@@ -124,20 +113,13 @@ export class AttachmentQueue {
 }
 
 // @alpha
-export interface AttachmentQueueOptions {
-    archivedCacheLimit?: number;
-    db: CommonPowerSyncDatabase;
-    downloadAttachments?: boolean;
-    errorHandler?: AttachmentErrorHandler;
-    localStorage: LocalStorageAdapter;
-    logger?: PowerSyncLogger;
-    remoteStorage?: RemoteStorageAdapter;
-    syncIntervalMs?: number;
-    syncThrottleDuration?: number;
-    tableName?: string;
-    transportAdapter?: AttachmentTransportAdapter;
-    watchAttachments: (onUpdate: (attachment: WatchedAttachmentItem[]) => Promise<void>, signal: AbortSignal) => void;
-}
+export type AttachmentQueueOptions = BaseAttachmentQueueOptions & ({
+    remoteStorage: RemoteStorageAdapter;
+    transportAdapter?: never;
+} | {
+    transportAdapter: AttachmentTransportAdapter;
+    remoteStorage?: never;
+});
 
 // @alpha
 export interface AttachmentRecord {
@@ -192,6 +174,20 @@ export interface AttachmentTransportAdapter {
     delete(attachment: AttachmentRecord): Promise<void>;
     download(attachment: LocatedAttachmentRecord): Promise<void>;
     upload(attachment: LocatedAttachmentRecord): Promise<void>;
+}
+
+// @alpha
+export interface BaseAttachmentQueueOptions {
+    archivedCacheLimit?: number;
+    db: CommonPowerSyncDatabase;
+    downloadAttachments?: boolean;
+    errorHandler?: AttachmentErrorHandler;
+    localStorage: LocalStorageAdapter;
+    logger?: PowerSyncLogger;
+    syncIntervalMs?: number;
+    syncThrottleDuration?: number;
+    tableName?: string;
+    watchAttachments: (onUpdate: (attachment: WatchedAttachmentItem[]) => Promise<void>, signal: AbortSignal) => void;
 }
 
 // @public (undocumented)
@@ -256,17 +252,6 @@ export interface BaseTriggerDiffRecord<TOperationId extends string | number = nu
 export interface BatchedUpdateNotification {
     // (undocumented)
     tables: string[];
-}
-
-// @alpha
-export class BufferedAttachmentTransport implements AttachmentTransportAdapter {
-    constructor(localStorage: LocalStorageAdapter, remoteStorage: RemoteStorageAdapter);
-    // (undocumented)
-    delete(attachment: AttachmentRecord): Promise<void>;
-    // (undocumented)
-    download(attachment: LocatedAttachmentRecord): Promise<void>;
-    // (undocumented)
-    upload(attachment: LocatedAttachmentRecord): Promise<void>;
 }
 
 // @public (undocumented)
@@ -943,6 +928,15 @@ export function sanitizeSQL(strings: TemplateStringsArray, ...values: any[]): st
 
 // @alpha
 export function sanitizeUUID(uuid: string): string;
+
+// @alpha
+export interface SaveAttachmentOptions {
+    fileExtension: string;
+    id?: string;
+    mediaType?: string;
+    metaData?: string;
+    updateHook?: (transaction: Transaction, attachment: AttachmentRecord) => Promise<void>;
+}
 
 // Warning: (ae-forgotten-export) The symbol "SchemaType" needs to be exported by the entry point index.d.ts
 //
