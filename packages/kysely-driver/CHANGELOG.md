@@ -1,5 +1,11 @@
 # @powersync/kysely-driver
 
+## 2.0.1
+
+### Patch Changes
+
+- 7f886e4: Support versions 0.29.x of kysely
+
 ## 2.0.0
 
 ### Major Changes

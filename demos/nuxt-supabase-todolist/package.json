@@ -9,7 +9,7 @@
   "dependencies": {
     "@nuxt/ui": "^4.0.0",
     "@nuxtjs/supabase": "2.0.1",
-    "@powersync/kysely-driver": "^2.0.0",
+    "@powersync/kysely-driver": "^2.0.1",
     "@powersync/nuxt": "^0.0.8",
     "@powersync/vue": "^0.6.0",
     "@powersync/web": "^2.0.0",

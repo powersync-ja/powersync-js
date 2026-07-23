@@ -65,7 +65,7 @@
   },
   "peerDependencies": {
     "@journeyapps/wa-sqlite": "^1.7.0",
-    "@powersync/kysely-driver": "workspace:^2.0.0",
+    "@powersync/kysely-driver": "workspace:^2.0.1",
     "@powersync/vue": "workspace:^0.6.0",
     "@powersync/web": "workspace:^2.0.0",
     "@powersync/shared-internals": "workspace:^1.0.1"
