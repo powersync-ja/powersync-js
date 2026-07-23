@@ -1,6 +1,7 @@
 export const DOC_FOLDER = 'docs';
 
-enum Packages {
+export enum Packages {
+  Common = 'common',
   CapacitorSdk = 'capacitor-sdk',
   ReactNativeSdk = 'react-native-sdk',
   ReactSdk = 'react-sdk',
@@ -26,6 +27,13 @@ type PackageMap = {
 };
 
 export const packageMap: PackageMap = {
+  [Packages.Common]: {
+    name: 'Cross-Platform definitions',
+    dirName: Packages.Common,
+    entryPoints: ['../packages/common/src/'],
+    tsconfig: '../packages/common/tsconfig.json',
+    id: Packages.Common
+  },
   [Packages.CapacitorSdk]: {
     name: 'Capacitor SDK',
     dirName: Packages.CapacitorSdk,

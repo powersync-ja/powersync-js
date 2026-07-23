@@ -4,34 +4,44 @@ import type { PluginOptions } from 'docusaurus-plugin-typedoc';
 import 'dotenv/config';
 import { themes as prismThemes } from 'prism-react-renderer';
 import type { TypeDocOptionMap } from 'typedoc';
-import { DOC_FOLDER, packageMap } from './utils/packageMap';
+import { DOC_FOLDER, packageMap, Packages } from './utils/packageMap';
 
 const PROJECT_NAME = process.env.GH_PROJECT_NAME;
 
-const plugins = Object.entries(packageMap).map(([id, config]) => [
-  'docusaurus-plugin-typedoc',
-  {
-    id,
-    excludeExternals: true,
-    entryPoints: config.entryPoints,
-    tsconfig: config.tsconfig,
-    out: `${DOC_FOLDER}/${config.dirName}`,
-    parametersFormat: 'table',
-    propertiesFormat: 'table',
-    enumMembersFormat: 'table',
-    excludeProtected: true,
-    excludePrivate: true,
-    indexFormat: 'table',
-    disableSources: true,
-    expandObjects: true,
-    useCodeBlocks: true,
-    typeDeclarationFormat: 'table',
-    membersWithOwnFile: ['Class', 'Enum', 'Function'],
-    textContentMappings: {
-      'title.memberPage': '{name}'
-    }
-  } as Partial<PluginOptions | TypeDocOptionMap>
-]);
+const plugins = Object.entries(packageMap).map(([id, config]) => {
+  const isCommon = config.id == Packages.Common;
+  const membersWithOwnFile: PluginOptions['membersWithOwnFile'] = ['Class', 'Enum', 'Function'];
+  if (isCommon) {
+    membersWithOwnFile.push('Interface');
+  }
+
+  return [
+    'docusaurus-plugin-typedoc',
+    {
+      // @ts-ignore
+      id,
+      entryPoints: config.entryPoints,
+      tsconfig: config.tsconfig,
+      out: `${DOC_FOLDER}/${config.dirName}`,
+      parametersFormat: 'table',
+      propertiesFormat: 'table',
+      enumMembersFormat: 'table',
+      excludeExternals: true,
+      excludeProtected: true,
+      excludePrivate: true,
+      excludeInternal: true,
+      indexFormat: 'table',
+      disableSources: true,
+      expandObjects: true,
+      useCodeBlocks: true,
+      typeDeclarationFormat: 'table',
+      membersWithOwnFile: membersWithOwnFile
+      //      textContentMappings: {
+      //        'title.memberPage': '{name}'
+      //      }
+    } satisfies Partial<PluginOptions | TypeDocOptionMap>
+  ];
+});
 
 const config: Config = {
   title: 'PowerSync JS SDK Docs',
