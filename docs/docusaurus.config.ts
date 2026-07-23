@@ -35,10 +35,10 @@ const plugins = Object.entries(packageMap).map(([id, config]) => {
       expandObjects: true,
       useCodeBlocks: true,
       typeDeclarationFormat: 'table',
-      membersWithOwnFile: membersWithOwnFile
-      //      textContentMappings: {
-      //        'title.memberPage': '{name}'
-      //      }
+      membersWithOwnFile: membersWithOwnFile,
+      textContentMappings: {
+        'title.memberPage': '{name}'
+      }
     } satisfies Partial<PluginOptions | TypeDocOptionMap>
   ];
 });
