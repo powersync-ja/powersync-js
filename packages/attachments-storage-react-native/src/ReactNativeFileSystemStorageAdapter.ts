@@ -1,5 +1,5 @@
 import { decode as decodeBase64, encode as encodeBase64 } from 'base64-arraybuffer';
-import type { AttachmentData, LocalStorageAdapter } from '@powersync/common';
+import type { AttachmentData, StreamingLocalStorageAdapter } from '@powersync/common';
 
 /**
  * ReactNativeFileSystemStorageAdapter implements LocalStorageAdapter using @dr.pogodin/react-native-fs.
@@ -8,7 +8,7 @@ import type { AttachmentData, LocalStorageAdapter } from '@powersync/common';
  * @experimental
  * @alpha This is currently experimental and may change without a major version bump.
  */
-export class ReactNativeFileSystemStorageAdapter implements LocalStorageAdapter {
+export class ReactNativeFileSystemStorageAdapter implements StreamingLocalStorageAdapter {
   private rnfs: typeof import('@dr.pogodin/react-native-fs');
   private storageDirectory: string;
 
@@ -69,6 +69,17 @@ To use the React Native File System attachment adapter please install @dr.pogodi
   async readFile(filePath: string): Promise<ArrayBuffer> {
     const content = await this.rnfs.readFile(filePath, 'base64');
     return decodeBase64(content);
+  }
+
+  async moveFile(sourceUri: string, targetUri: string): Promise<number> {
+    if (sourceUri !== targetUri) {
+      if (await this.rnfs.exists(targetUri)) {
+        await this.rnfs.unlink(targetUri);
+      }
+      await this.rnfs.moveFile(sourceUri, targetUri);
+    }
+    const stat = await this.rnfs.stat(targetUri);
+    return Number(stat.size);
   }
 
   async deleteFile(filePath: string): Promise<void> {

@@ -1,12 +1,12 @@
 import { promises as fs } from 'fs';
 import * as path from 'path';
-import { AttachmentData, EncodingType, LocalStorageAdapter } from '@powersync/common';
+import { AttachmentData, EncodingType, StreamingLocalStorageAdapter } from '@powersync/common';
 
 /**
  * NodeFileSystemAdapter implements LocalStorageAdapter using Node.js filesystem.
  * Suitable for Node.js environments and Electron applications.
  */
-export class NodeFileSystemAdapter implements LocalStorageAdapter {
+export class NodeFileSystemAdapter implements StreamingLocalStorageAdapter {
   constructor(private storageDirectory: string = './user_data') {}
 
   async initialize(): Promise<void> {
@@ -58,6 +58,14 @@ export class NodeFileSystemAdapter implements LocalStorageAdapter {
     } else {
       return data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength) as ArrayBuffer;
     }
+  }
+
+  async moveFile(sourceUri: string, targetUri: string): Promise<number> {
+    if (sourceUri !== targetUri) {
+      await fs.rename(sourceUri, targetUri);
+    }
+    const stats = await fs.stat(targetUri);
+    return stats.size;
   }
 
   async deleteFile(path: string, options?: { filename?: string }): Promise<void> {

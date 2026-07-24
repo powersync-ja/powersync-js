@@ -1,6 +1,7 @@
 export * from './attachments/AttachmentContext.js';
 export * from './attachments/AttachmentErrorHandler.js';
 export * from './attachments/AttachmentQueue.js';
+export * from './attachments/AttachmentTransportAdapter.js';
 export * from './attachments/LocalStorageAdapter.js';
 export * from './attachments/RemoteStorageAdapter.js';
 export * from './attachments/Schema.js';

@@ -80,8 +80,8 @@ export interface AttachmentErrorHandler {
 export function attachmentFromSql(row: any): AttachmentRecord;
 
 // @alpha
-export class AttachmentQueue {
-    constructor(input: AttachmentQueueOptions);
+export class AttachmentQueue<TLocal extends LocalStorageAdapter = LocalStorageAdapter> {
+    constructor(input: AttachmentQueueOptions<TLocal>);
     readonly archivedCacheLimit: number;
     // (undocumented)
     clearQueue(): Promise<void>;
@@ -94,16 +94,13 @@ export class AttachmentQueue {
     // (undocumented)
     expireCache(): Promise<void>;
     generateAttachmentId(): Promise<string>;
-    readonly localStorage: LocalStorageAdapter;
+    readonly localStorage: TLocal;
     readonly logger: PowerSyncLogger;
-    readonly remoteStorage: RemoteStorageAdapter;
-    saveFile(input: {
+    saveFile(options: SaveAttachmentOptions & {
         data: AttachmentData;
-        fileExtension: string;
-        mediaType?: string;
-        metaData?: string;
-        id?: string;
-        updateHook?: (transaction: Transaction, attachment: AttachmentRecord) => Promise<void>;
+    }): Promise<AttachmentRecord>;
+    saveFileFromUri(this: AttachmentQueue<StreamingLocalStorageAdapter>, options: SaveAttachmentOptions & {
+        localUri: string;
     }): Promise<AttachmentRecord>;
     startSync(): Promise<void>;
     stopSync(): Promise<void>;
@@ -116,19 +113,13 @@ export class AttachmentQueue {
 }
 
 // @alpha
-export interface AttachmentQueueOptions {
-    archivedCacheLimit?: number;
-    db: CommonPowerSyncDatabase;
-    downloadAttachments?: boolean;
-    errorHandler?: AttachmentErrorHandler;
-    localStorage: LocalStorageAdapter;
-    logger?: PowerSyncLogger;
+export type AttachmentQueueOptions<TLocal extends LocalStorageAdapter = LocalStorageAdapter> = BaseAttachmentQueueOptions<TLocal> & ({
     remoteStorage: RemoteStorageAdapter;
-    syncIntervalMs?: number;
-    syncThrottleDuration?: number;
-    tableName?: string;
-    watchAttachments: (onUpdate: (attachment: WatchedAttachmentItem[]) => Promise<void>, signal: AbortSignal) => void;
-}
+    transportAdapter?: never;
+} | {
+    transportAdapter: AttachmentTransportAdapter;
+    remoteStorage?: never;
+});
 
 // @alpha
 export interface AttachmentRecord {
@@ -177,6 +168,27 @@ export interface AttachmentTableOptions extends Omit<TableOptions, 'name' | 'col
 
 // @alpha
 export type AttachmentTableRecord = RowType<AttachmentTable>;
+
+// @alpha
+export interface AttachmentTransportAdapter {
+    delete(attachment: AttachmentRecord): Promise<void>;
+    download(attachment: LocatedAttachmentRecord): Promise<void>;
+    upload(attachment: LocatedAttachmentRecord): Promise<void>;
+}
+
+// @alpha
+export interface BaseAttachmentQueueOptions<TLocal extends LocalStorageAdapter = LocalStorageAdapter> {
+    archivedCacheLimit?: number;
+    db: CommonPowerSyncDatabase;
+    downloadAttachments?: boolean;
+    errorHandler?: AttachmentErrorHandler;
+    localStorage: TLocal;
+    logger?: PowerSyncLogger;
+    syncIntervalMs?: number;
+    syncThrottleDuration?: number;
+    tableName?: string;
+    watchAttachments: (onUpdate: (attachment: WatchedAttachmentItem[]) => Promise<void>, signal: AbortSignal) => void;
+}
 
 // @public (undocumented)
 export type BaseColumnType<T extends number | string | null> = {
@@ -656,6 +668,11 @@ export interface LocalStorageAdapter {
     saveFile(filePath: string, data: AttachmentData): Promise<number>;
 }
 
+// @alpha
+export type LocatedAttachmentRecord = AttachmentRecord & {
+    localUri: string;
+};
+
 // @public (undocumented)
 export abstract class LockContext implements SqlExecutor, DBGetUtils {
     // (undocumented)
@@ -911,6 +928,15 @@ export function sanitizeSQL(strings: TemplateStringsArray, ...values: any[]): st
 // @alpha
 export function sanitizeUUID(uuid: string): string;
 
+// @alpha
+export interface SaveAttachmentOptions {
+    fileExtension: string;
+    id?: string;
+    mediaType?: string;
+    metaData?: string;
+    updateHook?: (transaction: Transaction, attachment: AttachmentRecord) => Promise<void>;
+}
+
 // Warning: (ae-forgotten-export) The symbol "SchemaType" needs to be exported by the entry point index.d.ts
 //
 // @public
@@ -986,6 +1012,11 @@ export type StandardWatchedQuery<DataType> = WatchedQuery<DataType, WatchedQuery
 export interface StandardWatchedQueryOptions<RowType> extends WatchedQueryOptions {
     comparator?: WatchedQueryComparator<RowType[]>;
     placeholderData?: RowType[];
+}
+
+// @alpha
+export interface StreamingLocalStorageAdapter extends LocalStorageAdapter {
+    moveFile(sourceUri: string, targetUri: string): Promise<number>;
 }
 
 // Warning: (ae-forgotten-export) The symbol "JSONValue" needs to be exported by the entry point index.d.ts

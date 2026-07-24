@@ -1,5 +1,5 @@
 import { decode as decodeBase64 } from 'base64-arraybuffer';
-import type { AttachmentData, LocalStorageAdapter } from '@powersync/common';
+import type { AttachmentData, StreamingLocalStorageAdapter } from '@powersync/common';
 import type { File, Directory } from 'expo-file-system';
 
 /**
@@ -9,7 +9,7 @@ import type { File, Directory } from 'expo-file-system';
  * @experimental
  * @alpha This is currently experimental and may change without a major version bump.
  */
-export class ExpoFileSystemStorageAdapter implements LocalStorageAdapter {
+export class ExpoFileSystemStorageAdapter implements StreamingLocalStorageAdapter {
   private File: typeof File;
   private Directory: typeof Directory;
   private storageDir: Directory;
@@ -79,6 +79,17 @@ To use the Expo File System attachment adapter please install expo-file-system (
     
     const { buffer } = await file.bytes();
     return buffer;
+  }
+
+  async moveFile(sourceUri: string, targetUri: string): Promise<number> {
+    if (sourceUri !== targetUri) {
+      const target = new this.File(targetUri);
+      if (target.exists) {
+        target.delete();
+      }
+      new this.File(sourceUri).move(target);
+    }
+    return new this.File(targetUri).size ?? 0;
   }
 
   async deleteFile(filePath: string): Promise<void> {

@@ -76,3 +76,23 @@ export interface LocalStorageAdapter {
    */
   getLocalUri(filename: string): string;
 }
+
+/**
+ * A {@link LocalStorageAdapter} that can relocate a file into managed storage without
+ * loading it into memory. Required for {@link AttachmentQueue.saveFileFromUri}; only
+ * queues configured with a streaming-capable local adapter expose that method.
+ *
+ * @experimental
+ * @alpha This is currently experimental and may change without a major version bump.
+ */
+export interface StreamingLocalStorageAdapter extends LocalStorageAdapter {
+  /**
+   * Moves a file into managed storage without loading it into memory.
+   * Overwrites any existing file at the target. When source and target are the same
+   * path, this is a no-op that just reports the size.
+   * @param sourceUri - Path of the existing file
+   * @param targetUri - Destination path within managed storage
+   * @returns Number of bytes in the moved file
+   */
+  moveFile(sourceUri: string, targetUri: string): Promise<number>;
+}

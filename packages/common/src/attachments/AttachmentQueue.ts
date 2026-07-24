@@ -5,7 +5,9 @@ import { Transaction } from '../db/DBAdapter.js';
 import { AttachmentContext } from './AttachmentContext.js';
 import { AttachmentErrorHandler } from './AttachmentErrorHandler.js';
 import { AttachmentService } from './AttachmentService.js';
-import { AttachmentData, LocalStorageAdapter } from './LocalStorageAdapter.js';
+import { AttachmentTransportAdapter } from './AttachmentTransportAdapter.js';
+import { BufferedAttachmentTransport } from './BufferedAttachmentTransport.js';
+import { AttachmentData, LocalStorageAdapter, StreamingLocalStorageAdapter } from './LocalStorageAdapter.js';
 import { RemoteStorageAdapter } from './RemoteStorageAdapter.js';
 import { ATTACHMENT_TABLE, AttachmentRecord, AttachmentState } from './Schema.js';
 import { SyncingService } from './SyncingService.js';
@@ -13,24 +15,22 @@ import { WatchedAttachmentItem } from './WatchedAttachmentItem.js';
 import { CommonPowerSyncDatabase } from '../client/CommonPowerSyncDatabase.js';
 
 /**
- * Configuration options for {@link AttachmentQueue}.
+ * Fields common to every {@link AttachmentQueueOptions} variant.
  *
  * @experimental
  * @alpha This is currently experimental and may change without a major version bump.
  */
-export interface AttachmentQueueOptions {
+export interface BaseAttachmentQueueOptions<TLocal extends LocalStorageAdapter = LocalStorageAdapter> {
   /**
    * PowerSync database instance
    */
   db: CommonPowerSyncDatabase;
   /**
-   * Remote storage adapter for upload/download operations
+   * Local storage adapter for file persistence. Its type determines whether
+   * {@link AttachmentQueue.saveFileFromUri} is available (a
+   * {@link StreamingLocalStorageAdapter} enables it).
    */
-  remoteStorage: RemoteStorageAdapter;
-  /**
-   * Local storage adapter for file persistence
-   */
-  localStorage: LocalStorageAdapter;
+  localStorage: TLocal;
   /**
    * Callback for monitoring attachment changes in your data model
    */
@@ -65,6 +65,52 @@ export interface AttachmentQueueOptions {
 }
 
 /**
+ * Configuration options for {@link AttachmentQueue}.
+ *
+ * Provide **exactly one** remote mechanism:
+ * - `remoteStorage` — a {@link RemoteStorageAdapter}, wrapped in the default
+ *   default buffered transport that delegates upload/download/delete to it.
+ * - `transportAdapter` — an {@link AttachmentTransportAdapter} that owns all remote
+ *   operations directly (e.g. a native file-URI implementation for buffer-free
+ *   transfer of large files). No `remoteStorage` is needed in this case.
+ *
+ * Supplying both, or neither, is a type error.
+ *
+ * @experimental
+ * @alpha This is currently experimental and may change without a major version bump.
+ */
+export type AttachmentQueueOptions<TLocal extends LocalStorageAdapter = LocalStorageAdapter> =
+  BaseAttachmentQueueOptions<TLocal> &
+    (
+      | { remoteStorage: RemoteStorageAdapter; transportAdapter?: never }
+      | { transportAdapter: AttachmentTransportAdapter; remoteStorage?: never }
+    );
+
+/**
+ * Fields shared by {@link AttachmentQueue.saveFile} and {@link AttachmentQueue.saveFileFromUri}.
+ *
+ * @alpha
+ */
+export interface SaveAttachmentOptions {
+  /** File extension (e.g., 'jpg', 'pdf') */
+  fileExtension: string;
+  /** MIME type of the file (e.g., 'image/jpeg') */
+  mediaType?: string;
+  /** Optional metadata to associate with the attachment */
+  metaData?: string;
+  /** Optional custom ID. If not provided, a UUID will be generated */
+  id?: string;
+  /**
+   * Optional callback to execute additional database operations within the same transaction as the
+   * attachment creation.
+   */
+  updateHook?: (transaction: Transaction, attachment: AttachmentRecord) => Promise<void>;
+}
+
+/** How the file bytes reach managed storage when creating an upload attachment. */
+type AttachmentSource = { kind: 'data'; data: AttachmentData } | { kind: 'uri'; localUri: string };
+
+/**
  * AttachmentQueue manages the lifecycle and synchronization of attachments
  * between local and remote storage.
  * Provides automatic synchronization, upload/download queuing, attachment monitoring,
@@ -73,7 +119,7 @@ export interface AttachmentQueueOptions {
  * @experimental
  * @alpha This is currently experimental and may change without a major version bump.
  */
-export class AttachmentQueue {
+export class AttachmentQueue<TLocal extends LocalStorageAdapter = LocalStorageAdapter> {
   /** Timer for periodic synchronization operations */
   private periodicSyncTimer?: ReturnType<typeof setInterval>;
 
@@ -81,10 +127,7 @@ export class AttachmentQueue {
   private readonly syncingService: SyncingService;
 
   /** Adapter for local file storage operations */
-  readonly localStorage: LocalStorageAdapter;
-
-  /** Adapter for remote file storage operations */
-  readonly remoteStorage: RemoteStorageAdapter;
+  readonly localStorage: TLocal;
 
   /**
    * Callback function to watch for changes in attachment references in your data model.
@@ -159,6 +202,7 @@ export class AttachmentQueue {
     db,
     localStorage,
     remoteStorage,
+    transportAdapter,
     watchAttachments,
     logger,
     tableName = ATTACHMENT_TABLE,
@@ -167,10 +211,9 @@ export class AttachmentQueue {
     downloadAttachments = true,
     archivedCacheLimit = 100,
     errorHandler
-  }: AttachmentQueueOptions) {
+  }: AttachmentQueueOptions<TLocal>) {
     this.db = db;
     this.syncLoopMutex = db.createMutex();
-    this.remoteStorage = remoteStorage;
     this.localStorage = localStorage;
     this.watchAttachments = watchAttachments;
     this.tableName = tableName;
@@ -180,10 +223,16 @@ export class AttachmentQueue {
     this.downloadAttachments = downloadAttachments;
     this.logger = logger ?? db.logger;
     this.attachmentService = new AttachmentService(db, this.logger, tableName, archivedCacheLimit);
+
+    if (!transportAdapter && !remoteStorage) {
+      throw new Error('AttachmentQueue requires either a `remoteStorage` or a `transportAdapter`.');
+    }
+    const transport = transportAdapter ?? new BufferedAttachmentTransport(localStorage, remoteStorage!);
+
     this.syncingService = new SyncingService(
       this.attachmentService,
       localStorage,
-      remoteStorage,
+      transport,
       this.logger,
       errorHandler
     );
@@ -408,49 +457,30 @@ export class AttachmentQueue {
     return this.attachmentService.withContext(callback);
   }
   /**
-   * Saves a file to local storage and queues it for upload to remote storage.
-   *
-   * @param options - File save options
-   * @returns Promise resolving to the created attachment record
+   * Creates a `QUEUED_UPLOAD` attachment record, placing the file at the managed
+   * `localUri` from the given `source`, and persists the record
+   * alongside the caller's `updateHook` in a single transaction.
    */
-  async saveFile({
-    data,
-    fileExtension,
-    mediaType,
-    metaData,
-    id,
-    updateHook
-  }: {
-    /**
-     * The file data as ArrayBuffer, Blob, or base64 string
-     */
-    data: AttachmentData;
-    /**
-     * File extension (e.g., 'jpg', 'pdf')
-     */
-    fileExtension: string;
-    /**
-     * MIME type of the file (e.g., 'image/jpeg')
-     */
-    mediaType?: string;
-    /**
-     * Optional metadata to associate with the attachment
-     */
-    metaData?: string;
-    /**
-     * Optional custom ID. If not provided, a UUID will be generated
-     */
-    id?: string;
-    /**
-     * Optional callback to execute additional database operations within the same transaction as the attachment
-     * creation.
-     */
-    updateHook?: (transaction: Transaction, attachment: AttachmentRecord) => Promise<void>;
-  }): Promise<AttachmentRecord> {
+  private async createUploadAttachment(
+    { fileExtension, mediaType, metaData, id, updateHook }: SaveAttachmentOptions,
+    source: AttachmentSource
+  ): Promise<AttachmentRecord> {
     const resolvedId = id ?? (await this.generateAttachmentId());
     const filename = `${resolvedId}.${fileExtension}`;
     const localUri = this.localStorage.getLocalUri(filename);
-    const size = await this.localStorage.saveFile(localUri, data);
+
+    let size: number;
+    if (source.kind === 'data') {
+      size = await this.localStorage.saveFile(localUri, source.data);
+    } else {
+      // saveFileFromUri is only exposed for streaming-capable local adapters; guard at
+      // runtime too for plain-JS callers.
+      const localStorage = this.localStorage as Partial<StreamingLocalStorageAdapter>;
+      if (!localStorage.moveFile) {
+        throw new Error('The configured local storage adapter does not support moveFile, required by saveFileFromUri.');
+      }
+      size = await localStorage.moveFile(source.localUri, localUri);
+    }
 
     const attachment: AttachmentRecord = {
       id: resolvedId,
@@ -472,6 +502,37 @@ export class AttachmentQueue {
     });
 
     return attachment;
+  }
+
+  /**
+   * Saves in-memory file data to local storage and queues it for upload.
+   *
+   * @param options - File data plus {@link SaveAttachmentOptions}
+   * @returns Promise resolving to the created attachment record
+   */
+  async saveFile(options: SaveAttachmentOptions & { data: AttachmentData }): Promise<AttachmentRecord> {
+    return this.createUploadAttachment(options, { kind: 'data', data: options.data });
+  }
+
+  /**
+   * Registers a file that already exists on disk and queues it for upload, moving it
+   * into managed storage without loading it into memory.
+   *
+   * Prefer this over {@link AttachmentQueue.saveFile} for large, app-originated files
+   * (recordings, videos): it avoids reading the file into an `ArrayBuffer` just to write
+   * it back to disk. Requires the local storage adapter to implement `moveFile`.
+   *
+   * Only available when the queue is configured with a {@link StreamingLocalStorageAdapter}
+   * (one that implements `moveFile`).
+   *
+   * @param options - The existing file's `localUri` plus {@link SaveAttachmentOptions}
+   * @returns Promise resolving to the created attachment record
+   */
+  async saveFileFromUri(
+    this: AttachmentQueue<StreamingLocalStorageAdapter>,
+    options: SaveAttachmentOptions & { localUri: string }
+  ): Promise<AttachmentRecord> {
+    return this.createUploadAttachment(options, { kind: 'uri', localUri: options.localUri });
   }
 
   async deleteFile({
