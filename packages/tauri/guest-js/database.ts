@@ -33,6 +33,21 @@ export interface TauriSQLOpenOptions extends SQLOpenOptions {
    * A promise that resolves to the directory in which the PowerSync database should be stored.
    */
   dbLocationAsync?: () => Promise<string>;
+
+  /**
+   * Optional SQLCipher key. When set, the native plugin runs `PRAGMA key`
+   * against every pooled connection before any other statement, encrypting
+   * the database at rest. Desktop only — has no effect on mobile builds,
+   * which link plain (unencrypted) SQLite. Callers are responsible for
+   * deriving and persisting this key themselves; the plugin does not manage
+   * key storage.
+   *
+   * Requires the Rust crate to be built with `features = ["encryption"]`
+   * (SQLCipher is opt-in, off by default). If that feature is not enabled,
+   * `_initialize()` rejects with a clear error instead of silently opening
+   * an unencrypted database.
+   */
+  encryptionKey?: string;
 }
 
 /**
@@ -168,10 +183,12 @@ export class PowerSyncTauriDatabase extends BasePowerSyncDatabase<TauriPowerSync
 
   async _initialize(): Promise<void> {
     const path = await this.resolvePath();
+    const { encryptionKey } = this.options.database as TauriSQLOpenOptions;
     const result = await powersyncCommand({
       OpenDatabase: {
         name: path,
-        schema: this.schema.toJSON()
+        schema: this.schema.toJSON(),
+        ...(encryptionKey ? { encryption_key: encryptionKey } : {})
       }
     });
 

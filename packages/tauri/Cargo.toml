@@ -21,9 +21,15 @@ thiserror = "2"
 powersync = { version = "0.0.5", features = ["tokio", "reqwest"] }
 reqwest = "0.13.2"
 http-client = { version = "6.5.3", default-features = false }
-rusqlite = { version = "0.39.0", features = ["bundled"] }
 tokio = { version = "1.50.0", features = ["time"] }
 tokio-stream = "0.1"
+
+[dependencies.rusqlite]
+version = "0.39.0"
+features = ["bundled"]
+
+[features]
+encryption = ["rusqlite/bundled-sqlcipher"]
 
 [build-dependencies]
 tauri-plugin = { version = "2.5.4", features = ["build"] }
