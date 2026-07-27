@@ -1,5 +1,5 @@
 ---
-'@powersync/shared-internals': patch
+'@powersync/shared-internals': minor
 '@powersync/web': minor
 ---
 
