@@ -14,6 +14,8 @@ overrides:
   'websocket-driver': '>=0.7.5'
   # To avoid https://github.com/advisories/GHSA-23hp-3jrh-7fpw
   'tar': '>=7.5.19'
+  # To avoid https://github.com/advisories/GHSA-mv8w-475r-vwqw
+  'seroval': '>=1.5.6'
 
 catalog:
   '@journeyapps/wa-sqlite': ^1.5.0

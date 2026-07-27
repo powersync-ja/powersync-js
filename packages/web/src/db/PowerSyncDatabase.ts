@@ -26,12 +26,10 @@ import { WebSpecificOpenOptions, WebSQLOpenOptions } from './adapters/options.js
 import { SSRStreamingSyncImplementation } from './sync/SSRWebStreamingSyncImplementation.js';
 import { SharedWebStreamingSyncImplementation } from './sync/SharedWebStreamingSyncImplementation.js';
 import { WebRemote } from './sync/WebRemote.js';
-import {
-  WebStreamingSyncImplementation,
-  WebStreamingSyncImplementationOptions
-} from './sync/WebStreamingSyncImplementation.js';
+import { WebStreamingSyncImplementationOptions } from './sync/WebStreamingSyncImplementation.js';
 import { AsyncDbAdapter } from './adapters/AsyncWebAdapter.js';
 import { resolveAndValidateOptions } from './adapters/resolveAndValidateOptions.js';
+import { TabLocalStreamingSyncImplementation } from './sync/TabLocalStreamingSyncImplementation.js';
 
 export type WebPowerSyncDatabaseOptions = BasePowerSyncDatabaseOptions &
   DatabaseSource<WebSQLOpenOptions> &
@@ -193,7 +191,7 @@ export class WebPowerSyncDatabase extends BasePowerSyncDatabase<WebPowerSyncData
           enableBroadcastLogs: this.enableBroadcastLogs
         });
       default:
-        return new WebStreamingSyncImplementation(syncOptions);
+        return new TabLocalStreamingSyncImplementation(syncOptions);
     }
   }
 }

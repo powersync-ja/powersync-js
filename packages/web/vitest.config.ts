@@ -2,6 +2,8 @@ import path from 'path';
 import { defineConfig, ViteUserConfigExport } from 'vitest/config';
 import { playwright } from '@vitest/browser-playwright';
 
+const mockWebRemote = path.resolve(__dirname, './tests/mocks/MockWebRemote.ts');
+
 const config: ViteUserConfigExport = {
   server: {
     headers: {
@@ -19,7 +21,8 @@ const config: ViteUserConfigExport = {
        */
       '@powersync/web': path.resolve(__dirname, './lib'),
       // Mock WebRemote to throw 401 errors for all HTTP requests in tests
-      '../../db/sync/WebRemote.js': path.resolve(__dirname, './tests/mocks/MockWebRemote.ts')
+      '../../db/sync/WebRemote.js': mockWebRemote,
+      './sync/WebRemote.js': mockWebRemote
     }
   },
   worker: {

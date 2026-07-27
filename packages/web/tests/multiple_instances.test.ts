@@ -8,6 +8,8 @@ import { generateTestDb } from './utils/testDb.js';
 import { DatabaseClient, OpenWorkerConnection } from '../src/db/adapters/wa-sqlite/DatabaseClient.js';
 import { ClientConnectionView } from '../src/db/adapters/wa-sqlite/DatabaseServer.js';
 import { generateTabCloseSignal } from '../src/shared/tab_close_signal.js';
+import { PowerSyncDatabase } from '../src/index.js';
+import { MockSyncService } from './utils/MockSyncServiceWorker.js';
 
 const DB_FILENAME = 'test-multiple-instances.db';
 
@@ -345,4 +347,53 @@ describe('Multiple Instances', { sequential: true }, () => {
       await vi.waitFor(() => expect(connector.uploadData.mock.calls.length).greaterThanOrEqual(2), { timeout: 3000 });
     }
   );
+
+  describe('tab-local sync client', () => {
+    const mockService = MockSyncService.GLOBAL_INSTANCE;
+
+    it('can share status across instances', async () => {
+      const dbFilename = `${crypto.randomUUID()}.db`;
+      const a = new PowerSyncDatabase({ database: { dbFilename, enableMultiTabs: false }, schema: TEST_SCHEMA });
+      const connectPromise = a.connect(createTestConnector());
+      onTestFinished(() => a.close());
+      await a.init();
+
+      const b = new PowerSyncDatabase({ database: { dbFilename, enableMultiTabs: false }, schema: TEST_SCHEMA });
+      onTestFinished(() => b.close());
+
+      await vi.waitFor(() => {
+        const pendingRequests = mockService.getPendingRequestsSync();
+        expect(pendingRequests).toHaveLength(1);
+        const requestId = pendingRequests[0].id;
+        mockService.createResponse(requestId, 200, { 'Content-Type': 'application/json' });
+        mockService.pushBodyData(requestId, `{"token_expires_in": 10000000}\n`);
+      });
+
+      await connectPromise;
+
+      // b should mirror the status from a after connecting.
+      b.connect(createTestConnector());
+      await vi.waitFor(() => expect(b.connected).toBeTruthy());
+    });
+
+    it('can share sync subscriptions', async () => {
+      const dbFilename = `${crypto.randomUUID()}.db`;
+      const a = new PowerSyncDatabase({ database: { dbFilename, enableMultiTabs: false }, schema: TEST_SCHEMA });
+      a.connect(createTestConnector());
+      onTestFinished(() => a.close());
+      await a.init();
+
+      const b = new PowerSyncDatabase({ database: { dbFilename, enableMultiTabs: false }, schema: TEST_SCHEMA });
+      b.connect(createTestConnector());
+      onTestFinished(() => b.close());
+
+      const stream = await b.syncStream('foo').subscribe();
+      onTestFinished(() => stream.unsubscribe());
+
+      // Subscribing on b should make the stream show up on a, too.
+      await vi.waitFor(() => {
+        expect(a.currentStatus.syncStreams).toHaveLength(1);
+      });
+    });
+  });
 });

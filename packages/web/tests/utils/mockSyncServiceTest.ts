@@ -9,7 +9,7 @@ import {
   column,
   createConsoleLogger
 } from '@powersync/common';
-import { PowerSyncDatabase, WebPowerSyncDatabaseOptions } from '@powersync/web';
+import { PowerSyncDatabase } from '@powersync/web';
 import { MockedFunction, expect, onTestFinished, test, vi } from 'vitest';
 import { MockSyncService, getMockSyncServiceFromWorker } from './MockSyncServiceClient.js';
 import { GenerateConnectedDatabaseOptions, generateDefaultOptions } from './generateConnectedDatabase.js';
