@@ -61,6 +61,9 @@ export interface BucketStorageAdapter extends BaseObserverInterface<BucketStorag
  * Invokes `powersync_control` from the core extension, casting the result to text.
  */
 export async function rawPowerSyncControl(tx: Transaction, op: string, payload: SqliteValue): Promise<string | null> {
+  // For some calls, notably on target_checkpoint_request_id, powersync_control returns a 64-bit integer we want to
+  // represent as text. Instead of dealing with bigints which may or may not be supported across different sqlite
+  // libraries, play it safe and cast to text before mapping to JavaScript.
   const { rawRows } = await tx.executeRaw('SELECT CAST(powersync_control(?, ?) AS TEXT)', [op, payload]);
   return rawRows[0][0] as string | null;
 }
