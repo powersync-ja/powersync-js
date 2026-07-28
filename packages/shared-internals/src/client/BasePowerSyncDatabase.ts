@@ -341,7 +341,7 @@ export abstract class BasePowerSyncDatabase<Options extends BasePowerSyncDatabas
         .map((n) => parseInt(n));
     } catch (e: any) {
       throw new Error(
-        `Unsupported powersync extension version. Need >=0.5.1 <1.6.0, got: ${this.sdkVersion}. Details: ${e.message}`
+        `Unsupported powersync extension version. Need >=0.5.1 <0.6.0, got: ${this.sdkVersion}. Details: ${e.message}`
       );
     }
 
