@@ -36,7 +36,7 @@
     "@powersync/shared-internals": "workspace:*"
   },
   "devDependencies": {
-    "@powersync/sql-js": "0.0.9",
+    "@powersync/sql-js": "0.0.10",
     "@powersync/web": "workspace:*",
     "@rollup/plugin-alias": "catalog:",
     "@rollup/plugin-commonjs": "catalog:",

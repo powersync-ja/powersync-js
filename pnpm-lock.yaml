@@ -250,8 +250,8 @@ importers:
         version: link:../shared-internals
     devDependencies:
       '@powersync/sql-js':
-        specifier: 0.0.9
-        version: 0.0.9
+        specifier: 0.0.10
+        version: 0.0.10
       '@powersync/web':
         specifier: workspace:*
         version: link:../web
@@ -5513,8 +5513,8 @@ packages:
   '@poppinss/exception@1.2.3':
     resolution: {integrity: sha512-dCED+QRChTVatE9ibtoaxc+WkdzOSjYTKi/+uacHWIsfodVfpsueo3+DKpgU5Px8qXjgmXkSvhXvSCz3fnP9lw==}
 
-  '@powersync/sql-js@0.0.9':
-    resolution: {integrity: sha512-HX78DscTAD5TRsjT+xEYky3sg0JSKw+B697qyJRK/iZ0Pni/VwbKCQuo9Hk4Tc0PjIQIDMajrvqrpfZz2sbhdQ==}
+  '@powersync/sql-js@0.0.10':
+    resolution: {integrity: sha512-1sakDvham2yxcQ08VWxSvyUuUaEQARc2zNDzRlCvBgLM25l2sO81HxobLwCh8ixhz+Uqv1mxbi/OeDr7JMsUIw==}
 
   '@quansync/fs@1.0.0':
     resolution: {integrity: sha512-4TJ3DFtlf1L5LDMaM6CanJ/0lckGNtJcMjQ1NAV6zDmA0tEHKZtxNKin8EgPaVX1YzljbxckyT2tJrpQKAtngQ==}
@@ -24294,7 +24294,7 @@ snapshots:
 
   '@poppinss/exception@1.2.3': {}
 
-  '@powersync/sql-js@0.0.9': {}
+  '@powersync/sql-js@0.0.10': {}
 
   '@quansync/fs@1.0.0':
     dependencies:
@@ -25040,7 +25040,7 @@ snapshots:
       eslint: 8.57.1
       eslint-config-prettier: 8.10.2(eslint@8.57.1)
       eslint-plugin-eslint-comments: 3.2.0(eslint@8.57.1)
-      eslint-plugin-ft-flow: 2.0.3(@babel/eslint-parser@7.28.6(@babel/core@7.29.7)(eslint@8.57.1))(eslint@8.57.1)
+      eslint-plugin-ft-flow: 2.0.3(@babel/eslint-parser@7.28.6(@babel/core@7.29.0)(eslint@8.57.1))(eslint@8.57.1)
       eslint-plugin-jest: 29.15.0(@typescript-eslint/eslint-plugin@8.57.1(@typescript-eslint/parser@8.57.1(eslint@8.57.1)(typescript@6.0.3))(eslint@8.57.1)(typescript@6.0.3))(eslint@8.57.1)(jest@29.7.0(@types/node@24.10.13))(typescript@6.0.3)
       eslint-plugin-react: 7.37.5(eslint@8.57.1)
       eslint-plugin-react-hooks: 7.0.1(eslint@8.57.1)
@@ -29986,7 +29986,7 @@ snapshots:
       eslint: 8.57.1
       ignore: 5.3.2
 
-  eslint-plugin-ft-flow@2.0.3(@babel/eslint-parser@7.28.6(@babel/core@7.29.7)(eslint@8.57.1))(eslint@8.57.1):
+  eslint-plugin-ft-flow@2.0.3(@babel/eslint-parser@7.28.6(@babel/core@7.29.0)(eslint@8.57.1))(eslint@8.57.1):
     dependencies:
       '@babel/eslint-parser': 7.28.6(@babel/core@7.29.7)(eslint@8.57.1)
       eslint: 8.57.1
