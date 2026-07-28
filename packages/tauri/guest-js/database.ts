@@ -88,9 +88,7 @@ export class PowerSyncTauriDatabase extends BasePowerSyncDatabase<TauriPowerSync
 
   protected generateBucketStorageAdapter(): BucketStorageAdapter {
     return new Proxy<Partial<BucketStorageAdapter>>(
-      {
-        async init() {}
-      },
+      {},
       {
         get(target, symbol) {
           if (symbol in target) {

@@ -69,7 +69,10 @@ export async function fetchPowerSyncStats(getAll: GetAll, objectNames: Set<strin
           const tableInfo = await getAll(`PRAGMA table_info("${tableName}")`);
           const dataCols = tableInfo.filter((c: any) => c.name !== 'id').map((c: any) => `"${c.name}"`);
 
-          const sizeExpr = dataCols.length > 0 ? `, sum(${dataCols.map((c) => `length(ifnull(${c}, ''))`).join(' + ')}) as data_size` : '';
+          const sizeExpr =
+            dataCols.length > 0
+              ? `, sum(${dataCols.map((c) => `length(ifnull(${c}, ''))`).join(' + ')}) as data_size`
+              : '';
           const result = await getAll(`
             SELECT
               count(*) as count
@@ -126,7 +129,7 @@ export async function fetchPowerSyncStats(getAll: GetAll, objectNames: Set<strin
     if (objectNames.has('ps_buckets')) {
       if (bucketCount === 0) {
         try {
-          const countResult = await getAll(`SELECT count(*) as count FROM ps_buckets WHERE name != '$local'`);
+          const countResult = await getAll(`SELECT count(*) as count FROM ps_buckets`);
           bucketCount = Number(countResult[0]?.count) || 0;
         } catch {
           // ps_buckets exists but query failed
@@ -137,8 +140,7 @@ export async function fetchPowerSyncStats(getAll: GetAll, objectNames: Set<strin
         // Try count_at_last + count_since_last first (newer SDK versions)
         try {
           const opsResult = await getAll(`
-            SELECT sum(count_at_last + count_since_last) as total_ops
-            FROM ps_buckets WHERE name != '$local'
+            SELECT sum(count_at_last + count_since_last) as total_ops FROM ps_buckets
           `);
           totalOps = Number(opsResult[0]?.total_ops) || 0;
         } catch {
@@ -150,8 +152,7 @@ export async function fetchPowerSyncStats(getAll: GetAll, objectNames: Set<strin
         // Fallback: last_op is the checkpoint sequence number per bucket (~= total ops)
         try {
           const opIdResult = await getAll(`
-            SELECT sum(cast(last_op as integer)) as total_ops
-            FROM ps_buckets WHERE name != '$local'
+            SELECT sum(cast(last_op as integer)) as total_ops FROM ps_buckets
           `);
           totalOps = Number(opIdResult[0]?.total_ops) || 0;
         } catch {
