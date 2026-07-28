@@ -6,13 +6,16 @@ import {
   ProgressWithOperations,
   Schema,
   SyncOptions,
+  SyncStatus,
   SyncStreamConnectionMethod
 } from '@powersync/common';
 import {
   bucket,
+  checkpoint,
   MockSyncService,
   createMockSyncServiceTest,
   mockSyncServiceTest,
+  stream,
   TestConnector,
   waitForSyncStatus
 } from './utils.js';
@@ -823,6 +826,105 @@ function defineSyncTests(bson: boolean) {
     expect(another.currentStatus.priorityStatusEntries).toHaveLength(1);
     expect(another.currentStatus.statusForPriority(0).hasSynced).toBeTruthy();
     await another.waitForFirstSync({ priority: 0 });
+  });
+
+  mockSyncServiceTest('connecting does not clobber offline sync state', async ({ syncService }) => {
+    // Complete a full sync including a stream subscription, then close the database.
+    let database = await syncService.createDatabase();
+    const subscription = await database.syncStream('a').subscribe();
+    database.connect(new TestConnector(), options);
+    await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
+
+    syncService.pushLine(
+      checkpoint({
+        last_op_id: 0,
+        buckets: [bucket('a', 0, { priority: 3, subscriptions: [{ sub: 0 }] })],
+        streams: [stream('a', false)]
+      })
+    );
+    syncService.pushLine({ checkpoint_complete: { last_op_id: '0' } });
+    await database.waitForFirstSync();
+    subscription.unsubscribe();
+    await database.close();
+    await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(0));
+
+    // Re-opening the database restores the previous sync state.
+    database = await syncService.createDatabase();
+    const streamDescription = { name: 'a', parameters: null };
+    expect(database.currentStatus.hasSynced).toBe(true);
+    expect(database.currentStatus.forStream(streamDescription)?.subscription.hasSynced).toBe(true);
+
+    const statuses: SyncStatus[] = [];
+    database.registerListener({
+      statusChanged: (status) => statuses.push(status)
+    });
+
+    // Connect while holding the write lock: the sync core's first status update (which needs
+    // powersync_control on the write connection) is then guaranteed to arrive after the CRUD
+    // upload loop's initial read-only pass reports its upload state.
+    let releaseWriteLock!: () => void;
+    const writeLockHeld = new Promise<void>((lockHeld) => {
+      database.writeLock(() => {
+        lockHeld();
+        return new Promise<void>((release) => (releaseWriteLock = release));
+      });
+    });
+    await writeLockHeld;
+
+    database.connect(new TestConnector(), options);
+    await vi.waitFor(() => expect(statuses).not.toHaveLength(0));
+    releaseWriteLock();
+    await database.waitForStatus((s) => s.connected);
+
+    // The restored state must survive connecting - no emitted status may drop it.
+    for (const status of statuses) {
+      expect(status.hasSynced).toBe(true);
+      expect(status.forStream(streamDescription)?.subscription.hasSynced).toBe(true);
+    }
+  });
+
+  mockSyncServiceTest('aborted connect does not clobber offline sync state', async ({ syncService }) => {
+    // Complete a full sync, then close the database.
+    let database = await syncService.createDatabase();
+    database.connect(new TestConnector(), options);
+    await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
+
+    syncService.pushLine(checkpoint({ last_op_id: 0 }));
+    syncService.pushLine({ checkpoint_complete: { last_op_id: '0' } });
+    await database.waitForFirstSync();
+    await database.close();
+    await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(0));
+
+    database = await syncService.createDatabase();
+    expect(database.currentStatus.hasSynced).toBe(true);
+
+    const statuses: SyncStatus[] = [];
+    database.registerListener({
+      statusChanged: (status) => statuses.push(status)
+    });
+
+    // Hold the write lock so that the connection attempt is aborted before the sync core could
+    // report a status for it.
+    let releaseWriteLock!: () => void;
+    const writeLockHeld = new Promise<void>((lockHeld) => {
+      database.writeLock(() => {
+        lockHeld();
+        return new Promise<void>((release) => (releaseWriteLock = release));
+      });
+    });
+    await writeLockHeld;
+
+    database.connect(new TestConnector(), options);
+    await vi.waitFor(() => expect(statuses).not.toHaveLength(0));
+    const disconnected = database.disconnect();
+    releaseWriteLock();
+    await disconnected;
+
+    // Marking the never-connected attempt as disconnected must not drop the restored state.
+    for (const status of statuses) {
+      expect(status.hasSynced).toBe(true);
+    }
+    expect(database.currentStatus.hasSynced).toBe(true);
   });
 
   mockSyncServiceTest('raw tables with inferred statements', async ({ syncService }) => {

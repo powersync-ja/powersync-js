@@ -335,12 +335,19 @@ The next upload iteration will be delayed.`
 
   private markAsDisconnected() {
     const current = this.syncStatus.core;
+    if (current == null) {
+      // The sync core never reported a status for this connection attempt, so there is no
+      // connection state to reset. Synthesizing an empty core status here would clobber sync
+      // state previously restored from the database.
+      return;
+    }
+
     this.updateSyncStatus({
       connected: false,
       connecting: false,
-      priority_status: current?.priority_status ?? [],
+      priority_status: current.priority_status,
       downloading: null,
-      streams: current?.streams ?? []
+      streams: current.streams
     });
   }
 

@@ -167,8 +167,17 @@ export abstract class BasePowerSyncDatabase<Options extends BasePowerSyncDatabas
           const sync = this.generateSyncStreamImplementation(connector, options);
           const onDispose = sync.registerListener({
             statusChanged: (snapshot) => {
-              this.currentStatus = snapshot;
-              this.iterateListeners((cb) => cb.statusChanged?.(snapshot));
+              // A new sync stream implementation can report JavaScript-side state (like upload
+              // progress) before the sync core has reported its first status. Those snapshots
+              // have no core state - keep the known core state (e.g. the offline sync status
+              // resolved during initialization) instead of clobbering it with an empty one.
+              const updatedStatus =
+                snapshot.core == null && this.currentStatus.core != null
+                  ? new SyncStatusSnapshot(this.currentStatus.core, snapshot.jsState)
+                  : snapshot;
+
+              this.currentStatus = updatedStatus;
+              this.iterateListeners((cb) => cb.statusChanged?.(updatedStatus));
             }
           });
           await sync.waitForReady();
