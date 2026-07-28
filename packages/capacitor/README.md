@@ -27,7 +27,7 @@ This package uses `@powersync/web` as a peer dependency. For additional `@powers
 You must also install the following peer dependencies:
 
 ```bash
-npm install @capacitor-community/sqlite @powersync/web @journeyapps/wa-sqlite
+npm install @capacitor-community/sqlite
 ```
 
 See the [Capacitor Community SQLite](https://github.com/capacitor-community/sqlite?tab=readme-ov-file#installation) repository for additional instructions.

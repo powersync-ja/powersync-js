@@ -56,18 +56,17 @@
   "author": "PowerSync",
   "license": "Apache-2.0",
   "peerDependencies": {
-    "@journeyapps/wa-sqlite": "catalog:",
     "@powersync/common": "workspace:^2.0.0",
     "@powersync/shared-internals": "workspace:^1.0.1"
   },
   "dependencies": {
     "@powersync/common": "workspace:*",
     "@powersync/shared-internals": "workspace:*",
+    "@journeyapps/wa-sqlite": "catalog:",
     "comlink": "catalog:",
     "commander": "^12.1.0"
   },
   "devDependencies": {
-    "@journeyapps/wa-sqlite": "^1.7.0",
     "@types/uuid": "catalog:",
     "bson": "catalog:",
     "glob": "catalog:",

@@ -18,7 +18,9 @@ overrides:
   'seroval': '>=1.5.6'
 
 catalog:
-  '@journeyapps/wa-sqlite': ^1.5.0
+  # We must depend on an exact version of wa-sqlite, as we want to update the core extension
+  # (which can be breaking for SDKs) without a major revision.
+  '@journeyapps/wa-sqlite': 2.0.0
   '@microsoft/api-extractor': ^7.58.7
   '@nuxt/devtools-kit': ^3.2.3
   '@nuxt/devtools-ui-kit': ^3.2.3

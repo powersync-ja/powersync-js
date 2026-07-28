@@ -12,7 +12,6 @@
     "test:build": "pnpm build && vitest run"
   },
   "dependencies": {
-    "@journeyapps/wa-sqlite": "^1.7.0",
     "@powersync/web": "^2.0.0"
   },
   "devDependencies": {

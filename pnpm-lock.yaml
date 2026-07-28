@@ -7,8 +7,8 @@ settings:
 catalogs:
   default:
     '@journeyapps/wa-sqlite':
-      specifier: ^1.5.0
-      version: 1.7.0
+      specifier: 2.0.0
+      version: 2.0.0
     '@microsoft/api-extractor':
       specifier: ^7.58.7
       version: 7.58.7
@@ -410,7 +410,7 @@ importers:
     devDependencies:
       '@journeyapps/wa-sqlite':
         specifier: 'catalog:'
-        version: 1.7.0
+        version: 2.0.0
       '@powersync/web':
         specifier: workspace:*
         version: link:../web
@@ -435,7 +435,7 @@ importers:
     devDependencies:
       '@journeyapps/wa-sqlite':
         specifier: 'catalog:'
-        version: 1.7.0
+        version: 2.0.0
       '@powersync/web':
         specifier: workspace:*
         version: link:../web
@@ -783,6 +783,9 @@ importers:
 
   packages/web:
     dependencies:
+      '@journeyapps/wa-sqlite':
+        specifier: 'catalog:'
+        version: 2.0.0
       '@powersync/common':
         specifier: workspace:*
         version: link:../common
@@ -796,9 +799,6 @@ importers:
         specifier: ^12.1.0
         version: 12.1.0
     devDependencies:
-      '@journeyapps/wa-sqlite':
-        specifier: ^1.7.0
-        version: 1.7.0
       '@rollup/plugin-node-resolve':
         specifier: 'catalog:'
         version: 16.0.3(rollup@4.59.0)
@@ -839,8 +839,8 @@ importers:
   tools/diagnostics-app:
     dependencies:
       '@journeyapps/wa-sqlite':
-        specifier: ^1.7.0
-        version: 1.7.0
+        specifier: 'catalog:'
+        version: 2.0.0
       '@monaco-editor/react':
         specifier: ^4.7.0
         version: 4.7.0(monaco-editor@0.55.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -3993,6 +3993,9 @@ packages:
 
   '@journeyapps/wa-sqlite@1.7.0':
     resolution: {integrity: sha512-xQZ670aKDo4FWxIFpLqY0AGDpURr09aYIO08UkLdWvFw8C018nCiqY0ILJudGRhRdXORhv7K2xD2OXZ2QxU39w==}
+
+  '@journeyapps/wa-sqlite@2.0.0':
+    resolution: {integrity: sha512-rRvA568ybaop0vFmKLv3eUzG9Cwf04G3S16bKibrKzpcq6loBQxgVcJgbN6CfFAXd/4+uj3F+R3/yKhHZKYh/w==}
 
   '@jridgewell/gen-mapping@0.3.13':
     resolution: {integrity: sha512-2kkt/7niJ6MgEPxF0bYdQ6etZaA+fQvDcLKckhy1yIQOzaoKjBBjSj63/aLVjYE3qhRt5dvM+uUyfCg6UKCBbA==}
@@ -22123,6 +22126,8 @@ snapshots:
       chalk: 4.1.2
 
   '@journeyapps/wa-sqlite@1.7.0': {}
+
+  '@journeyapps/wa-sqlite@2.0.0': {}
 
   '@jridgewell/gen-mapping@0.3.13':
     dependencies:
