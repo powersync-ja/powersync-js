@@ -859,7 +859,7 @@ function defineSyncTests(bson: boolean) {
       statusChanged: (status) => statuses.push(status)
     });
 
-    // Connect while holding the write lock: the sync core's first status update (which needs
+    // Connect while holding the write lock: the core extension's first status update (which needs
     // powersync_control on the write connection) is then guaranteed to arrive after the CRUD
     // upload loop's initial read-only pass reports its upload state.
     let releaseWriteLock!: () => void;
@@ -903,7 +903,7 @@ function defineSyncTests(bson: boolean) {
       statusChanged: (status) => statuses.push(status)
     });
 
-    // Hold the write lock so that the connection attempt is aborted before the sync core could
+    // Hold the write lock so that the connection attempt is aborted before the core extension could
     // report a status for it.
     let releaseWriteLock!: () => void;
     const writeLockHeld = new Promise<void>((lockHeld) => {
