@@ -116,8 +116,6 @@ it('should log worker errors', async () => {
   db.init();
 
   await vi.waitFor(() => {
-    console.log(logs);
-
     expect(logs).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
