@@ -3,6 +3,15 @@ import { Factory as WaSqliteFactory, SQLITE_ROW } from '@journeyapps/wa-sqlite';
 import { loadModuleAndVfs } from './vfs.js';
 import { ResolvedWASQLiteOpenFactoryOptions } from './WASQLiteOpenFactory.js';
 
+/**
+ * The maximum length of a db filename we support.
+ *
+ * We configure the same on WA-SQLite (which otherwise defaults to a maximum length of 64). We don't want to support
+ * very long path names as Safari maps OPFS files directly to OS files, and APFS has a 255-byte filename limit. Since
+ * some VFS append additional characters for pooled file access handles, we want to stay well below that.
+ */
+export const maxPathNameLength = 128;
+
 export interface RawResultSet {
   columns: string[];
   rows: SQLiteCompatibleType[][];
@@ -52,6 +61,7 @@ export class RawSqliteConnection {
 
   private async openSQLiteAPI(): Promise<SQLiteAPI> {
     const { module, vfs } = await loadModuleAndVfs(this.options);
+    vfs.mxPathname = maxPathNameLength;
     const sqlite3 = WaSqliteFactory(module);
     sqlite3.vfs_register(vfs, true);
     /**
