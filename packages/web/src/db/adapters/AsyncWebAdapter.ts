@@ -132,7 +132,7 @@ function readWritePoolState(writer: DatabaseClient, readers: DatabaseClient[]): 
       let timeout: any = null;
       let release: UnlockFn | undefined;
       if (options?.timeoutMs) {
-        timeout = setTimeout(() => abortController.abort(), options.timeoutMs);
+        timeout = setTimeout(() => abortController.abort('requesting database timed out'), options.timeoutMs);
       }
 
       try {
