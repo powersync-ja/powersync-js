@@ -89,7 +89,7 @@ export class WASQLiteOpenFactory implements SQLOpenFactory {
         let workerConnection: WorkerConnection;
         if (typeof optionsDbWorker == 'function') {
           const worker = optionsDbWorker(this.options);
-          workerConnection = connectToExistingWorker(worker, 'database');
+          workerConnection = connectToExistingWorker(worker, this.logger, 'database');
         } else {
           const needsDedicated = vfsRequiresDedicatedWorkers(vfs);
           const useShared = !needsDedicated && enableMultiTabs;
@@ -98,7 +98,8 @@ export class WASQLiteOpenFactory implements SQLOpenFactory {
             service: 'database',
             databaseIdentifier: this.options.dbFilename,
             shared: useShared,
-            customWorker: optionsDbWorker
+            customWorker: optionsDbWorker,
+            loggerForErrors: this.logger
           });
         }
 
