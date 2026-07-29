@@ -167,8 +167,14 @@ export abstract class BasePowerSyncDatabase<Options extends BasePowerSyncDatabas
           const sync = this.generateSyncStreamImplementation(connector, options);
           const onDispose = sync.registerListener({
             statusChanged: (snapshot) => {
-              this.currentStatus = snapshot;
-              this.iterateListeners((cb) => cb.statusChanged?.(snapshot));
+              // For a JavaScriptSyncState update before the sync client was able to resolve the full status from the core extension, use the known offline sync state resolved during initialization.
+              const updatedStatus =
+                snapshot.core == null && this.currentStatus.core != null
+                  ? new SyncStatusSnapshot(this.currentStatus.core, snapshot.jsState)
+                  : snapshot;
+
+              this.currentStatus = updatedStatus;
+              this.iterateListeners((cb) => cb.statusChanged?.(updatedStatus));
             }
           });
           await sync.waitForReady();

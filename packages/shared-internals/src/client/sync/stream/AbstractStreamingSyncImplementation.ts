@@ -336,12 +336,17 @@ The next upload iteration will be delayed.`
 
   private markAsDisconnected() {
     const current = this.syncStatus.core;
+    if (current == null) {
+      // There's no connection attempt for which state could be cleared.
+      return;
+    }
+
     this.updateSyncStatus({
       connected: false,
       connecting: false,
-      priority_status: current?.priority_status ?? [],
+      priority_status: current.priority_status,
       downloading: null,
-      streams: current?.streams ?? []
+      streams: current.streams
     });
   }
 
