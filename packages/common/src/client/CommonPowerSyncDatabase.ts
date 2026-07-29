@@ -343,7 +343,7 @@ export interface CommonPowerSyncDatabase extends BaseObserverInterface<PowerSync
 
   /**
    * Open a read-only transaction.
-   * Read transactions can run concurrently to a write transaction.
+   * When multiple connections are available, read transactions can run concurrently to a write transaction.
    * Changes from any write transaction are not visible to read transactions started before it.
    *
    * @param callback - Function to execute within the transaction

@@ -1,3 +1,4 @@
+import { LogLevels, PowerSyncLogger } from '@powersync/common';
 import { SharedWorkerConnectionRequest, WorkerService } from './SharedWorkerConnectionRequest.js';
 
 export interface OpenWorkerOptions {
@@ -5,6 +6,7 @@ export interface OpenWorkerOptions {
   databaseIdentifier: string;
   customWorker?: string | URL;
   shared: boolean;
+  loggerForErrors: PowerSyncLogger;
 }
 
 export interface WorkerConnection {
@@ -17,7 +19,8 @@ export function connectToWorker({
   service,
   databaseIdentifier,
   customWorker,
-  shared
+  shared,
+  loggerForErrors
 }: OpenWorkerOptions): WorkerConnection {
   const name = `${shared ? 'shared-' : ''}powersync-${databaseIdentifier}`;
   let worker: Worker | SharedWorker;
@@ -38,7 +41,7 @@ export function connectToWorker({
     worker = spawnDefaultPowerSyncWorker(shared, name);
   }
 
-  return connectToExistingWorker(worker, service);
+  return connectToExistingWorker(worker, loggerForErrors, service);
 }
 
 /**
@@ -68,7 +71,23 @@ function spawnDefaultPowerSyncWorker(shared: boolean, name: string): Worker | Sh
       });
 }
 
-export function connectToExistingWorker(worker: Worker | SharedWorker, service: WorkerService): WorkerConnection {
+export function connectToExistingWorker(
+  worker: Worker | SharedWorker,
+  logger: PowerSyncLogger,
+  service: WorkerService
+): WorkerConnection {
+  function logError(event: ErrorEvent) {
+    // TODO: Ideally, we should be able to handle worker errors by forwarding them to async Comlink callers.
+    // Currently, comlink calls on errored workers would just be stuck forever.
+    logger.log({
+      level: LogLevels.error,
+      error: event.error,
+      message: 'Error in database or sync worker, this likely disrupts PowerSync.'
+    });
+  }
+
+  (worker as AbstractWorker).addEventListener('error', logError);
+
   const isShared = isSharedWorker(worker);
   if (isShared) {
     const { port1, port2 } = new MessageChannel();
@@ -81,6 +100,7 @@ export function connectToExistingWorker(worker: Worker | SharedWorker, service: 
       endpoint: port2,
       worker,
       close() {
+        worker.removeEventListener('error', logError);
         port2.close();
       }
     };
@@ -89,6 +109,7 @@ export function connectToExistingWorker(worker: Worker | SharedWorker, service: 
       endpoint: worker as Worker,
       worker,
       close() {
+        worker.removeEventListener('error', logError);
         worker.terminate();
       }
     };

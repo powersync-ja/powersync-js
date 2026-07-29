@@ -206,6 +206,7 @@ export abstract class AbstractStreamingSyncImplementation
   private async _uploadAllCrud(signal: AbortSignal, options: ResolvedSyncOptions): Promise<void> {
     return this.obtainLock({
       type: LockType.CRUD,
+      signal,
       callback: async () => {
         /**
          * Keep track of the first item in the CRUD queue for the last `uploadCrud` iteration.
