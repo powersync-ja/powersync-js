@@ -336,9 +336,7 @@ The next upload iteration will be delayed.`
   private markAsDisconnected() {
     const current = this.syncStatus.core;
     if (current == null) {
-      // The sync core never reported a status for this connection attempt, so there is no
-      // connection state to reset. Synthesizing an empty core status here would clobber sync
-      // state previously restored from the database.
+      // There's no connection attempt for which state could be cleared.
       return;
     }
 
