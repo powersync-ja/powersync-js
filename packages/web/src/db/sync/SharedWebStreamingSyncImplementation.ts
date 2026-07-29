@@ -96,13 +96,14 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
 
     const syncWorker = options.sync?.worker;
     if (typeof syncWorker === 'function') {
-      this.worker = connectToExistingWorker(syncWorker(), 'sync');
+      this.worker = connectToExistingWorker(syncWorker(), options.logger, 'sync');
     } else {
       this.worker = connectToWorker({
         service: 'sync',
         databaseIdentifier: this.webOptions.identifier!,
         shared: true,
-        customWorker: syncWorker
+        customWorker: syncWorker,
+        loggerForErrors: options.logger
       });
     }
 
