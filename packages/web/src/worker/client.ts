@@ -82,7 +82,7 @@ export function connectToExistingWorker(
     logger.log({
       level: LogLevels.error,
       error: event.error,
-      message: 'Error in database or sync worker, this likely discrupts PowerSync.'
+      message: 'Error in database or sync worker, this likely disrupts PowerSync.'
     });
   }
 
