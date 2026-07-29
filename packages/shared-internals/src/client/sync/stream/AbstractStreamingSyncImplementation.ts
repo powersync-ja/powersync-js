@@ -241,6 +241,10 @@ The next upload iteration will be delayed.`
               const neededUpdate = await this.options.adapter.updateLocalTarget(() => this.getWriteCheckpoint());
               if (neededUpdate) {
                 this.notifyCompletedUploads?.();
+              } else if (await this.options.adapter.hasCrud()) {
+                // `updateLocalTarget` also returns false when a local write raced the write checkpoint request. That
+                // write still needs to be uploaded, and no checkpoint can be applied until it is.
+                continue;
               } else if (checkedCrudItem != null) {
                 // Only log this if there was something to upload
                 this.logger.log({ level: LogLevels.debug, message: 'Upload complete, no write checkpoint needed.' });

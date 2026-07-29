@@ -722,6 +722,49 @@ function defineSyncTests(bson: boolean) {
     });
   });
 
+  mockSyncServiceTest('uploads writes made while requesting a write checkpoint', async ({ syncService }) => {
+    let holdWriteCheckpoint = false;
+    let onCheckpointRequested!: () => void;
+    const checkpointRequested = new Promise<void>((resolve) => (onCheckpointRequested = resolve));
+    let releaseCheckpoint!: () => void;
+    const checkpointReleased = new Promise<void>((resolve) => (releaseCheckpoint = resolve));
+
+    syncService.installRequestInterceptor(async (request) => {
+      if (!request.url.includes('/write-checkpoint2.json') || !holdWriteCheckpoint) {
+        return undefined;
+      }
+
+      onCheckpointRequested();
+      await checkpointReleased;
+      return new Response(JSON.stringify({ data: { write_checkpoint: '1' } }), { status: 200 });
+    });
+
+    const database = await syncService.createDatabase();
+    const connector = new TestConnector();
+    const pendingCrud = async () => (await database.get<{ c: number }>('SELECT count(*) AS c FROM ps_crud')).c;
+
+    // Complete a transaction outside of the upload loop, which leaves the local write target set with an empty queue.
+    await database.execute('INSERT INTO lists (id, name) VALUES (uuid(), ?)', ['completed outside the loop']);
+    const transaction = await database.getNextCrudTransaction();
+    await transaction!.complete();
+
+    // The first upload iteration finds nothing to upload and requests a write checkpoint, which we hold open.
+    holdWriteCheckpoint = true;
+    database.connect(connector, { ...options, crudUploadThrottleMs: 100 });
+    await checkpointRequested;
+
+    // Ignore CRUD notifications, so that the loop can only recover by noticing the queue itself.
+    const sync = (database as BasePowerSyncDatabase).syncStreamImplementation!;
+    sync.triggerCrudUpload = () => {};
+
+    await database.execute('INSERT INTO lists (id, name) VALUES (uuid(), ?)', ['raced write']);
+    expect(await pendingCrud()).toBe(1);
+    releaseCheckpoint();
+
+    await vi.waitFor(async () => expect(await pendingCrud()).toBe(0));
+    expect(connector.uploadDataInvocations).toBeGreaterThanOrEqual(1);
+  });
+
   mockSyncServiceTest('should update sync state incrementally', async ({ syncService }) => {
     const powersync = await syncService.createDatabase();
     powersync.connect(new TestConnector(), options);
