@@ -3,6 +3,15 @@ import { TemporaryStorageOption, WebSpecificOpenOptions } from './options.js';
 import { vfsRequiresDedicatedWorkers, WASQLiteVFS } from './wa-sqlite/vfs.js';
 
 /**
+ * The maximum length of a db filename we support.
+ *
+ * We configure the same on WA-SQLite (which otherwise defaults to a maximum length of 64). We don't want to support
+ * very long path names as Safari maps OPFS files directly to OS files, and APFS has a 255-byte filename limit. Since
+ * some VFS append additional characters for pooled file access handles, we want to stay well below that.
+ */
+export const maxPathNameLength = 128;
+
+/**
  * @internal
  */
 export function resolveAndValidateOptions<And = {}>(
