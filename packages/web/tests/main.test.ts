@@ -126,6 +126,45 @@ it('should log worker errors', async () => {
   });
 });
 
+describe('can use long path names', () => {
+  const testedVfs = [
+    WASQLiteVFS.IDBBatchAtomicVFS,
+    WASQLiteVFS.AccessHandlePoolVFS,
+    WASQLiteVFS.OPFSCoopSyncVFS,
+    WASQLiteVFS.OPFSWriteAheadVFS,
+    WASQLiteVFS.InMemoryVfs
+  ];
+
+  for (const vfs of testedVfs) {
+    describe(vfs, () => {
+      it('should be able to use database names exceeding 64 characters', async () => {
+        const db = generateTestDb({
+          schema: TEST_SCHEMA,
+          logger: defaultTestLogger,
+          database: {
+            dbFilename: vfs + 'a'.repeat(70),
+            vfs
+          }
+        });
+        await db.init();
+      });
+
+      it('throws when opening database with path exceeding 112 characters', async () => {
+        expect(() => {
+          new PowerSyncDatabase({
+            schema: TEST_SCHEMA,
+            logger: defaultTestLogger,
+            database: {
+              dbFilename: vfs + 'a'.repeat(112),
+              vfs
+            }
+          });
+        }).toThrow('dbFilename too long (max length is 112)');
+      });
+    });
+  }
+});
+
 function describeBasicTests(generateDB: () => PowerSyncDatabase) {
   return () => {
     it('should execute a select query using getAll', async () => {

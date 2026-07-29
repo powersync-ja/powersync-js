@@ -8,7 +8,7 @@ import { DatabaseClient, OpenWorkerConnection } from './DatabaseClient.js';
 import { generateTabCloseSignal } from '../../../shared/tab_close_signal.js';
 import { AsyncDbAdapter, PoolConnection } from '../AsyncWebAdapter.js';
 import { RawWaSqliteDatabaseOptions } from './RawSqliteConnection.js';
-import { resolveAndValidateOptions } from '../resolveAndValidateOptions.js';
+import { maxPathNameLength, resolveAndValidateOptions } from '../resolveAndValidateOptions.js';
 import { connectToExistingWorker, connectToWorker, WorkerConnection } from '../../../worker/client.js';
 
 export interface WASQLiteOpenFactoryOptions {
@@ -25,6 +25,13 @@ export class WASQLiteOpenFactory implements SQLOpenFactory {
 
   constructor(options: WASQLiteOpenFactoryOptions) {
     this.options = resolveAndValidateOptions(options.open);
+
+    // Account for the fact that SQLite might append -journal suffixes
+    const maxLength = maxPathNameLength - 16;
+    if (this.options.dbFilename.length > maxLength) {
+      throw new Error(`dbFilename too long (max length is ${maxLength})`);
+    }
+
     this.logger = options.logger;
   }
 

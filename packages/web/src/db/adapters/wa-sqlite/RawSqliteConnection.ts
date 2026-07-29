@@ -3,6 +3,7 @@ import { Factory as WaSqliteFactory, SQLITE_ROW } from '@journeyapps/wa-sqlite';
 import { loadModuleAndVfs, WASQLiteVFS } from './vfs.js';
 import { TemporaryStorageOption } from '../options.js';
 import { RawQueryResult, SqliteValue } from '@powersync/common';
+import { maxPathNameLength } from '../resolveAndValidateOptions.js';
 
 export interface RawWebResult extends Required<RawQueryResult> {
   autocommit: boolean;
@@ -62,6 +63,7 @@ export class RawSqliteConnection {
 
   private async openSQLiteAPI(): Promise<SQLiteAPI> {
     const { module, vfs } = await loadModuleAndVfs(this.options);
+    vfs.mxPathname = maxPathNameLength;
     const sqlite3 = WaSqliteFactory(module);
     sqlite3.vfs_register(vfs, true);
     /**
