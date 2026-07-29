@@ -5,7 +5,6 @@ import {
   SyncStatusOptions
 } from '@powersync/common';
 import * as Comlink from 'comlink';
-import { getNavigatorLocks } from '../../shared/navigator.js';
 import { AbstractSharedSyncClientProvider } from '../../worker/sync/AbstractSharedSyncClientProvider.js';
 import { ManualSharedSyncPayload, SharedSyncClientEvent } from '../../worker/sync/SharedSyncImplementation.js';
 import { WorkerClient } from '../../worker/sync/WorkerClient.js';
@@ -16,6 +15,7 @@ import {
   WebStreamingSyncImplementationOptions
 } from './WebStreamingSyncImplementation.js';
 import { generateTabCloseSignal } from '../../shared/tab_close_signal.js';
+import { logWorkerErrors } from '../../worker/errors.js';
 
 /**
  * The shared worker will trigger methods on this side of the message port
@@ -128,22 +128,23 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
     const syncWorker = options.sync?.worker;
     if (syncWorker) {
       if (typeof syncWorker === 'function') {
-        this.messagePort = syncWorker(resolvedWorkerOptions).port;
+        this.messagePort = this.workerPort(syncWorker(resolvedWorkerOptions));
       } else {
-        this.messagePort = new SharedWorker(`${syncWorker}`, {
-          /* @vite-ignore */
-          name: `shared-sync-${this.webOptions.identifier}`
-        }).port;
+        this.messagePort = this.workerPort(
+          new SharedWorker(`${syncWorker}`, {
+            /* @vite-ignore */
+            name: `shared-sync-${this.webOptions.identifier}`
+          })
+        );
       }
     } else {
-      this.messagePort = new SharedWorker(
-        new URL('../../worker/sync/SharedSyncImplementation.worker.js', import.meta.url),
-        {
+      this.messagePort = this.workerPort(
+        new SharedWorker(new URL('../../worker/sync/SharedSyncImplementation.worker.js', import.meta.url), {
           /* @vite-ignore */
           name: `shared-sync-${this.webOptions.identifier}`,
           type: 'module'
-        }
-      ).port;
+        })
+      );
     }
 
     /**
@@ -177,6 +178,11 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
      */
 
     this.isInitialized = this._init();
+  }
+
+  private workerPort(worker: SharedWorker): MessagePort {
+    logWorkerErrors(worker, this.logger);
+    return worker.port;
   }
 
   protected async _init() {

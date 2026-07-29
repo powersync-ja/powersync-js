@@ -29,6 +29,12 @@ test('supports concurrent reads', async () => {
       await Promise.all([ctx1.execute('SELECT 1'), ctx2.execute('SELECT 2')]);
     });
   });
+
+  // We can't use concurrent write transactions, but we should be able to abort.
+  await db.writeLock(async () => {
+    // Acquiring a second write lock with a timeout should throw.
+    await expect(db.writeTransaction(async () => {}, 100)).rejects.toThrow('timed out');
+  });
 });
 
 test('can update schema', async () => {

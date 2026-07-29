@@ -135,16 +135,24 @@ export class WASQLiteOpenFactory implements SQLOpenFactory {
       ): Promise<DatabaseClient> => {
         const workerPort =
           typeof optionsDbWorker == 'function'
-            ? resolveWorkerDatabasePortFactory(() =>
-                optionsDbWorker({
-                  ...this.options,
-                  temporaryStorage,
-                  cacheSizeKb,
-                  flags: this.resolvedFlags,
-                  encryptionKey
-                })
+            ? resolveWorkerDatabasePortFactory(
+                () =>
+                  optionsDbWorker({
+                    ...this.options,
+                    temporaryStorage,
+                    cacheSizeKb,
+                    flags: this.resolvedFlags,
+                    encryptionKey
+                  }),
+                this.logger
               )
-            : openWorkerDatabasePort(this.options.dbFilename, enableMultiTabs, optionsDbWorker, this.waOptions.vfs);
+            : openWorkerDatabasePort(
+                this.options.dbFilename,
+                enableMultiTabs,
+                optionsDbWorker,
+                this.waOptions.vfs,
+                this.logger
+              );
 
         const source = Comlink.wrap<OpenWorkerConnection>(workerPort);
         const closeSignal = new AbortController();
