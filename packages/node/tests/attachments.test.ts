@@ -933,21 +933,6 @@ describe('attachment queue - transport', () => {
     expect(transportDelete).toHaveBeenCalled();
     expect(mockDeleteFile).not.toHaveBeenCalled();
   });
-
-  it('throws when neither remoteStorage nor transportAdapter is provided', () => {
-    // The options type makes this a compile error; cast to exercise the runtime guard
-    // that protects plain-JS callers.
-    expect(
-      () =>
-        new AttachmentQueue({
-          db,
-          watchAttachments,
-          localStorage: mockLocalStorage,
-          syncIntervalMs: INTERVAL_MILLISECONDS,
-          archivedCacheLimit: 0
-        } as any)
-    ).toThrow(/remoteStorage/);
-  });
 });
 
 describe('attachment queue - saveFileFromUri', () => {

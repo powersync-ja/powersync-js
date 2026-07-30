@@ -4,7 +4,7 @@ import type { AttachmentRecord, AttachmentTransportAdapter, LocatedAttachmentRec
  * Describes the HTTP request used to upload a file's bytes to remote storage.
  * Typically points at a presigned URL.
  */
-export interface ReactNativeFSUploadRequest {
+export interface ReactNativeFileSystemUploadRequest {
   /** Destination URL (e.g. a presigned upload URL). */
   url: string;
   /** HTTP method. Defaults to `PUT`. */
@@ -24,7 +24,7 @@ export interface ReactNativeFSUploadRequest {
  * Describes the HTTP request used to download a file's bytes from remote storage.
  * Typically points at a presigned URL.
  */
-export interface ReactNativeFSDownloadRequest {
+export interface ReactNativeFileSystemDownloadRequest {
   /** Source URL (e.g. a presigned download URL). */
   url: string;
   /** Additional request headers. */
@@ -32,18 +32,18 @@ export interface ReactNativeFSDownloadRequest {
 }
 
 /**
- * Configuration for {@link ReactNativeFSTransportAdapter}.
+ * Configuration for {@link ReactNativeFileSystemTransportAdapter}.
  *
  * The resolvers map an attachment to the request that transfers its bytes, keeping
  * the transport agnostic of the remote storage backend (S3, Supabase, etc.).
  */
-export interface ReactNativeFSTransportAdapterOptions {
+export interface ReactNativeFileSystemTransportAdapterOptions {
   /** Resolves the upload request (e.g. a presigned URL) for an attachment. */
-  resolveUpload: (attachment: LocatedAttachmentRecord) => Promise<ReactNativeFSUploadRequest> | ReactNativeFSUploadRequest;
+  resolveUpload: (attachment: LocatedAttachmentRecord) => Promise<ReactNativeFileSystemUploadRequest> | ReactNativeFileSystemUploadRequest;
   /** Resolves the download request (e.g. a presigned URL) for an attachment. */
   resolveDownload: (
     attachment: LocatedAttachmentRecord
-  ) => Promise<ReactNativeFSDownloadRequest> | ReactNativeFSDownloadRequest;
+  ) => Promise<ReactNativeFileSystemDownloadRequest> | ReactNativeFileSystemDownloadRequest;
   /**
    * Deletes the attachment's file from remote storage (e.g. a storage SDK call or a
    * `DELETE` request). Delete is a plain remote operation, not a file transfer.
@@ -52,7 +52,7 @@ export interface ReactNativeFSTransportAdapterOptions {
 }
 
 /**
- * ReactNativeFSTransportAdapter transfers attachment bytes directly between a local
+ * ReactNativeFileSystemTransportAdapter transfers attachment bytes directly between a local
  * file and remote storage using `@dr.pogodin/react-native-fs`'s native
  * `uploadFiles` / `downloadFile`.
  *
@@ -63,10 +63,10 @@ export interface ReactNativeFSTransportAdapterOptions {
  * @experimental
  * @alpha This is currently experimental and may change without a major version bump.
  */
-export class ReactNativeFSTransportAdapter implements AttachmentTransportAdapter {
+export class ReactNativeFileSystemTransportAdapter implements AttachmentTransportAdapter {
   private rnfs: typeof import('@dr.pogodin/react-native-fs');
 
-  constructor(private options: ReactNativeFSTransportAdapterOptions) {
+  constructor(private options: ReactNativeFileSystemTransportAdapterOptions) {
     let rnfs: typeof import('@dr.pogodin/react-native-fs');
     try {
       rnfs = require('@dr.pogodin/react-native-fs');

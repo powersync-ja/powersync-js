@@ -224,9 +224,6 @@ export class AttachmentQueue<TLocal extends LocalStorageAdapter = LocalStorageAd
     this.logger = logger ?? db.logger;
     this.attachmentService = new AttachmentService(db, this.logger, tableName, archivedCacheLimit);
 
-    if (!transportAdapter && !remoteStorage) {
-      throw new Error('AttachmentQueue requires either a `remoteStorage` or a `transportAdapter`.');
-    }
     const transport = transportAdapter ?? new BufferedAttachmentTransport(localStorage, remoteStorage!);
 
     this.syncingService = new SyncingService(
