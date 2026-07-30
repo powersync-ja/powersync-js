@@ -1,6 +1,11 @@
 import { promises as fs } from 'fs';
 import * as path from 'path';
-import { AttachmentData, EncodingType, StreamingLocalStorageAdapter } from '@powersync/common';
+import { AttachmentData, AttachmentTransportAdapter, EncodingType, StreamingLocalStorageAdapter } from '@powersync/common';
+
+import {
+  NodeFileSystemTransportAdapter,
+  NodeFileSystemTransportAdapterOptions
+} from './NodeFileSystemTransportAdapter.js';
 
 /**
  * NodeFileSystemAdapter implements LocalStorageAdapter using Node.js filesystem.
@@ -8,6 +13,14 @@ import { AttachmentData, EncodingType, StreamingLocalStorageAdapter } from '@pow
  */
 export class NodeFileSystemAdapter implements StreamingLocalStorageAdapter {
   constructor(private storageDirectory: string = './user_data') {}
+
+  /**
+   * Creates a streaming transport that transfers bytes between local files and remote
+   * storage without materializing them in the JS heap.
+   */
+  createTransportAdapter(options: NodeFileSystemTransportAdapterOptions): AttachmentTransportAdapter {
+    return new NodeFileSystemTransportAdapter(options);
+  }
 
   async initialize(): Promise<void> {
     const dir = path.resolve(this.storageDirectory);
