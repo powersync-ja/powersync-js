@@ -1,5 +1,9 @@
 export * from './ExpoFileSystemStorageAdapter.js';
-export * from './ExpoFileSystemTransportAdapter.js';
+export type {
+  ExpoUploadRequest,
+  ExpoDownloadRequest,
+  ExpoFileSystemTransportAdapterOptions
+} from './ExpoFileSystemTransportAdapter.js';
 export * from './ReactNativeFileSystemStorageAdapter.js';
 export type {
   ReactNativeFileSystemUploadRequest,

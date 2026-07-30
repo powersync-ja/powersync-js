@@ -91,18 +91,17 @@ The queue takes **exactly one** remote mechanism: either `remoteStorage` or `tra
 
 Both transports are backend-agnostic: you supply resolver callbacks that map an attachment to a request (typically a presigned URL from your backend).
 
-### With Expo File System (`uploadAsync` / `downloadAsync`)
+### With Expo File System (`File.upload` / `File.downloadFileAsync`)
+
+> The Expo streaming transport requires **Expo SDK 56+** (`expo-file-system >=56`). The `ExpoFileSystemStorageAdapter` itself still works on Expo SDK 54+.
 
 ```typescript
-import {
-  ExpoFileSystemStorageAdapter,
-  ExpoFileSystemTransportAdapter
-} from '@powersync/attachments-storage-react-native';
+import { ExpoFileSystemStorageAdapter } from '@powersync/attachments-storage-react-native';
 import { AttachmentQueue } from '@powersync/react-native';
 
 const localStorage = new ExpoFileSystemStorageAdapter();
 
-const transportAdapter = new ExpoFileSystemTransportAdapter({
+const transportAdapter = localStorage.createTransportAdapter({
   resolveUpload: async (attachment) => ({
     url: await getSignedUploadUrl(attachment.filename), // from your backend
     httpMethod: 'PUT',
@@ -187,11 +186,12 @@ Implement the `AttachmentTransportAdapter` interface from `@powersync/common`:
 
 ## Supported Versions
 
-| Adapter                               | Library                       | Supported Versions  |
-| ------------------------------------- | ----------------------------- | ------------------- |
-| `ExpoFileSystemStorageAdapter`        | `expo-file-system`            | >=19.0.0 (Expo 54+) |
-| `ExpoFileSystemTransportAdapter`      | `expo-file-system`            | >=19.0.0 (Expo 54+) |
-| `ReactNativeFileSystemStorageAdapter` | `@dr.pogodin/react-native-fs` | ^2.25.0             |
+| Adapter                               | Library                       | Supported Versions               |
+| ------------------------------------- | ----------------------------- | -------------------------------- |
+| `ExpoFileSystemStorageAdapter`        | `expo-file-system`            | >=19.0.0 (Expo 54+)              |
+| `ReactNativeFileSystemStorageAdapter` | `@dr.pogodin/react-native-fs` | ^2.25.0                          |
+
+Streaming transports are created via `localStorage.createTransportAdapter(...)`. The Expo streaming transport additionally requires `expo-file-system >=56` (Expo SDK 56+).
 
 ## License
 
