@@ -98,6 +98,8 @@ export class OPSQLiteDBAdapter extends DBAdapter {
     this.loadAdditionalExtensions(DB);
     this.loadPowerSyncExtension(DB);
 
+    await DB.execute('SELECT powersync_init()');
+
     return new OPSQLiteConnection({
       baseDB: DB
     });
