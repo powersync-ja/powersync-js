@@ -129,14 +129,11 @@ const attachmentQueue = new AttachmentQueue({
 Identical options shape. The upload is sent as a raw binary `PUT` (`binaryStreamOnly`), suitable for presigned S3/Supabase URLs.
 
 ```typescript
-import {
-  ReactNativeFileSystemStorageAdapter,
-  ReactNativeFileSystemTransportAdapter
-} from '@powersync/attachments-storage-react-native';
+import { ReactNativeFileSystemStorageAdapter } from '@powersync/attachments-storage-react-native';
 
 const localStorage = new ReactNativeFileSystemStorageAdapter();
 
-const transportAdapter = new ReactNativeFileSystemTransportAdapter({
+const transportAdapter = localStorage.createTransportAdapter({
   resolveUpload: async (attachment) => ({
     url: await getSignedUploadUrl(attachment.filename),
     httpMethod: 'PUT',
@@ -195,7 +192,6 @@ Implement the `AttachmentTransportAdapter` interface from `@powersync/common`:
 | `ExpoFileSystemStorageAdapter`        | `expo-file-system`            | >=19.0.0 (Expo 54+) |
 | `ExpoFileSystemTransportAdapter`      | `expo-file-system`            | >=19.0.0 (Expo 54+) |
 | `ReactNativeFileSystemStorageAdapter` | `@dr.pogodin/react-native-fs` | ^2.25.0             |
-| `ReactNativeFileSystemTransportAdapter`       | `@dr.pogodin/react-native-fs` | ^2.25.0             |
 
 ## License
 

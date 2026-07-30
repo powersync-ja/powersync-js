@@ -1,5 +1,10 @@
 import { decode as decodeBase64, encode as encodeBase64 } from 'base64-arraybuffer';
-import type { AttachmentData, StreamingLocalStorageAdapter } from '@powersync/common';
+import type { AttachmentData, AttachmentTransportAdapter, StreamingLocalStorageAdapter } from '@powersync/common';
+
+import {
+  ReactNativeFileSystemTransportAdapter,
+  ReactNativeFileSystemTransportAdapterOptions
+} from './ReactNativeFileSystemTransportAdapter.js';
 
 /**
  * ReactNativeFileSystemStorageAdapter implements LocalStorageAdapter using @dr.pogodin/react-native-fs.
@@ -24,6 +29,14 @@ To use the React Native File System attachment adapter please install @dr.pogodi
     this.rnfs = rnfs;
     // Default to a subdirectory in the document directory
     this.storageDirectory = storageDirectory ?? `${this.rnfs.DocumentDirectoryPath}/attachments/`;
+  }
+
+  /**
+   * Creates a streaming transport that transfers bytes between local files and remote
+   * storage natively, reusing this adapter's resolved `@dr.pogodin/react-native-fs` module.
+   */
+  createTransportAdapter(options: ReactNativeFileSystemTransportAdapterOptions): AttachmentTransportAdapter {
+    return new ReactNativeFileSystemTransportAdapter(this.rnfs, options);
   }
 
   async initialize(): Promise<void> {

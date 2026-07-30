@@ -64,19 +64,10 @@ export interface ReactNativeFileSystemTransportAdapterOptions {
  * @alpha This is currently experimental and may change without a major version bump.
  */
 export class ReactNativeFileSystemTransportAdapter implements AttachmentTransportAdapter {
-  private rnfs: typeof import('@dr.pogodin/react-native-fs');
-
-  constructor(private options: ReactNativeFileSystemTransportAdapterOptions) {
-    let rnfs: typeof import('@dr.pogodin/react-native-fs');
-    try {
-      rnfs = require('@dr.pogodin/react-native-fs');
-    } catch (e) {
-      throw new Error(`Could not resolve @dr.pogodin/react-native-fs.
-To use the React Native File System transport please install @dr.pogodin/react-native-fs.`);
-    }
-
-    this.rnfs = rnfs;
-  }
+  constructor(
+    private rnfs: typeof import('@dr.pogodin/react-native-fs'),
+    private options: ReactNativeFileSystemTransportAdapterOptions
+  ) {}
 
   async upload(attachment: LocatedAttachmentRecord): Promise<void> {
     const request = await this.options.resolveUpload(attachment);
