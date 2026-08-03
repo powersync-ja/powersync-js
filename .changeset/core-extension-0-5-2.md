@@ -4,6 +4,8 @@
 '@powersync/node': patch
 '@powersync/react-native': patch
 '@powersync/shared-internals': patch
+'@powersync/tauri-plugin': patch
+'tauri-plugin-powersync': patch
 ---
 
 Update PowerSync SQLite core extension to version 0.5.2.
