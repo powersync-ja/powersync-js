@@ -1,5 +1,15 @@
 # @powersync/tauri-plugin
 
+## 0.0.6
+
+### Patch Changes
+
+- 3d1fd84: Update PowerSync SQLite core extension to version 0.5.2.
+- Updated dependencies [3d1fd84]
+- Updated dependencies [669ba97]
+- Updated dependencies [bc50ecc]
+  - @powersync/shared-internals@1.1.0
+
 ## 0.0.5
 
 ### Patch Changes
