@@ -5,6 +5,7 @@
 '@powersync/react-native': patch
 '@powersync/shared-internals': patch
 '@powersync/tauri-plugin': patch
+'@powersync/nuxt': patch
 'tauri-plugin-powersync': patch
 ---
 
