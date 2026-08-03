@@ -18,16 +18,6 @@ See a summary of features [here](https://docs.powersync.com/client-sdk-reference
 npm install @powersync/web
 ```
 
-## Install Peer Dependency: WA-SQLite
-
-This SDK currently requires `@journeyapps/wa-sqlite` as a peer dependency.
-
-Install it in your app with:
-
-```bash
-npm install @journeyapps/wa-sqlite
-```
-
 ### Encryption with Multiple Ciphers
 
 To enable encryption you need to specify an encryption key when instantiating the PowerSync database.

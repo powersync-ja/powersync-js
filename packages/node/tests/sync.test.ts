@@ -144,7 +144,7 @@ describe('Sync', () => {
 
     // Replicate what we'd see on the web when switching connections in the shared sync worker: The sync client would
     // suddenly see a database without an active sync iteration.
-    await database.execute('SELECT powersync_control(?, null)', ['stop']);
+    await database.writeTransaction((tx) => tx.execute('SELECT powersync_control(?, null)', ['stop']));
     (database as BasePowerSyncDatabase).syncStreamImplementation!.markConnectionMayHaveChanged();
     await database.waitForStatus((s) => !s.connected);
     await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));

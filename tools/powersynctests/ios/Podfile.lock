@@ -25,9 +25,9 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - powersync-react-native (1.35.6):
+  - powersync-react-native (2.0.0):
     - hermes-engine
-    - powersync-sqlite-core (~> 0.4.12)
+    - powersync-sqlite-core (~> 0.5.2)
     - RCTRequired
     - RCTTypeSafety
     - React
@@ -50,7 +50,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - powersync-sqlite-core (0.4.14)
+  - powersync-sqlite-core (0.5.2)
   - RCTDeprecation (0.86.0)
   - RCTRequired (0.86.0)
   - RCTSwiftUI (0.86.0)
@@ -2126,8 +2126,8 @@ SPEC CHECKSUMS:
   FBLazyVector: b3e7ad108f0d882e30445c5527d774e3fd432f3d
   hermes-engine: 55148b6d9f59a81514e4602d9af4759dd288f194
   op-sqlite: 6e75f040190a3bbd46758c08d252980c3a466e69
-  powersync-react-native: 5103c1f81ad39b63df734360f2ba65a26f4b9d19
-  powersync-sqlite-core: 6ce0b8b254812855e4ec52899ddc3ac6a30bda12
+  powersync-react-native: 419e1144ee8a5aac1571914c8f37a61088a4dd40
+  powersync-sqlite-core: bc08b93d58df5a012e99cd3795ceb2d1bc97e5a3
   RCTDeprecation: 2a74a2c57675e64419bd89078efde81f7c1de90b
   RCTRequired: 30451112e6fef4e6f31b4e7eee0845156e35e4b0
   RCTSwiftUI: 5aaf0b07e747ba749dc6acc94d8bd41eea4b570f

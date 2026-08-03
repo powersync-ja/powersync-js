@@ -5,14 +5,17 @@ import {
   DBAdapter,
   Transaction,
   CrudEntry,
-  CrudBatch
+  CrudBatch,
+  SqliteValue
 } from '@powersync/common';
 
 import {
   BucketStorageAdapter,
   BucketStorageListener,
   PowerSyncControlCommand,
-  PSInternalTable
+  PSInternalTable,
+  rawPowerSyncControl,
+  targetCheckpointRequestId
 } from './BucketStorageAdapter.js';
 import { CrudEntryImpl, CrudEntryJSON } from './CrudEntry.js';
 import { MAX_OP_ID } from '../../../constants.js';
@@ -21,7 +24,6 @@ import { MAX_OP_ID } from '../../../constants.js';
  * @internal
  */
 export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> implements BucketStorageAdapter {
-  public tableNames: Set<string>;
   private updateListener: () => void;
   private _clientId?: Promise<string>;
 
@@ -30,7 +32,6 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
     private logger: PowerSyncLogger
   ) {
     super();
-    this.tableNames = new Set();
     this.updateListener = db.registerListener({
       tablesUpdated: ({ tables }) => {
         if (tables.includes(PSInternalTable.CRUD)) {
@@ -38,15 +39,6 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
         }
       }
     });
-  }
-
-  async init() {
-    const existingTableRows = await this.db.getAll<{ name: string }>(
-      `SELECT name FROM sqlite_master WHERE type='table' AND name GLOB 'ps_data_*'`
-    );
-    for (const row of existingTableRows ?? []) {
-      this.tableNames.add(row.name);
-    }
   }
 
   async dispose() {
@@ -65,28 +57,19 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
     return this._clientId!;
   }
 
-  getMaxOpId() {
-    return MAX_OP_ID;
-  }
-
   async updateLocalTarget(cb: () => Promise<string>): Promise<boolean> {
-    const rs1 = await this.db.getAll(
-      "SELECT target_op FROM ps_buckets WHERE name = '$local' AND target_op = CAST(? as INTEGER)",
-      [MAX_OP_ID]
-    );
-    if (!rs1.length) {
-      // Nothing to update
-      return false;
-    }
-    const rs = await this.db.getOptional<{ seq: number }>(
-      "SELECT seq FROM main.sqlite_sequence WHERE name = 'ps_crud'"
-    );
-    if (!rs) {
-      // Nothing to update
-      return false;
-    }
+    const sequenceBefore = await this.db.readTransaction(async (tx): Promise<number | undefined> => {
+      const currentCheckpoint = await targetCheckpointRequestId(tx);
+      if (currentCheckpoint != MAX_OP_ID) return;
 
-    const seqBefore = rs.seq;
+      const rs = await tx.getOptional<{ seq: number }>("SELECT seq FROM main.sqlite_sequence WHERE name = 'ps_crud'");
+      return rs?.seq;
+    });
+
+    if (sequenceBefore == null) {
+      // Nothing to update
+      return false;
+    }
 
     const opId = await cb();
 
@@ -105,7 +88,7 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
         "SELECT seq FROM main.sqlite_sequence WHERE name = 'ps_crud'"
       );
 
-      if (seqAfter != seqBefore) {
+      if (seqAfter != sequenceBefore) {
         this.logger.log({
           level: LogLevels.debug,
           message: `New data uploaded since write checpoint ${opId} - need new write checkpoint (sequence updated)`
@@ -119,7 +102,7 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
         level: LogLevels.debug,
         message: `Updating target write checkpoint to ${opId}`
       });
-      await tx.execute("UPDATE ps_buckets SET target_op = CAST(? as INTEGER) WHERE name='$local'", [opId]);
+      await targetCheckpointRequestId(tx, opId);
       return true;
     });
   }
@@ -162,23 +145,23 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
       crud: all,
       haveMore: true,
       complete: async (writeCheckpoint?: string) => {
-        return this.writeTransaction(async (tx) => {
-          await tx.execute('DELETE FROM ps_crud WHERE id <= ?', [last.clientId]);
-          if (writeCheckpoint) {
-            const crudResult = await tx.execute('SELECT 1 FROM ps_crud LIMIT 1');
-            if (crudResult.rows?.length) {
-              await tx.execute("UPDATE ps_buckets SET target_op = CAST(? as INTEGER) WHERE name='$local'", [
-                writeCheckpoint
-              ]);
-            }
-          } else {
-            await tx.execute("UPDATE ps_buckets SET target_op = CAST(? as INTEGER) WHERE name='$local'", [
-              this.getMaxOpId()
-            ]);
-          }
-        });
+        return this.handleCrudCheckpoint(last.clientId, writeCheckpoint);
       }
     };
+  }
+
+  handleCrudCheckpoint(lastClientId: number, writeCheckpoint?: string): Promise<void> {
+    return this.writeTransaction(async (tx) => {
+      await tx.execute('DELETE FROM ps_crud WHERE id <= ?', [lastClientId]);
+      if (writeCheckpoint) {
+        const crudResult = await tx.execute('SELECT 1 FROM ps_crud LIMIT 1');
+        if (crudResult.rows?.length) {
+          await targetCheckpointRequestId(tx, writeCheckpoint);
+        }
+      } else {
+        await targetCheckpointRequestId(tx, MAX_OP_ID);
+      }
+    });
   }
 
   async writeTransaction<T>(callback: (tx: Transaction) => Promise<T>, options?: { timeoutMs: number }): Promise<T> {
@@ -187,8 +170,7 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
 
   async control(op: PowerSyncControlCommand, payload: string | Uint8Array | ArrayBuffer | null): Promise<string> {
     return await this.writeTransaction(async (tx) => {
-      const { rawRows } = await tx.executeRaw('SELECT powersync_control(?, ?)', [op, payload]);
-      return rawRows[0][0] as string;
+      return (await rawPowerSyncControl(tx, op, payload as SqliteValue))!;
     });
   }
 

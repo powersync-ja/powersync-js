@@ -77,8 +77,8 @@ describe('usePowerSyncInspectorDiagnostics', () => {
 
     // Verify refreshState was called (it queries synced_at and bucket data)
     const getCalls = getSpy.mock.calls;
-    const hasSyncedAtQuery = getCalls.some((call) => call[0]?.includes('powersync_last_synced_at'));
-    expect(hasSyncedAtQuery).toBe(true);
+    const hasStatusQuery = getCalls.some((call) => call[0]?.includes('powersync_offline_sync_status'));
+    expect(hasStatusQuery).toBe(true);
   });
 
   it('should trigger refreshState when onChangeWithCallback fires', async () => {

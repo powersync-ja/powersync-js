@@ -7,8 +7,8 @@ settings:
 catalogs:
   default:
     '@journeyapps/wa-sqlite':
-      specifier: ^1.5.0
-      version: 1.7.0
+      specifier: 2.0.1
+      version: 2.0.1
     '@microsoft/api-extractor':
       specifier: ^7.58.7
       version: 7.58.7
@@ -250,8 +250,8 @@ importers:
         version: link:../shared-internals
     devDependencies:
       '@powersync/sql-js':
-        specifier: 0.0.9
-        version: 0.0.9
+        specifier: 0.0.11
+        version: 0.0.11
       '@powersync/web':
         specifier: workspace:*
         version: link:../web
@@ -410,7 +410,7 @@ importers:
     devDependencies:
       '@journeyapps/wa-sqlite':
         specifier: 'catalog:'
-        version: 1.7.0
+        version: 2.0.1
       '@powersync/web':
         specifier: workspace:*
         version: link:../web
@@ -435,7 +435,7 @@ importers:
     devDependencies:
       '@journeyapps/wa-sqlite':
         specifier: 'catalog:'
-        version: 1.7.0
+        version: 2.0.1
       '@powersync/web':
         specifier: workspace:*
         version: link:../web
@@ -539,7 +539,7 @@ importers:
     devDependencies:
       '@journeyapps/wa-sqlite':
         specifier: ^1.7.0
-        version: 1.7.0
+        version: 1.7.2
       '@nuxt/module-builder':
         specifier: ^1.0.2
         version: 1.0.2(@nuxt/cli@3.34.0(@nuxt/schema@4.3.1)(cac@6.7.14)(commander@13.1.0)(magicast@0.5.2))(@vue/compiler-core@3.5.35)(esbuild@0.27.3)(typescript@6.0.3)(vue-tsc@3.2.5(typescript@6.0.3))(vue@3.5.30(typescript@6.0.3))
@@ -783,6 +783,9 @@ importers:
 
   packages/web:
     dependencies:
+      '@journeyapps/wa-sqlite':
+        specifier: 'catalog:'
+        version: 2.0.1
       '@powersync/common':
         specifier: workspace:*
         version: link:../common
@@ -796,9 +799,6 @@ importers:
         specifier: ^12.1.0
         version: 12.1.0
     devDependencies:
-      '@journeyapps/wa-sqlite':
-        specifier: ^1.7.0
-        version: 1.7.0
       '@rollup/plugin-node-resolve':
         specifier: 'catalog:'
         version: 16.0.3(rollup@4.59.0)
@@ -839,8 +839,8 @@ importers:
   tools/diagnostics-app:
     dependencies:
       '@journeyapps/wa-sqlite':
-        specifier: ^1.7.0
-        version: 1.7.0
+        specifier: 'catalog:'
+        version: 2.0.1
       '@monaco-editor/react':
         specifier: ^4.7.0
         version: 4.7.0(monaco-editor@0.55.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -3991,8 +3991,11 @@ packages:
     resolution: {integrity: sha512-u3UPsIilWKOM3F9CXtrG8LEJmNxwoCQC/XVj4IKYXvvpx7QIi/Kg1LI5uDmDpKlac62NUtX7eLjRh+jVZcLOzw==}
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
 
-  '@journeyapps/wa-sqlite@1.7.0':
-    resolution: {integrity: sha512-xQZ670aKDo4FWxIFpLqY0AGDpURr09aYIO08UkLdWvFw8C018nCiqY0ILJudGRhRdXORhv7K2xD2OXZ2QxU39w==}
+  '@journeyapps/wa-sqlite@1.7.2':
+    resolution: {integrity: sha512-EVRMzqHtHgJBFcTGOgQ5/YlxrYFSXLFFztC5yo6+jQx2mqFR+a1kkLV4IirquiBzIonjmYXfBtvZ26fmI8r9Nw==}
+
+  '@journeyapps/wa-sqlite@2.0.1':
+    resolution: {integrity: sha512-QhKBS9onDyFwZfXjUYH5E4UFhlRiMilMUv+M/Pba1UKYrHlLl9rjLmKPO7cBldqZGn3+Jfd1QviGDnxNipRziA==}
 
   '@jridgewell/gen-mapping@0.3.13':
     resolution: {integrity: sha512-2kkt/7niJ6MgEPxF0bYdQ6etZaA+fQvDcLKckhy1yIQOzaoKjBBjSj63/aLVjYE3qhRt5dvM+uUyfCg6UKCBbA==}
@@ -5510,8 +5513,8 @@ packages:
   '@poppinss/exception@1.2.3':
     resolution: {integrity: sha512-dCED+QRChTVatE9ibtoaxc+WkdzOSjYTKi/+uacHWIsfodVfpsueo3+DKpgU5Px8qXjgmXkSvhXvSCz3fnP9lw==}
 
-  '@powersync/sql-js@0.0.9':
-    resolution: {integrity: sha512-HX78DscTAD5TRsjT+xEYky3sg0JSKw+B697qyJRK/iZ0Pni/VwbKCQuo9Hk4Tc0PjIQIDMajrvqrpfZz2sbhdQ==}
+  '@powersync/sql-js@0.0.11':
+    resolution: {integrity: sha512-m3wlVMgYlmyaBD9Aii5x91OBFtxi2/YKS56fEP8MTEKW41leClO1pbGC6Dj88pGU9cj05EB3pbBeXgrTAFfqLg==}
 
   '@quansync/fs@1.0.0':
     resolution: {integrity: sha512-4TJ3DFtlf1L5LDMaM6CanJ/0lckGNtJcMjQ1NAV6zDmA0tEHKZtxNKin8EgPaVX1YzljbxckyT2tJrpQKAtngQ==}
@@ -22122,7 +22125,9 @@ snapshots:
       '@types/yargs': 17.0.35
       chalk: 4.1.2
 
-  '@journeyapps/wa-sqlite@1.7.0': {}
+  '@journeyapps/wa-sqlite@1.7.2': {}
+
+  '@journeyapps/wa-sqlite@2.0.1': {}
 
   '@jridgewell/gen-mapping@0.3.13':
     dependencies:
@@ -24289,7 +24294,7 @@ snapshots:
 
   '@poppinss/exception@1.2.3': {}
 
-  '@powersync/sql-js@0.0.9': {}
+  '@powersync/sql-js@0.0.11': {}
 
   '@quansync/fs@1.0.0':
     dependencies:

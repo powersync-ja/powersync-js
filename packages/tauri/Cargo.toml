@@ -18,7 +18,7 @@ tauri = { version = "2.10.3" }
 serde = "1"
 serde_json = { version = "1", features = ["raw_value"] }
 thiserror = "2"
-powersync = { version = "0.0.5", features = ["tokio", "reqwest"] }
+powersync = { version = "0.0.7", features = ["tokio", "reqwest"] }
 reqwest = "0.13.2"
 http-client = { version = "6.5.3", default-features = false }
 rusqlite = { version = "0.39.0", features = ["bundled"] }

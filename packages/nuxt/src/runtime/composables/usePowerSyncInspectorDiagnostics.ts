@@ -11,6 +11,7 @@ import { ref, computed, readonly, onMounted, onUnmounted } from 'vue';
 import { computedAsync } from '@vueuse/core';
 import { usePowerSyncInspector } from './usePowerSyncInspector';
 import type { NuxtDatabaseImplementation } from '../utils/NuxtPowerSyncDatabase';
+import { SyncStatusSnapshot } from '@powersync/shared-internals';
 
 // queries
 const BUCKETS_QUERY = `
@@ -308,17 +309,21 @@ export function usePowerSyncInspectorDiagnostics(): UsePowerSyncInspectorDiagnos
 
   async function refreshState() {
     if (db.value) {
-      const { synced_at } = await db.value.get<{ synced_at: string | null }>(
-        'SELECT powersync_last_synced_at() as synced_at'
+      // FIXME: This relies on internal core extension APIs, why can't this use the
+      // current sync status?
+      const { status: rawStatus } = await db.value.get<{ status: string }>(
+        'SELECT powersync_offline_sync_status() as status'
       );
+      const status = new SyncStatusSnapshot(JSON.parse(rawStatus), null);
+      const hasSyned = status.hasSynced;
 
-      uploadQueueStats.value = await db.value?.getUploadQueueStats(true);
+      uploadQueueStats.value = await db.value.getUploadQueueStats(true);
 
-      if (synced_at != null && !syncStatus.value?.downloading) {
+      if (hasSyned && !syncStatus.value.downloading) {
         // These are potentially expensive queries - do not run during initial sync
         bucketRows.value = await db.value.getAll(BUCKETS_QUERY);
         tableRows.value = await db.value.getAll(TABLES_QUERY);
-      } else if (synced_at != null) {
+      } else if (hasSyned) {
         // Busy downloading, but have already synced once
         bucketRows.value = await db.value.getAll(BUCKETS_QUERY_FAST);
         // Load tables if we haven't yet
