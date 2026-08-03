@@ -7,8 +7,8 @@ settings:
 catalogs:
   default:
     '@journeyapps/wa-sqlite':
-      specifier: 2.0.0
-      version: 2.0.0
+      specifier: 2.0.1
+      version: 2.0.1
     '@microsoft/api-extractor':
       specifier: ^7.58.7
       version: 7.58.7
@@ -410,7 +410,7 @@ importers:
     devDependencies:
       '@journeyapps/wa-sqlite':
         specifier: 'catalog:'
-        version: 2.0.0
+        version: 2.0.1
       '@powersync/web':
         specifier: workspace:*
         version: link:../web
@@ -435,7 +435,7 @@ importers:
     devDependencies:
       '@journeyapps/wa-sqlite':
         specifier: 'catalog:'
-        version: 2.0.0
+        version: 2.0.1
       '@powersync/web':
         specifier: workspace:*
         version: link:../web
@@ -539,7 +539,7 @@ importers:
     devDependencies:
       '@journeyapps/wa-sqlite':
         specifier: ^1.7.0
-        version: 1.7.0
+        version: 1.7.2
       '@nuxt/module-builder':
         specifier: ^1.0.2
         version: 1.0.2(@nuxt/cli@3.34.0(@nuxt/schema@4.3.1)(cac@6.7.14)(commander@13.1.0)(magicast@0.5.2))(@vue/compiler-core@3.5.35)(esbuild@0.27.3)(typescript@6.0.3)(vue-tsc@3.2.5(typescript@6.0.3))(vue@3.5.30(typescript@6.0.3))
@@ -785,7 +785,7 @@ importers:
     dependencies:
       '@journeyapps/wa-sqlite':
         specifier: 'catalog:'
-        version: 2.0.0
+        version: 2.0.1
       '@powersync/common':
         specifier: workspace:*
         version: link:../common
@@ -840,7 +840,7 @@ importers:
     dependencies:
       '@journeyapps/wa-sqlite':
         specifier: 'catalog:'
-        version: 2.0.0
+        version: 2.0.1
       '@monaco-editor/react':
         specifier: ^4.7.0
         version: 4.7.0(monaco-editor@0.55.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -3991,11 +3991,11 @@ packages:
     resolution: {integrity: sha512-u3UPsIilWKOM3F9CXtrG8LEJmNxwoCQC/XVj4IKYXvvpx7QIi/Kg1LI5uDmDpKlac62NUtX7eLjRh+jVZcLOzw==}
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
 
-  '@journeyapps/wa-sqlite@1.7.0':
-    resolution: {integrity: sha512-xQZ670aKDo4FWxIFpLqY0AGDpURr09aYIO08UkLdWvFw8C018nCiqY0ILJudGRhRdXORhv7K2xD2OXZ2QxU39w==}
+  '@journeyapps/wa-sqlite@1.7.2':
+    resolution: {integrity: sha512-EVRMzqHtHgJBFcTGOgQ5/YlxrYFSXLFFztC5yo6+jQx2mqFR+a1kkLV4IirquiBzIonjmYXfBtvZ26fmI8r9Nw==}
 
-  '@journeyapps/wa-sqlite@2.0.0':
-    resolution: {integrity: sha512-rRvA568ybaop0vFmKLv3eUzG9Cwf04G3S16bKibrKzpcq6loBQxgVcJgbN6CfFAXd/4+uj3F+R3/yKhHZKYh/w==}
+  '@journeyapps/wa-sqlite@2.0.1':
+    resolution: {integrity: sha512-QhKBS9onDyFwZfXjUYH5E4UFhlRiMilMUv+M/Pba1UKYrHlLl9rjLmKPO7cBldqZGn3+Jfd1QviGDnxNipRziA==}
 
   '@jridgewell/gen-mapping@0.3.13':
     resolution: {integrity: sha512-2kkt/7niJ6MgEPxF0bYdQ6etZaA+fQvDcLKckhy1yIQOzaoKjBBjSj63/aLVjYE3qhRt5dvM+uUyfCg6UKCBbA==}
@@ -22125,9 +22125,9 @@ snapshots:
       '@types/yargs': 17.0.35
       chalk: 4.1.2
 
-  '@journeyapps/wa-sqlite@1.7.0': {}
+  '@journeyapps/wa-sqlite@1.7.2': {}
 
-  '@journeyapps/wa-sqlite@2.0.0': {}
+  '@journeyapps/wa-sqlite@2.0.1': {}
 
   '@jridgewell/gen-mapping@0.3.13':
     dependencies:
@@ -25040,7 +25040,7 @@ snapshots:
       eslint: 8.57.1
       eslint-config-prettier: 8.10.2(eslint@8.57.1)
       eslint-plugin-eslint-comments: 3.2.0(eslint@8.57.1)
-      eslint-plugin-ft-flow: 2.0.3(@babel/eslint-parser@7.28.6(@babel/core@7.29.0)(eslint@8.57.1))(eslint@8.57.1)
+      eslint-plugin-ft-flow: 2.0.3(@babel/eslint-parser@7.28.6(@babel/core@7.29.7)(eslint@8.57.1))(eslint@8.57.1)
       eslint-plugin-jest: 29.15.0(@typescript-eslint/eslint-plugin@8.57.1(@typescript-eslint/parser@8.57.1(eslint@8.57.1)(typescript@6.0.3))(eslint@8.57.1)(typescript@6.0.3))(eslint@8.57.1)(jest@29.7.0(@types/node@24.10.13))(typescript@6.0.3)
       eslint-plugin-react: 7.37.5(eslint@8.57.1)
       eslint-plugin-react-hooks: 7.0.1(eslint@8.57.1)
@@ -29986,7 +29986,7 @@ snapshots:
       eslint: 8.57.1
       ignore: 5.3.2
 
-  eslint-plugin-ft-flow@2.0.3(@babel/eslint-parser@7.28.6(@babel/core@7.29.0)(eslint@8.57.1))(eslint@8.57.1):
+  eslint-plugin-ft-flow@2.0.3(@babel/eslint-parser@7.28.6(@babel/core@7.29.7)(eslint@8.57.1))(eslint@8.57.1):
     dependencies:
       '@babel/eslint-parser': 7.28.6(@babel/core@7.29.7)(eslint@8.57.1)
       eslint: 8.57.1

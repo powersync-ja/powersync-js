@@ -6,4 +6,4 @@
 '@powersync/shared-internals': patch
 ---
 
-Update PowerSync SQLite core extension to version 0.5.1.
+Update PowerSync SQLite core extension to version 0.5.2.

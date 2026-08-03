@@ -341,13 +341,13 @@ export abstract class BasePowerSyncDatabase<Options extends BasePowerSyncDatabas
         .map((n) => parseInt(n));
     } catch (e: any) {
       throw new Error(
-        `Unsupported powersync extension version. Need >=0.5.1 <0.6.0, got: ${this.sdkVersion}. Details: ${e.message}`
+        `Unsupported powersync extension version. Need >=0.5.2 <0.6.0, got: ${this.sdkVersion}. Details: ${e.message}`
       );
     }
 
-    // Validate >=0.5.1 <0.6.0
-    if (major != 0 || minor != 5 || patch < 1) {
-      throw new Error(`Unsupported powersync extension version. Need >=0.5.1 <0.6.0, got: ${this.sdkVersion}`);
+    // Validate >=0.5.2 <0.6.0
+    if (major != 0 || minor != 5 || patch < 2) {
+      throw new Error(`Unsupported powersync extension version. Need >=0.5.2 <0.6.0, got: ${this.sdkVersion}`);
     }
   }
 
