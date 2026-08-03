@@ -66,11 +66,15 @@ export class SQLJSDBAdapter extends DBAdapter {
     this.dbP = null;
 
     this.writeScheduler = new ControlledExecutor(async (db: SQLJs.Database) => {
-      if (!this.options.persister) {
+      const persister = this.options.persister;
+      if (!persister) {
         return;
       }
 
-      await this.options.persister.writeFile(db.export());
+      const blob = db.export();
+      // Calling export() closes and re-opens the database, so we need to re-install update hooks.
+      this.setup(db);
+      await persister.writeFile(blob);
     });
   }
 
@@ -97,10 +101,12 @@ export class SQLJSDBAdapter extends DBAdapter {
     const db = new SQL.Database(existing);
     this.dbP = (db as any)['db'] as number;
     this._db = db;
-
-    db.exec("SELECT powersync_update_hooks('install')");
-
+    this.setup(db);
     return db;
+  }
+
+  private setup(db: SQLJs.Database) {
+    db.exec("SELECT powersync_update_hooks('install')");
   }
 
   async close() {
@@ -121,11 +127,6 @@ export class SQLJSDBAdapter extends DBAdapter {
       const context = new SqlJsLockContext(db);
       const result = await fn(context);
 
-      // No point to schedule a write if there's no persister.
-      if (this.options.persister) {
-        this.writeScheduler.schedule(db);
-      }
-
       const { rawRows: rawUpdates } = await context.executeRaw("SELECT powersync_update_hooks('get')");
       const updatedTables = JSON.parse(rawUpdates[0][0] as string);
 
@@ -134,6 +135,11 @@ export class SQLJSDBAdapter extends DBAdapter {
           tables: updatedTables
         };
         this.iterateListeners((l) => l.tablesUpdated?.(notification));
+      }
+
+      // No point to schedule a write if there's no persister.
+      if (this.options.persister) {
+        this.writeScheduler.schedule(db);
       }
 
       return result;
