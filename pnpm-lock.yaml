@@ -332,7 +332,7 @@ importers:
         specifier: workspace:*
         version: link:../shared-internals
       '@powersync/web':
-        specifier: workspace:^2.0.0
+        specifier: workspace:^2.1.0
         version: link:../web
     devDependencies:
       '@capacitor-community/sqlite':
@@ -501,7 +501,7 @@ importers:
         specifier: ^4.3.1
         version: 4.3.1(magicast@0.5.2)
       '@powersync/shared-internals':
-        specifier: workspace:^1.0.1
+        specifier: workspace:^1.1.0
         version: link:../shared-internals
       '@tanstack/vue-table':
         specifier: ^8.21.3
@@ -707,7 +707,7 @@ importers:
         specifier: workspace:*
         version: link:../react
       '@powersync/shared-internals':
-        specifier: workspace:^1.0.1
+        specifier: workspace:^1.1.0
         version: link:../shared-internals
       '@tanstack/react-query':
         specifier: ^5.70.0
@@ -762,7 +762,7 @@ importers:
   packages/vue:
     dependencies:
       '@powersync/shared-internals':
-        specifier: workspace:^1.0.1
+        specifier: workspace:^1.1.0
         version: link:../shared-internals
     devDependencies:
       '@powersync/common':

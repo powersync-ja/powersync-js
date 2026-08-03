@@ -1,5 +1,21 @@
 # @powersync/capacitor
 
+## 0.8.1
+
+### Patch Changes
+
+- 3d1fd84: Make `@journeyapps/wa-sqlite` a regular dependency instead of a dev-dependency.
+  When upgrading, you can remove that package from your dependencies if you don't import it directly in your project.
+- Updated dependencies [3d1fd84]
+- Updated dependencies [3d1fd84]
+- Updated dependencies [669ba97]
+- Updated dependencies [8d18368]
+- Updated dependencies [8d18368]
+- Updated dependencies [bc50ecc]
+- Updated dependencies [d1b3622]
+  - @powersync/web@2.1.0
+  - @powersync/shared-internals@1.1.0
+
 ## 0.8.0
 
 ### Minor Changes

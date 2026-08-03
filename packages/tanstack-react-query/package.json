@@ -33,7 +33,7 @@
   "homepage": "https://docs.powersync.com",
   "peerDependencies": {
     "@powersync/common": "workspace:^2.0.0",
-    "@powersync/shared-internals": "workspace:^1.0.1",
+    "@powersync/shared-internals": "workspace:^1.1.0",
     "react": "*"
   },
   "dependencies": {
