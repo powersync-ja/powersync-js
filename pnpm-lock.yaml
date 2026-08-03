@@ -250,8 +250,8 @@ importers:
         version: link:../shared-internals
     devDependencies:
       '@powersync/sql-js':
-        specifier: 0.0.10
-        version: 0.0.10
+        specifier: 0.0.11
+        version: 0.0.11
       '@powersync/web':
         specifier: workspace:*
         version: link:../web
@@ -5513,8 +5513,8 @@ packages:
   '@poppinss/exception@1.2.3':
     resolution: {integrity: sha512-dCED+QRChTVatE9ibtoaxc+WkdzOSjYTKi/+uacHWIsfodVfpsueo3+DKpgU5Px8qXjgmXkSvhXvSCz3fnP9lw==}
 
-  '@powersync/sql-js@0.0.10':
-    resolution: {integrity: sha512-1sakDvham2yxcQ08VWxSvyUuUaEQARc2zNDzRlCvBgLM25l2sO81HxobLwCh8ixhz+Uqv1mxbi/OeDr7JMsUIw==}
+  '@powersync/sql-js@0.0.11':
+    resolution: {integrity: sha512-m3wlVMgYlmyaBD9Aii5x91OBFtxi2/YKS56fEP8MTEKW41leClO1pbGC6Dj88pGU9cj05EB3pbBeXgrTAFfqLg==}
 
   '@quansync/fs@1.0.0':
     resolution: {integrity: sha512-4TJ3DFtlf1L5LDMaM6CanJ/0lckGNtJcMjQ1NAV6zDmA0tEHKZtxNKin8EgPaVX1YzljbxckyT2tJrpQKAtngQ==}
@@ -24294,7 +24294,7 @@ snapshots:
 
   '@poppinss/exception@1.2.3': {}
 
-  '@powersync/sql-js@0.0.10': {}
+  '@powersync/sql-js@0.0.11': {}
 
   '@quansync/fs@1.0.0':
     dependencies:
