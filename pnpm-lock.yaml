@@ -651,10 +651,11 @@ importers:
         version: 0.85.3(@babel/core@7.29.7)(@react-native-community/cli@20.2.0(typescript@6.0.3))(@types/react@19.2.14)(react@19.2.4)
 
   packages/shared-internals:
-    devDependencies:
+    dependencies:
       '@powersync/common':
         specifier: workspace:*
         version: link:../common
+    devDependencies:
       '@rollup/plugin-commonjs':
         specifier: 'catalog:'
         version: 29.0.2(rollup@4.59.0)
