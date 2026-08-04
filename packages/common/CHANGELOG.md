@@ -1,5 +1,11 @@
 # @powersync/common
 
+## 1.57.3
+
+### Patch Changes
+
+- 99d3d7d: Internal: Fix obtaining crud lock not being abortable.
+
 ## 1.57.2
 
 ### Patch Changes
