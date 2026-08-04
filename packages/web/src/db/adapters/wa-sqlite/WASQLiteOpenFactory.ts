@@ -16,6 +16,7 @@ import { MultiDatabaseServer } from '../../../worker/db/MultiDatabaseServer.js';
 import { DatabaseClient, OpenWorkerConnection } from './DatabaseClient.js';
 import { generateTabCloseSignal } from '../../../shared/tab_close_signal.js';
 import { AsyncDbAdapter, PoolConnection } from '../AsyncWebAdapter.js';
+import { maxPathNameLength } from './RawSqliteConnection.js';
 
 export interface WASQLiteOpenFactoryOptions extends WebSQLOpenFactoryOptions {
   vfs?: WASQLiteVFS;
@@ -134,16 +135,24 @@ export class WASQLiteOpenFactory implements SQLOpenFactory {
       ): Promise<DatabaseClient> => {
         const workerPort =
           typeof optionsDbWorker == 'function'
-            ? resolveWorkerDatabasePortFactory(() =>
-                optionsDbWorker({
-                  ...this.options,
-                  temporaryStorage,
-                  cacheSizeKb,
-                  flags: this.resolvedFlags,
-                  encryptionKey
-                })
+            ? resolveWorkerDatabasePortFactory(
+                () =>
+                  optionsDbWorker({
+                    ...this.options,
+                    temporaryStorage,
+                    cacheSizeKb,
+                    flags: this.resolvedFlags,
+                    encryptionKey
+                  }),
+                this.logger
               )
-            : openWorkerDatabasePort(this.options.dbFilename, enableMultiTabs, optionsDbWorker, this.waOptions.vfs);
+            : openWorkerDatabasePort(
+                this.options.dbFilename,
+                enableMultiTabs,
+                optionsDbWorker,
+                this.waOptions.vfs,
+                this.logger
+              );
 
         const source = Comlink.wrap<OpenWorkerConnection>(workerPort);
         const closeSignal = new AbortController();
@@ -219,5 +228,11 @@ function assertValidWASQLiteOpenFactoryOptions(options: WASQLiteOpenFactoryOptio
         `Invalid configuration: The 'useWebWorker' flag must be true when using an OPFS-based VFS (${vfs}).`
       );
     }
+  }
+
+  // Account for the fact that SQLite might append -journal suffixes
+  const maxLength = maxPathNameLength - 16;
+  if (options.dbFilename.length > maxLength) {
+    throw new Error(`dbFilename too long (max length is ${maxLength})`);
   }
 }
