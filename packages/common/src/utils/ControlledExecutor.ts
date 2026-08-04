@@ -65,14 +65,17 @@ export class ControlledExecutor<T> {
 
   private async execute(param: T) {
     this.runningTask = this.task(param);
-    await this.runningTask;
-    this.runningTask = undefined;
+    try {
+      await this.runningTask;
+    } finally {
+      this.runningTask = undefined;
 
-    if (this.pendingTaskParam) {
-      const pendingParam = this.pendingTaskParam;
-      this.pendingTaskParam = undefined;
+      if (this.pendingTaskParam) {
+        const pendingParam = this.pendingTaskParam;
+        this.pendingTaskParam = undefined;
 
-      this.execute(pendingParam);
+        this.execute(pendingParam);
+      }
     }
   }
 }

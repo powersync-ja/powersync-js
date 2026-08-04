@@ -122,6 +122,8 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
   broadCastLogger: ILogger;
   protected readonly database = this.generateReconnectableDatabase();
 
+  private sharedCloseSignal = generateTabCloseSignal();
+
   constructor() {
     super();
     this.ports = [];
@@ -508,7 +510,7 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
     const remote = Comlink.wrap<OpenWorkerConnection>(workerPort);
     const identifier = this.syncParams!.dbParams.dbFilename;
 
-    const clientLockName = await generateTabCloseSignal();
+    const clientLockName = await this.sharedCloseSignal;
 
     /**
      * The open could fail if the tab is closed while we're busy opening the database.

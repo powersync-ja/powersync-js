@@ -1,5 +1,15 @@
 # @powersync/web
 
+## 1.39.1
+
+### Patch Changes
+
+- 99d3d7d: Fix timeout option having no effect with OPFS WriteAhead VFS.
+- 99d3d7d: Log error when a worker fails to load.
+- 99d3d7d: Increase maximum `dbFilename` length to 112 and improve errors (closes https://github.com/powersync-ja/powersync-js/issues/1052).
+- Updated dependencies [99d3d7d]
+  - @powersync/common@1.57.3
+
 ## 1.39.0
 
 ### Minor Changes

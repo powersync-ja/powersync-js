@@ -1,6 +1,8 @@
 import * as Comlink from 'comlink';
 import { vfsRequiresDedicatedWorkers, WASQLiteVFS } from '../../db/adapters/wa-sqlite/vfs.js';
 import { OpenWorkerConnection } from '../../db/adapters/wa-sqlite/DatabaseClient.js';
+import type { ILogger } from '@powersync/common';
+import { logWorkerErrors } from '../errors.js';
 
 /**
  * Opens a shared or dedicated worker which exposes opening of database connections
@@ -9,20 +11,23 @@ export function openWorkerDatabasePort(
   workerIdentifier: string,
   multipleTabs = true,
   worker: string | URL = '',
-  vfs?: WASQLiteVFS
+  vfs?: WASQLiteVFS,
+  logger?: ILogger
 ) {
   const needsDedicated = vfs && vfsRequiresDedicatedWorkers(vfs);
+  let resolvedWorker: Worker | SharedWorker;
 
   if (worker) {
-    return !needsDedicated && multipleTabs
-      ? new SharedWorker(`${worker}`, {
-          /* @vite-ignore */
-          name: `shared-DB-worker-${workerIdentifier}`
-        }).port
-      : new Worker(`${worker}`, {
-          /* @vite-ignore */
-          name: `DB-worker-${workerIdentifier}`
-        });
+    resolvedWorker =
+      !needsDedicated && multipleTabs
+        ? new SharedWorker(`${worker}`, {
+            /* @vite-ignore */
+            name: `shared-DB-worker-${workerIdentifier}`
+          })
+        : new Worker(`${worker}`, {
+            /* @vite-ignore */
+            name: `DB-worker-${workerIdentifier}`
+          });
   } else {
     /**
      *  Webpack V5 can bundle the worker automatically if the full Worker constructor syntax is used
@@ -30,18 +35,21 @@ export function openWorkerDatabasePort(
      *  This enables multi tab support by default, but falls back if SharedWorker is not available
      *  (in the case of Android)
      */
-    return !needsDedicated && multipleTabs
-      ? new SharedWorker(new URL('./WASQLiteDB.worker.js', import.meta.url), {
-          /* @vite-ignore */
-          name: `shared-DB-worker-${workerIdentifier}`,
-          type: 'module'
-        }).port
-      : new Worker(new URL('./WASQLiteDB.worker.js', import.meta.url), {
-          /* @vite-ignore */
-          name: `DB-worker-${workerIdentifier}`,
-          type: 'module'
-        });
+    resolvedWorker =
+      !needsDedicated && multipleTabs
+        ? new SharedWorker(new URL('./WASQLiteDB.worker.js', import.meta.url), {
+            /* @vite-ignore */
+            name: `shared-DB-worker-${workerIdentifier}`,
+            type: 'module'
+          })
+        : new Worker(new URL('./WASQLiteDB.worker.js', import.meta.url), {
+            /* @vite-ignore */
+            name: `DB-worker-${workerIdentifier}`,
+            type: 'module'
+          });
   }
+
+  return resolveWorkerDatabasePortFactory(() => resolvedWorker, logger);
 }
 
 /**
@@ -52,8 +60,12 @@ export function getWorkerDatabaseOpener(workerIdentifier: string, multipleTabs =
   return Comlink.wrap<OpenWorkerConnection>(openWorkerDatabasePort(workerIdentifier, multipleTabs, worker));
 }
 
-export function resolveWorkerDatabasePortFactory(worker: () => Worker | SharedWorker) {
+export function resolveWorkerDatabasePortFactory(worker: () => Worker | SharedWorker, logger?: ILogger) {
   const workerInstance = worker();
+  if (logger) {
+    logWorkerErrors(workerInstance, logger);
+  }
+
   return isSharedWorker(workerInstance) ? workerInstance.port : workerInstance;
 }
 

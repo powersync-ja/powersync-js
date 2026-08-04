@@ -1,6 +1,6 @@
-import { PowerSyncDatabase, WASQLiteOpenFactory, WASQLiteVFS } from '@powersync/web';
+import { createLogger, LogLevel, PowerSyncDatabase, WASQLiteOpenFactory, WASQLiteVFS } from '@powersync/web';
 import { v4 as uuid } from 'uuid';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { TEST_SCHEMA, TestDatabase } from './utils/test-schema.js';
 import { generateTestDb } from './utils/testDb.js';
 // TODO import tests from a common package
@@ -88,6 +88,70 @@ describe('Basic - with in-memory', () => {
   );
 });
 
+it('should log worker errors', async () => {
+  const logger = createLogger('test', { logLevel: LogLevel.TRACE });
+  const logMessages: string[] = [];
+  (logger as any).invoke = (level: any, args: any) => {
+    logMessages.push(args[0]);
+  };
+
+  const db = new PowerSyncDatabase({
+    schema: TEST_SCHEMA,
+    logger,
+    database: new WASQLiteOpenFactory({
+      worker: '/does_not_exist.js',
+      dbFilename: 'test.db',
+      logger
+    })
+  });
+
+  // This will never resolve due to the broken worker.
+  db.init();
+
+  await vi.waitFor(() => {
+    expect(logMessages).toEqual(
+      expect.arrayContaining(['Error in database or sync worker, this likely disrupts PowerSync.'])
+    );
+  });
+});
+
+describe('can use long path names', () => {
+  const testedVfs = [
+    WASQLiteVFS.IDBBatchAtomicVFS,
+    WASQLiteVFS.AccessHandlePoolVFS,
+    WASQLiteVFS.OPFSCoopSyncVFS,
+    WASQLiteVFS.OPFSWriteAheadVFS,
+    WASQLiteVFS.InMemoryVfs
+  ];
+
+  for (const vfs of testedVfs) {
+    describe(vfs, () => {
+      it('should be able to use database names exceeding 64 characters', async () => {
+        const db = generateTestDb({
+          schema: TEST_SCHEMA,
+          database: new WASQLiteOpenFactory({
+            dbFilename: vfs + 'a'.repeat(70),
+            vfs
+          })
+        });
+        await db.init();
+      });
+
+      it('throws when opening database with path exceeding 112 characters', async () => {
+        expect(() => {
+          new PowerSyncDatabase({
+            schema: TEST_SCHEMA,
+            database: new WASQLiteOpenFactory({
+              dbFilename: vfs + 'a'.repeat(112),
+              vfs
+            })
+          });
+        }).toThrow('dbFilename too long (max length is 112)');
+      });
+    });
+  }
+});
+
 function describeBasicTests(generateDB: () => PowerSyncDatabase) {
   return () => {
     it('should execute a select query using getAll', async () => {
@@ -138,6 +202,15 @@ function describeBasicTests(generateDB: () => PowerSyncDatabase) {
         return await tx.getAll<{ name: string }>('SELECT name FROM customers');
       });
       expect(names).deep.equal([{ name: 'name' }]);
+    });
+
+    it('can abort', async () => {
+      const db = generateDB();
+
+      await db.writeLock(async () => {
+        // Acquiring a second write lock with a timeout should throw.
+        await expect(db.writeTransaction(async () => {}, 100)).rejects.toThrow('timed out');
+      });
     });
   };
 }
