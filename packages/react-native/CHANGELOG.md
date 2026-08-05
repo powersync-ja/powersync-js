@@ -1,5 +1,13 @@
 # @powersync/react-native
 
+## 2.0.2
+
+### Patch Changes
+
+- Updated dependencies [c787aaf]
+  - @powersync/shared-internals@1.1.1
+  - @powersync/react@2.0.0
+
 ## 2.0.1
 
 ### Patch Changes

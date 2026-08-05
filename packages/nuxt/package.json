@@ -66,8 +66,8 @@
   "peerDependencies": {
     "@powersync/kysely-driver": "workspace:^2.0.1",
     "@powersync/vue": "workspace:^0.6.0",
-    "@powersync/web": "workspace:^2.1.0",
-    "@powersync/shared-internals": "workspace:^1.1.0"
+    "@powersync/web": "workspace:^2.1.1",
+    "@powersync/shared-internals": "workspace:^1.1.1"
   },
   "peerDependenciesMeta": {
     "@powersync/kysely-driver": {

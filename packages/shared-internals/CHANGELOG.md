@@ -1,5 +1,11 @@
 # @powersync/shared-internals
 
+## 1.1.1
+
+### Patch Changes
+
+- c787aaf: Declare `@powersync/common` as a peer dependency so the main entry point resolves it under strict `node_modules` layouts.
+
 ## 1.1.0
 
 ### Minor Changes
