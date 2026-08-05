@@ -1,5 +1,12 @@
 # @powersync/node
 
+## 0.20.2
+
+### Patch Changes
+
+- Updated dependencies [c787aaf]
+  - @powersync/shared-internals@1.1.1
+
 ## 0.20.1
 
 ### Patch Changes

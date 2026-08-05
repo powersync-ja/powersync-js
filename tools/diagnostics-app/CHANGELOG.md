@@ -1,5 +1,14 @@
 # diagnostics-app
 
+## 0.13.17
+
+### Patch Changes
+
+- Updated dependencies [c787aaf]
+  - @powersync/shared-internals@1.1.1
+  - @powersync/web@2.1.1
+  - @powersync/react@2.0.0
+
 ## 0.13.16
 
 ### Patch Changes

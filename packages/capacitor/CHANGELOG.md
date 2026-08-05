@@ -1,5 +1,13 @@
 # @powersync/capacitor
 
+## 0.8.2
+
+### Patch Changes
+
+- Updated dependencies [c787aaf]
+  - @powersync/shared-internals@1.1.1
+  - @powersync/web@2.1.1
+
 ## 0.8.1
 
 ### Patch Changes
