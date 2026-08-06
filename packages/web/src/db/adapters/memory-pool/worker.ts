@@ -20,8 +20,9 @@ class MemoryDatabaseServer implements DatabaseServer {
       vfs: WASQLiteVFS.InMemoryVfs,
       temporaryStorage: TemporaryStorageOption.MEMORY,
       cacheSizeKb: 50 * 1024,
+      preparedStatementsCache: 0,
       ...options,
-      // The rest of these options is not overridable: The VFS handles /database eads and writes in a special way and
+      // The rest of these options is not overridable: The VFS handles /database reads and writes in a special way and
       // there can only be one database per buffers instance.
       filename: '/database',
       readonly: false
