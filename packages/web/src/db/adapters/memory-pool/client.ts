@@ -93,7 +93,7 @@ function createWriteAheadLogBuffers(options: InMemoryWriteAheadLogPoolOptions): 
  * This database uses a concept known as a write-ahead log: Instead of writing changes directly to the database (which
  * would cause conflicts with readers), the writer appends modified database pages into an append-only overlay log. When
  * readers start a transaction, they consider the main database and items from the log until a specific position,
- * meaning that future appends won't discrupt existing readers.
+ * meaning that future appends won't disrupt existing readers.
  *
  * To avoid the write-ahead log from growing indefinitely, it is regularly copied back into the main database file. This
  * process is called a checkpoint, and in this implementation it blocks all other database access. However, it only
@@ -111,7 +111,7 @@ export class InMemoryWriteAheadLogPool extends DBAdapter {
   // must have a single designated write worker, because sync state is stored on the connection and the sync client
   // relies on this.
   readonly #readers?: Semaphore<PoolWorker>;
-  readonly #underlyingReaders: PoolWorker[];
+  readonly #underlyingReaders: PoolWorker[] = [];
   readonly #writer: PoolWorker;
   readonly #writeLock = new Mutex();
 
@@ -128,7 +128,6 @@ export class InMemoryWriteAheadLogPool extends DBAdapter {
     this.#checkpointThreshold = this.#buffers.writeAheadLog.maxByteLength / 10;
 
     this.#writer = new PoolWorker(this.#buffers, options.database ?? {});
-    this.#underlyingReaders = [];
     for (let i = 0; i < options.numWorkers - 1; i++) {
       this.#underlyingReaders.push(new PoolWorker(this.#buffers, options.database ?? {}));
     }
@@ -336,9 +335,10 @@ class PoolWorker extends LockContext {
       this.#isInitialized = true;
     }
 
-    if (this.#outstandingChanges) {
-      await this.#server.updateWalState(this.#outstandingChanges);
+    const pending = this.#outstandingChanges;
+    if (pending) {
       this.#outstandingChanges = null;
+      await this.#server.updateWalState(pending);
     }
   }
 
