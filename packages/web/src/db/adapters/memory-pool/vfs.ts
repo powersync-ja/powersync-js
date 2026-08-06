@@ -61,7 +61,7 @@ export class InMemoryWriteAheadLog extends FacadeVFS {
           return VFS.SQLITE_IOERR;
         }
 
-        const newFile = new LocalFile(zName, false);
+        const newFile = new LocalFile(zName);
         newFile.deleteOnClose = (flags & VFS.SQLITE_OPEN_DELETEONCLOSE) != 0;
         this.#openedFiles.set(fileId, newFile);
         this.#files.set(zName, newFile);
@@ -278,10 +278,7 @@ class LocalFile {
   buffer = new ArrayBuffer(1024);
   size: number = 0;
 
-  constructor(
-    name: string,
-    readonly isMainDatabase: boolean
-  ) {
+  constructor(name: string) {
     this.name = name;
   }
 

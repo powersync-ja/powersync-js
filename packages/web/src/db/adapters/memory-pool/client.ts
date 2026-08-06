@@ -270,6 +270,7 @@ export class InMemoryWriteAheadLogPool extends DBAdapter {
   }
 
   override async refreshSchema(): Promise<void> {
+    // We only have to refresh readers, as the schema change itself was made on the write connection.
     if (this.#readers) {
       const { items, release } = await this.#readers.requestAll();
       try {
@@ -289,8 +290,7 @@ export class InMemoryWriteAheadLogPool extends DBAdapter {
     const releaseWriter = await this.#writeLock.acquire();
     const readers = await this.#readers?.requestAll();
 
-    await this.#writer.close();
-    await Promise.race([this.#writer.close(), readers?.items.map((e) => e.close())]);
+    await Promise.race([this.#writer.close(), ...(readers?.items ?? []).map((e) => e.close())]);
 
     releaseWriter();
     readers?.release();

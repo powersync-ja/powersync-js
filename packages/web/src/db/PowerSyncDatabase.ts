@@ -174,7 +174,7 @@ export class WebPowerSyncDatabase extends BasePowerSyncDatabase<WebPowerSyncData
 
     if (this.resolvedOpenOptions.ssrMode) {
       return new SSRStreamingSyncImplementation();
-    } else if (this.resolvedOpenOptions.enableMultiTabs && 'shareConnection' in this.database) {
+    } else if (this.resolvedOpenOptions.enableMultiTabs) {
       if (!this.enableBroadcastLogs) {
         const warning = `
             Multiple tabs are enabled, but broadcasting of logs is disabled.
