@@ -71,7 +71,7 @@ function createWriteAheadLogBuffers(options: InMemoryWriteAheadLogPoolOptions): 
  * needs to copy between memory and is usually fairly fast. This implementation checkpoints after a transaction
  * completes and at least 10% of the WAL are used. We might fine-tune this later.
  */
-export class InMemoryWriteAheadLogPool extends DBAdapter {
+export default class InMemoryWriteAheadLogPool extends DBAdapter {
   readonly name: string = `in-memory-${crypto.randomUUID()}`;
 
   readonly #buffers: WriteAheadBuffers;
