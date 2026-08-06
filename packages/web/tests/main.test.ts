@@ -232,6 +232,6 @@ function describeBasicTests(generateDB: () => PowerSyncDatabase) {
         // Acquiring a second write lock with a timeout should throw.
         await expect(db.writeTransaction(async () => {}, 100)).rejects.toThrow('timed out');
       });
-    }, 1000);
+    });
   };
 }
