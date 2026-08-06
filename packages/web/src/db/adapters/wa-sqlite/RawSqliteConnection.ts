@@ -58,7 +58,7 @@ export class RawSqliteConnection {
 
   async init() {
     const { module, vfs } = await loadModuleAndVfs(this.options);
-    this.initWithModule(module, vfs);
+    await this.initWithModule(module, vfs);
   }
 
   async initWithModule(module: any, vfs: any) {
