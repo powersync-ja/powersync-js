@@ -3,6 +3,7 @@ import { DBAdapter, DBLockOptions, LockContext, RawQueryResult } from '@powersyn
 import { applyWalChanges, DatabaseServer, emptyWalState, WalIndexChange, WriteAheadBuffers } from './shared.js';
 import { Mutex, Semaphore } from '@powersync/shared-internals';
 import type { RawWaSqliteDatabaseOptions } from '../wa-sqlite/RawSqliteConnection.js';
+import { acquireFromPool } from '../acquireFromPool.js';
 
 /**
  * Options for a {@link InMemoryWriteAheadLogPool}.
@@ -59,7 +60,19 @@ function createWriteAheadLogBuffers(options: InMemoryWriteAheadLogPoolOptions): 
  *
  * Multiple workers can execute readonly transactions in parallel, and a single writer is allowed to write to the
  * database in parallel to readers. To allow multiple workers to access the same database, this is based on shared array
- * buffers and requires the page to be [cross-origin isolated](https://web.dev/articles/cross-origin-isolation-guide?hl=en).
+ * buffers and requires the page to be [cross-origin isolated](https://web.dev/articles/cross-origin-isolation-guide).
+ *
+ * To use this VFS, pass it to the {@link PowerSyncDatabase} constructor:
+ *
+ * ```TypeScript
+ * import { PowerSyncDatabase, Schema } from '@powersync/web';
+ * import InMemoryWriteAheadLogPool from '@powersync/web/extra/shared-memory-pool';
+ *
+ * const db = new PowerSyncDatabase({
+ *   opened: new InMemoryWriteAheadLogPool({numWorkers: 3}),
+ *   schema: new Schema(...),
+ * });
+ * ```
  *
  * This database uses a concept known as a write-ahead log: Instead of writing changes directly to the database (which
  * would cause conflicts with readers), the writer appends modified database pages into an append-only overlay log. When
@@ -71,13 +84,19 @@ function createWriteAheadLogBuffers(options: InMemoryWriteAheadLogPoolOptions): 
  * needs to copy between memory and is usually fairly fast. This implementation checkpoints after a transaction
  * completes and at least 10% of the WAL are used. We might fine-tune this later.
  */
-export default class InMemoryWriteAheadLogPool extends DBAdapter {
-  readonly name: string = `in-memory-${crypto.randomUUID()}`;
+export class InMemoryWriteAheadLogPool extends DBAdapter {
+  // Note that this name is also used as an identifier for sync navigator locks, so we want it to be unique. As there is
+  // no persistence, the name is not configurable and serves no other purpose.
+  override readonly name: string = `in-memory-${crypto.randomUUID()}`;
 
   readonly #buffers: WriteAheadBuffers;
   readonly #rawWorkers: PoolWorker[] = [];
-  readonly #workers: Semaphore<PoolWorker>;
+
+  // There is nothing that tells the read and write workers apart, and we will use a write worker for reads too. But we
+  // must have a single designated write worker, because the sync connect is stored on the connection.
+  readonly #readers: Semaphore<PoolWorker>;
   readonly #writeLock = new Mutex();
+
   readonly #walState = emptyWalState();
   readonly #checkpointThreshold: number;
 
@@ -89,26 +108,33 @@ export default class InMemoryWriteAheadLogPool extends DBAdapter {
       this.#rawWorkers.push(new PoolWorker(this.#buffers, options.database ?? {}));
     }
 
-    this.#workers = new Semaphore(this.#rawWorkers);
+    this.#readers = new Semaphore(this.#rawWorkers.slice(1));
   }
 
-  async #withWorker<T>(fn: (worker: PoolWorker) => Promise<T>, abortSignal: AbortSignal): Promise<T> {
-    const { item: worker, release } = await this.#workers.requestOne(abortSignal);
-    try {
-      await worker.pushWalState();
-      return await fn(worker);
-    } finally {
-      release();
-    }
+  get #writeWorker() {
+    return this.#rawWorkers[0];
+  }
+
+  async #withWorker<T>(
+    allowReadOnly: boolean,
+    fn: (worker: PoolWorker) => Promise<T>,
+    lockOptions?: DBLockOptions
+  ): Promise<T> {
+    return acquireFromPool(
+      this.#writeLock,
+      this.#writeWorker,
+      this.#readers,
+      async (worker) => {
+        await worker.pushWalState();
+        return await fn(worker);
+      },
+      lockOptions,
+      allowReadOnly
+    );
   }
 
   override readLock<T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions): Promise<T> {
-    const [abortSignal, clearTimeout] = timeoutAbortSignal(options);
-
-    return this.#withWorker(async (worker) => {
-      clearTimeout();
-      return await fn(worker);
-    }, abortSignal);
+    return this.#withWorker(true, fn, options);
   }
 
   #checkpoint() {
@@ -131,27 +157,11 @@ export default class InMemoryWriteAheadLogPool extends DBAdapter {
     }
   }
 
-  /**
-   * Explicitly starts a checkpoint operation copying pages from the write-ahead log into the main database.
-   *
-   * This is primarily exposed for testing purposes.
-   */
-  async checkpoint(): Promise<void> {
-    const { release } = await this.#workers.requestAll();
-    try {
-      await this.#checkpoint();
-    } finally {
-      release();
-    }
-  }
-
   override writeLock<T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions): Promise<T> {
-    const [abortSignal, clearTimeout] = timeoutAbortSignal(options);
-
-    return this.#writeLock.runExclusive(() => {
-      return this.#withWorker(async (worker) => {
+    return this.#withWorker(
+      false, // Don't allow read-only connection
+      async (worker) => {
         try {
-          clearTimeout();
           return await fn(worker);
         } finally {
           const changes = await worker.takeWalChanges();
@@ -159,11 +169,14 @@ export default class InMemoryWriteAheadLogPool extends DBAdapter {
 
           if (changes.walEnd > this.#checkpointThreshold) {
             // Checkpoint. This can't run concurrently to anything else, so acquire remaining workers.
-            const remainingWorkers = this.#workers.size - 1;
+            const remainingWorkers = this.#readers.size - 1;
             if (remainingWorkers > 0) {
-              const { release } = await this.#workers.requestPermits(this.#workers.size - 1);
-              this.#checkpoint();
-              release();
+              const { release } = await this.#readers.requestAll();
+              try {
+                this.#checkpoint();
+              } finally {
+                release();
+              }
             } else {
               this.#checkpoint();
             }
@@ -175,33 +188,40 @@ export default class InMemoryWriteAheadLogPool extends DBAdapter {
             }
           }
         }
-      }, abortSignal);
-    }, abortSignal);
+      },
+      options
+    );
   }
 
   override async refreshSchema(): Promise<void> {
-    const { items, release } = await this.#workers.requestAll();
-    try {
-      await Promise.all(
-        items.map(async (worker) => {
-          await worker.pushWalState();
-          await worker.executeRaw("pragma table_info('sqlite_master')");
-        })
-      );
-    } finally {
-      release();
+    if (this.#readers.size) {
+      const { items, release } = await this.#readers.requestAll();
+      try {
+        await Promise.all(
+          items.map(async (worker) => {
+            await worker.pushWalState();
+            await worker.executeRaw("pragma table_info('sqlite_master')");
+          })
+        );
+      } finally {
+        release();
+      }
     }
   }
 
   override async close(): Promise<void> {
-    const { release } = await this.#workers.requestAll();
+    const releaseWriter = await this.#writeLock.acquire();
+    const { release } = await this.#readers.requestAll();
     for (const worker of this.#rawWorkers) {
       worker.close();
     }
 
+    releaseWriter();
     release();
   }
 }
+
+export default InMemoryWriteAheadLogPool;
 
 class PoolWorker extends LockContext {
   #buffers: WriteAheadBuffers;
@@ -256,21 +276,4 @@ class PoolWorker extends LockContext {
   close() {
     this.#worker.terminate();
   }
-}
-
-/**
- * Converts an optional timeout into an abort signal.
- *
- * Also returns a function that should be called once an inner operation has started to clear the timeout.
- */
-function timeoutAbortSignal(options?: DBLockOptions): [AbortSignal, () => void] {
-  const abortController = new AbortController();
-  const abortSignal = abortController.signal;
-
-  let timeout: any = null;
-  if (options?.timeoutMs) {
-    timeout = setTimeout(() => abortController.abort('requesting database timed out'), options.timeoutMs);
-  }
-
-  return [abortSignal, () => clearTimeout(timeout)];
 }
