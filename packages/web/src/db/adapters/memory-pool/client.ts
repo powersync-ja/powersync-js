@@ -242,13 +242,13 @@ export class InMemoryWriteAheadLogPool extends DBAdapter {
 
   override async close(): Promise<void> {
     const releaseWriter = await this.#writeLock.acquire();
-    const { release } = await this.#readers.requestAll();
+    const readers = this.#readers.size ? await this.#readers.requestAll() : null;
     for (const worker of this.#rawWorkers) {
       worker.close();
     }
 
     releaseWriter();
-    release();
+    readers?.release();
   }
 }
 
