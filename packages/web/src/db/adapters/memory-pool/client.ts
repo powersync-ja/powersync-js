@@ -1,5 +1,5 @@
 import * as Comlink from 'comlink';
-import { DBAdapter, DBLockOptions, LockContext, RawQueryResult } from '@powersync/common';
+import { BatchedUpdateNotification, DBAdapter, DBLockOptions, LockContext, RawQueryResult } from '@powersync/common';
 import { applyWalChanges, DatabaseServer, emptyWalState, WalIndexChange, WriteAheadBuffers } from './shared.js';
 import { Mutex, Semaphore } from '@powersync/shared-internals';
 import type { RawWaSqliteDatabaseOptions } from '../wa-sqlite/RawSqliteConnection.js';
@@ -137,6 +137,9 @@ export class InMemoryWriteAheadLogPool extends DBAdapter {
     return this.#withWorker(true, fn, options);
   }
 
+  /**
+   * Runs a checkpoint operation, moving pages from the write-ahead log to the main database file.
+   */
   #checkpoint() {
     const walBuffer = this.#buffers.writeAheadLog;
     const databaseBuffer = this.#buffers.database;
@@ -157,36 +160,55 @@ export class InMemoryWriteAheadLogPool extends DBAdapter {
     }
   }
 
+  /**
+   * Propagates WAL additions from the writer to other workers, checkpointing if necessary.
+   *
+   * The caller must hold the write lock for the duration of the call.
+   */
+  async #propagateChangesFromWriter(writer: PoolWorker) {
+    const changes = await writer.takeWalChanges();
+    applyWalChanges(this.#walState, changes);
+
+    if (changes.walEnd > this.#checkpointThreshold) {
+      // Checkpoint. This can't run concurrently to anything else, so acquire remaining workers.
+      const remainingWorkers = this.#readers.size - 1;
+      if (remainingWorkers > 0) {
+        const { release } = await this.#readers.requestAll();
+        try {
+          this.#checkpoint();
+        } finally {
+          release();
+        }
+      } else {
+        this.#checkpoint();
+      }
+    } else {
+      for (const otherWorker of this.#rawWorkers) {
+        if (otherWorker !== writer) {
+          otherWorker.addChanges(changes);
+        }
+      }
+    }
+  }
+
   override writeLock<T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions): Promise<T> {
     return this.#withWorker(
       false, // Don't allow read-only connection
       async (worker) => {
         try {
-          return await fn(worker);
-        } finally {
-          const changes = await worker.takeWalChanges();
-          applyWalChanges(this.#walState, changes);
+          const res = await fn(worker);
 
-          if (changes.walEnd > this.#checkpointThreshold) {
-            // Checkpoint. This can't run concurrently to anything else, so acquire remaining workers.
-            const remainingWorkers = this.#readers.size - 1;
-            if (remainingWorkers > 0) {
-              const { release } = await this.#readers.requestAll();
-              try {
-                this.#checkpoint();
-              } finally {
-                release();
-              }
-            } else {
-              this.#checkpoint();
-            }
-          } else {
-            for (const otherWorker of this.#rawWorkers) {
-              if (otherWorker !== worker) {
-                otherWorker.addChanges(changes);
-              }
-            }
+          const {
+            rawRows: [[updates]]
+          } = await worker.executeRaw(`SELECT powersync_update_hooks('get')`);
+          const updatedTables: string[] = JSON.parse(updates as string);
+          if (updatedTables.length) {
+            const notification: BatchedUpdateNotification = { tables: updatedTables };
+            this.iterateListeners((l) => l.tablesUpdated?.(notification));
           }
+          return res;
+        } finally {
+          await this.#propagateChangesFromWriter(worker);
         }
       },
       options

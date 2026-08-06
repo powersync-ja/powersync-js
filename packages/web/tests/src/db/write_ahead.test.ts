@@ -59,6 +59,8 @@ function describeCommonWalTests(generateSource: (name: string) => DatabaseSource
       schema: TEST_SCHEMA
     });
 
+    const changes = db.onChange({ tables: ['customers'] })[Symbol.asyncIterator]();
+
     await db.writeTransaction(async (tx) => {
       expect(await db.getAll('SELECT * FROM customers')).toHaveLength(0);
       await tx.execute('INSERT INTO customers (id, name) VALUES (uuid(), ?)', ['name']);
@@ -66,6 +68,7 @@ function describeCommonWalTests(generateSource: (name: string) => DatabaseSource
       expect(await db.getAll('SELECT * FROM customers')).toHaveLength(0); // No commit yet...
     });
 
+    await changes.next();
     expect(await db.getAll('SELECT * FROM customers')).toHaveLength(1);
 
     // Despite only using one additional read connection, we should be able to support two concurrent readers by using
