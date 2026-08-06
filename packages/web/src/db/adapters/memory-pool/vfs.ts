@@ -250,7 +250,7 @@ class WriteAheadTransaction {
     const newEnd = currentEnd + data.length;
 
     const wal = this.buffers.writeAheadLog;
-    if (newEnd >= wal.byteLength) {
+    if (newEnd > wal.byteLength) {
       if (!this.#growWal(wal, newEnd)) return false;
     }
     this.fileSize = Math.max(this.fileSize, offset + data.length);
@@ -262,7 +262,7 @@ class WriteAheadTransaction {
   }
 
   #growWal(buffer: SharedArrayBuffer, minSize: number) {
-    const newSize = Math.max(minSize, 2 * buffer.byteLength);
+    const newSize = Math.max(minSize, Math.min(2 * buffer.byteLength, buffer.maxByteLength));
     if (newSize > buffer.maxByteLength) {
       return false;
     }

@@ -9,7 +9,14 @@ import {
   queryResultWithoutRows,
   RawQueryResult
 } from '@powersync/common';
-import { applyWalChanges, DatabaseServer, emptyWalState, WalIndexChange, WriteAheadBuffers } from './shared.js';
+import {
+  applyWalChanges,
+  DatabaseServer,
+  emptyWalState,
+  WalIndexChange,
+  WalOverlayEntry,
+  WriteAheadBuffers
+} from './shared.js';
 import { Mutex, Semaphore } from '@powersync/shared-internals';
 import type { RawWaSqliteDatabaseOptions } from '../wa-sqlite/RawSqliteConnection.js';
 import { acquireFromPool } from '../acquireFromPool.js';
@@ -99,11 +106,13 @@ export class InMemoryWriteAheadLogPool extends DBAdapter {
   override readonly name: string = `in-memory-${crypto.randomUUID()}`;
 
   readonly #buffers: WriteAheadBuffers;
-  readonly #rawWorkers: PoolWorker[] = [];
 
   // There is nothing that tells the read and write workers apart, and we will use a write worker for reads too. But we
-  // must have a single designated write worker, because the sync connect is stored on the connection.
-  readonly #readers: Semaphore<PoolWorker>;
+  // must have a single designated write worker, because sync state is stored on the connection and the sync client
+  // relies on this.
+  readonly #readers?: Semaphore<PoolWorker>;
+  readonly #underlyingReaders: PoolWorker[];
+  readonly #writer: PoolWorker;
   readonly #writeLock = new Mutex();
 
   readonly #walState = emptyWalState();
@@ -111,17 +120,22 @@ export class InMemoryWriteAheadLogPool extends DBAdapter {
 
   constructor(options: InMemoryWriteAheadLogPoolOptions) {
     super();
-    this.#buffers = createWriteAheadLogBuffers(options);
-    this.#checkpointThreshold = this.#buffers.writeAheadLog.maxByteLength / 10;
-    for (let i = 0; i < options.numWorkers; i++) {
-      this.#rawWorkers.push(new PoolWorker(this.#buffers, options.database ?? {}));
+    if (options.numWorkers < 1) {
+      throw new Error('Need at least one worker');
     }
 
-    this.#readers = new Semaphore(this.#rawWorkers.slice(1));
-  }
+    this.#buffers = createWriteAheadLogBuffers(options);
+    this.#checkpointThreshold = this.#buffers.writeAheadLog.maxByteLength / 10;
 
-  get #writeWorker() {
-    return this.#rawWorkers[0];
+    this.#writer = new PoolWorker(this.#buffers, options.database ?? {});
+    this.#underlyingReaders = [];
+    for (let i = 0; i < options.numWorkers - 1; i++) {
+      this.#underlyingReaders.push(new PoolWorker(this.#buffers, options.database ?? {}));
+    }
+
+    if (this.#underlyingReaders.length) {
+      this.#readers = new Semaphore(this.#underlyingReaders);
+    }
   }
 
   async #withWorker<T>(
@@ -131,7 +145,7 @@ export class InMemoryWriteAheadLogPool extends DBAdapter {
   ): Promise<T> {
     return acquireFromPool(
       this.#writeLock,
-      this.#writeWorker,
+      this.#writer,
       this.#readers,
       async (worker) => {
         await worker.pushWalState();
@@ -147,24 +161,58 @@ export class InMemoryWriteAheadLogPool extends DBAdapter {
   }
 
   /**
-   * Runs a checkpoint operation, moving pages from the write-ahead log to the main database file.
+   * Moves data from the write-ahead log overlay into the main database file.
+   *
+   * This may only be called with the writers and all readers locked.
    */
-  #checkpoint() {
+  #checkpoint(changes: WalIndexChange) {
     const walBuffer = this.#buffers.writeAheadLog;
     const databaseBuffer = this.#buffers.database;
-    const newFileSize = this.#walState.fileSize;
-    if (databaseBuffer.byteLength < newFileSize) {
-      databaseBuffer.grow(newFileSize);
+    const newFileSize = changes.fileSize;
+
+    // Note: Checkpointing can fail (e.g. due to us exceeding the max db size), in which case we must tell the
+    // writer to drop the WAL changes it has made to consistently roll back the failure after throwing.
+    try {
+      if (databaseBuffer.byteLength < newFileSize) {
+        databaseBuffer.grow(newFileSize);
+      }
+
+      function copyFromWal(dbOffset: number, overlayEntry: WalOverlayEntry) {
+        const source = new Uint8Array(walBuffer, overlayEntry.logOffset, overlayEntry.size);
+        new Uint8Array(databaseBuffer, dbOffset).set(source);
+      }
+
+      // Checkpoint existing entries from previous writes.
+      for (const [pageOffset, overlayEntry] of this.#walState.overlay.entries()) {
+        copyFromWal(pageOffset, overlayEntry);
+      }
+
+      // Checkpoint changes from the last writeLock call that haven't been applied yet.
+      for (let i = 0; i < changes.added.length; i += 2) {
+        const dbOffset = changes.added[i] as number;
+        const walEntry = changes.added[i + 1] as WalOverlayEntry;
+        copyFromWal(dbOffset, walEntry);
+      }
+    } catch (e) {
+      // Checkpointing failed, reset the state in the write worker to the local state here.
+      const allEntries: (number | WalOverlayEntry)[] = [];
+      this.#walState.overlay.forEach((entry, offset) => allEntries.push(offset, entry));
+
+      this.#writer.addChanges({
+        cleared: true,
+        fileSize: this.#walState.fileSize,
+        walEnd: this.#walState.walEnd,
+        added: allEntries
+      });
+
+      throw e;
     }
 
-    for (const [pageOffset, overlayEntry] of this.#walState.overlay.entries()) {
-      const source = new Uint8Array(walBuffer, overlayEntry.logOffset, overlayEntry.size);
-      new Uint8Array(databaseBuffer, pageOffset).set(source);
-    }
-
+    // Checkpoint complete, inform all workers to reset their WAL view when they're used again.
     const cleared: WalIndexChange = { cleared: true, fileSize: newFileSize, walEnd: 0, added: [] };
     applyWalChanges(this.#walState, cleared);
-    for (const worker of this.#rawWorkers) {
+    this.#writer.addChanges(cleared);
+    for (const worker of this.#underlyingReaders) {
       worker.addChanges(cleared);
     }
   }
@@ -176,26 +224,24 @@ export class InMemoryWriteAheadLogPool extends DBAdapter {
    */
   async #propagateChangesFromWriter(writer: PoolWorker) {
     const changes = await writer.takeWalChanges();
-    applyWalChanges(this.#walState, changes);
 
     if (changes.walEnd > this.#checkpointThreshold) {
-      // Checkpoint. This can't run concurrently to anything else, so acquire remaining workers.
-      const remainingWorkers = this.#readers.size - 1;
-      if (remainingWorkers > 0) {
-        const { release } = await this.#readers.requestAll();
-        try {
-          this.#checkpoint();
-        } finally {
-          release();
-        }
-      } else {
-        this.#checkpoint();
+      // Instead of applying these changes to the local overlay and other workers, checkpoint! This can't run
+      // concurrently with anything else, so acquire read workers workers (we already have the  write lock when this
+      // gets called).
+      const acquiredReaders = await this.#readers?.requestAll();
+
+      try {
+        this.#checkpoint(changes);
+      } finally {
+        acquiredReaders?.release();
       }
     } else {
-      for (const otherWorker of this.#rawWorkers) {
-        if (otherWorker !== writer) {
-          otherWorker.addChanges(changes);
-        }
+      // No checkpoint necessary, just forward WAL changes to other workers.
+      applyWalChanges(this.#walState, changes);
+
+      for (const otherWorker of this.#underlyingReaders) {
+        otherWorker.addChanges(changes);
       }
     }
   }
@@ -225,7 +271,7 @@ export class InMemoryWriteAheadLogPool extends DBAdapter {
   }
 
   override async refreshSchema(): Promise<void> {
-    if (this.#readers.size) {
+    if (this.#readers) {
       const { items, release } = await this.#readers.requestAll();
       try {
         await Promise.all(
@@ -242,10 +288,10 @@ export class InMemoryWriteAheadLogPool extends DBAdapter {
 
   override async close(): Promise<void> {
     const releaseWriter = await this.#writeLock.acquire();
-    const readers = this.#readers.size ? await this.#readers.requestAll() : null;
-    for (const worker of this.#rawWorkers) {
-      worker.close();
-    }
+    const readers = await this.#readers?.requestAll();
+
+    await this.#writer.close();
+    await Promise.race([this.#writer.close(), readers?.items.map((e) => e.close())]);
 
     releaseWriter();
     readers?.release();

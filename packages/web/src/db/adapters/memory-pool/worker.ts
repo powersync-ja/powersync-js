@@ -18,7 +18,7 @@ class MemoryDatabaseServer implements DatabaseServer {
     const connection = new RawSqliteConnection({
       encryptionKey: undefined,
       vfs: WASQLiteVFS.InMemoryVfs,
-      temporaryStorage: TemporaryStorageOption.MEMORY,
+      temporaryStorage: TemporaryStorageOption.MEMORY, // Unused, since we register our own VFS
       cacheSizeKb: 50 * 1024,
       preparedStatementsCache: 0,
       ...options,

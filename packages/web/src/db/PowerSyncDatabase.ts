@@ -184,15 +184,22 @@ export class WebPowerSyncDatabase extends BasePowerSyncDatabase<WebPowerSyncData
         logger ? logger.log({ level: LogLevels.warn, message: warning }) : console.warn(warning);
       }
 
-      return new SharedWebStreamingSyncImplementation({
-        ...syncOptions,
-        db: this.database as WebDBAdapter, // This should always be the case
-        logLevel: this.options.sync?.logLevel ?? LogLevels.info,
-        enableBroadcastLogs: this.enableBroadcastLogs
+      if ('shareConnection' in this.database) {
+        return new SharedWebStreamingSyncImplementation({
+          ...syncOptions,
+          db: this.database as WebDBAdapter, // This should always be the case
+          logLevel: this.options.sync?.logLevel ?? LogLevels.info,
+          enableBroadcastLogs: this.enableBroadcastLogs
+        });
+      }
+
+      this.logger.log({
+        level: LogLevels.warn,
+        message: "Not using a shared sync worker because the database adapter doesn't support it."
       });
-    } else {
-      return new TabLocalStreamingSyncImplementation(syncOptions);
     }
+
+    return new TabLocalStreamingSyncImplementation(syncOptions);
   }
 }
 /**

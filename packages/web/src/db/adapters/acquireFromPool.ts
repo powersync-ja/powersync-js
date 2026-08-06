@@ -8,7 +8,7 @@ import type { Mutex, Semaphore, UnlockFn } from '@powersync/shared-internals';
 export async function acquireFromPool<Connection, Res>(
   writerMutex: Mutex,
   writer: Connection,
-  readers: Semaphore<Connection>,
+  readers: Semaphore<Connection> | undefined,
   callback: (connection: Connection) => Promise<Res>,
   options: DBLockOptions | undefined,
   allowReadOnly: boolean
@@ -57,9 +57,7 @@ export async function acquireFromPool<Connection, Res>(
         }
 
         writerMutex.acquire(abortSignal).then((unlock) => completeSuccess(writer, unlock), completeError);
-        if (readers.size) {
-          readers.requestOne(abortSignal).then(({ item, release }) => completeSuccess(item, release), completeError);
-        }
+        readers?.requestOne(abortSignal).then(({ item, release }) => completeSuccess(item, release), completeError);
       });
 
       return await callback(connection);

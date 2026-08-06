@@ -73,7 +73,7 @@ export function applyWalChanges(state: WriteAheadState, changes: WalIndexChange)
 
   for (let i = 0; i < changes.added.length; i += 2) {
     const dbOffset = changes.added[i] as number;
-    const walOffset = changes.added[i + 1] as WalOverlayEntry;
-    state.overlay.set(dbOffset, walOffset);
+    const walEntry = changes.added[i + 1] as WalOverlayEntry;
+    state.overlay.set(dbOffset, walEntry);
   }
 }

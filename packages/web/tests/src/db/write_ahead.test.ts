@@ -24,6 +24,10 @@ describe('in-memory', () => {
     opened: new InMemoryWriteAheadLogPool({ numWorkers: 2 })
   }));
 
+  test('throws without workers', () => {
+    expect(() => new InMemoryWriteAheadLogPool({ numWorkers: 0 })).toThrow();
+  });
+
   describe('handles OOM errors', () => {
     test('in WAL', async () => {
       const adapter = new InMemoryWriteAheadLogPool({ numWorkers: 1, maxWriteAheadLogSize: 4096 });
@@ -36,6 +40,7 @@ describe('in-memory', () => {
 
       // The database should still be usable though
       expect(await adapter.get('PRAGMA user_version')).toStrictEqual({ user_version: 10 });
+      expect(await adapter.getAll('SELECT * FROM sqlite_schema')).toHaveLength(0);
     });
 
     test('in checkpoint', async () => {
@@ -47,7 +52,9 @@ describe('in-memory', () => {
 
       await adapter.executeRaw('PRAGMA user_version = 10;');
       await expect(adapter.executeRaw('CREATE TABLE users (name TEXT);')).rejects.toThrow();
+
       expect(await adapter.get('PRAGMA user_version')).toStrictEqual({ user_version: 10 });
+      expect(await adapter.getAll('SELECT * FROM sqlite_schema')).toHaveLength(0);
     });
   });
 });
