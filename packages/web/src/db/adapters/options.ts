@@ -88,6 +88,14 @@ export interface WebSpecificOpenOptions {
    * A worker will be initialized if none is provided
    */
   workerPort?: MessagePort | undefined;
+
+  /**
+   * If set to a value greater than zero, the worker will cache prepared statements to avoid preparing them every time
+   * a query runs.
+   *
+   * Defaults to 0 (disabling the cache).
+   */
+  preparedStatementsCache?: number;
 }
 
 export interface ResolvedWebSQLOpenOptions extends SQLOpenOptions, WebSpecificOpenOptions {}
