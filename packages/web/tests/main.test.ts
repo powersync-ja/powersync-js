@@ -1,5 +1,5 @@
 import { LogRecord, PowerSyncDatabase, WASQLiteOpenFactory, WASQLiteVFS } from '@powersync/web';
-import { InMemoryWriteAheadLogPool } from '../lib/db/adapters/memory/client.js';
+import { InMemoryWriteAheadLogPool } from '../lib/db/adapters/memory-pool/client.js';
 import { v4 as uuid } from 'uuid';
 import { describe, expect, it, vi } from 'vitest';
 import { TEST_SCHEMA, TestDatabase } from './utils/test-schema.js';

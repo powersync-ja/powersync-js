@@ -49,7 +49,7 @@ function createWriteAheadLogBuffers(options: InMemoryWriteAheadLogPoolOptions): 
   }
 
   return {
-    database: new SharedArrayBuffer(0, { maxByteLength: 4 * gigabyte }),
+    database,
     writeAheadLog: new SharedArrayBuffer(0, { maxByteLength: options.maxWriteAheadLogSize ?? 1 * gigabyte })
   };
 }
@@ -128,6 +128,20 @@ export class InMemoryWriteAheadLogPool extends DBAdapter {
     applyWalChanges(this.#walState, cleared);
     for (const worker of this.#rawWorkers) {
       worker.addChanges(cleared);
+    }
+  }
+
+  /**
+   * Explicitly starts a checkpoint operation copying pages from the write-ahead log into the main database.
+   *
+   * This is primarily exposed for testing purposes.
+   */
+  async checkpoint(): Promise<void> {
+    const { release } = await this.#workers.requestAll();
+    try {
+      await this.#checkpoint();
+    } finally {
+      release();
     }
   }
 
