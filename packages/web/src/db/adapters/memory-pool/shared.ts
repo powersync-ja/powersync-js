@@ -1,5 +1,5 @@
 import { RawQueryResult } from '@powersync/common';
-import type { RawWaSqliteDatabaseOptions } from '../wa-sqlite/RawSqliteConnection.js';
+import type { RawWaSqliteDatabaseOptions, RawWebResult } from '../wa-sqlite/RawSqliteConnection.js';
 
 export interface WriteAheadBuffers {
   database: SharedArrayBuffer;
@@ -50,6 +50,8 @@ export interface DatabaseServer {
   updateWalState(overlay: WalIndexChange): Promise<void>;
 
   executeRaw(query: string, params?: any[] | undefined): Promise<RawQueryResult>;
+
+  executeBatch(query: string, params?: any[][] | undefined): Promise<RawWebResult[]>;
 
   /**
    * Takes WAL changes made by this worker during its active write iteration.

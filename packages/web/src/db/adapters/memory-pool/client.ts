@@ -1,5 +1,14 @@
 import * as Comlink from 'comlink';
-import { BatchedUpdateNotification, DBAdapter, DBLockOptions, LockContext, RawQueryResult } from '@powersync/common';
+import {
+  BaseQueryResult,
+  BatchedUpdateNotification,
+  DBAdapter,
+  DBLockOptions,
+  LockContext,
+  QueryResult,
+  queryResultWithoutRows,
+  RawQueryResult
+} from '@powersync/common';
 import { applyWalChanges, DatabaseServer, emptyWalState, WalIndexChange, WriteAheadBuffers } from './shared.js';
 import { Mutex, Semaphore } from '@powersync/shared-internals';
 import type { RawWaSqliteDatabaseOptions } from '../wa-sqlite/RawSqliteConnection.js';
@@ -293,6 +302,17 @@ class PoolWorker extends LockContext {
 
   executeRaw<T>(query: string, params?: any[] | undefined): Promise<RawQueryResult> {
     return this.#server.executeRaw(query, params);
+  }
+
+  async executeBatch(query: string, params?: any[][]): Promise<QueryResult<never>> {
+    const results = await this.#server.executeBatch(query, params ?? []);
+    const result: BaseQueryResult = { insertId: undefined, rowsAffected: 0 };
+    for (const source of results) {
+      result.insertId = source.insertId;
+      result.rowsAffected = (result.rowsAffected ?? 0) + source.rowsAffected;
+    }
+
+    return queryResultWithoutRows(result);
   }
 
   close() {

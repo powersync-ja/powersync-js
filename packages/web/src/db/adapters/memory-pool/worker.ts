@@ -2,7 +2,7 @@ import * as Comlink from 'comlink';
 import { applyWalChanges, DatabaseServer, WalIndexChange, WriteAheadBuffers } from './shared.js';
 import { RawQueryResult } from '@powersync/common';
 import { InMemoryWriteAheadLog } from './vfs.js';
-import { RawSqliteConnection, RawWaSqliteDatabaseOptions } from '../wa-sqlite/RawSqliteConnection.js';
+import { RawSqliteConnection, RawWaSqliteDatabaseOptions, RawWebResult } from '../wa-sqlite/RawSqliteConnection.js';
 import { WASQLiteVFS } from '../wa-sqlite/vfs.js';
 import { TemporaryStorageOption } from '../options.js';
 
@@ -37,6 +37,10 @@ class MemoryDatabaseServer implements DatabaseServer {
 
   async executeRaw(query: string, params?: any[] | undefined): Promise<RawQueryResult> {
     return await this.#connection.execute(query, params);
+  }
+
+  async executeBatch(query: string, params: any[][]): Promise<RawWebResult[]> {
+    return await this.#connection.executeBatch(query, params);
   }
 
   async takeWalChanges(): Promise<WalIndexChange> {
