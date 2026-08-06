@@ -1,4 +1,5 @@
 import { LogRecord, PowerSyncDatabase, WASQLiteOpenFactory, WASQLiteVFS } from '@powersync/web';
+import { InMemoryWriteAheadLogPool } from '../lib/db/adapters/memory/client.js';
 import { v4 as uuid } from 'uuid';
 import { describe, expect, it, vi } from 'vitest';
 import { TEST_SCHEMA, TestDatabase } from './utils/test-schema.js';
@@ -95,6 +96,13 @@ describe('Basic - with in-memory', () => {
     )
   );
 });
+
+describe(
+  'in-memory pool',
+  describeBasicTests(() =>
+    generateTestDb({ schema: TEST_SCHEMA, opened: new InMemoryWriteAheadLogPool({ numWorkers: 1 }) })
+  )
+);
 
 it('should log worker errors', async () => {
   const logs: LogRecord[] = [];
@@ -224,6 +232,6 @@ function describeBasicTests(generateDB: () => PowerSyncDatabase) {
         // Acquiring a second write lock with a timeout should throw.
         await expect(db.writeTransaction(async () => {}, 100)).rejects.toThrow('timed out');
       });
-    });
+    }, 1000);
   };
 }

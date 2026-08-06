@@ -57,7 +57,12 @@ export class RawSqliteConnection {
   }
 
   async init() {
-    const api = (this._sqliteAPI = await this.openSQLiteAPI());
+    const { module, vfs } = await loadModuleAndVfs(this.options);
+    this.initWithModule(module, vfs);
+  }
+
+  async initWithModule(module: any, vfs: any) {
+    const api = (this._sqliteAPI = await this.openSQLiteAPI(module, vfs));
     this.db = await api.open_v2(
       this.options.filename,
       this.options.readonly ? 1 /* SQLITE_OPEN_READONLY */ : 6 /* SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE */
@@ -72,8 +77,7 @@ export class RawSqliteConnection {
     await this.executeRaw(`SELECT powersync_update_hooks('install');`);
   }
 
-  private async openSQLiteAPI(): Promise<SQLiteAPI> {
-    const { module, vfs } = await loadModuleAndVfs(this.options);
+  private async openSQLiteAPI(module: any, vfs: SQLiteVFS): Promise<SQLiteAPI> {
     vfs.mxPathname = maxPathNameLength;
 
     this.sqlite3_stmt_isexplain = module.cwrap('sqlite3_stmt_isexplain', 'int', ['int']);
