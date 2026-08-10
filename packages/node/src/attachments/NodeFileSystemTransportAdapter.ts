@@ -80,6 +80,8 @@ export class NodeFileSystemTransportAdapter implements AttachmentTransportAdapte
       method: request.httpMethod ?? 'PUT',
       headers,
       body: Readable.toWeb(createReadStream(attachment.localUri)) as ReadableStream,
+      // Node's fetch rejects a streamed body without this; see:
+      // https://github.com/node-fetch/node-fetch/issues/1769
       duplex: 'half'
     } as RequestInit & { duplex: 'half' });
 

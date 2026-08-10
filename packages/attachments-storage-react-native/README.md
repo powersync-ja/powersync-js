@@ -93,6 +93,7 @@ Both transports are backend-agnostic: you supply resolver callbacks that map an 
 
 ### With Expo File System (`File.upload` / `File.downloadFileAsync`)
 
+> [!NOTE]
 > The Expo streaming transport requires **Expo SDK 56+** (`expo-file-system >=56`). The `ExpoFileSystemStorageAdapter` itself still works on Expo SDK 54+.
 
 ```typescript
