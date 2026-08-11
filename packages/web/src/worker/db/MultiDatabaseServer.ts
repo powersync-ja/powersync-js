@@ -116,7 +116,8 @@ export class MultiDatabaseServer {
     if (needsNavigatorLocks) {
       return getNavigatorLocks().request(OPEN_DB_LOCK, openDatabase);
     } else {
-      // Even if we don't need navigator locks, this avoids a race between
+      // Even if we don't need navigator locks, this avoids a race between the activeDatabases.get() call, the async
+      // open logic and the final activeDatabases.set() step.
       return this.#localOpenLock.runExclusive(openDatabase);
     }
   }
