@@ -75,7 +75,7 @@
     }
   },
   "devDependencies": {
-    "@journeyapps/wa-sqlite": "^1.7.0",
+    "@journeyapps/wa-sqlite": "catalog:",
     "@nuxt/module-builder": "^1.0.2",
     "@nuxt/schema": "^4.3.1",
     "@nuxt/test-utils": "catalog:",

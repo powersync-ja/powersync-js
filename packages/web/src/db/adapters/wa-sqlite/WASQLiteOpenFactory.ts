@@ -150,10 +150,12 @@ export class WASQLiteOpenFactory implements SQLOpenFactory {
         // This VFS supports concurrent reads, so we can open additional workers to host read-only connections for
         // concurrent reads / writes.
         const additionalReadersCount = this.options.additionalReaders ?? 1;
+
+        const additionalReaderPromises: Promise<DatabaseClient>[] = [];
         for (let i = 0; i < additionalReadersCount; i++) {
-          const reader = await openDatabaseWorker(true);
-          additionalReaders.push(reader);
+          additionalReaderPromises.push(openDatabaseWorker(true));
         }
+        additionalReaders.push(...(await Promise.all(additionalReaderPromises)));
       }
     } else {
       // Don't use a web worker. Instead, open the MultiDatabaseServer a worker would use locally.
