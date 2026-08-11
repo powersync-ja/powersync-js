@@ -172,27 +172,34 @@ export class WebPowerSyncDatabase extends BasePowerSyncDatabase<WebPowerSyncData
       logger: this.logger
     };
 
-    switch (true) {
-      case this.resolvedOpenOptions.ssrMode:
-        return new SSRStreamingSyncImplementation();
-      case this.resolvedOpenOptions.enableMultiTabs:
-        if (!this.enableBroadcastLogs) {
-          const warning = `
+    if (this.resolvedOpenOptions.ssrMode) {
+      return new SSRStreamingSyncImplementation();
+    } else if (this.resolvedOpenOptions.enableMultiTabs) {
+      if (!this.enableBroadcastLogs) {
+        const warning = `
             Multiple tabs are enabled, but broadcasting of logs is disabled.
             Logs for shared sync worker will only be available in the shared worker context
           `;
-          const logger = this.options.logger;
-          logger ? logger.log({ level: LogLevels.warn, message: warning }) : console.warn(warning);
-        }
+        const logger = this.options.logger;
+        logger ? logger.log({ level: LogLevels.warn, message: warning }) : console.warn(warning);
+      }
+
+      if ('shareConnection' in this.database) {
         return new SharedWebStreamingSyncImplementation({
           ...syncOptions,
           db: this.database as WebDBAdapter, // This should always be the case
           logLevel: this.options.sync?.logLevel ?? LogLevels.info,
           enableBroadcastLogs: this.enableBroadcastLogs
         });
-      default:
-        return new TabLocalStreamingSyncImplementation(syncOptions);
+      }
+
+      this.logger.log({
+        level: LogLevels.warn,
+        message: "Not using a shared sync worker because the database adapter doesn't support it."
+      });
     }
+
+    return new TabLocalStreamingSyncImplementation(syncOptions);
   }
 }
 /**

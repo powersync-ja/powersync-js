@@ -23,6 +23,10 @@
       "react-native": "./dist/index.react_native_web.js",
       "default": "./lib/index.js"
     },
+    "./extra/shared-memory-pool": {
+      "types": "./lib/db/adapters/memory-pool/client.d.ts",
+      "default": "./lib/db/adapters/memory-pool/client.js"
+    },
     "./bundled_worker": {
       "types": "./lib/worker/worker.d.ts",
       "default": "./dist/worker/worker.js"
@@ -44,7 +48,7 @@
     "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
     "watch": "tsc --build -w",
     "test": "pnpm build && vitest",
-    "test:exports": "attw --pack . --entrypoints . --profile=esm-only "
+    "test:exports": "attw --pack . --entrypoints . extra/shared-memory-pool --profile=esm-only "
   },
   "keywords": [
     "data sync",
