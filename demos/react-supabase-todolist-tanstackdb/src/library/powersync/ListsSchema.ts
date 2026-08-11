@@ -8,7 +8,9 @@ import { stringToDate } from './zod-helpers';
 export const LISTS_TABLE_DEFINITION = new Table({
   created_at: column.text,
   name: column.text,
-  owner_id: column.text
+  owner_id: column.text,
+  // Relational Attachment ID for matching photos
+  photo_id: column.text
 });
 
 /**
@@ -19,7 +21,8 @@ export const ListsSchema = z.object({
   id: z.string(),
   created_at: z.date(),
   name: z.string(),
-  owner_id: z.string()
+  owner_id: z.string(),
+  photo_id: z.string().nullable()
 });
 
 /**
@@ -29,7 +32,8 @@ export const ListsSchema = z.object({
  */
 export const ListsDeserializationSchema = z.object({
   ...ListsSchema.shape,
-  created_at: stringToDate
+  created_at: stringToDate,
+  photo_id: z.string().nullable()
 });
 
 export type ListRecord = z.output<typeof ListsSchema>;

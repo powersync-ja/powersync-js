@@ -7,9 +7,10 @@ Demo app demonstrating use of the [PowerSync SDK for Web](https://www.npmjs.com/
 ## Run Demo
 
 Prerequisites:
-* To run this demo, you need to have properly configured Supabase and PowerSync projects. Follow the instructions in our Supabase<>PowerSync integration guide:
-  * [Configure Supabase](https://docs.powersync.com/integration-guides/supabase-+-powersync#configure-supabase)
-  * [Configure PowerSync](https://docs.powersync.com/integration-guides/supabase-+-powersync#configure-powersync)
+
+- To run this demo, you need to have properly configured Supabase and PowerSync projects. Follow the instructions in our Supabase<>PowerSync integration guide:
+  - [Configure Supabase](https://docs.powersync.com/integration-guides/supabase-+-powersync#configure-supabase)
+  - [Configure PowerSync](https://docs.powersync.com/integration-guides/supabase-+-powersync#configure-powersync)
 
 Switch into the demo's directory:
 
@@ -38,6 +39,22 @@ pnpm dev
 ```
 
 Open [http://localhost:5173](http://localhost:5173) with your browser to see the result.
+
+## Attachments
+
+This demo optionally syncs a photo per list, demonstrating PowerSync attachments with the TanStack DB
+integration. It is powered by `TanStackDBAttachmentQueue` from
+[`@tanstack/powersync-db-collection`](https://github.com/powersync-ja/tanstack-db/tree/main/packages/powersync-db-collection),
+which commits the attachment record and the related list row in a single transaction. See that
+package's documentation for the usage guide.
+
+### Enabling attachments
+
+Attachments are **off by default** and the demo downgrades gracefully — lists are created without a photo and no
+attachment UI is shown when disabled. To enable them:
+
+1. Create a [Supabase Storage](https://supabase.com/docs/guides/storage) bucket in your Supabase project.
+2. Set `VITE_SUPABASE_BUCKET` in `.env.local` to the bucket name.
 
 ## Progressive Web App (PWA)
 

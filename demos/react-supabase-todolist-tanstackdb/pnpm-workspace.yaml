@@ -4,3 +4,7 @@ allowBuilds:
   '@journeyapps/wa-sqlite': true
   '@swc/core': true
   esbuild: true
+
+trustPolicyExclude:
+  - rollup@2.80.0
+  - semver@6.3.1
