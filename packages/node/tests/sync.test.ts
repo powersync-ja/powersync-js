@@ -20,7 +20,7 @@ import {
   waitForSyncStatus
 } from './utils.js';
 import { BucketChecksum, OplogEntryJSON } from '@powersync/shared-internals/internal/sync_protocol';
-import { BasePowerSyncDatabase } from '@powersync/shared-internals';
+import { BasePowerSyncDatabase, BucketStorageAdapter } from '@powersync/shared-internals';
 
 const defaultConnectOptions: SyncOptions = {
   // This might help with test stability/timeouts if a retry is needed.
@@ -726,46 +726,79 @@ function defineSyncTests(bson: boolean) {
   });
 
   mockSyncServiceTest('uploads writes made while requesting a write checkpoint', async ({ syncService }) => {
-    let holdWriteCheckpoint = false;
-    let onCheckpointRequested!: () => void;
-    const checkpointRequested = new Promise<void>((resolve) => (onCheckpointRequested = resolve));
-    let releaseCheckpoint!: () => void;
-    const checkpointReleased = new Promise<void>((resolve) => (releaseCheckpoint = resolve));
-
-    syncService.installRequestInterceptor(async (request) => {
-      if (!request.url.includes('/write-checkpoint2.json') || !holdWriteCheckpoint) {
-        return undefined;
-      }
-
-      onCheckpointRequested();
-      await checkpointReleased;
-      return new Response(JSON.stringify({ data: { write_checkpoint: '1' } }), { status: 200 });
-    });
-
     const database = await syncService.createDatabase();
     const connector = new TestConnector();
     const pendingCrud = async () => (await database.get<{ c: number }>('SELECT count(*) AS c FROM ps_crud')).c;
+
+    // `updateLocalTarget` checks the CRUD queue in a write transaction, while `nextCrudItem` reads it outside of one.
+    // Make that read miss the row once, reproducing an upload iteration that finds nothing to upload even though the
+    // queue is not empty. CRUD notifications are deliberately left intact: the write's own notification is what wakes
+    // this iteration, so it is already consumed by the time the loop would park again.
+    const adapter = (database as any).bucketStorageAdapter as BucketStorageAdapter;
+    const nextCrudItem = adapter.nextCrudItem.bind(adapter);
+    let missNextRead = false;
+    adapter.nextCrudItem = async () => {
+      if (missNextRead) {
+        missNextRead = false;
+        return undefined;
+      }
+      return nextCrudItem();
+    };
 
     // Complete a transaction outside of the upload loop, which leaves the local write target set with an empty queue.
     await database.execute('INSERT INTO lists (id, name) VALUES (uuid(), ?)', ['completed outside the loop']);
     const transaction = await database.getNextCrudTransaction();
     await transaction!.complete();
 
-    // The first upload iteration finds nothing to upload and requests a write checkpoint, which we hold open.
-    holdWriteCheckpoint = true;
+    // Let the initial upload iteration settle, so the loop is parked waiting for a notification.
     database.connect(connector, { ...options, crudUploadThrottleMs: 100 });
-    await checkpointRequested;
+    await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
+    await vi.waitFor(async () => expect(await pendingCrud()).toBe(0));
 
-    // Ignore CRUD notifications, so that the loop can only recover by noticing the queue itself.
-    const sync = (database as BasePowerSyncDatabase).syncStreamImplementation!;
-    sync.triggerCrudUpload = () => {};
-
+    missNextRead = true;
     await database.execute('INSERT INTO lists (id, name) VALUES (uuid(), ?)', ['raced write']);
     expect(await pendingCrud()).toBe(1);
-    releaseCheckpoint();
 
-    await vi.waitFor(async () => expect(await pendingCrud()).toBe(0));
+    await vi.waitFor(async () => expect(await pendingCrud()).toBe(0), { timeout: 5000 });
     expect(connector.uploadDataInvocations).toBeGreaterThanOrEqual(1);
+  });
+
+  mockSyncServiceTest('throttles the upload retry when the queue read keeps missing', async ({ syncService }) => {
+    const database = await syncService.createDatabase();
+    const connector = new TestConnector();
+
+    // The retry exits once `nextCrudItem` observes the row. Keep it missing indefinitely to check that the retry is
+    // rate-limited rather than busy-looping on the write checkpoint endpoint.
+    const adapter = (database as any).bucketStorageAdapter as BucketStorageAdapter;
+    const nextCrudItem = adapter.nextCrudItem.bind(adapter);
+    let alwaysMiss = false;
+    let missedReads = 0;
+    adapter.nextCrudItem = async () => {
+      if (alwaysMiss) {
+        missedReads++;
+        return undefined;
+      }
+      return nextCrudItem();
+    };
+
+    await database.execute('INSERT INTO lists (id, name) VALUES (uuid(), ?)', ['completed outside the loop']);
+    const transaction = await database.getNextCrudTransaction();
+    await transaction!.complete();
+
+    const throttleMs = 100;
+    database.connect(connector, { ...options, crudUploadThrottleMs: throttleMs });
+    await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
+    await vi.waitFor(async () =>
+      expect((await database.get<{ c: number }>('SELECT count(*) AS c FROM ps_crud')).c).toBe(0)
+    );
+
+    const observeMs = 1000;
+    alwaysMiss = true;
+    await database.execute('INSERT INTO lists (id, name) VALUES (uuid(), ?)', ['raced write']);
+    await new Promise((resolve) => setTimeout(resolve, observeMs));
+
+    // Without throttling this loops as fast as the event loop allows (thousands of iterations per second).
+    expect(missedReads).toBeLessThan((observeMs / throttleMs) * 4);
   });
 
   mockSyncServiceTest('should update sync state incrementally', async ({ syncService }) => {

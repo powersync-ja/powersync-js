@@ -243,8 +243,13 @@ The next upload iteration will be delayed.`
               if (neededUpdate) {
                 this.notifyCompletedUploads?.();
               } else if (await this.options.adapter.hasCrud()) {
-                // `updateLocalTarget` also returns false when a local write raced the write checkpoint request. That
-                // write still needs to be uploaded, and no checkpoint can be applied until it is.
+                // `updateLocalTarget` compares the CRUD queue inside a write transaction, so it can see a local write
+                // that `nextCrudItem()` did not. When that happens the write still needs to be uploaded and no
+                // checkpoint can be applied until it is, so retry instead of parking the loop.
+                //
+                // The retry is throttled because its exit condition is `nextCrudItem()` observing the row. If the two
+                // reads keep disagreeing, an immediate `continue` busy-loops and floods the write checkpoint endpoint.
+                await this.delayRetry(signal, options.crudUploadThrottleMs);
                 continue;
               } else if (checkedCrudItem != null) {
                 // Only log this if there was something to upload
