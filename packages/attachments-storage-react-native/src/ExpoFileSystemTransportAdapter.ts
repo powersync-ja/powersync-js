@@ -1,9 +1,14 @@
 import type { AttachmentRecord, AttachmentTransportAdapter, LocatedAttachmentRecord } from '@powersync/common';
-import type { UploadType } from 'expo-file-system';
+import type { DownloadOptions, UploadType } from 'expo-file-system';
 
 /**
  * Describes the HTTP request used to upload a file's bytes to remote storage.
  * Typically points at a presigned URL.
+ *
+ * These fields are declared by hand rather than extending Expo's `UploadOptions`
+ * (as {@link ExpoDownloadRequest} does with `DownloadOptions`): `UploadOptions` only
+ * exists in `expo-file-system` 56+, while the storage adapter supports back to 19, so
+ * referencing it here would break the types for those older consumers.
  */
 export interface ExpoUploadRequest {
   /** Destination URL (e.g. a presigned upload URL). */
@@ -27,11 +32,9 @@ export interface ExpoUploadRequest {
  * Describes the HTTP request used to download a file's bytes from remote storage.
  * Typically points at a presigned URL.
  */
-export interface ExpoDownloadRequest {
+export interface ExpoDownloadRequest extends DownloadOptions {
   /** Source URL (e.g. a presigned download URL). */
   url: string;
-  /** Additional request headers. */
-  headers?: Record<string, string>;
 }
 
 /**
@@ -88,14 +91,11 @@ export class ExpoFileSystemTransportAdapter implements AttachmentTransportAdapte
   }
 
   async download(attachment: LocatedAttachmentRecord): Promise<void> {
-    const request = await this.options.resolveDownload(attachment);
+    const { url, ...options } = await this.options.resolveDownload(attachment);
 
     try {
-      // `downloadFileAsync` rejects on a non-2xx response; `idempotent` overwrites any existing file.
-      await this.File.downloadFileAsync(request.url, new this.File(attachment.localUri), {
-        headers: request.headers,
-        idempotent: true
-      });
+      // `downloadFileAsync` rejects on a non-2xx response; `idempotent` overwrites any existing file by default.
+      await this.File.downloadFileAsync(url, new this.File(attachment.localUri), { idempotent: true, ...options });
     } catch (error) {
       throw new Error(`Download for ${attachment.id} failed`, { cause: error });
     }
