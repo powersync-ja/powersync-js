@@ -10,10 +10,9 @@
   },
   "dependencies": {
     "@powersync/react": "^2.0.0",
-    "@powersync/web": "^2.0.0",
+    "@powersync/web": "^2.1.1",
     "@emotion/react": "11.11.4",
     "@emotion/styled": "11.11.5",
-    "@journeyapps/wa-sqlite": "^1.7.0",
     "@mui/icons-material": "^5.15.12",
     "@mui/material": "^5.15.12",
     "@mui/x-data-grid": "^6.19.6",

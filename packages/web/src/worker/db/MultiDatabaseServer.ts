@@ -5,6 +5,7 @@ import { getNavigatorLocks } from '../../shared/navigator.js';
 import { RawSqliteConnection, RawWaSqliteDatabaseOptions } from '../../db/adapters/wa-sqlite/RawSqliteConnection.js';
 import { ConcurrentSqliteConnection } from '../../db/adapters/wa-sqlite/ConcurrentConnection.js';
 import { WASQLiteVFS } from '../../db/adapters/wa-sqlite/vfs.js';
+import { Mutex } from '@powersync/shared-internals';
 
 const OPEN_DB_LOCK = 'open-wasqlite-db';
 
@@ -18,7 +19,8 @@ export interface ConnectToMultiDatabaseServerOptions {
  * Shared state to manage multiple database connections hosted by a worker.
  */
 export class MultiDatabaseServer {
-  private activeDatabases = new Map<string, DatabaseServer>();
+  readonly #activeDatabases = new Map<string, DatabaseServer>();
+  readonly #localOpenLock = new Mutex();
 
   constructor(readonly logger: PowerSyncLogger) {}
 
@@ -38,7 +40,7 @@ export class MultiDatabaseServer {
 
   async connectToExisting(name: string, lockName: string): Promise<ClientConnectionView> {
     return getNavigatorLocks().request(OPEN_DB_LOCK, async () => {
-      const server = this.activeDatabases.get(name);
+      const server = this.#activeDatabases.get(name);
       if (server == null) {
         throw new Error(`connectToExisting(${name}) failed because the worker doesn't own a database with that name.`);
       }
@@ -55,7 +57,7 @@ export class MultiDatabaseServer {
 
     for (let count = 0; count < maxAttempts - 1; count++) {
       try {
-        server = await this.databaseOpenAttempt(logger, options);
+        server = await this.#databaseOpenAttempt(logger, options);
       } catch (error) {
         this.logger.log({
           level: LogLevels.warn,
@@ -67,24 +69,22 @@ export class MultiDatabaseServer {
     }
 
     // Final attempt if we haven't been able to open the server - rethrow errors if we still can't open.
-    server ??= await this.databaseOpenAttempt(logger, options);
+    server ??= await this.#databaseOpenAttempt(logger, options);
     return server.connect(lockName);
   }
 
-  private async databaseOpenAttempt(
-    logger: PowerSyncLogger,
-    options: RawWaSqliteDatabaseOptions
-  ): Promise<DatabaseServer> {
-    return getNavigatorLocks().request(OPEN_DB_LOCK, async () => {
-      const { filename, readonly, vfs } = options;
+  async #databaseOpenAttempt(logger: PowerSyncLogger, options: RawWaSqliteDatabaseOptions): Promise<DatabaseServer> {
+    const { filename, readonly, vfs } = options;
+    // We don't need navigator locks for shared workers because all queries run in this shared worker exclusively.
+    // For read-only connections, we use a VFS that supports concurrent reads (so a single lock on the connection is
+    // fine). In-memory databases either run in a shared worker or aren't shared across tabs at all, so the internal
+    // lock is enough.
+    const needsNavigatorLocks = !(isSharedWorker || readonly || vfs == WASQLiteVFS.InMemoryVfs);
+    const activeDatabases = this.#activeDatabases;
 
-      let server: DatabaseServer | undefined = this.activeDatabases.get(filename);
+    async function openDatabase() {
+      let server: DatabaseServer | undefined = activeDatabases.get(filename);
       if (server == null) {
-        // We don't need navigator locks for shared workers because all queries run in this shared worker exclusively.
-        // For read-only connections, we use a VFS that supports concurrent reads (so a single lock on the connection is
-        // fine). In-memory databases either run in a shared worker or aren't shared across tabs at all, so the internal
-        // lock is enough.
-        const needsNavigatorLocks = !(isSharedWorker || readonly || vfs == WASQLiteVFS.InMemoryVfs);
         const connection = new RawSqliteConnection(options);
         const withSafeConcurrency = new ConcurrentSqliteConnection(connection, needsNavigatorLocks);
 
@@ -101,21 +101,29 @@ export class MultiDatabaseServer {
         }
         returnLease();
 
-        const onClose = () => this.activeDatabases.delete(filename);
+        const onClose = () => activeDatabases.delete(filename);
         server = new DatabaseServer({
           inner: withSafeConcurrency,
           logger,
           onClose
         });
-        this.activeDatabases.set(filename, server);
+        activeDatabases.set(filename, server);
       }
 
       return server;
-    });
+    }
+
+    if (needsNavigatorLocks) {
+      return getNavigatorLocks().request(OPEN_DB_LOCK, openDatabase);
+    } else {
+      // Even if we don't need navigator locks, this avoids a race between the activeDatabases.get() call, the async
+      // open logic and the final activeDatabases.set() step.
+      return this.#localOpenLock.runExclusive(openDatabase);
+    }
   }
 
   closeAll() {
-    const existingDatabases = [...this.activeDatabases.values()];
+    const existingDatabases = [...this.#activeDatabases.values()];
     return Promise.all(
       existingDatabases.map((db) => {
         db.forceClose();

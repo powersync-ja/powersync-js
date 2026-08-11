@@ -34,7 +34,11 @@ import {
   SqliteRecord,
   SyncStreamConnectionMethod
 } from '@powersync/common';
-import { BucketStorageAdapter, PSInternalTable } from './sync/bucket/BucketStorageAdapter.js';
+import {
+  BucketStorageAdapter,
+  PSInternalTable,
+  targetCheckpointRequestId
+} from './sync/bucket/BucketStorageAdapter.js';
 import { SyncStatusSnapshot } from '../db/crud/SyncStatus.js';
 import {
   ConnectionManager,
@@ -53,6 +57,7 @@ import { DEFAULT_WATCH_THROTTLE_MS } from './watched/WatchedQuery.js';
 import { CustomQuery } from './CustomQuery.js';
 import { MEMORY_TRIGGER_CLAIM_MANAGER } from './triggers/MemoryTriggerClaimManager.js';
 import { symbolAsyncIterator } from '../utils/compatibility.js';
+import { MAX_OP_ID } from '../constants.js';
 
 const POWERSYNC_TABLE_MATCH = /(^ps_data__|^ps_data_local__)/;
 
@@ -167,8 +172,14 @@ export abstract class BasePowerSyncDatabase<Options extends BasePowerSyncDatabas
           const sync = this.generateSyncStreamImplementation(connector, options);
           const onDispose = sync.registerListener({
             statusChanged: (snapshot) => {
-              this.currentStatus = snapshot;
-              this.iterateListeners((cb) => cb.statusChanged?.(snapshot));
+              // For a JavaScriptSyncState update before the sync client was able to resolve the full status from the core extension, use the known offline sync state resolved during initialization.
+              const updatedStatus =
+                snapshot.core == null && this.currentStatus.core != null
+                  ? new SyncStatusSnapshot(this.currentStatus.core, snapshot.jsState)
+                  : snapshot;
+
+              this.currentStatus = updatedStatus;
+              this.iterateListeners((cb) => cb.statusChanged?.(updatedStatus));
             }
           });
           await sync.waitForReady();
@@ -307,7 +318,6 @@ export abstract class BasePowerSyncDatabase<Options extends BasePowerSyncDatabas
    */
   protected async initialize() {
     await this._initialize();
-    await this.bucketStorageAdapter.init();
     await this.loadVersion();
     await this.updateSchema(this.options.schema);
     await this.resolveOfflineSyncStatus();
@@ -324,20 +334,20 @@ export abstract class BasePowerSyncDatabase<Options extends BasePowerSyncDatabas
     } catch (e: any) {
       throw new Error(`The powersync extension is not loaded correctly. Details: ${e.message}`);
     }
-    let versionInts: number[];
+    let major: number, minor: number, patch: number;
     try {
-      versionInts = this.sdkVersion!.split(/[.\/]/)
+      [major, minor, patch] = this.sdkVersion!.split(/[.\/]/)
         .slice(0, 3)
         .map((n) => parseInt(n));
     } catch (e: any) {
       throw new Error(
-        `Unsupported powersync extension version. Need >=0.4.10 <1.0.0, got: ${this.sdkVersion}. Details: ${e.message}`
+        `Unsupported powersync extension version. Need >=0.5.2 <0.6.0, got: ${this.sdkVersion}. Details: ${e.message}`
       );
     }
 
-    // Validate >=0.4.10 <1.0.0
-    if (versionInts[0] != 0 || versionInts[1] < 4 || (versionInts[1] == 4 && versionInts[2] < 10)) {
-      throw new Error(`Unsupported powersync extension version. Need >=0.4.10 <1.0.0, got: ${this.sdkVersion}`);
+    // Validate >=0.5.2 <0.6.0
+    if (major != 0 || minor != 5 || patch < 2) {
+      throw new Error(`Unsupported powersync extension version. Need >=0.5.2 <0.6.0, got: ${this.sdkVersion}`);
     }
   }
 
@@ -476,7 +486,7 @@ export abstract class BasePowerSyncDatabase<Options extends BasePowerSyncDatabas
 
     const last = all[all.length - 1];
     return new CrudBatch(all, haveMore, async (writeCheckpoint?: string) =>
-      this.handleCrudCheckpoint(last.clientId, writeCheckpoint)
+      this.bucketStorageAdapter.handleCrudCheckpoint(last.clientId, writeCheckpoint)
     );
   }
 
@@ -516,7 +526,8 @@ SELECT * FROM crud_entries;
               done: false,
               value: new CrudTransaction(
                 items,
-                async (writeCheckpoint?: string) => this.handleCrudCheckpoint(last.clientId, writeCheckpoint),
+                async (writeCheckpoint?: string) =>
+                  this.bucketStorageAdapter.handleCrudCheckpoint(last.clientId, writeCheckpoint),
                 txId
               )
             };
@@ -528,24 +539,6 @@ SELECT * FROM crud_entries;
 
   async getClientId(): Promise<string> {
     return this.bucketStorageAdapter.getClientId();
-  }
-
-  private async handleCrudCheckpoint(lastClientId: number, writeCheckpoint?: string) {
-    return this.writeTransaction(async (tx) => {
-      await tx.execute(`DELETE FROM ${PSInternalTable.CRUD} WHERE id <= ?`, [lastClientId]);
-      if (writeCheckpoint) {
-        const check = await tx.execute(`SELECT 1 FROM ${PSInternalTable.CRUD} LIMIT 1`);
-        if (!check.rows?.length) {
-          await tx.execute(`UPDATE ${PSInternalTable.BUCKETS} SET target_op = CAST(? as INTEGER) WHERE name='$local'`, [
-            writeCheckpoint
-          ]);
-        }
-      } else {
-        await tx.execute(`UPDATE ${PSInternalTable.BUCKETS} SET target_op = CAST(? as INTEGER) WHERE name='$local'`, [
-          this.bucketStorageAdapter.getMaxOpId()
-        ]);
-      }
-    });
   }
 
   async execute<T = SqliteRecord>(sql: string, parameters?: any[]) {

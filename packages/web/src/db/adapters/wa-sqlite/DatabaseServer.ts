@@ -172,7 +172,10 @@ export class DatabaseServer {
   }
 
   async forceClose() {
-    this.#logger.log({ level: LogLevels.debug, message: `Closing connection to ${this.#inner.options}.` });
+    this.#logger.log({
+      level: LogLevels.debug,
+      message: `Closing connection to ${JSON.stringify(this.#inner.options)}.`
+    });
     const connection = this.#inner;
     this.#options.onClose();
     this.#updateBroadcastChannel.close();

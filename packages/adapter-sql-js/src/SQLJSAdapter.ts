@@ -1,6 +1,4 @@
 import {
-  BaseObserver,
-  BaseListener,
   BatchedUpdateNotification,
   createConsoleLogger,
   DBAdapter,
@@ -42,31 +40,12 @@ export class SQLJSOpenFactory implements SQLOpenFactory {
   }
 }
 
-(globalThis as any).onSqliteUpdate = (
-  dbP: number,
-  operation: string,
-  database: string,
-  table: string,
-  rowId: number
-) => {
-  SQLJSDBAdapter.sharedObserver.iterateListeners((l) => l.tablesUpdated?.(dbP, operation, database, table, rowId));
-};
-
-interface TableObserverListener extends BaseListener {
-  tablesUpdated?: (dpP: number, operation: string, database: string, table: string, rowId: number) => void;
-}
-class TableObserver extends BaseObserver<TableObserverListener> {}
-
 export class SQLJSDBAdapter extends DBAdapter {
   protected initPromise: Promise<SQLJs.Database>;
   protected _db: SQLJs.Database | null;
-  protected tableUpdateCache: Set<string>;
   protected dbP: number | null;
   protected writeScheduler: ControlledExecutor<SQLJs.Database>;
   protected options: ResolvedSQLJSOpenOptions;
-
-  static sharedObserver = new TableObserver();
-  protected disposeListener: () => void;
 
   protected mutex: Mutex;
 
@@ -83,25 +62,19 @@ export class SQLJSDBAdapter extends DBAdapter {
     this.options = this.resolveOptions(options);
     this.initPromise = this.init();
     this._db = null;
-    this.tableUpdateCache = new Set<string>();
     this.mutex = new Mutex();
     this.dbP = null;
-    this.disposeListener = SQLJSDBAdapter.sharedObserver.registerListener({
-      tablesUpdated: (dbP: number, operation: string, database: string, table: string, rowId: number) => {
-        if (this.dbP !== dbP) {
-          // Ignore updates from other databases.
-          return;
-        }
-        this.tableUpdateCache.add(table);
-      }
-    });
 
     this.writeScheduler = new ControlledExecutor(async (db: SQLJs.Database) => {
-      if (!this.options.persister) {
+      const persister = this.options.persister;
+      if (!persister) {
         return;
       }
 
-      await this.options.persister.writeFile(db.export());
+      const blob = db.export();
+      // Calling export() closes and re-opens the database, so we need to re-install update hooks.
+      this.setup(db);
+      await persister.writeFile(blob);
     });
   }
 
@@ -128,12 +101,16 @@ export class SQLJSDBAdapter extends DBAdapter {
     const db = new SQL.Database(existing);
     this.dbP = (db as any)['db'] as number;
     this._db = db;
+    this.setup(db);
     return db;
+  }
+
+  private setup(db: SQLJs.Database) {
+    db.exec("SELECT powersync_update_hooks('install')");
   }
 
   async close() {
     const db = await this.getDB();
-    this.disposeListener();
     db.close();
   }
 
@@ -147,18 +124,24 @@ export class SQLJSDBAdapter extends DBAdapter {
   writeLock<T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions): Promise<T> {
     return this.mutex.runExclusive(async () => {
       const db = await this.getDB();
-      const result = await fn(new SqlJsLockContext(db));
+      const context = new SqlJsLockContext(db);
+      const result = await fn(context);
+
+      const { rawRows: rawUpdates } = await context.executeRaw("SELECT powersync_update_hooks('get')");
+      const updatedTables = JSON.parse(rawUpdates[0][0] as string);
+
+      if (updatedTables.length) {
+        const notification: BatchedUpdateNotification = {
+          tables: updatedTables
+        };
+        this.iterateListeners((l) => l.tablesUpdated?.(notification));
+      }
 
       // No point to schedule a write if there's no persister.
       if (this.options.persister) {
         this.writeScheduler.schedule(db);
       }
 
-      const notification: BatchedUpdateNotification = {
-        tables: Array.from(this.tableUpdateCache)
-      };
-      this.tableUpdateCache.clear();
-      this.iterateListeners((l) => l.tablesUpdated?.(notification));
       return result;
     }, timeoutSignal(options?.timeoutMs));
   }

@@ -8,7 +8,7 @@ import { DatabaseClient, OpenWorkerConnection } from './DatabaseClient.js';
 import { generateTabCloseSignal } from '../../../shared/tab_close_signal.js';
 import { AsyncDbAdapter, PoolConnection } from '../AsyncWebAdapter.js';
 import { RawWaSqliteDatabaseOptions } from './RawSqliteConnection.js';
-import { resolveAndValidateOptions } from '../resolveAndValidateOptions.js';
+import { maxPathNameLength, resolveAndValidateOptions } from '../resolveAndValidateOptions.js';
 import { connectToExistingWorker, connectToWorker, WorkerConnection } from '../../../worker/client.js';
 
 export interface WASQLiteOpenFactoryOptions {
@@ -25,6 +25,13 @@ export class WASQLiteOpenFactory implements SQLOpenFactory {
 
   constructor(options: WASQLiteOpenFactoryOptions) {
     this.options = resolveAndValidateOptions(options.open);
+
+    // Account for the fact that SQLite might append -journal suffixes
+    const maxLength = maxPathNameLength - 16;
+    if (this.options.dbFilename.length > maxLength) {
+      throw new Error(`dbFilename too long (max length is ${maxLength})`);
+    }
+
     this.logger = options.logger;
   }
 
@@ -60,8 +67,16 @@ export class WASQLiteOpenFactory implements SQLOpenFactory {
   }
 
   async openConnection(): Promise<PoolConnection> {
-    const { enableMultiTabs, useWebWorker, vfs, dbFilename, encryptionKey, temporaryStorage, cacheSizeKb } =
-      this.options;
+    const {
+      enableMultiTabs,
+      useWebWorker,
+      vfs,
+      dbFilename,
+      encryptionKey,
+      temporaryStorage,
+      cacheSizeKb,
+      preparedStatementsCache
+    } = this.options;
 
     if (!enableMultiTabs) {
       this.logger.log({ level: LogLevels.warn, message: 'Multiple tabs are not enabled in this browser' });
@@ -78,7 +93,9 @@ export class WASQLiteOpenFactory implements SQLOpenFactory {
         vfs,
         encryptionKey,
         temporaryStorage,
-        cacheSizeKb
+        cacheSizeKb,
+        // TODO: Enable prepared statement cache by default?
+        preparedStatementsCache: preparedStatementsCache ?? 0
       };
     }
 
@@ -133,10 +150,12 @@ export class WASQLiteOpenFactory implements SQLOpenFactory {
         // This VFS supports concurrent reads, so we can open additional workers to host read-only connections for
         // concurrent reads / writes.
         const additionalReadersCount = this.options.additionalReaders ?? 1;
+
+        const additionalReaderPromises: Promise<DatabaseClient>[] = [];
         for (let i = 0; i < additionalReadersCount; i++) {
-          const reader = await openDatabaseWorker(true);
-          additionalReaders.push(reader);
+          additionalReaderPromises.push(openDatabaseWorker(true));
         }
+        additionalReaders.push(...(await Promise.all(additionalReaderPromises)));
       }
     } else {
       // Don't use a web worker. Instead, open the MultiDatabaseServer a worker would use locally.

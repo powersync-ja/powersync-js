@@ -16,9 +16,13 @@ overrides:
   'tar': '>=7.5.19'
   # To avoid https://github.com/advisories/GHSA-mv8w-475r-vwqw
   'seroval': '>=1.5.6'
+  # To avoid https://github.com/advisories/GHSA-279x-mwfv-vcqv
+  '@nuxt/devtools': '^3.3.1'
 
 catalog:
-  '@journeyapps/wa-sqlite': ^1.5.0
+  # We must depend on an exact version of wa-sqlite, as we want to update the core extension
+  # (which can be breaking for SDKs) without a major revision.
+  '@journeyapps/wa-sqlite': 2.0.2
   '@microsoft/api-extractor': ^7.58.7
   '@nuxt/devtools-kit': ^3.2.3
   '@nuxt/devtools-ui-kit': ^3.2.3

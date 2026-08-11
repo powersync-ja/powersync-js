@@ -1,4 +1,5 @@
 import { LogRecord, PowerSyncDatabase, WASQLiteOpenFactory, WASQLiteVFS } from '@powersync/web';
+import { InMemoryWriteAheadLogPool } from '../lib/db/adapters/memory-pool/client.js';
 import { v4 as uuid } from 'uuid';
 import { describe, expect, it, vi } from 'vitest';
 import { TEST_SCHEMA, TestDatabase } from './utils/test-schema.js';
@@ -96,6 +97,13 @@ describe('Basic - with in-memory', () => {
   );
 });
 
+describe(
+  'in-memory pool',
+  describeBasicTests(() =>
+    generateTestDb({ schema: TEST_SCHEMA, opened: new InMemoryWriteAheadLogPool({ numWorkers: 1 }) })
+  )
+);
+
 it('should log worker errors', async () => {
   const logs: LogRecord[] = [];
 
@@ -124,6 +132,45 @@ it('should log worker errors', async () => {
       ])
     );
   });
+});
+
+describe('can use long path names', () => {
+  const testedVfs = [
+    WASQLiteVFS.IDBBatchAtomicVFS,
+    WASQLiteVFS.AccessHandlePoolVFS,
+    WASQLiteVFS.OPFSCoopSyncVFS,
+    WASQLiteVFS.OPFSWriteAheadVFS,
+    WASQLiteVFS.InMemoryVfs
+  ];
+
+  for (const vfs of testedVfs) {
+    describe(vfs, () => {
+      it('should be able to use database names exceeding 64 characters', async () => {
+        const db = generateTestDb({
+          schema: TEST_SCHEMA,
+          logger: defaultTestLogger,
+          database: {
+            dbFilename: vfs + 'a'.repeat(70),
+            vfs
+          }
+        });
+        await db.init();
+      });
+
+      it('throws when opening database with path exceeding 112 characters', async () => {
+        expect(() => {
+          new PowerSyncDatabase({
+            schema: TEST_SCHEMA,
+            logger: defaultTestLogger,
+            database: {
+              dbFilename: vfs + 'a'.repeat(112),
+              vfs
+            }
+          });
+        }).toThrow('dbFilename too long (max length is 112)');
+      });
+    });
+  }
 });
 
 function describeBasicTests(generateDB: () => PowerSyncDatabase) {

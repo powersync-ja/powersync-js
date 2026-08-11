@@ -1,5 +1,32 @@
 # @powersync/web
 
+## 2.1.1
+
+### Patch Changes
+
+- Updated dependencies [c787aaf]
+  - @powersync/shared-internals@1.1.1
+
+## 2.1.0
+
+### Minor Changes
+
+- bc50ecc: When shared sync workers are disabled, use broadcast channels to share the current sync status and
+  subscriptions across tabs.
+
+### Patch Changes
+
+- 3d1fd84: Make `@journeyapps/wa-sqlite` a regular dependency instead of a dev-dependency.
+  When upgrading, you can remove that package from your dependencies if you don't import it directly in your project.
+- 3d1fd84: Update PowerSync SQLite core extension to version 0.5.2.
+- 8d18368: Fix timeout option having no effect with OPFS WriteAhead VFS.
+- 8d18368: Log error when a worker fails to load.
+- d1b3622: Increase maximum `dbFilename` length to 112 and improve errors (closes https://github.com/powersync-ja/powersync-js/issues/1052).
+- Updated dependencies [3d1fd84]
+- Updated dependencies [669ba97]
+- Updated dependencies [bc50ecc]
+  - @powersync/shared-internals@1.1.0
+
 ## 2.0.0
 
 ### Major Changes

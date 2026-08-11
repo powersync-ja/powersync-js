@@ -14,9 +14,8 @@
     "test:build": "pnpm build"
   },
   "dependencies": {
-    "@journeyapps/wa-sqlite": "^1.7.0",
     "@powersync/react": "^2.0.0",
-    "@powersync/web": "^2.0.0",
+    "@powersync/web": "^2.1.1",
     "@tailwindcss/postcss": "^4.2.2",
     "jose": "^5.9.6",
     "next": "^16.1.1",

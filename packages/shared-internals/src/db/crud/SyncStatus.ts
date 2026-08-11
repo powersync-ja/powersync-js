@@ -180,7 +180,7 @@ export class SyncStatusSnapshot implements SyncStatus {
 }
 
 function coreTimestampToDate(time: number | null): Date | undefined {
-  return time == null ? undefined : new Date(time * 1000);
+  return time == null ? undefined : new Date(time / 1000);
 }
 
 function priorityToJs(status: CoreSyncPriorityStatus): SyncPriorityStatus {

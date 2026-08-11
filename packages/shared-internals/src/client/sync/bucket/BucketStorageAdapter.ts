@@ -1,4 +1,13 @@
-import { BaseListener, BaseObserverInterface, Disposable, CrudBatch, CrudEntry } from '@powersync/common';
+import {
+  BaseListener,
+  BaseObserverInterface,
+  Disposable,
+  CrudBatch,
+  CrudEntry,
+  Transaction,
+  SqliteValue
+} from '@powersync/common';
+import { MAX_OP_ID } from '../../../constants.js';
 
 export enum PSInternalTable {
   DATA = 'ps_data',
@@ -27,8 +36,6 @@ export interface BucketStorageListener extends BaseListener {
 }
 
 export interface BucketStorageAdapter extends BaseObserverInterface<BucketStorageListener>, Disposable {
-  init(): Promise<void>;
-
   hasMigratedSubkeys(): Promise<boolean>;
   migrateToFixedSubkeys(): Promise<void>;
 
@@ -37,7 +44,7 @@ export interface BucketStorageAdapter extends BaseObserverInterface<BucketStorag
   getCrudBatch(limit?: number): Promise<CrudBatch | null>;
 
   updateLocalTarget(cb: () => Promise<string>): Promise<boolean>;
-  getMaxOpId(): string;
+  handleCrudCheckpoint(lastClientId: number, writeCheckpoint?: string): Promise<void>;
 
   /**
    * Get an unique client id.
@@ -48,4 +55,30 @@ export interface BucketStorageAdapter extends BaseObserverInterface<BucketStorag
    * Invokes the `powersync_control` function for the sync client.
    */
   control(op: PowerSyncControlCommand, payload: string | Uint8Array | null): Promise<string>;
+}
+
+/**
+ * Invokes `powersync_control` from the core extension, casting the result to text.
+ */
+export async function rawPowerSyncControl(tx: Transaction, op: string, payload: SqliteValue): Promise<string | null> {
+  // For some calls, notably on target_checkpoint_request_id, powersync_control returns a 64-bit integer we want to
+  // represent as text. Instead of dealing with bigints which may or may not be supported across different sqlite
+  // libraries, play it safe and cast to text before mapping to JavaScript.
+  const { rawRows } = await tx.executeRaw('SELECT CAST(powersync_control(?, ?) AS TEXT)', [op, payload]);
+  return rawRows[0][0] as string | null;
+}
+
+/**
+ * Reads the current target checkpoint request id, or updates it when the update parameter is set.
+ *
+ * After requesting a checkpoint, the service needs to include that checkpoint id (or a subsequent one) in a
+ * `checkpoint_complete` message before we apply any subsequent sync lines. This guards against uploaded changes that
+ * have not yet been synced to flicker if we apply an intermediate checkpoint.
+ *
+ * @param update An optional value to update the stored target checkpoint request. {@link MAX_OP_ID} can be used as a
+ * sentinel for pending changes that have been uploaded, but for which no checkpoint request has been created yet.
+ * @returns The previous checkpoint request.
+ */
+export function targetCheckpointRequestId(tx: Transaction, update: string | null = null): Promise<string | null> {
+  return rawPowerSyncControl(tx, 'target_checkpoint_request_id', update);
 }

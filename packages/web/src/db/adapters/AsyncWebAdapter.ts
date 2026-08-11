@@ -1,7 +1,8 @@
 import { DBAdapter, DBAdapterListener, DBLockOptions, LockContext } from '@powersync/common';
-import { Mutex, Semaphore, UnlockFn } from '@powersync/shared-internals';
-import { SharedConnectionWorker, WebDBAdapter, WebDBAdapterConfiguration } from './WebDBAdapter.js';
+import { Mutex, Semaphore } from '@powersync/shared-internals';
+import { SharedConnectionWorker, WebDBAdapterConfiguration } from './WebDBAdapter.js';
 import { DatabaseClient } from './wa-sqlite/DatabaseClient.js';
+import { acquireFromPool } from './acquireFromPool.js';
 
 type PendingListener = { listener: Partial<DBAdapterListener>; closeAfterRegisteredOnResolvedPool?: () => void };
 
@@ -126,65 +127,16 @@ function readWritePoolState(writer: DatabaseClient, readers: DatabaseClient[]): 
   return {
     writer,
     async withConnection(allowReadOnly, fn, options) {
-      const abortController = new AbortController();
-      const abortSignal = abortController.signal;
-
-      let timeout: any = null;
-      let release: UnlockFn | undefined;
-      if (options?.timeoutMs) {
-        timeout = setTimeout(() => abortController.abort('requesting database timed out'), options.timeoutMs);
-      }
-
-      try {
-        if (allowReadOnly) {
-          let connection: DatabaseClient;
-
-          // Even if we have a pool of read connections, it's typically very small and we assume that most queries are
-          // reads. So, we want to request any connection from the read pool and the dedicated write connection (which
-          // can also serve reads). We race for the first connection we can obtain this way, and then abort the other
-          // request.
-          [connection, release] = await new Promise<[DatabaseClient, UnlockFn]>((resolve, reject) => {
-            let didComplete = false;
-            function complete() {
-              didComplete = true;
-              abortController.abort();
-            }
-
-            function completeSuccess(connection: DatabaseClient, returnFn: UnlockFn) {
-              if (didComplete) {
-                // We're not going to use this connection, so return it immediately.
-                returnFn();
-              } else {
-                complete();
-                resolve([connection, returnFn]);
-              }
-            }
-
-            function completeError(error: unknown) {
-              // We either have a working connection already, or we've rejected the promise. Either way, we don't need
-              // to do either thing again.
-              if (didComplete) return;
-
-              complete();
-              reject(error);
-            }
-
-            writerMutex.acquire(abortSignal).then((unlock) => completeSuccess(writer, unlock), completeError);
-            readerSemaphore
-              .requestOne(abortSignal)
-              .then(({ item, release }) => completeSuccess(item, release), completeError);
-          });
-
-          return await connection.readLock(fn);
-        } else {
-          return await writerMutex.runExclusive(() => writer.writeLock(fn), abortSignal);
-        }
-      } finally {
-        if (timeout != null) {
-          clearTimeout(timeout);
-        }
-        release?.();
-      }
+      return acquireFromPool(
+        writerMutex,
+        writer,
+        readerSemaphore,
+        (connection) => {
+          return allowReadOnly ? connection.readLock(fn) : connection.writeLock(fn);
+        },
+        options,
+        allowReadOnly
+      );
     },
     async close() {
       await writer.close();

@@ -1,6 +1,6 @@
 {
   "name": "@powersync/nuxt",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
@@ -64,11 +64,10 @@
     "bson": "catalog:"
   },
   "peerDependencies": {
-    "@journeyapps/wa-sqlite": "^1.7.0",
-    "@powersync/kysely-driver": "workspace:^2.0.0",
+    "@powersync/kysely-driver": "workspace:^2.0.1",
     "@powersync/vue": "workspace:^0.6.0",
-    "@powersync/web": "workspace:^2.0.0",
-    "@powersync/shared-internals": "workspace:^1.0.1"
+    "@powersync/web": "workspace:^2.1.1",
+    "@powersync/shared-internals": "workspace:^1.1.1"
   },
   "peerDependenciesMeta": {
     "@powersync/kysely-driver": {
@@ -76,7 +75,7 @@
     }
   },
   "devDependencies": {
-    "@journeyapps/wa-sqlite": "^1.7.0",
+    "@journeyapps/wa-sqlite": "catalog:",
     "@nuxt/module-builder": "^1.0.2",
     "@nuxt/schema": "^4.3.1",
     "@nuxt/test-utils": "catalog:",

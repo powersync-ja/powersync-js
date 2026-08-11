@@ -3,6 +3,8 @@ import { Factory as WaSqliteFactory, SQLITE_ROW } from '@journeyapps/wa-sqlite';
 import { loadModuleAndVfs, WASQLiteVFS } from './vfs.js';
 import { TemporaryStorageOption } from '../options.js';
 import { RawQueryResult, SqliteValue } from '@powersync/common';
+import { maxPathNameLength } from '../resolveAndValidateOptions.js';
+import { PreparedStatementCache } from './StatementCache.js';
 
 export interface RawWebResult extends Required<RawQueryResult> {
   autocommit: boolean;
@@ -23,6 +25,10 @@ export interface RawWaSqliteDatabaseOptions {
   encryptionKey: string | undefined;
   temporaryStorage: TemporaryStorageOption;
   cacheSizeKb: number;
+  /**
+   * The amount of prepared statements to cache, or 0 to disable caching.
+   */
+  preparedStatementsCache: number;
 }
 
 /**
@@ -33,19 +39,30 @@ export interface RawWaSqliteDatabaseOptions {
  */
 export class RawSqliteConnection {
   private _sqliteAPI: SQLiteAPI | null = null;
+  private sqlite3_stmt_isexplain!: (stmt: number) => 0 | 1 | 2;
+
   /**
    * The `sqlite3*` connection pointer.
    */
   private db: number = 0;
+  private statementCache: PreparedStatementCache | null;
 
-  constructor(readonly options: RawWaSqliteDatabaseOptions) {}
+  constructor(readonly options: RawWaSqliteDatabaseOptions) {
+    this.statementCache =
+      options.preparedStatementsCache > 0 ? new PreparedStatementCache(options.preparedStatementsCache) : null;
+  }
 
   get isOpen(): boolean {
     return this.db != 0;
   }
 
   async init() {
-    const api = (this._sqliteAPI = await this.openSQLiteAPI());
+    const { module, vfs } = await loadModuleAndVfs(this.options);
+    await this.initWithModule(module, vfs);
+  }
+
+  async initWithModule(module: any, vfs: any) {
+    const api = (this._sqliteAPI = await this.openSQLiteAPI(module, vfs));
     this.db = await api.open_v2(
       this.options.filename,
       this.options.readonly ? 1 /* SQLITE_OPEN_READONLY */ : 6 /* SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE */
@@ -60,8 +77,10 @@ export class RawSqliteConnection {
     await this.executeRaw(`SELECT powersync_update_hooks('install');`);
   }
 
-  private async openSQLiteAPI(): Promise<SQLiteAPI> {
-    const { module, vfs } = await loadModuleAndVfs(this.options);
+  private async openSQLiteAPI(module: any, vfs: SQLiteVFS): Promise<SQLiteAPI> {
+    vfs.mxPathname = maxPathNameLength;
+
+    this.sqlite3_stmt_isexplain = module.cwrap('sqlite3_stmt_isexplain', 'int', ['int']);
     const sqlite3 = WaSqliteFactory(module);
     sqlite3.vfs_register(vfs, true);
     /**
@@ -141,7 +160,7 @@ export class RawSqliteConnection {
   async executeRaw(sql: string, bindings?: any[]): Promise<RawResultSet[]> {
     const results = [];
     const api = this.requireSqlite();
-    for await (const stmt of api.statements(this.db, sql)) {
+    for await (const stmt of this.cachedStatements(api, sql)) {
       let columns;
 
       const rs = await this.stepThroughStatement(api, stmt, bindings ?? [], columns);
@@ -192,8 +211,56 @@ export class RawSqliteConnection {
 
   async close() {
     if (this.isOpen) {
-      await this.requireSqlite().close(this.db);
+      const api = this.requireSqlite();
+
+      if (this.statementCache) {
+        for (const stmt of this.statementCache.drain()) {
+          await api.finalize(stmt);
+        }
+      }
+
+      await api.close(this.db);
       this.db = 0;
+    }
+  }
+
+  private async *cachedStatements(api: SQLiteAPI, sql: string): AsyncIterable<number> {
+    {
+      const existing = this.statementCache?.lookup(sql);
+      if (existing != null) {
+        yield existing;
+        return;
+      }
+    }
+
+    const inner = api.statements(this.db, sql, { unscoped: true });
+    const preparedStatements: number[] = [];
+
+    try {
+      for await (const stmt of inner) {
+        preparedStatements.push(stmt);
+        yield stmt;
+      }
+    } finally {
+      // We can only cache statements if the sql text corresponds to a single statement, otherwise it's not clear what
+      // portion of the original sql text to use as a key.
+      if (preparedStatements.length === 1 && this.statementCache) {
+        const stmt = preparedStatements[0];
+        // Don't cache EXPLAIN statements, their result becomes invalid after schema changes.
+        if (this.sqlite3_stmt_isexplain(stmt) == 0) {
+          const evicted = this.statementCache.addStatement(sql, stmt);
+          if (evicted != null) {
+            await api.finalize(evicted);
+          }
+
+          return;
+        }
+      }
+
+      // We're not caching statements, so finalize them.
+      for (const stmt of preparedStatements) {
+        await api.finalize(stmt);
+      }
     }
   }
 }

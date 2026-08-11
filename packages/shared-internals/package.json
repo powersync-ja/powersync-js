@@ -1,6 +1,6 @@
 {
   "name": "@powersync/shared-internals",
-  "version": "1.0.1",
+  "version": "1.1.1",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
@@ -45,8 +45,10 @@
     "test:exports": "attw --pack . --profile node16 --exclude-entrypoints internal/sync_protocol --ignore-rules cjs-resolves-to-esm",
     "postversion": "node tool/update_version.js"
   },
+  "peerDependencies": {
+    "@powersync/common": "workspace:*"
+  },
   "devDependencies": {
-    "@powersync/common": "workspace:*",
     "@rollup/plugin-commonjs": "catalog:",
     "@rollup/plugin-inject": "catalog:",
     "@rollup/plugin-json": "catalog:",
