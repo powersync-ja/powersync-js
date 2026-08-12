@@ -244,13 +244,13 @@ The next upload iteration will be delayed.`
               this.updateJsSyncState({ uploadError: undefined });
             } else {
               // Uploading is completed
-              const neededUpdate = await this.options.adapter.updateLocalTarget(() => this.getWriteCheckpoint());
-              if (neededUpdate) {
+              const localTarget = await this.options.adapter.updateLocalTarget(() => this.getWriteCheckpoint());
+              if (localTarget == 'updated_checkpoint') {
                 this.notifyCompletedUploads?.();
-              } else if (await this.options.adapter.hasCrud()) {
+              } else if (localTarget == 'new_data') {
                 // `updateLocalTarget` compares the CRUD queue inside a write transaction, so it can see a local write
-                // that `nextCrudItem()` did not. When that happens the write still needs to be uploaded and no
-                // checkpoint can be applied until it is, so retry instead of parking the loop.
+                // that `nextCrudItem()` did not. That write still needs to be uploaded and no checkpoint can be
+                // applied until it is, so retry instead of parking the loop.
                 //
                 // The first retry runs immediately, because the row is normally visible by then and delaying it would
                 // add latency to an ordinary upload. Later retries wait: the exit condition is `nextCrudItem()`
@@ -260,8 +260,9 @@ The next upload iteration will be delayed.`
                   await this.delayRetry(signal, options.crudUploadThrottleMs);
                 }
                 continue;
-              } else if (checkedCrudItem != null) {
-                // Only log this if there was something to upload
+              } else if (localTarget == 'no_crud_sequence' && checkedCrudItem != null) {
+                // Only log this if there was something to upload. `sequence_changed` is excluded because
+                // `updateLocalTarget` has already reported that a new write checkpoint is needed.
                 this.logger.log({ level: LogLevels.debug, message: 'Upload complete, no write checkpoint needed.' });
               }
               break;

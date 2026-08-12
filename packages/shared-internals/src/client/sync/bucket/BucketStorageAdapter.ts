@@ -35,6 +35,21 @@ export interface BucketStorageListener extends BaseListener {
   crudUpdate: () => void;
 }
 
+/**
+ * The outcome of an attempt to record a write checkpoint as the local target.
+ *
+ * - `updated_checkpoint`: the target was recorded, so uploads are fully acknowledged.
+ * - `new_data`: the CRUD queue was not empty when the checkpoint came back, so a local write raced the request and
+ *    still needs uploading.
+ * - `sequence_changed`: the queue is empty, but its sequence moved while the checkpoint was in flight, so the
+ *    checkpoint is already outdated and a new one is needed.
+ * - `no_crud_sequence`: there was nothing to record, either because no CRUD has ever been written or because a target
+ *    checkpoint is already pending.
+ *
+ * @internal
+ */
+export type UpdateLocalTargetResult = 'updated_checkpoint' | 'new_data' | 'sequence_changed' | 'no_crud_sequence';
+
 export interface BucketStorageAdapter extends BaseObserverInterface<BucketStorageListener>, Disposable {
   hasMigratedSubkeys(): Promise<boolean>;
   migrateToFixedSubkeys(): Promise<void>;
@@ -43,7 +58,7 @@ export interface BucketStorageAdapter extends BaseObserverInterface<BucketStorag
   hasCrud(): Promise<boolean>;
   getCrudBatch(limit?: number): Promise<CrudBatch | null>;
 
-  updateLocalTarget(cb: () => Promise<string>): Promise<boolean>;
+  updateLocalTarget(cb: () => Promise<string>): Promise<UpdateLocalTargetResult>;
   handleCrudCheckpoint(lastClientId: number, writeCheckpoint?: string): Promise<void>;
 
   /**
