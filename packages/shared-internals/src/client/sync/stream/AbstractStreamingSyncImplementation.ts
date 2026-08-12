@@ -212,6 +212,10 @@ export abstract class AbstractStreamingSyncImplementation
          * Keep track of the first item in the CRUD queue for the last `uploadCrud` iteration.
          */
         let checkedCrudItem: CrudEntry | undefined;
+        /**
+         * Consecutive retries caused by a local write that `nextCrudItem` did not see, reset once an upload succeeds.
+         */
+        let unseenWriteRetries = 0;
 
         while (!signal.aborted) {
           try {
@@ -236,6 +240,7 @@ The next upload iteration will be delayed.`
 
               checkedCrudItem = nextCrudItem;
               await this.options.uploadCrud();
+              unseenWriteRetries = 0;
               this.updateJsSyncState({ uploadError: undefined });
             } else {
               // Uploading is completed
@@ -247,9 +252,13 @@ The next upload iteration will be delayed.`
                 // that `nextCrudItem()` did not. When that happens the write still needs to be uploaded and no
                 // checkpoint can be applied until it is, so retry instead of parking the loop.
                 //
-                // The retry is throttled because its exit condition is `nextCrudItem()` observing the row. If the two
-                // reads keep disagreeing, an immediate `continue` busy-loops and floods the write checkpoint endpoint.
-                await this.delayRetry(signal, options.crudUploadThrottleMs);
+                // The first retry runs immediately, because the row is normally visible by then and delaying it would
+                // add latency to an ordinary upload. Later retries wait: the exit condition is `nextCrudItem()`
+                // observing the row, so if the two reads keep disagreeing an unthrottled loop would request write
+                // checkpoints as fast as the event loop allows.
+                if (unseenWriteRetries++ > 0) {
+                  await this.delayRetry(signal, options.crudUploadThrottleMs);
+                }
                 continue;
               } else if (checkedCrudItem != null) {
                 // Only log this if there was something to upload

@@ -801,6 +801,42 @@ function defineSyncTests(bson: boolean) {
     expect(missedReads).toBeLessThan((observeMs / throttleMs) * 4);
   });
 
+  mockSyncServiceTest('retries a raced write without waiting for the upload throttle', async ({ syncService }) => {
+    const database = await syncService.createDatabase();
+    const connector = new TestConnector();
+    const pendingCrud = async () => (await database.get<{ c: number }>('SELECT count(*) AS c FROM ps_crud')).c;
+
+    const adapter = (database as any).bucketStorageAdapter as BucketStorageAdapter;
+    const nextCrudItem = adapter.nextCrudItem.bind(adapter);
+    let missNextRead = false;
+    adapter.nextCrudItem = async () => {
+      if (missNextRead) {
+        missNextRead = false;
+        return undefined;
+      }
+      return nextCrudItem();
+    };
+
+    await database.execute('INSERT INTO lists (id, name) VALUES (uuid(), ?)', ['completed outside the loop']);
+    const transaction = await database.getNextCrudTransaction();
+    await transaction!.complete();
+
+    // A throttle much longer than the upload itself, so waiting one interval would show up in the timing below.
+    const throttleMs = 1500;
+    database.connect(connector, { ...options, crudUploadThrottleMs: throttleMs });
+    await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
+    // Let the first iteration finish its throttle and park, so the measurement below covers only the retry.
+    await new Promise((resolve) => setTimeout(resolve, throttleMs + 300));
+
+    missNextRead = true;
+    const startedAt = performance.now();
+    await database.execute('INSERT INTO lists (id, name) VALUES (uuid(), ?)', ['raced write']);
+    await vi.waitFor(async () => expect(await pendingCrud()).toBe(0), { timeout: 5000 });
+
+    // The first retry runs immediately, so the queue drains well inside one throttle interval.
+    expect(performance.now() - startedAt).toBeLessThan(throttleMs / 2);
+  });
+
   mockSyncServiceTest('should update sync state incrementally', async ({ syncService }) => {
     const powersync = await syncService.createDatabase();
     powersync.connect(new TestConnector(), options);
