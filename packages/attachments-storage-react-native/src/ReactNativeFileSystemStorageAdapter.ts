@@ -1,5 +1,10 @@
 import { decode as decodeBase64, encode as encodeBase64 } from 'base64-arraybuffer';
-import type { AttachmentData, LocalStorageAdapter } from '@powersync/common';
+import type { AttachmentData, AttachmentTransportAdapter, StreamingLocalStorageAdapter } from '@powersync/common';
+
+import {
+  ReactNativeFileSystemTransportAdapter,
+  ReactNativeFileSystemTransportAdapterOptions
+} from './ReactNativeFileSystemTransportAdapter.js';
 
 /**
  * ReactNativeFileSystemStorageAdapter implements LocalStorageAdapter using @dr.pogodin/react-native-fs.
@@ -8,7 +13,7 @@ import type { AttachmentData, LocalStorageAdapter } from '@powersync/common';
  * @experimental
  * @alpha This is currently experimental and may change without a major version bump.
  */
-export class ReactNativeFileSystemStorageAdapter implements LocalStorageAdapter {
+export class ReactNativeFileSystemStorageAdapter implements StreamingLocalStorageAdapter {
   private rnfs: typeof import('@dr.pogodin/react-native-fs');
   private storageDirectory: string;
 
@@ -24,6 +29,14 @@ To use the React Native File System attachment adapter please install @dr.pogodi
     this.rnfs = rnfs;
     // Default to a subdirectory in the document directory
     this.storageDirectory = storageDirectory ?? `${this.rnfs.DocumentDirectoryPath}/attachments/`;
+  }
+
+  /**
+   * Creates a streaming transport that transfers bytes between local files and remote
+   * storage natively, reusing this adapter's resolved `@dr.pogodin/react-native-fs` module.
+   */
+  createTransportAdapter(options: ReactNativeFileSystemTransportAdapterOptions): AttachmentTransportAdapter {
+    return new ReactNativeFileSystemTransportAdapter(this.rnfs, options);
   }
 
   async initialize(): Promise<void> {
@@ -69,6 +82,17 @@ To use the React Native File System attachment adapter please install @dr.pogodi
   async readFile(filePath: string): Promise<ArrayBuffer> {
     const content = await this.rnfs.readFile(filePath, 'base64');
     return decodeBase64(content);
+  }
+
+  async moveFile(sourceUri: string, targetUri: string): Promise<number> {
+    if (sourceUri !== targetUri) {
+      if (await this.rnfs.exists(targetUri)) {
+        await this.rnfs.unlink(targetUri);
+      }
+      await this.rnfs.moveFile(sourceUri, targetUri);
+    }
+    const stat = await this.rnfs.stat(targetUri);
+    return Number(stat.size);
   }
 
   async deleteFile(filePath: string): Promise<void> {

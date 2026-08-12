@@ -1,6 +1,11 @@
 import { decode as decodeBase64 } from 'base64-arraybuffer';
-import type { AttachmentData, LocalStorageAdapter } from '@powersync/common';
+import type { AttachmentData, AttachmentTransportAdapter, StreamingLocalStorageAdapter } from '@powersync/common';
 import type { File, Directory } from 'expo-file-system';
+
+import {
+  ExpoFileSystemTransportAdapter,
+  ExpoFileSystemTransportAdapterOptions
+} from './ExpoFileSystemTransportAdapter.js';
 
 /**
  * ExpoFileSystemStorageAdapter implements LocalStorageAdapter using Expo's new File System API (SDK 54+).
@@ -9,7 +14,7 @@ import type { File, Directory } from 'expo-file-system';
  * @experimental
  * @alpha This is currently experimental and may change without a major version bump.
  */
-export class ExpoFileSystemStorageAdapter implements LocalStorageAdapter {
+export class ExpoFileSystemStorageAdapter implements StreamingLocalStorageAdapter {
   private File: typeof File;
   private Directory: typeof Directory;
   private storageDir: Directory;
@@ -29,10 +34,22 @@ To use the Expo File System attachment adapter please install expo-file-system (
 
     this.File = fs.File;
     this.Directory = fs.Directory;
-    
+
     // Default to a subdirectory in the document directory
     const basePath = storageDirectory ?? fs.Paths.document;
     this.storageDir = new fs.Directory(basePath, 'attachments');
+  }
+
+  /**
+   * Creates a streaming transport that transfers bytes between local files and remote
+   * storage natively, reusing this adapter's resolved `expo-file-system` module. Requires
+   * the modern upload API, available in expo-file-system SDK 56+.
+   */
+  createTransportAdapter(options: ExpoFileSystemTransportAdapterOptions): AttachmentTransportAdapter {
+    if (typeof this.File.prototype.upload !== 'function') {
+      throw new Error(`Expo File System streaming transport not available. This requires expo-file-system SDK 56+.`);
+    }
+    return new ExpoFileSystemTransportAdapter(this.File, options);
   }
 
   async initialize(): Promise<void> {
@@ -51,10 +68,7 @@ To use the Expo File System attachment adapter please install expo-file-system (
     return new this.File(this.storageDir, filename).uri;
   }
 
-  async saveFile(
-    filePath: string,
-    data: AttachmentData
-  ): Promise<number> {
+  async saveFile(filePath: string, data: AttachmentData): Promise<number> {
     const file = new this.File(filePath);
     let size: number;
 
@@ -76,9 +90,20 @@ To use the Expo File System attachment adapter please install expo-file-system (
 
   async readFile(filePath: string, mediaType?: string): Promise<ArrayBuffer> {
     const file = new this.File(filePath);
-    
+
     const { buffer } = await file.bytes();
     return buffer;
+  }
+
+  async moveFile(sourceUri: string, targetUri: string): Promise<number> {
+    if (sourceUri !== targetUri) {
+      const target = new this.File(targetUri);
+      if (target.exists) {
+        target.delete();
+      }
+      new this.File(sourceUri).move(target);
+    }
+    return new this.File(targetUri).size ?? 0;
   }
 
   async deleteFile(filePath: string): Promise<void> {
@@ -110,7 +135,7 @@ To use the Expo File System attachment adapter please install expo-file-system (
   async makeDir(path: string): Promise<void> {
     const dir = new this.Directory(path);
     if (!dir.exists) {
-       dir.create();
+      dir.create();
     }
   }
 

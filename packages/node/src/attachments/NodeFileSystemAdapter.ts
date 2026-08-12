@@ -1,13 +1,26 @@
 import { promises as fs } from 'fs';
 import * as path from 'path';
-import { AttachmentData, EncodingType, LocalStorageAdapter } from '@powersync/common';
+import { AttachmentData, AttachmentTransportAdapter, EncodingType, StreamingLocalStorageAdapter } from '@powersync/common';
+
+import {
+  NodeFileSystemTransportAdapter,
+  NodeFileSystemTransportAdapterOptions
+} from './NodeFileSystemTransportAdapter.js';
 
 /**
  * NodeFileSystemAdapter implements LocalStorageAdapter using Node.js filesystem.
  * Suitable for Node.js environments and Electron applications.
  */
-export class NodeFileSystemAdapter implements LocalStorageAdapter {
+export class NodeFileSystemAdapter implements StreamingLocalStorageAdapter {
   constructor(private storageDirectory: string = './user_data') {}
+
+  /**
+   * Creates a streaming transport that transfers bytes between local files and remote
+   * storage without materializing them in the JS heap.
+   */
+  createTransportAdapter(options: NodeFileSystemTransportAdapterOptions): AttachmentTransportAdapter {
+    return new NodeFileSystemTransportAdapter(options);
+  }
 
   async initialize(): Promise<void> {
     const dir = path.resolve(this.storageDirectory);
@@ -58,6 +71,14 @@ export class NodeFileSystemAdapter implements LocalStorageAdapter {
     } else {
       return data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength) as ArrayBuffer;
     }
+  }
+
+  async moveFile(sourceUri: string, targetUri: string): Promise<number> {
+    if (sourceUri !== targetUri) {
+      await fs.rename(sourceUri, targetUri);
+    }
+    const stats = await fs.stat(targetUri);
+    return stats.size;
   }
 
   async deleteFile(path: string, options?: { filename?: string }): Promise<void> {
