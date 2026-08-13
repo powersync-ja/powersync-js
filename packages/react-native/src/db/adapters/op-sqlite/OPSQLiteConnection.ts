@@ -1,7 +1,5 @@
 import { DB, SQLBatchTuple, UpdateHookOperation } from '@op-engineering/op-sqlite';
 import {
-  BaseObserver,
-  BatchedUpdateNotification,
   LockContext,
   QueryResult,
   queryResultFromMapped,
@@ -23,38 +21,10 @@ export type OPSQLiteUpdateNotification = {
 
 export class OPSQLiteConnection extends LockContext {
   protected DB: DB;
-  private updateBuffer: Set<string>;
-  readonly tableUpdateDispatcher = new BaseObserver();
 
   constructor(protected options: OPSQLiteConnectionOptions) {
     super();
     this.DB = options.baseDB;
-    this.updateBuffer = new Set();
-
-    this.DB.rollbackHook(() => {
-      this.updateBuffer = new Set();
-    });
-
-    this.DB.updateHook((update) => {
-      this.addTableUpdate(update);
-    });
-  }
-
-  addTableUpdate(update: OPSQLiteUpdateNotification) {
-    this.updateBuffer.add(update.table);
-  }
-
-  flushUpdates() {
-    if (!this.updateBuffer.size) {
-      return;
-    }
-
-    const batchedUpdate: BatchedUpdateNotification = {
-      tables: Array.from(this.updateBuffer)
-    };
-
-    this.updateBuffer = new Set();
-    this.tableUpdateDispatcher.iterateListeners((l) => l.tablesUpdated?.(batchedUpdate));
   }
 
   close() {
