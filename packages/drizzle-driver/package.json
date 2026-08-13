@@ -39,7 +39,7 @@
     "tslib": "^2.8.1"
   },
   "peerDependencies": {
-    "@powersync/common": "workspace:^2.0.0",
+    "@powersync/common": "workspace:^2.1.0",
     "drizzle-orm": "<1.0.0"
   },
   "devDependencies": {

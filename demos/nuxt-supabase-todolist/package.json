@@ -12,7 +12,7 @@
     "@powersync/kysely-driver": "^2.0.1",
     "@powersync/nuxt": "^0.0.9",
     "@powersync/vue": "^0.6.0",
-    "@powersync/web": "^2.1.1",
+    "@powersync/web": "^2.2.0",
     "@supabase/supabase-js": "2.75.0",
     "tailwindcss": "^4.1.18"
   },

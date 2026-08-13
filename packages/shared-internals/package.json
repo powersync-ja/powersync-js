@@ -46,7 +46,7 @@
     "postversion": "node tool/update_version.js"
   },
   "peerDependencies": {
-    "@powersync/common": "workspace:^2.0.0"
+    "@powersync/common": "workspace:^2.1.0"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "catalog:",
