@@ -1,8 +1,11 @@
 packages:
   - .
 allowBuilds:
-  '@journeyapps/wa-sqlite': true
   '@parcel/watcher': true
   esbuild: true
   lmdb: false
   msgpackr-extract: false
+
+minimumReleaseAgeExclude:
+  - '@journeyapps/*'
+  - '@powersync/*'

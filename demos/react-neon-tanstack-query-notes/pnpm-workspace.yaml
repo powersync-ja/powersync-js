@@ -1,7 +1,10 @@
 packages:
   - .
 allowBuilds:
-  '@journeyapps/wa-sqlite': true
   '@sentry-internal/node-cpu-profiler': false
   core-js: true
   esbuild: true
+
+minimumReleaseAgeExclude:
+  - '@journeyapps/*'
+  - '@powersync/*'
