@@ -1,8 +1,11 @@
 packages:
   - .
 allowBuilds:
-  '@journeyapps/wa-sqlite': true
   '@parcel/watcher': true
   '@swc/core': true
   esbuild: true
   vue-demi: false
+
+minimumReleaseAgeExclude:
+  - '@journeyapps/*'
+  - '@powersync/*'

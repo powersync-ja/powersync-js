@@ -22,7 +22,7 @@ overrides:
 catalog:
   # We must depend on an exact version of wa-sqlite, as we want to update the core extension
   # (which can be breaking for SDKs) without a major revision.
-  '@journeyapps/wa-sqlite': 2.0.2
+  '@journeyapps/wa-sqlite': 2.0.3
   '@microsoft/api-extractor': ^7.58.7
   '@nuxt/devtools-kit': ^3.2.3
   '@nuxt/devtools-ui-kit': ^3.2.3
@@ -64,7 +64,6 @@ catalog:
   expo: ^56.0.0
 
 allowBuilds:
-  '@journeyapps/wa-sqlite': true
   '@parcel/watcher': false
   '@swc/core': true
   better-sqlite3: true
@@ -79,3 +78,7 @@ allowBuilds:
 
 trustPolicyExclude:
   - 'rollup@2.80.0' # Backport release published from trusted tag
+
+minimumReleaseAgeExclude:
+  - '@journeyapps/*'
+  - '@powersync/*'
