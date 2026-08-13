@@ -1,5 +1,11 @@
 # @powersync/common
 
+## 2.1.0
+
+### Minor Changes
+
+- 5af3523: Add a streaming attachment transport (`AttachmentTransportAdapter`) and `AttachmentQueue.saveFileFromUri`, with native `createTransportAdapter` implementations for Node, Expo (SDK 56+), and React Native, so large files transfer without being buffered in JS memory.
+
 ## 2.0.0
 
 ### Major Changes

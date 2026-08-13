@@ -1,5 +1,18 @@
 # @powersync/react-native
 
+## 2.1.0
+
+### Minor Changes
+
+- 89e605d: For consistency with other platforms and better performance, use update hooks from the PowerSync SQLite core extension instead of registering them as JavaScript callbacks.
+
+### Patch Changes
+
+- Updated dependencies [5af3523]
+  - @powersync/common@2.1.0
+  - @powersync/react@2.0.0
+  - @powersync/shared-internals@1.1.1
+
 ## 2.0.2
 
 ### Patch Changes

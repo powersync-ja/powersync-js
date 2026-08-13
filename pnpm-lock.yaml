@@ -403,7 +403,7 @@ importers:
   packages/drizzle-driver:
     dependencies:
       '@powersync/common':
-        specifier: workspace:^2.0.0
+        specifier: workspace:^2.1.0
         version: link:../common
       tslib:
         specifier: ^2.8.1
@@ -428,7 +428,7 @@ importers:
   packages/kysely-driver:
     dependencies:
       '@powersync/common':
-        specifier: workspace:^2.0.0
+        specifier: workspace:^2.1.0
         version: link:../common
       kysely:
         specifier: 'catalog:'

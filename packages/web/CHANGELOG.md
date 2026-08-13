@@ -1,5 +1,20 @@
 # @powersync/web
 
+## 2.2.0
+
+### Minor Changes
+
+- c586cd4: This adds the `preparedStatementsCache` option when opening databases. While disabled by default, caching prepared statements can improve performance by not having to parse them every time a statement is executed.
+- c626674: Add `@powersync/web/extra/shared-memory-pool`, a multi-threaded in-memory connection pool useful for high-performance workloads where persistence is not required.
+
+### Patch Changes
+
+- c2fa06b: Upgrade `@journeyapps/wa-sqlite` to no longer use a `postinstall` hook.
+- 8430408: Allow opening read workers for the OPFS WriteAhead file system in parallel, improving startup performance.
+- Updated dependencies [5af3523]
+  - @powersync/common@2.1.0
+  - @powersync/shared-internals@1.1.1
+
 ## 2.1.1
 
 ### Patch Changes
