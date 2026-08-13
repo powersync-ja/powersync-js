@@ -761,6 +761,13 @@ SELECT * FROM crud_entries;
     }
 
     const resolvedOptions = options ?? {};
+
+    // An already-aborted signal never emits an `abort` event, so the listener registered
+    // below would never be disposed. Avoid registering anything in that case.
+    if (resolvedOptions.signal?.aborted) {
+      return () => {};
+    }
+
     const watchedTables = new Set<string>(
       (resolvedOptions?.tables ?? []).flatMap((table) => [table, `ps_data__${table}`, `ps_data_local__${table}`])
     );
