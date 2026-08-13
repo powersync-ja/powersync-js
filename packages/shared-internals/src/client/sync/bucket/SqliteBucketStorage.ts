@@ -15,7 +15,8 @@ import {
   PowerSyncControlCommand,
   PSInternalTable,
   rawPowerSyncControl,
-  targetCheckpointRequestId
+  targetCheckpointRequestId,
+  UpdateLocalTargetResult
 } from './BucketStorageAdapter.js';
 import { CrudEntryImpl, CrudEntryJSON } from './CrudEntry.js';
 import { MAX_OP_ID } from '../../../constants.js';
@@ -57,7 +58,7 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
     return this._clientId!;
   }
 
-  async updateLocalTarget(cb: () => Promise<string>): Promise<boolean> {
+  async updateLocalTarget(cb: () => Promise<string>): Promise<UpdateLocalTargetResult> {
     const sequenceBefore = await this.db.readTransaction(async (tx): Promise<number | undefined> => {
       const currentCheckpoint = await targetCheckpointRequestId(tx);
       if (currentCheckpoint != MAX_OP_ID) return;
@@ -68,7 +69,7 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
 
     if (sequenceBefore == null) {
       // Nothing to update
-      return false;
+      return 'no_crud_sequence';
     }
 
     const opId = await cb();
@@ -81,7 +82,7 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
           level: LogLevels.debug,
           message: `New data uploaded since write checkpoint ${opId} - need new write checkpoint`
         });
-        return false;
+        return 'new_data';
       }
 
       const { seq: seqAfter } = await tx.get<{ seq: number }>(
@@ -95,7 +96,7 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
         });
 
         // New crud data may have been uploaded since we got the checkpoint. Abort.
-        return false;
+        return 'sequence_changed';
       }
 
       this.logger.log({
@@ -103,7 +104,7 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
         message: `Updating target write checkpoint to ${opId}`
       });
       await targetCheckpointRequestId(tx, opId);
-      return true;
+      return 'updated_checkpoint';
     });
   }
 
