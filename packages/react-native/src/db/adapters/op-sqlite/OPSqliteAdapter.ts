@@ -1,6 +1,6 @@
 import { NativeModules } from 'react-native';
 import { getDylibPath, open, type DB } from '@op-engineering/op-sqlite';
-import { DBAdapter, DBLockOptions, QueryResult } from '@powersync/common';
+import { BatchedUpdateNotification, DBAdapter, DBLockOptions, QueryResult } from '@powersync/common';
 import { timeoutSignal, Semaphore } from '@powersync/shared-internals';
 import { Platform } from 'react-native';
 import { OPSQLiteConnection } from './OPSQLiteConnection';
@@ -54,7 +54,9 @@ export class OPSQLiteDBAdapter extends DBAdapter {
       ...baseStatements,
       `PRAGMA journal_mode = ${journalMode}`,
       `PRAGMA journal_size_limit = ${journalSizeLimit}`,
-      `PRAGMA synchronous = ${synchronous}`
+      `PRAGMA synchronous = ${synchronous}`,
+      // Changes should only occur in the write connection
+      `SELECT powersync_update_hooks('install')`
     ];
 
     for (const statement of writeConnectionStatements) {
@@ -71,11 +73,6 @@ export class OPSQLiteDBAdapter extends DBAdapter {
         }
       }
     }
-
-    // Changes should only occur in the write connection
-    underlyingWriteConnection.tableUpdateDispatcher.registerListener({
-      tablesUpdated: (notification) => this.iterateListeners((cb) => cb.tablesUpdated?.(notification))
-    });
 
     const underlyingReadConnections = [];
     for (let i = 0; i < READ_CONNECTIONS; i++) {
@@ -212,8 +209,20 @@ export class OPSQLiteDBAdapter extends DBAdapter {
     const { signal, cleanUpInnerSignal } = this.generateNestedAbortSignal(options);
     const { item, release } = await this.writeConnection!.requestOne(signal);
     try {
-      return await fn(item).finally(() => item.flushUpdates());
+      return await fn(item);
     } finally {
+      // Fetch committed table updates
+      const {
+        rawRows: [[jsonUpdate]]
+      } = await item.executeRaw("SELECT powersync_update_hooks('get')");
+
+      const notification: BatchedUpdateNotification = {
+        tables: JSON.parse(jsonUpdate as string)
+      };
+      if (notification.tables.length) {
+        this.iterateListeners((l) => l.tablesUpdated?.(notification));
+      }
+
       release();
       cleanUpInnerSignal?.();
     }

@@ -227,6 +227,12 @@ export function registerBaseTests() {
 
     it('Transaction, manual rollback', async () => {
       const { name, age, networth } = generateUserInfo();
+      let didNotify = false;
+      const l = db.database.registerListener({
+        tablesUpdated() {
+          didNotify=true;
+        }
+      });
 
       await db.writeTransaction(async (tx) => {
         await tx.execute('INSERT INTO "users" (id, name, age, networth) VALUES(uuid(), ?, ?, ?)', [
@@ -239,6 +245,34 @@ export function registerBaseTests() {
 
       const res = await db.execute('SELECT * FROM users');
       expect(res.rows?._array).to.eql([]);
+      expect(didNotify).to.be.false;
+      l();
+    });
+
+    it('Manual transaction', async () => {
+      const { name, age, networth } = generateUserInfo();
+      let didNotify = false;
+      const l = db.database.registerListener({
+        tablesUpdated() {
+          didNotify=true;
+        }
+      });
+
+      await db.writeLock(async (lock) => {
+        await lock.execute('INSERT INTO "users" (id, name, age, networth) VALUES(uuid(), ?, ?, ?)', [
+          name,
+          age,
+          networth
+        ]);
+        await lock.execute('BEGIN');
+        await lock.execute('DELETE FROM users');
+        await lock.execute('ROLLBACK');
+      });
+
+      expect(didNotify).to.be.true;
+      const res = await db.execute('SELECT * FROM users');
+      expect(res.rows?.length).to.eql(1);
+      l();
     });
 
     /**
