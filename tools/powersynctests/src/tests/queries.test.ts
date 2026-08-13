@@ -245,7 +245,7 @@ export function registerBaseTests() {
 
       const res = await db.execute('SELECT * FROM users');
       expect(res.rows?._array).to.eql([]);
-      expect(!didNotify);
+      expect(didNotify).to.be.false;
       l();
     });
 
@@ -269,7 +269,7 @@ export function registerBaseTests() {
         await lock.execute('ROLLBACK');
       });
 
-      expect(didNotify);
+      expect(didNotify).to.be.true;
       const res = await db.execute('SELECT * FROM users');
       expect(res.rows?.length).to.eql(1);
       l();

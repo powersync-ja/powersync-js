@@ -209,9 +209,9 @@ export class OPSQLiteDBAdapter extends DBAdapter {
     const { signal, cleanUpInnerSignal } = this.generateNestedAbortSignal(options);
     const { item, release } = await this.writeConnection!.requestOne(signal);
     try {
-      const result = await fn(item);
-
-      // Fetc committed table updates
+      return await fn(item);
+    } finally {
+      // Fetch committed table updates
       const {
         rawRows: [[jsonUpdate]]
       } = await item.executeRaw("SELECT powersync_update_hooks('get')");
@@ -219,10 +219,10 @@ export class OPSQLiteDBAdapter extends DBAdapter {
       const notification: BatchedUpdateNotification = {
         tables: JSON.parse(jsonUpdate as string)
       };
-      this.iterateListeners((l) => l.tablesUpdated?.(notification));
+      if (notification.tables.length) {
+        this.iterateListeners((l) => l.tablesUpdated?.(notification));
+      }
 
-      return result;
-    } finally {
       release();
       cleanUpInnerSignal?.();
     }

@@ -1,4 +1,4 @@
-import { DB, SQLBatchTuple, UpdateHookOperation } from '@op-engineering/op-sqlite';
+import { DB, SQLBatchTuple } from '@op-engineering/op-sqlite';
 import {
   LockContext,
   QueryResult,
@@ -10,13 +10,6 @@ import {
 
 export type OPSQLiteConnectionOptions = {
   baseDB: DB;
-};
-
-export type OPSQLiteUpdateNotification = {
-  table: string;
-  operation: UpdateHookOperation;
-  row?: any;
-  rowId: number;
 };
 
 export class OPSQLiteConnection extends LockContext {
