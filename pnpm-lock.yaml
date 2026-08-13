@@ -654,7 +654,7 @@ importers:
   packages/shared-internals:
     dependencies:
       '@powersync/common':
-        specifier: workspace:*
+        specifier: workspace:^2.0.0
         version: link:../common
     devDependencies:
       '@rollup/plugin-commonjs':
