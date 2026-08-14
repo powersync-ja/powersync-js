@@ -656,7 +656,9 @@ SELECT * FROM crud_entries;
   watchWithCallback(sql: string, parameters?: any[], handler?: WatchHandler, options?: SQLWatchOptions): void {
     const {
       onResult,
-      onError = (e: Error) => this.logger.log({ level: LogLevels.error, message: 'Error in watch', error: e })
+      // The watched query already logs errors with this database's logger, so the default handler
+      // only has to avoid rethrowing.
+      onError = () => {}
     } = handler ?? {};
     if (!onResult) {
       throw new Error('onResult is required');

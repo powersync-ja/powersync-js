@@ -1,3 +1,4 @@
+import { LogLevels } from '@powersync/common';
 import React from 'react';
 import { QueryResult } from './watch-types.js';
 import { InternalHookOptions } from './watch-utils.js';
@@ -36,6 +37,13 @@ export const useSingleQuery = <RowType = any>(options: InternalHookOptions<RowTy
           error: undefined
         }));
       } catch (error) {
+        // Matches the logging done by watched queries, so that `runQueryOnce` failures are just as
+        // discoverable.
+        powerSync.logger.log({
+          level: LogLevels.error,
+          message: 'Error in watched query',
+          error
+        });
         setOutputState((prev) => ({
           ...prev,
           isLoading: false,

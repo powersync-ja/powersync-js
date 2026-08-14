@@ -138,6 +138,16 @@ export abstract class AbstractQueryProcessor<
     }
 
     if (typeof update.error !== 'undefined') {
+      if (update.error) {
+        // Errors are also reported on the query state and to error listeners, but those are easy to
+        // miss. Logging makes failures such as invalid SQL discoverable without extra wiring.
+        // Note that `error: null` is used to clear a previous error, which should not be logged.
+        this.options.db.logger.log({
+          level: LogLevels.error,
+          message: 'Error in watched query',
+          error: update.error
+        });
+      }
       await this.iterateAsyncListenersWithError(async (l) => l.onError?.(update.error!));
       // An error always stops for the current fetching state
       update.isFetching = false;
