@@ -254,6 +254,16 @@ export interface BatchedUpdateNotification {
     tables: string[];
 }
 
+// @public
+export type CheckpointMode = 'legacy' | 'requests' | {
+    requests: CheckpointRequestsOptions;
+};
+
+// @public
+export interface CheckpointRequestsOptions {
+    retryDelay: number;
+}
+
 // @public (undocumented)
 export class Column {
     constructor(options: ColumnOptions);
@@ -742,6 +752,7 @@ export type PendingStatementParameter = 'Id' | {
 // @public (undocumented)
 export interface PowerSyncBackendConnector {
     fetchCredentials: () => Promise<PowerSyncCredentials | null>;
+    postCheckpointRequest?(clientId: string, requestId: string): Promise<string>;
     uploadData: (database: CommonPowerSyncDatabase) => Promise<void>;
 }
 
@@ -1037,6 +1048,7 @@ export interface SyncDataFlowStatus {
 // @public
 export interface SyncOptions {
     appMetadata?: Record<string, string>;
+    checkpointMode?: CheckpointMode;
     connectionMethod?: SyncStreamConnectionMethod;
     crudUploadThrottleMs?: number;
     // (undocumented)

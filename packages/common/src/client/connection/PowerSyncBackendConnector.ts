@@ -33,8 +33,8 @@ export interface PowerSyncBackendConnector {
    * and [asynchronous backend uploads](https://docs.powersync.com/client-sdks/advanced/checkpoint-requests#asynchronous-upload-backends)
    * are used. In any other case, this method should not be present on backend connectors.
    *
-   * @param requestId The client-generated checkpoint request ID (a positive 64-bit integer encoded as a string).
-   * @param clientId The PowerSync client ID for the current device.
+   * @param requestId - The client-generated checkpoint request ID (a positive 64-bit integer encoded as a string).
+   * @param clientId - The PowerSync client ID for the current device.
    */
   postCheckpointRequest?(clientId: string, requestId: string): Promise<string>;
 }

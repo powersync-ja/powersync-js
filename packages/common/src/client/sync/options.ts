@@ -100,8 +100,11 @@ export type CheckpointMode = 'legacy' | 'requests' | { requests: CheckpointReque
 /**
  * Options associated with a {@link CheckpointMode} when the requests-based checkpoint option is used.
  *
- * @alpha
+ * @public
  */
 export interface CheckpointRequestsOptions {
+  /**
+   * The delay, in milliseconds, to wait before re-sending a checkpoint request when it hasn't been applied in time.
+   */
   retryDelay: number;
 }
