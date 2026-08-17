@@ -84,7 +84,7 @@ export class CheckpointStateSignals {
       }
     } while ((await this.stateChanged.waitForEvent(abort)) != null);
 
-    return false; // current is null, meaning the wait was aborted
+    return false; // waitForEvent returned null, meaning the wait was aborted
   }
 }
 

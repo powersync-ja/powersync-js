@@ -84,8 +84,8 @@ export enum FetchStrategy {
 /**
  * The mechanism to request checkpoints from the PowerSync service.
  *
- * Checkpoint requests are used after a client uploads local mutations. Once synced, checkpoints provide the guarantee
- * that uploaded data is synced down again.
+ * Checkpoint requests are used after a client uploads local mutations. The PowerSync service later references them in
+ * downloaded data, allowing the SDK to assume that uploaded data has been synced down again.
  *
  * There are two ways to send checkpoint requests: A legacy (but default and stable) format supported by all PowerSync
  * service versions, and a newer (`requests`) method which is only available from PowerSync service version 1.24.0 or
