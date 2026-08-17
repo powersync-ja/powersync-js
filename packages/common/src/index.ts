@@ -17,7 +17,13 @@ export { CrudEntry, OpId, UpdateType } from './client/sync/bucket/CrudEntry.js';
 export * from './client/sync/bucket/CrudTransaction.js';
 export * from './client/sync/stream/JsonValue.js';
 export * from './client/sync/sync-streams.js';
-export { SyncOptions, SyncStreamConnectionMethod, FetchStrategy } from './client/sync/options.js';
+export {
+  SyncOptions,
+  SyncStreamConnectionMethod,
+  FetchStrategy,
+  CheckpointMode,
+  CheckpointRequestsOptions
+} from './client/sync/options.js';
 
 export { ProgressWithOperations, SyncProgress } from './db/crud/SyncProgress.js';
 export * from './db/crud/SyncStatus.js';

@@ -14,6 +14,7 @@ import { AbortOperation } from '../../../utils/AbortOperation.js';
 import { BucketStorageAdapter, PowerSyncControlCommand } from '../bucket/BucketStorageAdapter.js';
 import { AbstractRemote, SyncStreamOptions } from './AbstractRemote.js';
 import {
+  CheckpointRequestPayload,
   CoreSyncStatus,
   Instruction,
   NonInterruptingInstruction,
@@ -29,6 +30,7 @@ import {
 import { asyncNotifier } from '../../../utils/async.js';
 import { JavaScriptSyncState, SyncStatusSnapshot } from '../../../db/crud/SyncStatus.js';
 import { ResolvedSyncOptions } from '../options.js';
+import { CheckpointStateSignals, isCheckpointRequestApplied } from './CheckpointState.js';
 
 /**
  * @internal
@@ -56,6 +58,10 @@ export interface AbstractStreamingSyncImplementationOptions {
   adapter: BucketStorageAdapter;
   subscriptions: SubscribedStream[];
   uploadCrud: () => Promise<void>;
+  /**
+   * Posts a checkpoint request with the connector, returning null if the connector doesn't support that.
+   */
+  postCheckpointRequest: (clientId: string, requestId: string) => Promise<string | null> | null;
   /**
    * An identifier for which PowerSync DB this sync implementation is
    * linked to. Most commonly DB name, but not restricted to DB name.
@@ -93,7 +99,6 @@ export interface StreamingSyncImplementation
    * @throws if not connected or if abort is not controlled internally
    */
   disconnect(): Promise<void>;
-  getWriteCheckpoint: () => Promise<string>;
   isConnected: boolean;
   triggerCrudUpload: () => void;
   waitForReady(): Promise<void>;
@@ -120,11 +125,12 @@ export abstract class AbstractStreamingSyncImplementation
   protected options: AbstractStreamingSyncImplementationOptions;
   protected abortController: AbortController | null;
   protected crudUpdateListener?: () => void;
-  protected streamingSyncPromise?: Promise<[void, void]>;
+  protected streamingSyncPromise?: Promise<[void, void, void]>;
   protected logger: PowerSyncLogger;
   protected activeStreams: SubscribedStream[];
   private connectionMayHaveChanged = false;
   private crudUploadNotifier = asyncNotifier();
+  private checkpoints = new CheckpointStateSignals();
 
   private notifyCompletedUploads?: () => void;
   private handleActiveStreamsChange?: () => void;
@@ -182,10 +188,41 @@ export abstract class AbstractStreamingSyncImplementation
 
   abstract obtainLock<T>(lockOptions: LockOptions<T>): Promise<T>;
 
-  async getWriteCheckpoint(): Promise<string> {
+  private async requestNextCheckpointFromService(abort: AbortSignal): Promise<string> {
+    await this.checkpoints.waitForCheckpointRequestsReady(abort);
+
+    const nextCheckpointRequestId = await this.options.adapter.readCheckpointRequestId('next');
+    const clientId = await this.options.adapter.getClientId();
+    return await this.requestCheckpointFromService(abort, {
+      client_id: clientId,
+      checkpoint_request_id: nextCheckpointRequestId
+    });
+  }
+
+  private async requestCheckpointFromService(signal: AbortSignal, request: CheckpointRequestPayload): Promise<string> {
+    // First, check if we can use a custom checkpoint request implementation.
+    {
+      const customResponse = await this.options.postCheckpointRequest(request.client_id, request.checkpoint_request_id);
+      if (customResponse != null) {
+        return customResponse;
+      }
+    }
+
+    const status = await this.options.remote.fetchAndDecodeJson({
+      method: 'POST',
+      path: '/sync/checkpoint-request',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(request),
+      signal
+    });
+
+    return status.data.checkpoint_request_id;
+  }
+
+  private async getLegacyWriteCheckpoint(): Promise<string> {
     const clientId = await this.options.adapter.getClientId();
     let path = `/write-checkpoint2.json?client_id=${clientId}`;
-    const response = await this.options.remote.get(path);
+    const response = await this.options.remote.fetchAndDecodeJson({ path });
     const checkpoint = response['data']['write_checkpoint'] as string;
     this.logger.log({ level: LogLevels.debug, message: `Created write checkpoint: ${checkpoint}` });
     return checkpoint;
@@ -239,7 +276,13 @@ The next upload iteration will be delayed.`
               this.updateJsSyncState({ uploadError: undefined });
             } else {
               // Uploading is completed
-              const neededUpdate = await this.options.adapter.updateLocalTarget(() => this.getWriteCheckpoint());
+              const neededUpdate = await this.options.adapter.updateLocalTarget(() => {
+                if (options.checkpointMode === 'legacy') {
+                  return this.getLegacyWriteCheckpoint();
+                } else {
+                  return this.requestNextCheckpointFromService(signal);
+                }
+              });
               if (neededUpdate) {
                 this.notifyCompletedUploads?.();
               } else if (checkedCrudItem != null) {
@@ -280,8 +323,13 @@ The next upload iteration will be delayed.`
       this.crudUploadLoop(controller.signal, options).catch((error) =>
         this.logger.log({ level: LogLevels.error, message: 'Error in crud upload loop', error })
       ),
-      this.streamingSync(controller.signal, options)
-    ]);
+      this.streamingSync(controller.signal, options),
+      this.repostUnacknowledgedCheckpointRequests(controller.signal, options)
+    ]).finally(() => {
+      // These promises only complete when we want to disconnect. No further sync iteration can resume checkpoint
+      // requests, so fail any that are still pending.
+      this.checkpoints.disconnected();
+    });
 
     // Return a promise that resolves when the connection status is updated to indicate that we're connected. We do this
     // by waiting for connecting to be true and then false again.
@@ -342,11 +390,10 @@ The next upload iteration will be delayed.`
     }
 
     this.updateSyncStatus({
+      ...current,
       connected: false,
       connecting: false,
-      priority_status: current.priority_status,
-      downloading: null,
-      streams: current.streams
+      downloading: null
     });
   }
 
@@ -419,6 +466,7 @@ The next upload iteration will be delayed.`
 
         this.updateJsSyncState({ downloadError: ex as Error });
       } finally {
+        this.checkpoints.downloadIterationEnded();
         this.notifyCompletedUploads = undefined;
 
         if (!signal.aborted) {
@@ -431,7 +479,7 @@ The next upload iteration will be delayed.`
 
           // On error, wait a little before retrying
           if (shouldDelayRetry) {
-            await this.delayRetry(nestedAbortController.signal, options.retryDelayMs);
+            await this.delayRetry(nestedAbortController.signal, options.retryDelayMs, true);
           }
         }
       }
@@ -550,6 +598,66 @@ The next upload iteration will be delayed.`
     };
   }
 
+  /**
+   * Watches the current checkpoint request id to re-request it if we take too long to receive it.
+   *
+   * This does not require navigator locks: It waits for checkpoints to be seeded, which can only happen in the context
+   * of a download loop.
+   *
+   * Note that requesting checkpoints with ids the service has already seen is a cheap no-op.
+   */
+  private async repostUnacknowledgedCheckpointRequests(abort: AbortSignal, options: ResolvedSyncOptions) {
+    let retryDelay: number;
+    const mode = options.checkpointMode;
+    if (mode == 'legacy') return;
+
+    if (mode == 'requests') {
+      retryDelay = 10_000;
+    } else {
+      retryDelay = Math.max(mode.requests.retryDelay, 10_000);
+    }
+
+    while (!abort.aborted) {
+      try {
+        await this.checkpoints.waitForCheckpointRequestsReady(abort, false);
+
+        const requestId = await this.options.adapter.readCheckpointRequestId('current');
+        // Give the request some time to sync.
+        await this.delayRetry(abort, retryDelay);
+
+        // If a new request was made, reset the timer.
+        if (requestId != (await this.options.adapter.readCheckpointRequestId('current'))) {
+          continue;
+        }
+
+        // If the request was applied, we don't need to retry.
+        if (isCheckpointRequestApplied(this.syncStatus?.core, requestId)) {
+          continue;
+        }
+
+        // Make sure we're online and ready before making the request
+        await this.checkpoints.waitForCheckpointRequestsReady(abort, false);
+
+        // It's safe if this request races with a new one. The service will reject it.
+        this.logger.log({ level: LogLevels.debug, message: `Retry checkpoint request ${requestId}` });
+        await this.requestCheckpointFromService(abort, {
+          client_id: await this.options.adapter.getClientId(),
+          checkpoint_request_id: requestId
+        });
+      } catch (e) {
+        if (abort.aborted) return;
+
+        this.logger.log({ level: LogLevels.warn, error: e, message: 'Error retrying checkpoint request.' });
+        await this.delayRetry(abort, retryDelay);
+      }
+    }
+  }
+
+  private async seedCheckpointRequestState(abort: AbortSignal, request: CheckpointRequestPayload) {
+    const seed = await this.requestCheckpointFromService(abort, request);
+    await this.options.adapter.readCheckpointRequestId('seed', seed);
+  }
+
   private async rustSyncIteration(
     signal: AbortSignal,
     resolvedOptions: ResolvedSyncOptions
@@ -570,7 +678,8 @@ The next upload iteration will be delayed.`
         parameters: resolvedOptions.params,
         app_metadata: resolvedOptions.appMetadata,
         active_streams: syncImplementation.activeStreams,
-        include_defaults: resolvedOptions.includeDefaultStreams
+        include_defaults: resolvedOptions.includeDefaultStreams,
+        checkpoint_mode: resolvedOptions.checkpointMode === 'legacy' ? 'legacy' : 'requests'
       };
       if (serializedSchema) {
         options.schema = serializedSchema;
@@ -671,10 +780,11 @@ The next upload iteration will be delayed.`
 
       for (const startInstruction of await startCommand()) {
         if ('EstablishSyncStream' in startInstruction) {
+          const establish = startInstruction.EstablishSyncStream;
           const syncOptions: SyncStreamOptions = {
             path: '/sync/stream',
             abortSignal: signal,
-            data: startInstruction.EstablishSyncStream.request
+            data: establish.request
           };
 
           controlInvocations = injectable(
@@ -683,6 +793,24 @@ The next upload iteration will be delayed.`
               connection: resolvedOptions
             })
           );
+
+          if (establish.checkpoint_request) {
+            // Start checkpoint request validation concurrently, without blocking line processing on it. We reconcile
+            // checkpoint states on each started download iteration to:
+            //   1. Align service and client checkpoint ids, allowing both parties to safely forget old checkpoints.
+            //   2. If the user id changes between connections, agreeing on the highest checkpoint request between the
+            //      old and new user to make sure we'll receive that checkpoint eventually.
+            const seed = this.checkpoints.markCheckpointsReady(
+              this.seedCheckpointRequestState(signal, establish.checkpoint_request)
+            );
+
+            seed.catch((e) => {
+              // Make the download iteration fail if checkpoint requests are broken.
+              if (!signal.aborted) {
+                controlInvocations?.injectError(e);
+              }
+            });
+          }
         } else if ('CloseSyncStream' in startInstruction) {
           return defaultResult;
         } else {
@@ -761,14 +889,15 @@ The next upload iteration will be delayed.`
     this.updateSyncStatus(this.syncStatus.core, state);
   }
 
-  private async delayRetry(signal: AbortSignal, delay: number): Promise<void> {
+  private async delayRetry(signal: AbortSignal, delay: number, resumeOnCheckpointRequest = false): Promise<void> {
     return new Promise((resolve) => {
-      if (signal?.aborted) {
+      if (signal.aborted) {
         // If the signal is already aborted, resolve immediately
         resolve();
         return;
       }
 
+      let nested: AbortController | null = null;
       let timeoutId: ReturnType<typeof setTimeout> | undefined;
 
       const endDelay = () => {
@@ -777,11 +906,23 @@ The next upload iteration will be delayed.`
           clearTimeout(timeoutId);
           timeoutId = undefined;
         }
-        signal?.removeEventListener('abort', endDelay);
+        if (nested) {
+          nested.abort();
+          nested = null;
+        }
+        signal.removeEventListener('abort', endDelay);
       };
 
-      signal?.addEventListener('abort', endDelay, { once: true });
-      timeoutId = setTimeout(endDelay, delay);
+      signal.addEventListener('abort', endDelay, { once: true });
+
+      // Add a random +/- 10% jitter to the retry delay.
+      const randomizedDelay = delay * (0.9 + Math.random() * 0.2);
+      timeoutId = setTimeout(endDelay, randomizedDelay);
+
+      if (resumeOnCheckpointRequest) {
+        nested = new AbortController();
+        this.checkpoints.waitForCheckpointWaiter(nested.signal).finally(endDelay);
+      }
     });
   }
 

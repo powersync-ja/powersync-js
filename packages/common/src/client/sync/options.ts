@@ -49,6 +49,11 @@ export interface SyncOptions {
    * milliseconds.
    */
   crudUploadThrottleMs?: number;
+
+  /**
+   * The mode used to request checkpoints from the service (used after uploading local data).
+   */
+  checkpointMode?: CheckpointMode;
 }
 
 /**
@@ -74,4 +79,29 @@ export enum FetchStrategy {
    * This reduces processing overhead and improves real-time responsiveness.
    */
   Sequential = 'sequential'
+}
+
+/**
+ * The mechanism to request checkpoints from the PowerSync service.
+ *
+ * Checkpoint requests are used after a client uploads local mutations. Once synced, checkpoints provide the guarantee
+ * that uploaded data is synced down again.
+ *
+ * There are two ways to send checkpoint requests: A legacy (but default and stable) format supported by all PowerSync
+ * service versions, and a newer (`requests`) method which is only available from PowerSync service version 1.24.0 or
+ * later.
+ *
+ * Note that the requests checkpoint mode is an alpha API.
+ *
+ * @public
+ */
+export type CheckpointMode = 'legacy' | 'requests' | { requests: CheckpointRequestsOptions };
+
+/**
+ * Options associated with a {@link CheckpointMode} when the requests-based checkpoint option is used.
+ *
+ * @alpha
+ */
+export interface CheckpointRequestsOptions {
+  retryDelay: number;
 }

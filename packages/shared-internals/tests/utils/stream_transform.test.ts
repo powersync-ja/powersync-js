@@ -93,6 +93,36 @@ describe('injectable', () => {
     }
   });
 
+  test('forwards injected errors', async () => {
+    let pendingCall: ((value: IteratorResult<number>) => void) | null = null;
+    const stream = injectable<number>({
+      next() {
+        return new Promise((resolve) => (pendingCall = resolve));
+      }
+    });
+
+    // injectError() before next() is called: error is queued and rejects the next next() call.
+    stream.injectError(new Error('queued error'));
+    await expect(stream.next()).rejects.toThrow('queued error');
+
+    // injectError() while a next() call is pending: rejects that pending call directly.
+    const next = stream.next();
+    expect(pendingCall).not.toBeNull();
+
+    stream.injectError(new Error('pending error'));
+    await expect(next).rejects.toThrow('pending error');
+
+    // The stream keeps working after an injected error has been consumed.
+    {
+      const next2 = stream.next();
+      expect(pendingCall).not.toBeNull();
+      pendingCall!(valueResult(3));
+      pendingCall = null;
+
+      expect(await next2).toStrictEqual(valueResult(3));
+    }
+  });
+
   test('does not start a second source fetch while one is already in flight', async () => {
     const outstandingEvents: Array<(value: IteratorResult<number>) => void> = [];
 

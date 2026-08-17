@@ -25,4 +25,16 @@ export interface PowerSyncBackendConnector {
    * Any thrown errors will result in a retry after the configured wait period (default: 5 seconds).
    */
   uploadData: (database: CommonPowerSyncDatabase) => Promise<void>;
+
+  /**
+   * Posts a client-generated checkpoint request to the backend and returns the effective checkpoint request state.
+   *
+   * This method is optional. It only needs to be implemented when the selected {@link CheckpointMode} is `requests`
+   * and [asynchronous backend uploads](https://docs.powersync.com/client-sdks/advanced/checkpoint-requests#asynchronous-upload-backends)
+   * are used. In any other case, this method should not be present on backend connectors.
+   *
+   * @param requestId The client-generated checkpoint request ID (a positive 64-bit integer encoded as a string).
+   * @param clientId The PowerSync client ID for the current device.
+   */
+  postCheckpointRequest?(clientId: string, requestId: string): Promise<string>;
 }

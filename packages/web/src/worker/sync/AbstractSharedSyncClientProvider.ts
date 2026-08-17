@@ -8,6 +8,7 @@ export abstract class AbstractSharedSyncClientProvider {
   abstract fetchCredentials(): Promise<PowerSyncCredentials | null>;
   abstract invalidateCredentials(): void;
   abstract uploadCrud(): Promise<void>;
+  abstract postCheckpointRequest(clientId: string, requestId: string): Promise<string | null>;
   abstract statusChanged(status: SyncStatusJson): void;
   abstract getDBWorkerPort(): Promise<MessagePort>;
 

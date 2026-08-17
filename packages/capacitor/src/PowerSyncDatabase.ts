@@ -116,16 +116,8 @@ class CapacitorPowerSyncDatabase extends WebPowerSyncDatabase {
 
       return new CapacitorStreamingSyncImplementation({
         ...(this.options as {}),
-        adapter: this.bucketStorageAdapter,
-        remote,
-        uploadCrud: async () => {
-          await this.waitForReady();
-          await connector.uploadData(this);
-        },
-        identifier: this.database.name,
-        logger: this.logger,
-        subscriptions: options.subscriptions,
-        serializedSchema: options.serializedSchema
+        ...this.commonSyncOptions(connector, options),
+        remote
       });
     } else {
       this.logger.log({ level: LogLevels.debug, message: `Using default web sync implementation for web platform` });

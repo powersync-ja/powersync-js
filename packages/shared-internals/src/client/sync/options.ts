@@ -19,6 +19,7 @@ export function resolveSyncOptions(
     params: options.params ?? {},
     includeDefaultStreams: options.includeDefaultStreams ?? true,
     retryDelayMs: options.retryDelayMs ?? 5000,
-    crudUploadThrottleMs: options.crudUploadThrottleMs ?? 1000
+    crudUploadThrottleMs: options.crudUploadThrottleMs ?? 1000,
+    checkpointMode: options.checkpointMode ?? 'legacy'
   };
 }

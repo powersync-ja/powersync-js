@@ -111,6 +111,8 @@ export function createMockSyncServiceTest(bson: boolean) {
 
       const listeners: Listener[] = [];
       let requestInterceptor: (request: Request) => Promise<Response | void> = async () => {};
+      let lastWriteCheckpoint = 0;
+      let checkpointRequests: number[] = [];
 
       const inMemoryFetch: typeof fetch = async (info, init?) => {
         const request = new Request(info, init);
@@ -153,6 +155,18 @@ export function createMockSyncServiceTest(bson: boolean) {
             status: 200,
             headers: { 'content-type': bson ? 'application/vnd.powersync.bson-stream' : 'application/x-ndjson' }
           });
+        } else if (request.url.indexOf('/sync/checkpoint-request') != -1) {
+          const body = await request.json();
+          const requestedId = Number(body['checkpoint_request_id']);
+          checkpointRequests.push(requestedId);
+          lastWriteCheckpoint = Math.max(lastWriteCheckpoint, requestedId);
+
+          return new Response(
+            JSON.stringify({
+              data: { checkpoint_request_id: lastWriteCheckpoint.toString() }
+            }),
+            { status: 200 }
+          );
         } else if (request.url.indexOf('/write-checkpoint2.json') != -1) {
           return new Response(
             JSON.stringify({
@@ -195,7 +209,14 @@ export function createMockSyncServiceTest(bson: boolean) {
             listener.stream.enqueue(line);
           }
         },
-        createDatabase: newConnection
+        createDatabase: newConnection,
+        get lastWriteCheckpoint(): number {
+          return lastWriteCheckpoint;
+        },
+        set lastWriteCheckpoint(value: number) {
+          lastWriteCheckpoint = value;
+        },
+        checkpointRequests
       });
     }
   });
@@ -207,6 +228,8 @@ export interface MockSyncService {
   installRequestInterceptor(interceptor: (request: Request) => Promise<Response | void>): void;
   pushLine: (line: StreamingSyncLine) => void;
   connectedListeners: any[];
+  lastWriteCheckpoint: number;
+  readonly checkpointRequests: number[];
 
   createDatabase: (options?: Partial<NodePowerSyncDatabaseOptions>) => Promise<PowerSyncDatabase>;
 }

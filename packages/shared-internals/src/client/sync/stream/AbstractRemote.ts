@@ -173,16 +173,30 @@ export abstract class AbstractRemote {
     };
   }
 
-  async get(path: string, headers?: Record<string, string>): Promise<any> {
+  async fetchAndDecodeJson({
+    path,
+    method = 'GET',
+    headers,
+    body,
+    signal
+  }: {
+    path: string;
+    method?: string;
+    headers?: Record<string, string>;
+    body?: string;
+    signal?: AbortSignal;
+  }): Promise<any> {
     const request = await this.buildRequest(path);
     const res = await this.fetch({
       resource: request.url,
       request: {
-        method: 'GET',
+        method,
         headers: {
           ...headers,
           ...request.headers
-        }
+        },
+        body,
+        signal
       },
       expectStreamingResponse: false
     });

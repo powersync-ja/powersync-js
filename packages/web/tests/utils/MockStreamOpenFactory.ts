@@ -138,6 +138,13 @@ export class MockedStreamPowerSync extends PowerSyncDatabase {
         await this.waitForReady();
         await connector.uploadData(this);
       },
+      postCheckpointRequest: (clientId, requestId) => {
+        if (connector.postCheckpointRequest) {
+          return this.waitForReady().then((_) => connector.postCheckpointRequest!(clientId, requestId));
+        }
+
+        return null;
+      },
       identifier: this.database.name,
       subscriptions: [],
       serializedSchema: options.serializedSchema

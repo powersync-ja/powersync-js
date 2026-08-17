@@ -107,6 +107,12 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
     });
   }
 
+  readCheckpointRequestId(variant: 'next' | 'current' | 'seed', payload: string | null = null): Promise<string> {
+    return this.db.writeTransaction(async (tx) => {
+      return (await rawPowerSyncControl(tx, `${variant}_checkpoint_request_id`, payload))!;
+    });
+  }
+
   async nextCrudItem(): Promise<CrudEntry | undefined> {
     const next = await this.db.getOptional<CrudEntryJSON>('SELECT * FROM ps_crud ORDER BY id ASC LIMIT 1');
     if (!next) {
