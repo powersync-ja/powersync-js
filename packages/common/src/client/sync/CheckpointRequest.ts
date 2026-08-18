@@ -9,8 +9,8 @@
  * and reconnect cycles. A wait interrupted by a disconnect throws an error, but the same request can be awaited again
  * once a new connection is established.
  *
- * Requests do to surive {@link CommonPowerSyncDatabase#disconnectAndClear}, instances created before a clear should be
- * discarded and requested again.
+ * Requests do not survive {@link CommonPowerSyncDatabase#disconnectAndClear}, instances created before a clear should
+ * be discarded and requested again.
  *
  * @alpha
  */

@@ -235,7 +235,7 @@ export interface CommonPowerSyncDatabase extends BaseObserverInterface<PowerSync
   syncStream(name: string, params?: Record<string, any>): SyncStream;
 
   /**
-   * Requests a checkpoint from thte PowerSync service.
+   * Requests a checkpoint from the PowerSync service.
    *
    * The returned request can be awaited (using {@link CheckpointRequest#waitForSync}) to confirm that the local
    * database has applied server-side changes up to the checkpoint. This method requires an active or connecting sync
