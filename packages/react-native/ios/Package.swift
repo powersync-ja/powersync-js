@@ -4,7 +4,7 @@ import PackageDescription
 // When updating this, also update the version in powersync-react-native.podspec and android/build.gradle
 let coreExtensionVersion: Version = "0.5.2"
 
-let packageName = "ReactNative"
+let packageName = "PowerSyncReactNative"
 
 let package = Package(
     name: packageName,
@@ -24,7 +24,7 @@ let package = Package(
             dependencies: [
                 .product(name: "PowerSyncSQLiteCore", package: "powersync-sqlite-core-swift"),
             ],
-            path: "ios/swiftpm",
+            path: "swiftpm",
         )
     ],
 )

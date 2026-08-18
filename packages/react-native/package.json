@@ -16,7 +16,7 @@
     "android",
     "ios",
     "*.podspec",
-    "Package.swift"
+    "react-native.config.js"
   ],
   "scripts": {
     "build": "tsc -b",
