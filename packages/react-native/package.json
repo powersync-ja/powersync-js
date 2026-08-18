@@ -15,7 +15,8 @@
     "src",
     "android",
     "ios",
-    "*.podspec"
+    "*.podspec",
+    "Package.swift"
   ],
   "scripts": {
     "build": "tsc -b",

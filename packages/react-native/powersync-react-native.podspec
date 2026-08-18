@@ -23,6 +23,7 @@ Pod::Spec.new do |s|
 
   s.dependency "React-callinvoker"
   s.dependency "React"
+  # When updating this, also update the version in Package.swift and android/build.gradle
   s.dependency "powersync-sqlite-core", "~> 0.5.2"
   if defined?(install_modules_dependencies())
     install_modules_dependencies(s)
