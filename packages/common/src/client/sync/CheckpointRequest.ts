@@ -18,7 +18,7 @@ export interface CheckpointRequest {
   /**
    * Whether this checkpoint request has synced before.
    */
-  readonly hasSyned: boolean;
+  readonly hasSynced: boolean;
 
   /**
    * Waits until this checkpoint has been synced locally.

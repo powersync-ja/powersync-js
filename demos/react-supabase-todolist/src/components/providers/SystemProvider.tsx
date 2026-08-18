@@ -41,7 +41,7 @@ export type QueryStore = {
  * Whether to use [checkpoint requests](https://docs.powersync.com/client-sdks/advanced/checkpoint-requests) to add an
  * explicit sync button to this demo.
  */
-export const useCheckpointRequests = import.meta.env.VITE_USE_POWERSYNC_CHECKPOINT_REQUESTS;
+export const useCheckpointRequests = import.meta.env.VITE_USE_POWERSYNC_CHECKPOINT_REQUESTS == 'true';
 
 export const syncOptions: SyncOptions = {
   appMetadata: {

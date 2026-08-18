@@ -13,13 +13,13 @@ export class CheckpointRequestImpl implements CheckpointRequest {
     private readonly database: BasePowerSyncDatabase
   ) {}
 
-  get hasSyned(): boolean {
+  get hasSynced(): boolean {
     const status = this.database.currentStatus.core;
     return isCheckpointRequestApplied(status, this.requestId);
   }
 
   async waitForSync(options?: { signal?: AbortSignal }): Promise<void> {
-    if (this.hasSyned) return;
+    if (this.hasSynced) return;
 
     const signal = options?.signal;
     const manager = this.database.connectionManager;

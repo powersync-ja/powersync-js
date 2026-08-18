@@ -233,11 +233,11 @@ describe('Sync', () => {
 
         const checkpoint = await db.requestCheckpoint();
         syncService.pushLine({ checkpoint: { last_op_id: '0', buckets: [], write_checkpoint: '2' } });
-        expect(checkpoint.hasSyned).toBeFalsy();
+        expect(checkpoint.hasSynced).toBeFalsy();
         syncService.pushLine({ checkpoint_complete: { last_op_id: '0' } });
 
         await checkpoint.waitForSync();
-        expect(checkpoint.hasSyned).toBeTruthy();
+        expect(checkpoint.hasSynced).toBeTruthy();
       });
 
       mockSyncServiceTest('throws on disconnect but can request again', async ({ syncService }) => {

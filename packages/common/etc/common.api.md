@@ -261,7 +261,7 @@ export type CheckpointMode = 'legacy' | 'requests' | {
 
 // @alpha
 export interface CheckpointRequest {
-    readonly hasSyned: boolean;
+    readonly hasSynced: boolean;
     waitForSync(options?: {
         signal?: AbortSignal;
     }): Promise<void>;
