@@ -18,9 +18,10 @@ export class CheckpointRequestImpl implements CheckpointRequest {
     return isCheckpointRequestApplied(status, this.requestId);
   }
 
-  async waitForSync({ signal }: { signal?: AbortSignal }): Promise<void> {
+  async waitForSync(options?: { signal?: AbortSignal }): Promise<void> {
     if (this.hasSyned) return;
 
+    const signal = options?.signal;
     const manager = this.database.connectionManager;
     if (manager.syncStreamImplementation == null) {
       throw cannotRequestDueToDisconnectedError();
