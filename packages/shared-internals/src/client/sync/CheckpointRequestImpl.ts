@@ -18,7 +18,7 @@ export class CheckpointRequestImpl implements CheckpointRequest {
     return isCheckpointRequestApplied(status, this.requestId);
   }
 
-  async waitForSync(options?: { signal?: AbortSignal }): Promise<void> {
+  async waitForSync({ signal }: { signal?: AbortSignal }): Promise<void> {
     if (this.hasSyned) return;
 
     const manager = this.database.connectionManager;
@@ -44,6 +44,10 @@ export class CheckpointRequestImpl implements CheckpointRequest {
       }
 
       return false;
-    }, options?.signal);
+    }, signal);
+
+    if (signal?.aborted) {
+      throw signal.reason;
+    }
   }
 }

@@ -276,6 +276,20 @@ describe('Sync', () => {
         syncService.pushLine({ checkpoint: { buckets: [], last_op_id: 'invalid line' } });
         await failureExpectation;
       });
+
+      mockSyncServiceTest('can abort waiting for requests', async ({ syncService }) => {
+        const db = await syncService.createDatabase();
+        await db.connect(new TestConnector(), { checkpointMode: 'requests' });
+        const checkpoint = await db.requestCheckpoint();
+
+        const controller = new AbortController();
+        const failureExpectation = expect(checkpoint.waitForSync({ signal: controller.signal })).rejects.toThrow(
+          /custom abort reason/
+        );
+
+        controller.abort('custom abort reason');
+        await failureExpectation;
+      });
     });
   });
 
