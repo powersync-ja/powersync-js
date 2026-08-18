@@ -18,7 +18,7 @@ export class CheckpointRequestImpl implements CheckpointRequest {
     return isCheckpointRequestApplied(status, this.requestId);
   }
 
-  async waitForSync(options: { signal?: AbortSignal }): Promise<void> {
+  async waitForSync(options?: { signal?: AbortSignal }): Promise<void> {
     if (this.hasSyned) return;
 
     const manager = this.database.connectionManager;
@@ -31,7 +31,7 @@ export class CheckpointRequestImpl implements CheckpointRequest {
 
     await this.database.waitForStatus((status) => {
       if (isCheckpointRequestApplied((status as SyncStatusSnapshot).core, this.requestId)) {
-        return;
+        return true;
       }
 
       const anyError = status.downloadError ?? status.uploadError;
@@ -42,6 +42,8 @@ export class CheckpointRequestImpl implements CheckpointRequest {
       if (!status.connected && !status.connecting) {
         throw cannotRequestDueToDisconnectedError();
       }
-    }, options.signal);
+
+      return false;
+    }, options?.signal);
   }
 }

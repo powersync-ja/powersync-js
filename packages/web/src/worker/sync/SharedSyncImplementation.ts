@@ -340,6 +340,10 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
     });
   }
 
+  requestCheckpoint() {
+    return this.withSyncImplementation((sync) => sync.requestCheckpoint());
+  }
+
   protected async withSyncImplementation<T>(callback: (sync: StreamingSyncImplementation) => Promise<T>): Promise<T> {
     await this.waitForReady();
 

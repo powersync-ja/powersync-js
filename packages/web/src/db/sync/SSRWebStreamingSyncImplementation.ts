@@ -58,4 +58,8 @@ export class SSRStreamingSyncImplementation extends BaseObserver implements Stre
    * No-op in SSR mode.
    */
   markConnectionMayHaveChanged(): void {}
+
+  requestCheckpoint(): Promise<bigint> {
+    throw new Error('Sub sync implementation does not support request checkpoints');
+  }
 }

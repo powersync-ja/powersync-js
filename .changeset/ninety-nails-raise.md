@@ -8,4 +8,8 @@
 '@powersync/web': minor
 ---
 
-Add `checkpointMode` option to `ConnectOptions` to use a more efficient way to request checkpoints from PowerSync after uploads.
+Add `requestCheckpoint()` to `PowerSyncDatabase` to request an explicit sync acknowledgement.
+This feature requires a new `checkpointMode: 'requests'` option on `ConnectOptions` switching to a more
+efficient way to request checkpoints from the PowerSync service.
+
+For more details on this feature, see [Sync Catch-Up](https://docs.powersync.com/client-sdks/advanced/checkpoint-requests).

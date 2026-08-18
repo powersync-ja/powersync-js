@@ -27,5 +27,5 @@ export interface CheckpointRequest {
    * that error is rethrown here. This makes it easier to observe sync errors when relying on checkpoints. Once sync has
    * recovered, it is valid to call this method again to await the checkpoint.
    */
-  waitForSync(options: { signal?: AbortSignal }): Promise<void>;
+  waitForSync(options?: { signal?: AbortSignal }): Promise<void>;
 }

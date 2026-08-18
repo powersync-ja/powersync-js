@@ -88,6 +88,10 @@ export class WorkerClient {
     }
   }
 
+  requestCheckpoint(): Promise<bigint> {
+    return this.sync.requestCheckpoint();
+  }
+
   disconnect() {
     return this.sync.disconnect();
   }

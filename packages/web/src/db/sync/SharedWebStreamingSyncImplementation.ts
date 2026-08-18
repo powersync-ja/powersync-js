@@ -227,6 +227,10 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
     return this.isInitialized;
   }
 
+  requestCheckpoint(): Promise<bigint> {
+    return this.syncManager.requestCheckpoint();
+  }
+
   updateSubscriptions(subscriptions: SubscribedStream[]): void {
     this.syncManager.updateSubscriptions(subscriptions);
   }
