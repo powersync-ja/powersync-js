@@ -213,7 +213,6 @@ export abstract class AbstractStreamingSyncImplementation
     const status = await this.options.remote.fetchAndDecodeJson({
       method: 'POST',
       path: '/sync/checkpoint-request',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(request),
       signal
     });
