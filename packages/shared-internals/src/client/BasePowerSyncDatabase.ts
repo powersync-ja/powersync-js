@@ -32,7 +32,8 @@ import {
   WatchOnChangeHandler,
   BaseObserver,
   SqliteRecord,
-  SyncStreamConnectionMethod
+  SyncStreamConnectionMethod,
+  CheckpointRequest
 } from '@powersync/common';
 import { BucketStorageAdapter, PSInternalTable } from './sync/bucket/BucketStorageAdapter.js';
 import { SyncStatusSnapshot } from '../db/crud/SyncStatus.js';
@@ -58,6 +59,11 @@ import { MEMORY_TRIGGER_CLAIM_MANAGER } from './triggers/MemoryTriggerClaimManag
 import { symbolAsyncIterator } from '../utils/compatibility.js';
 import { MAX_OP_ID } from '../constants.js';
 import { SqliteBucketStorage } from './sync/bucket/SqliteBucketStorage.js';
+import {
+  cannotRequestDueToDisconnectedError,
+  checkpointRequestsNotEnabledError
+} from './sync/stream/CheckpointState.js';
+import { CheckpointRequestImpl } from './sync/CheckpointRequestImpl.js';
 
 const POWERSYNC_TABLE_MATCH = /(^ps_data__|^ps_data_local__)/;
 
@@ -96,7 +102,7 @@ export abstract class BasePowerSyncDatabase<Options extends BasePowerSyncDatabas
 
   protected bucketStorageAdapter: BucketStorageAdapter;
   protected _isReadyPromise: Promise<void>;
-  protected connectionManager: ConnectionManager;
+  connectionManager: ConnectionManager;
   private subscriptions: InternalSubscriptionAdapter;
 
   get syncStreamImplementation() {
@@ -306,10 +312,18 @@ export abstract class BasePowerSyncDatabase<Options extends BasePowerSyncDatabas
       return;
     }
 
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       const dispose = this.registerListener({
         statusChanged: (status) => {
-          if (predicate(status)) {
+          let isComplete = false;
+          try {
+            isComplete = predicate(status);
+          } catch (e) {
+            reject(e);
+            isComplete = true;
+          }
+
+          if (isComplete) {
             abort();
           }
         }
@@ -318,6 +332,7 @@ export abstract class BasePowerSyncDatabase<Options extends BasePowerSyncDatabas
       function abort() {
         dispose();
         resolve();
+        signal?.removeEventListener('abort', abort);
       }
 
       if (signal?.aborted) {
@@ -449,6 +464,21 @@ export abstract class BasePowerSyncDatabase<Options extends BasePowerSyncDatabas
 
   syncStream(name: string, params?: Record<string, any>): SyncStream {
     return this.connectionManager.stream(this.subscriptions, name, params ?? null);
+  }
+
+  async requestCheckpoint(): Promise<CheckpointRequest> {
+    await this.waitForReady();
+
+    const impl = this.connectionManager.syncStreamImplementation;
+    if (impl == null) {
+      throw cannotRequestDueToDisconnectedError();
+    }
+    if (this.connectionManager.connectionOptions?.checkpointMode == 'legacy') {
+      throw checkpointRequestsNotEnabledError();
+    }
+
+    const checkpoint = await impl.requestCheckpoint();
+    return new CheckpointRequestImpl(checkpoint, this);
   }
 
   async close(options: PowerSyncCloseOptions = DEFAULT_POWERSYNC_CLOSE_OPTIONS) {

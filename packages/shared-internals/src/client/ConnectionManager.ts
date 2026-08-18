@@ -100,7 +100,7 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
    */
   protected pendingConnectionOptions: StoredConnectionOptions | null;
 
-  private currentOptions: ResolvedSyncOptions | null;
+  protected currentOptions: ResolvedSyncOptions | null;
 
   syncStreamImplementation: StreamingSyncImplementation | null;
 

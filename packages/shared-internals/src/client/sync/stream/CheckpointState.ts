@@ -126,7 +126,11 @@ export function cannotRequestDueToDisconnectedError(): Error {
   return new Error('Cannot request checkpoints, sync client is disconnected.');
 }
 
-export function isCheckpointRequestApplied(status: CoreSyncStatus | null, requestId: string): boolean {
+export function checkpointRequestsNotEnabledError(): Error {
+  return new Error('Connected with legacy checkpoint mode, cannot request checkpoints.');
+}
+
+export function isCheckpointRequestApplied(status: CoreSyncStatus | null, requestId: bigint): boolean {
   const applied = status?.internal_last_applied_checkpoint_request_id;
-  return applied != null && BigInt(applied) >= BigInt(requestId);
+  return applied != null && BigInt(applied) >= requestId;
 }

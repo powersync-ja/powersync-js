@@ -15,6 +15,7 @@ export * from './client/SQLOpenFactory.js';
 export * from './client/sync/bucket/CrudBatch.js';
 export { CrudEntry, OpId, UpdateType } from './client/sync/bucket/CrudEntry.js';
 export * from './client/sync/bucket/CrudTransaction.js';
+export * from './client/sync/CheckpointRequest.js';
 export * from './client/sync/stream/JsonValue.js';
 export * from './client/sync/sync-streams.js';
 export {

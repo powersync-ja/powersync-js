@@ -105,6 +105,8 @@ export interface StreamingSyncImplementation
   waitUntilStatusMatches(predicate: (status: SyncStatus) => boolean): Promise<void>;
   updateSubscriptions(subscriptions: SubscribedStream[]): void;
   markConnectionMayHaveChanged(): void;
+
+  requestCheckpoint(): Promise<bigint>;
 }
 
 /**
@@ -357,6 +359,11 @@ The next upload iteration will be delayed.`
         }
       });
     });
+  }
+
+  async requestCheckpoint(): Promise<bigint> {
+    const neverAbort = new AbortController().signal;
+    return BigInt(await this.requestNextCheckpointFromService(neverAbort));
   }
 
   async disconnect(): Promise<void> {
@@ -631,7 +638,7 @@ The next upload iteration will be delayed.`
         }
 
         // If the request was applied, we don't need to retry.
-        if (isCheckpointRequestApplied(this.syncStatus?.core, requestId)) {
+        if (isCheckpointRequestApplied(this.syncStatus?.core, BigInt(requestId))) {
           continue;
         }
 
