@@ -1,3 +1,4 @@
+import { BaseListener, BaseObserver } from '@powersync/common';
 import { asyncNotifier, EventQueue } from '../../../utils/async.js';
 import { CoreSyncStatus } from './core-instruction.js';
 
@@ -11,7 +12,7 @@ const pending: CheckpointState = { state: 'pending' };
 
 export class CheckpointStateSignals {
   private currentState: CheckpointState = pending;
-  private readonly stateChanged = new EventQueue<CheckpointState>();
+  private readonly stateChanged = new BaseObserver<CheckpointStateListener>();
 
   /**
    * Use to immediately restart another download iteration if it is retry delay when a new checkpoint is requested.
@@ -20,7 +21,7 @@ export class CheckpointStateSignals {
 
   private updateState(state: CheckpointState) {
     this.currentState = state;
-    this.stateChanged.notify(state);
+    this.stateChanged.iterateListeners((l) => l.stateChanged?.());
   }
 
   /**
@@ -65,31 +66,64 @@ export class CheckpointStateSignals {
    * @returns Turue if checkpoints are ready, false if aborted.
    */
   async waitForCheckpointRequestsReady(abort: AbortSignal, wakeDownloadLoop = true): Promise<boolean> {
-    do {
-      const current = this.currentState;
-
-      switch (current.state) {
-        case 'disconnected':
-          throwCannotRequestDueToDisconnectedError();
-        case 'ready':
-          return true;
-        case 'error':
-          throw current.error;
-        case 'pending': {
-          // Wait for the next event.
-          if (wakeDownloadLoop) {
-            this.waitingForCheckpointsReady.notify();
+    return new Promise((resolve, reject) => {
+      // Resolves the promise from the current state if possible, returning true if it was.
+      const handleState = () => {
+        const state = this.currentState;
+        switch (state.state) {
+          case 'disconnected':
+            reject(cannotRequestDueToDisconnectedError());
+            return true;
+          case 'ready':
+            resolve(true);
+            return true;
+          case 'error':
+            reject(state.error);
+            return true;
+          case 'pending': {
+            // Wait for the next event.
+            if (wakeDownloadLoop) {
+              this.waitingForCheckpointsReady.notify();
+            }
+            return false;
           }
         }
-      }
-    } while ((await this.stateChanged.waitForEvent(abort)) != null);
+      };
 
-    return false; // waitForEvent returned null, meaning the wait was aborted
+      if (handleState()) {
+        return;
+      }
+
+      let removeListener: () => void;
+      let onAbort: () => void;
+
+      function cleanup() {
+        removeListener();
+        abort.removeEventListener('abort', onAbort);
+      }
+
+      onAbort = () => {
+        resolve(false);
+        cleanup();
+      };
+      removeListener = this.stateChanged.registerListener({
+        stateChanged() {
+          if (handleState()) {
+            cleanup();
+          }
+        }
+      });
+      abort.addEventListener('abort', onAbort);
+    });
   }
 }
 
-export function throwCannotRequestDueToDisconnectedError(): never {
-  throw new Error('Cannot request checkpoints, sync client is disconnected.');
+interface CheckpointStateListener extends BaseListener {
+  stateChanged(): void;
+}
+
+export function cannotRequestDueToDisconnectedError(): Error {
+  return new Error('Cannot request checkpoints, sync client is disconnected.');
 }
 
 export function isCheckpointRequestApplied(status: CoreSyncStatus | null, requestId: string): boolean {

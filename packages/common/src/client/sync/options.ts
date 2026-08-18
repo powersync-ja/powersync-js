@@ -105,6 +105,8 @@ export type CheckpointMode = 'legacy' | 'requests' | { requests: CheckpointReque
 export interface CheckpointRequestsOptions {
   /**
    * The delay, in milliseconds, to wait before re-sending a checkpoint request when it hasn't been applied in time.
+   *
+   * The minimum value for this is 10 seconds, lower values will be ignored.
    */
   retryDelay: number;
 }

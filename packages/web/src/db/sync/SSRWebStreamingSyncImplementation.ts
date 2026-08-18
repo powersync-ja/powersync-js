@@ -45,20 +45,6 @@ export class SSRStreamingSyncImplementation extends BaseObserver implements Stre
   }
 
   /**
-   * Returns a placeholder checkpoint. This should not be used.
-   */
-  async getWriteCheckpoint() {
-    return '1';
-  }
-
-  /**
-   * The SSR mode adapter will never complete syncing.
-   */
-  async hasCompletedSync() {
-    return false;
-  }
-
-  /**
    * This is a no-op in SSR mode.
    */
   triggerCrudUpload() {}

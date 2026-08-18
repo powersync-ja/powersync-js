@@ -108,6 +108,8 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
   }
 
   readCheckpointRequestId(variant: 'next' | 'current' | 'seed', payload: string | null = null): Promise<string> {
+    // This needs to run in a write transaction because some checkpoint request reads interact with sync client state
+    // bound to the write connection.
     return this.db.writeTransaction(async (tx) => {
       return (await rawPowerSyncControl(tx, `${variant}_checkpoint_request_id`, payload))!;
     });
