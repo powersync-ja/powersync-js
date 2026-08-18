@@ -34,11 +34,7 @@ import {
   SqliteRecord,
   SyncStreamConnectionMethod
 } from '@powersync/common';
-import {
-  BucketStorageAdapter,
-  PSInternalTable,
-  targetCheckpointRequestId
-} from './sync/bucket/BucketStorageAdapter.js';
+import { BucketStorageAdapter, PSInternalTable } from './sync/bucket/BucketStorageAdapter.js';
 import { SyncStatusSnapshot } from '../db/crud/SyncStatus.js';
 import {
   ConnectionManager,

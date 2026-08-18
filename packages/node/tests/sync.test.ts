@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, vi } from 'vitest';
 
 import {
   CommonPowerSyncDatabase,
+  LogRecord,
   PowerSyncLogger,
   ProgressWithOperations,
   Schema,
@@ -33,6 +34,28 @@ describe('Sync', () => {
   describe('bson', () => defineSyncTests(true));
 
   describe('checkpoint requests', () => {
+    mockSyncServiceTest('warns for custom connectors without requests being enabled', async ({ syncService }) => {
+      const records: LogRecord[] = [];
+
+      const database = await syncService.createDatabase({ logger: { log: records.push.bind(records) } });
+      const connector = new (class extends TestConnector {
+        async postCheckpointRequest(_clientId: string, requestId: string) {
+          return requestId;
+        }
+      })();
+
+      await database.connect(connector);
+      expect(records).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            message: expect.stringContaining(
+              'implements postCheckpointRequest, but connect() was called without checkpoint requests'
+            )
+          })
+        ])
+      );
+    });
+
     mockSyncServiceTest('requests checkpoints for updates', async ({ syncService }) => {
       const database = await syncService.createDatabase();
       await database.connect(new TestConnector(), { checkpointMode: 'requests' });

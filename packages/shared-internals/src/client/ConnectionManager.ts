@@ -150,11 +150,20 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
     const hadPendingOptions = !!this.pendingConnectionOptions;
 
     // Update pending options to the latest values
+    const resolvedOptions = resolveSyncOptions(options, this.options.defaultConnectionMethod);
     this.pendingConnectionOptions = {
       connector,
-      options: resolveSyncOptions(options, this.options.defaultConnectionMethod),
+      options: resolvedOptions,
       schema: serializedSchema
     };
+
+    if (connector.postCheckpointRequest && resolvedOptions.checkpointMode == 'legacy') {
+      this.logger.log({
+        level: LogLevels.warn,
+        message:
+          'The backend connector implements postCheckpointRequest, but connect() was called without checkpoint requests enabled.'
+      });
+    }
 
     // Disconnecting here provides aborting in progress connection attempts.
     // The connectInternal method will clear pending options once it starts connecting (with the options).
