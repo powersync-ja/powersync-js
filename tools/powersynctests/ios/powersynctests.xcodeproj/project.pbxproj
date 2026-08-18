@@ -301,7 +301,7 @@
 				"RN_SPM_REACT_BINARY[sdk=iphoneos*]" = "$(SRCROOT)/build/xcframeworks/$(RN_SPM_FLAVOR)/React.xcframework/ios-arm64/React.framework/React";
 				"RN_SPM_REACT_FRAMEWORK[sdk=iphoneos*]" = "$(SRCROOT)/build/xcframeworks/$(RN_SPM_FLAVOR)/React.xcframework/ios-arm64/React.framework";
 				RN_SPM_FLAVOR = debug;
-				HERMES_CLI_PATH = "/Users/simon/src/powersync-js/node_modules/.pnpm/hermes-compiler@250829098.0.2/node_modules/hermes-compiler/hermesc/osx-bin/hermesc";
+				HERMES_CLI_PATH = "/../../../node_modules/.pnpm/hermes-compiler@250829098.0.2/node_modules/hermes-compiler/hermesc/osx-bin/hermesc";
 				REACT_NATIVE_PATH = "../node_modules/react-native";
 				CLANG_CXX_LANGUAGE_STANDARD = "c++20";
 				FRAMEWORK_SEARCH_PATHS = (

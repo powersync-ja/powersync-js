@@ -15,16 +15,16 @@ let package = Package(
     dependencies: [
         .package(
             url: "https://github.com/powersync-ja/powersync-sqlite-core-swift.git",
-            exact: coreExtensionVersion,
+            exact: coreExtensionVersion
         )
     ],
     targets: [
         .target(
             name: packageName,
             dependencies: [
-                .product(name: "PowerSyncSQLiteCore", package: "powersync-sqlite-core-swift"),
+                .product(name: "PowerSyncSQLiteCore", package: "powersync-sqlite-core-swift")
             ],
-            path: "swiftpm",
+            path: "swiftpm"
         )
     ],
 )
