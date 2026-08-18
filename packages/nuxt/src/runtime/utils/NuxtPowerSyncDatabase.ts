@@ -90,13 +90,9 @@ export class NuxtDatabaseImplementation extends WebPowerSyncDatabase {
           logger ? logger.log({ level: LogLevels.warn, message: warning }) : console.warn(warning);
         }
         return new SharedWebStreamingSyncImplementation({
-          ...options,
+          ...this.commonSyncOptions(connector, options),
           adapter,
           remote: new WebRemote(connector, logger),
-          uploadCrud: async () => {
-            await this.waitForReady();
-            await connector.uploadData(this);
-          },
           logger,
           db: this.database as WebDBAdapter,
           logLevel: this.resolvedOpenOptions.databaseWorkerLogLevel ?? LogLevels.info,
@@ -104,13 +100,9 @@ export class NuxtDatabaseImplementation extends WebPowerSyncDatabase {
         });
       } else {
         return new WebStreamingSyncImplementation({
-          ...options,
+          ...this.commonSyncOptions(connector, options),
           adapter,
           remote: new WebRemote(connector, logger),
-          uploadCrud: async () => {
-            await this.waitForReady();
-            await connector.uploadData(this);
-          },
           identifier: 'database' in this.options ? this.options.database.dbFilename : 'diagnostics-sync',
           logger
         });

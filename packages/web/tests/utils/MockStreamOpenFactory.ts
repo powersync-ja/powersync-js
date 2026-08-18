@@ -55,11 +55,19 @@ export class MockRemote extends AbstractRemote {
     throw new Error('Not implemented');
   }
 
-  async get(path: string, headers?: Record<string, string> | undefined): Promise<any> {
-    // mock a response for write checkpoint API
-    if (path.includes('checkpoint')) {
+  override async fetchAndDecodeJson({
+    path
+  }: {
+    path: string;
+    method?: string;
+    headers?: Record<string, string>;
+    body?: string;
+    signal?: AbortSignal;
+  }): Promise<any> {
+    if (path.includes('checkpoint2.json')) {
       return this.generateCheckpoint();
     }
+
     throw new Error('Not implemented');
   }
 
@@ -94,7 +102,7 @@ export class MockRemote extends AbstractRemote {
     throw new Error('Mocked WebRemote does not support WebSockets');
   }
 
-  async fetchStream(options: SyncStreamOptions): Promise<SimpleAsyncIterator<Uint8Array | string>> {
+  override async fetchStream(options: SyncStreamOptions): Promise<SimpleAsyncIterator<Uint8Array | string>> {
     const mockResponse = await this.postStreaming(options.path, options.data, options.abortSignal);
     const mockReader = mockResponse.getReader();
     options.abortSignal?.addEventListener('abort', async () => {
@@ -137,6 +145,13 @@ export class MockedStreamPowerSync extends PowerSyncDatabase {
       uploadCrud: async () => {
         await this.waitForReady();
         await connector.uploadData(this);
+      },
+      postCheckpointRequest: (clientId, requestId) => {
+        if (connector.postCheckpointRequest) {
+          return this.waitForReady().then((_) => connector.postCheckpointRequest!(clientId, requestId));
+        }
+
+        return null;
       },
       identifier: this.database.name,
       subscriptions: [],

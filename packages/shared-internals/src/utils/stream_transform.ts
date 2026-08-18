@@ -34,6 +34,7 @@ export function map<T1, T2>(source: SimpleAsyncIterator<T1>, map: (source: T1) =
 
 export interface InjectableIterator<T> extends SimpleAsyncIterator<T> {
   inject(event: T): void;
+  injectError(error: unknown): void;
 }
 
 /**
@@ -54,7 +55,7 @@ export function injectable<T>(source: SimpleAsyncIterator<T>): InjectableIterato
   let pendingSourceEvent: ((w: Waiter) => void) | null = null;
   let sourceFetchInFlight = false;
 
-  let pendingInjectedEvents: T[] = [];
+  let pendingInjectedEvents: PromiseSettledResult<T>[] = [];
 
   const consumeWaiter = () => {
     const pending = waiter;
@@ -102,7 +103,14 @@ export function injectable<T>(source: SimpleAsyncIterator<T>): InjectableIterato
 
         // Second priority: Dispatch injected events
         if (pendingInjectedEvents.length) {
-          return resolve(valueResult(pendingInjectedEvents.shift()!));
+          const event = pendingInjectedEvents.shift()!;
+          if (event.status === 'fulfilled') {
+            resolve(valueResult(event.value));
+          } else {
+            reject(event.reason);
+          }
+
+          return;
         }
 
         // Nothing pending? Fetch from source
@@ -117,7 +125,15 @@ export function injectable<T>(source: SimpleAsyncIterator<T>): InjectableIterato
       if (pending != null) {
         pending.resolve(valueResult(event));
       } else {
-        pendingInjectedEvents.push(event);
+        pendingInjectedEvents.push({ status: 'fulfilled', value: event });
+      }
+    },
+    injectError(error) {
+      const pending = consumeWaiter();
+      if (pending != null) {
+        pending.reject(error);
+      } else {
+        pendingInjectedEvents.push({ status: 'rejected', reason: error });
       }
     }
   };

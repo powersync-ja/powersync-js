@@ -140,6 +140,9 @@ export async function connect() {
     uploadCrud: async () => {
       // No-op
     },
+    postCheckpointRequest() {
+      return null; // No-op
+    },
     identifier: 'diagnostics',
     subscriptions: [],
     logger: baseLogger,

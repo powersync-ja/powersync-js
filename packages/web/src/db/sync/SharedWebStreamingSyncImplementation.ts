@@ -59,6 +59,10 @@ class SharedSyncClientProvider extends AbstractSharedSyncClientProvider {
     await this.options.uploadCrud();
   }
 
+  override async postCheckpointRequest(clientId: string, requestId: string): Promise<string | null> {
+    return await this.options.postCheckpointRequest(clientId, requestId);
+  }
+
   get logger() {
     return this.options.logger;
   }
@@ -185,11 +189,6 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
   async disconnect(): Promise<void> {
     await this.waitForReady();
     return this.syncManager.disconnect();
-  }
-
-  async getWriteCheckpoint(): Promise<string> {
-    await this.waitForReady();
-    return this.syncManager.getWriteCheckpoint();
   }
 
   async dispose(): Promise<void> {

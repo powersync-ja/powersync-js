@@ -1,8 +1,9 @@
 import { describe, expect, it, Mock, vi } from 'vitest';
 
-import { PowerSyncFetchImplementation, ReactNativeRemote } from '../../src/sync/stream/ReactNativeRemote';
+import { ReactNativeRemote } from '../../src/sync/stream/ReactNativeRemote';
 import { createConsoleLogger } from '@powersync/common';
 import { FetchOptions } from '@powersync/shared-internals';
+import type { PowerSyncFetchImplementation } from '../../src/sync/stream/fetch';
 
 const connector = {
   fetchCredentials: async () => ({
@@ -41,7 +42,7 @@ describe('ReactNativeRemote', () => {
     const [fetchImplementation, mock] = mockFetchImplementation();
     const remote = new ReactNativeRemote(connector, logger, { fetchImplementation });
 
-    await remote.get('/write-checkpoint2.json');
+    await remote.fetchAndDecodeJson({ path: '/write-checkpoint2.json' });
 
     expect(mock).toHaveBeenCalledWith({
       resource: 'https://example.com/write-checkpoint2.json',

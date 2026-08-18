@@ -44,10 +44,6 @@ class NodePowerSyncDatabase extends BasePowerSyncDatabase<NodePowerSyncDatabaseO
     return openDatabase(this.options, (open) => new WorkerConnectionPool(open));
   }
 
-  protected generateBucketStorageAdapter(): BucketStorageAdapter {
-    return new SqliteBucketStorage(this.database, this.logger);
-  }
-
   protected generateSyncStreamImplementation(
     connector: PowerSyncBackendConnector,
     options: CreateSyncImplementationOptions
@@ -56,15 +52,8 @@ class NodePowerSyncDatabase extends BasePowerSyncDatabase<NodePowerSyncDatabaseO
     const remote = new NodeRemote(connector, logger, this.options.remoteOptions);
 
     return new NodeStreamingSyncImplementation({
-      adapter: this.bucketStorageAdapter,
-      remote,
-      uploadCrud: async () => {
-        await this.waitForReady();
-        await connector.uploadData(this);
-      },
-      ...options,
-      identifier: this.database.name,
-      logger
+      ...this.commonSyncOptions(connector, options),
+      remote
     });
   }
 }

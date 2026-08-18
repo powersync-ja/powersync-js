@@ -24,14 +24,30 @@ describe('Streaming', { sequential: true }, () => {
     {
       sequential: true
     },
-    describeStreamingTests((syncOptions) =>
-      generateConnectedDatabase(
-        {
-          logger
-        },
-        syncOptions
-      )
-    )
+    () => {
+      describeStreamingTests((syncOptions) =>
+        generateConnectedDatabase(
+          {
+            logger
+          },
+          syncOptions
+        )
+      )();
+
+      it('can use custom checkpoint requests', async () => {
+        const didRequestCheckpoint = Promise.withResolvers<void>();
+        const connector = new (class extends TestConnector {
+          async postCheckpointRequest(_clientId: string, requestId: string) {
+            expect(requestId).toStrictEqual('1');
+            didRequestCheckpoint.resolve();
+
+            return requestId;
+          }
+        })();
+        await generateConnectedDatabase({ logger }, { checkpointMode: 'requests' }, connector);
+        await didRequestCheckpoint.promise;
+      });
+    }
   );
 
   describe(
