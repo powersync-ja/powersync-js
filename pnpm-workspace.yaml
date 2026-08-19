@@ -27,7 +27,7 @@ catalog:
   '@nuxt/devtools-kit': ^3.2.3
   '@nuxt/devtools-ui-kit': ^3.2.3
   '@nuxt/test-utils': ^4.0.3
-  '@op-engineering/op-sqlite': ^17.1.0
+  '@op-engineering/op-sqlite': ^18.1.1
   '@pnpm/workspace.find-packages': ^1000.0.55
   '@pnpm/workspace.read-manifest': ^1000.2.9
   '@rollup/plugin-alias': ^5.1.0
@@ -82,3 +82,4 @@ trustPolicyExclude:
 minimumReleaseAgeExclude:
   - '@journeyapps/*'
   - '@powersync/*'
+  - '@op-engineering/op-sqlite@18.1.1'
