@@ -234,6 +234,10 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
 
         this.pendingConnectionOptions = null;
 
+        // An update from subscriptionsMayHaveChanged() is lost between this read and the
+        // implementation being ready: there is nothing to send it to yet, or it is sent to an
+        // implementation that discards it. Compare against this and re-send the current set below.
+        const subscriptionsAtStart = this.subscriptionIdentity;
         const { sync, onDispose } = await this.options.createSyncImplementation(connector, {
           subscriptions: this.activeStreams,
           serializedSchema: schema
@@ -242,6 +246,10 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
         this.syncStreamImplementation = sync;
         this.syncDisposer = onDispose;
         await this.syncStreamImplementation.waitForReady();
+
+        if (this.subscriptionIdentity !== subscriptionsAtStart) {
+          this.syncStreamImplementation.updateSubscriptions(this.activeStreams);
+        }
         resolve();
       } catch (error) {
         reject(error);
@@ -362,6 +370,13 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
    */
   get activeStreams() {
     return [...this.locallyActiveSubscriptions.values()].map((a) => ({ name: a.name, params: a.parameters }));
+  }
+
+  /**
+   * Identifies the current set of subscriptions, for detecting a change across an await.
+   */
+  private get subscriptionIdentity() {
+    return [...this.locallyActiveSubscriptions.keys()].join('\n');
   }
 
   private subscriptionsMayHaveChanged() {
