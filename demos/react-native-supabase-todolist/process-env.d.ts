@@ -9,6 +9,7 @@ declare global {
       EXPO_PUBLIC_SUPABASE_BUCKET: string;
       EXPO_PUBLIC_POWERSYNC_URL: string;
       EXPO_PUBLIC_EAS_PROJECT_ID: string;
+      EXPO_PUBLIC_USE_POWERSYNC_CHECKPOINT_REQUESTS: 'false' | 'true';
     }
   }
 }
