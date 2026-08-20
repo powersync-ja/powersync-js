@@ -234,9 +234,6 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
 
         this.pendingConnectionOptions = null;
 
-        // An update from subscriptionsMayHaveChanged() is lost between this read and the
-        // implementation being ready: there is nothing to send it to yet, or it is sent to an
-        // implementation that discards it. Compare against this and re-send the current set below.
         const subscriptionsAtStart = this.subscriptionIdentity;
         const { sync, onDispose } = await this.options.createSyncImplementation(connector, {
           subscriptions: this.activeStreams,
@@ -247,6 +244,7 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
         this.syncDisposer = onDispose;
         await this.syncStreamImplementation.waitForReady();
 
+        // Subscriptions changed while creating the sync stream implementation, update it now.
         if (this.subscriptionIdentity !== subscriptionsAtStart) {
           this.syncStreamImplementation.updateSubscriptions(this.activeStreams);
         }
