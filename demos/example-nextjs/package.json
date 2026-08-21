@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "@powersync/react": "^2.0.0",
-    "@powersync/web": "^2.2.0",
+    "@powersync/web": "^2.3.0",
     "@tailwindcss/postcss": "^4.2.2",
     "jose": "^5.9.6",
     "next": "^16.1.1",

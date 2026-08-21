@@ -1,5 +1,24 @@
 # @powersync/nuxt
 
+## 0.1.0
+
+### Minor Changes
+
+- a07998d: Add `requestCheckpoint()` to `PowerSyncDatabase` to request an explicit sync acknowledgement.
+  This feature requires a new `checkpointMode: 'requests'` option on `ConnectOptions` switching to a more
+  efficient way to request checkpoints from the PowerSync service.
+
+  For more details on this feature, see [Sync Catch-Up](https://docs.powersync.com/client-sdks/advanced/checkpoint-requests).
+
+### Patch Changes
+
+- Updated dependencies [aa1f171]
+- Updated dependencies [a07998d]
+  - @powersync/shared-internals@1.2.0
+  - @powersync/web@2.3.0
+  - @powersync/vue@0.6.0
+  - @powersync/kysely-driver@2.0.1
+
 ## 0.0.9
 
 ### Patch Changes
