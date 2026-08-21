@@ -37,7 +37,7 @@
     "test:exports": "attw --pack . --ignore-rules cjs-resolves-to-esm"
   },
   "peerDependencies": {
-    "@powersync/common": "workspace:^2.1.0",
+    "@powersync/common": "workspace:^2.2.0",
     "expo-file-system": ">=19.0.0",
     "@dr.pogodin/react-native-fs": "^2.25.0"
   },

@@ -1,6 +1,6 @@
 {
   "name": "@powersync/web",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "description": "PowerSync Web SDK",
   "main": "lib/index.js",
   "module": "lib/index.js",
@@ -60,8 +60,8 @@
   "author": "PowerSync",
   "license": "Apache-2.0",
   "peerDependencies": {
-    "@powersync/common": "workspace:^2.1.0",
-    "@powersync/shared-internals": "workspace:^1.1.1"
+    "@powersync/common": "workspace:^2.2.0",
+    "@powersync/shared-internals": "workspace:^1.2.0"
   },
   "dependencies": {
     "@powersync/common": "workspace:*",
