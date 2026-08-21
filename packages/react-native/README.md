@@ -4,7 +4,7 @@
 
 # PowerSync SDK for React Native
 
-_[PowerSync](https://www.powersync.com) is a sync engine for building local-first apps with instantly-responsive UI/UX and simplified state transfer. Syncs between SQLite on the client-side and Postgres, MongoDB, MySQL or SQL Server on the server-side._
+_[PowerSync](https://www.powersync.com) keeps a client-side SQLite database in sync with your backend database. Changes appear across users and devices in real-time, user interactions feel instant and your app continues to work even when offline. Supports Postgres, MongoDB, MySQL, and SQL Server. Client SDKs are available for a wide range of environments including web, mobile, desktop, headless and embedded._
 
 This package (`packages/react-native`) is the PowerSync SDK for React Native clients. It is an extension of `packages/common`.
 
