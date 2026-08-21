@@ -4,7 +4,7 @@
 
 # PowerSync SDK for Node.js
 
-_[PowerSync](https://www.powersync.com) keeps a client-side SQLite database in sync with your backend database. Changes appear across users and devices in real-time, user interactions feel instant and your app will continue to work even when offline. Supports Postgres, MongoDB, MySQL, and SQL Server. Client SDKs are available for a wide range of environments including web, mobile, desktop, headless and embedded._
+_[PowerSync](https://www.powersync.com) keeps a client-side SQLite database in sync with your backend database. Changes appear across users and devices in real-time, user interactions feel instant and your app continues to work even when offline. Supports Postgres, MongoDB, MySQL, and SQL Server. Client SDKs are available for a wide range of environments including web, mobile, desktop, headless and embedded._
 
 This package (`packages/node`) is the PowerSync SDK for Node.js clients. It is an extension of `packages/common`.
 Using this package is not necessary for PowerSync on servers, see [our documentation](https://docs.powersync.com/installation/app-backend-setup) for more details on that.
