@@ -2,6 +2,7 @@ import {
   CommonPowerSyncDatabase,
   ArrayComparator,
   GetAllQuery,
+  LogLevels,
   QueryResult,
   WatchedQueryDifferential,
   WatchedQueryState
@@ -40,6 +41,20 @@ describe('Watch Tests', { sequential: true }, () => {
     await powersync.disconnectAndClear();
     await powersync.close();
   });
+
+  const spyOnLogger = (db: CommonPowerSyncDatabase) => {
+    const logSpy = vi.spyOn(db.logger, 'log');
+    onTestFinished(() => logSpy.mockRestore());
+    return logSpy;
+  };
+
+  /**
+   * The error records a watched query logged because nothing else handled the error.
+   */
+  const watchedQueryErrorLogs = (logSpy: ReturnType<typeof spyOnLogger>) =>
+    logSpy.mock.calls
+      .map(([record]) => record)
+      .filter((record) => record.level >= LogLevels.error && record.message.includes('Error in watched query'));
 
   it('watch outside throttle limits', async () => {
     const abortController = new AbortController();
@@ -491,6 +506,56 @@ describe('Watch Tests', { sequential: true }, () => {
     abortController.abort();
 
     expect(receivedErrorCount).equals(1);
+  });
+
+  it('should log watch errors when no onError callback is supplied', async () => {
+    const abortController = new AbortController();
+    onTestFinished(() => abortController.abort());
+    const logSpy = spyOnLogger(powersync);
+
+    powersync.watch(
+      'INVALID SQL QUERY', // Simulate an error with bad SQL
+      [],
+      { onResult: () => {} },
+      { signal: abortController.signal, throttleMs: throttleDuration }
+    );
+
+    await vi.waitFor(
+      () => {
+        expect(watchedQueryErrorLogs(logSpy).length).toBeGreaterThan(0);
+      },
+      { timeout: 2000 }
+    );
+  });
+
+  it('should not log watch errors when an onError callback is supplied', async () => {
+    const abortController = new AbortController();
+    onTestFinished(() => abortController.abort());
+    const logSpy = spyOnLogger(powersync);
+
+    let receivedErrorCount = 0;
+    powersync.watch(
+      'INVALID SQL QUERY', // Simulate an error with bad SQL
+      [],
+      {
+        onResult: () => {},
+        onError: () => {
+          receivedErrorCount++;
+        }
+      },
+      { signal: abortController.signal, throttleMs: throttleDuration }
+    );
+
+    await vi.waitFor(
+      () => {
+        expect(receivedErrorCount).toBeGreaterThan(0);
+      },
+      { timeout: 2000 }
+    );
+
+    // The watched query logs before dispatching to error listeners, so any log for this error would
+    // already have been recorded here.
+    expect(watchedQueryErrorLogs(logSpy)).toEqual([]);
   });
 
   it('should throttle watch callback overflow', async () => {
