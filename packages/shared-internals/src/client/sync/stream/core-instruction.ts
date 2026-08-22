@@ -25,6 +25,7 @@ export interface LogLine {
 
 export interface EstablishSyncStream {
   request: unknown;
+  checkpoint_request?: CheckpointRequestPayload;
 }
 
 export interface UpdateSyncStatus {
@@ -37,6 +38,7 @@ export interface CoreSyncStatus {
   priority_status: SyncPriorityStatus[];
   downloading: DownloadProgress | null;
   streams: CoreStreamSubscription[];
+  internal_last_applied_checkpoint_request_id?: string;
 }
 
 /// An `ActiveStreamSubscription` from the core extension + serialized progress information.
@@ -71,6 +73,11 @@ export interface BucketProgress {
 
 export interface FetchCredentials {
   did_expire: boolean;
+}
+
+export interface CheckpointRequestPayload {
+  client_id: string;
+  checkpoint_request_id: string;
 }
 
 export function isInterruptingInstruction(instruction: Instruction): instruction is InterruptingInstruction {

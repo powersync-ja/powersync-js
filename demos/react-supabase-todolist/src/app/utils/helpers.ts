@@ -1,3 +1,5 @@
+import { useEffect, useMemo } from 'react';
+
 type ExtractGenerator = (jsonColumnName: string, columnName: string) => string;
 
 export enum ExtractType {
@@ -34,3 +36,13 @@ export const generateJsonExtracts = (type: ExtractType, jsonColumnName: string, 
 
   return columns.map((column) => generator(jsonColumnName, column)).join(', ');
 };
+
+export function useAbortSignal(): AbortSignal {
+  const controller = useMemo(() => new AbortController(), []);
+
+  useEffect(() => {
+    return () => controller.abort();
+  }, [controller]);
+
+  return controller.signal;
+}

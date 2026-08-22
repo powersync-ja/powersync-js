@@ -2,7 +2,7 @@
   <a href="https://www.powersync.com" target="_blank"><img src="https://github.com/powersync-ja/.github/assets/7372448/d2538c43-c1a0-4c47-9a76-41462dba484f"/></a>
 </p>
 
-_[PowerSync](https://www.powersync.com) is a sync engine for building local-first apps with instantly-responsive UI/UX and simplified state transfer. Syncs between SQLite on the client-side and Postgres, MongoDB, MySQL or SQL Server on the server-side._
+_[PowerSync](https://www.powersync.com) keeps a client-side SQLite database in sync with your backend database. Changes appear across users and devices in real-time, user interactions feel instant and your app continues to work even when offline. Supports Postgres, MongoDB, MySQL, and SQL Server. Client SDKs are available for a wide range of environments including web, mobile, desktop, headless and embedded._
 
 # PowerSync JavaScript SDKs
 
@@ -49,10 +49,6 @@ _[PowerSync](https://www.powersync.com) is a sync engine for building local-firs
 - [packages/drizzle-driver](./packages/drizzle-driver/README.md)
 
   - [Drizzle](https://orm.drizzle.team/) integration (ORM) for React Native and JavaScript/TypeScript projects.
-
-- [packages/powersync-op-sqlite](./packages/powersync-op-sqlite/README.md)
-
-  - [OP-SQLite](https://github.com/OP-Engineering/op-sqlite) integration for React Native projects. Alternative to the default usage of [react-native-quick-sqlite](https://github.com/powersync-ja/react-native-quick-sqlite).
 
 - [packages/common](./packages/common/README.md)
   - Shared package: TypeScript implementation of a PowerSync database connector, streaming sync bucket implementation and attachment utilities.

@@ -143,10 +143,6 @@ export class WebPowerSyncDatabase extends BasePowerSyncDatabase<WebPowerSyncData
     return super.resolveOfflineSyncStatus();
   }
 
-  protected generateBucketStorageAdapter(): BucketStorageAdapter {
-    return new SqliteBucketStorage(this.database, this.logger);
-  }
-
   protected async runExclusive<T>(cb: () => Promise<T>) {
     if (this.resolvedOpenOptions.ssrMode) {
       return WebPowerSyncDatabase.SHARED_MUTEX.runExclusive(cb);
@@ -161,15 +157,8 @@ export class WebPowerSyncDatabase extends BasePowerSyncDatabase<WebPowerSyncData
     const remote = new WebRemote(connector, this.logger);
     const syncOptions: WebStreamingSyncImplementationOptions = {
       ...(this.options as {}),
-      ...options,
-      adapter: this.bucketStorageAdapter,
-      remote,
-      uploadCrud: async () => {
-        await this.waitForReady();
-        await connector.uploadData(this);
-      },
-      identifier: this.database.name,
-      logger: this.logger
+      ...this.commonSyncOptions(connector, options),
+      remote
     };
 
     if (this.resolvedOpenOptions.ssrMode) {

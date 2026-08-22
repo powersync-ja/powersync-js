@@ -78,10 +78,6 @@ export class WorkerClient {
     return this.sync.setParams(params);
   }
 
-  getWriteCheckpoint() {
-    return this.sync.getWriteCheckpoint();
-  }
-
   connect(options: ResolvedSyncOptions, schema: any) {
     return this.sync.connect(options, schema);
   }
@@ -90,6 +86,10 @@ export class WorkerClient {
     if (this.resolvedPort) {
       this.sync.updateSubscriptions(this.resolvedPort, subscriptions);
     }
+  }
+
+  requestCheckpoint(): Promise<bigint> {
+    return this.sync.requestCheckpoint();
   }
 
   disconnect() {

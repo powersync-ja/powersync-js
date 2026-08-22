@@ -8,8 +8,8 @@ import {
   LogLevels,
   DifferentialWatchedQuery,
   PowerSyncDatabase,
-  WASQLiteOpenFactory,
-  WASQLiteVFS
+  WASQLiteVFS,
+  SyncOptions
 } from '@powersync/web';
 import React, { Suspense } from 'react';
 import { NavigationPanelContextProvider } from '../navigation/NavigationPanelContext';
@@ -26,7 +26,7 @@ export const db = new PowerSyncDatabase({
     dbFilename: 'example.db',
     vfs: WASQLiteVFS.OPFSCoopSyncVFS,
     databaseWorkerLogLevel: LogLevels.debug,
-    enableMultiTabs: typeof SharedWorker !== 'undefined',
+    enableMultiTabs: typeof SharedWorker !== 'undefined'
   },
   logger
 });
@@ -35,6 +35,19 @@ export type EnhancedListRecord = ListRecord & { total_tasks: number; completed_t
 
 export type QueryStore = {
   lists: DifferentialWatchedQuery<EnhancedListRecord>;
+};
+
+/**
+ * Whether to use [checkpoint requests](https://docs.powersync.com/client-sdks/advanced/checkpoint-requests) to add an
+ * explicit sync button to this demo.
+ */
+export const useCheckpointRequests = import.meta.env.VITE_USE_POWERSYNC_CHECKPOINT_REQUESTS == 'true';
+
+export const syncOptions: SyncOptions = {
+  appMetadata: {
+    app_version: APP_VERSION
+  },
+  checkpointMode: useCheckpointRequests ? 'requests' : 'legacy'
 };
 
 const QueryStore = React.createContext<QueryStore | null>(null);
@@ -77,13 +90,9 @@ export const SystemProvider = ({ children }: { children: React.ReactNode }) => {
 
     powerSync.init();
     const l = connector.registerListener({
-      initialized: () => { },
+      initialized: () => {},
       sessionStarted: () => {
-        powerSync.connect(connector, {
-          appMetadata: {
-            app_version: APP_VERSION
-          }
-        });
+        powerSync.connect(connector, syncOptions);
       }
     });
 

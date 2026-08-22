@@ -15,9 +15,9 @@ import com.facebook.soloader.SoLoader
 class MainApplication : Application(), ReactApplication {
 
   override val reactNativeHost: ReactNativeHost =
-      object : DefaultReactNativeHost(this) {
+      object : DefaultReactNativeHost(this@MainApplication) {
         override fun getPackages(): List<ReactPackage> =
-            PackageList(this).packages.apply {
+            PackageList(this@MainApplication).packages.apply {
               // Packages that cannot be autolinked yet can be added manually here, for example:
               // add(MyReactNativePackage())
             }

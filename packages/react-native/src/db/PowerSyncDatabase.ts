@@ -53,15 +53,8 @@ class ReactNativePowerSyncDatabase extends BasePowerSyncDatabase<ReactNativeData
     const remote = new ReactNativeRemote(connector, this.logger, this.options.remote);
 
     return new ReactNativeStreamingSyncImplementation({
-      ...options,
-      adapter: this.bucketStorageAdapter,
-      remote,
-      uploadCrud: async () => {
-        await this.waitForReady();
-        await connector.uploadData(this);
-      },
-      identifier: this.database.name,
-      logger: this.logger
+      ...this.commonSyncOptions(connector, options),
+      remote
     });
   }
 

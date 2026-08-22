@@ -1,5 +1,6 @@
 import {
   DatabaseSource,
+  PowerSyncBackendConnector,
   PowerSyncLogger,
   SQLOpenFactory,
   Schema,
@@ -53,7 +54,8 @@ export function generateDefaultOptions(options: GenerateConnectedDatabaseOptions
 
 export async function generateConnectedDatabase(
   databaseOptions?: GenerateConnectedDatabaseOptions,
-  syncOptions?: SyncOptions
+  syncOptions?: SyncOptions,
+  connector?: PowerSyncBackendConnector
 ) {
   const resolvedOptions = generateDefaultOptions(databaseOptions ?? {});
 
@@ -62,7 +64,7 @@ export async function generateConnectedDatabase(
    * Required since we cannot extend multiple classes.
    */
   const callbacks: Map<string, () => void> = new Map();
-  const connector = new TestConnector();
+  connector ??= new TestConnector();
   const uploadSpy = vi.spyOn(connector, 'uploadData');
   const remote = new MockRemote(connector, defaultTestLogger, () => callbacks.forEach((c) => c()));
 

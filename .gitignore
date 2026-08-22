@@ -11,6 +11,8 @@ dist
 .DS_STORE
 .idea
 .fleet
+.build
+packages/react-native/ios/Package.resolved
 
 # TanStack Router generated files
 routeTree.gen.ts

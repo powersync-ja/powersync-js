@@ -90,7 +90,9 @@ export class System {
 
   async init() {
     await this.powersync.init();
-    await this.powersync.connect(this.supabaseConnector);
+    await this.powersync.connect(this.supabaseConnector, {
+      checkpointMode: AppConfig.usePowerSyncCheckpointRequests ? 'requests' : 'legacy'
+    });
 
     if (this.photoAttachmentQueue) {
       await this.photoAttachmentQueue.startSync();
