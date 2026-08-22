@@ -3,4 +3,4 @@
 '@powersync/react': patch
 ---
 
-Log errors from watched queries with the PowerSync database's logger. Failures such as invalid SQL or a missing table previously only surfaced on the query state, so `useQuery` appeared to silently do nothing.
+Log errors from watched queries with the PowerSync database's logger. Failures such as invalid SQL or a missing table previously only surfaced on the query state, so `useQuery` appeared to silently do nothing. Queries whose listeners register an `onError` handler are left alone, since those report errors themselves.

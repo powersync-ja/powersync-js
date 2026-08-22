@@ -132,16 +132,25 @@ export abstract class AbstractQueryProcessor<
    */
   protected abstract linkQuery(options: LinkQueryOptions<Data>): Promise<void>;
 
+  /**
+   * Whether any of the registered listeners handles errors itself.
+   * These are the listeners which {@link AbstractQueryProcessor.updateState} reports errors to.
+   */
+  protected get hasErrorListener(): boolean {
+    return (this.listenerCounts[WatchedQueryListenerEvent.ON_ERROR] ?? 0) > 0;
+  }
+
   protected async updateState(update: Partial<MutableWatchedQueryState<Data>>) {
     if (this._closed) {
       return;
     }
 
     if (typeof update.error !== 'undefined') {
-      if (update.error) {
-        // Errors are also reported on the query state and to error listeners, but those are easy to
-        // miss. Logging makes failures such as invalid SQL discoverable without extra wiring.
-        // Note that `error: null` is used to clear a previous error, which should not be logged.
+      // `error: null` is used to clear a previous error, which should not be logged.
+      if (update.error && !this.hasErrorListener) {
+        // Errors are also reported on the query state, but that is easy to miss. Logging makes failures such as
+        // invalid SQL discoverable without extra wiring. Listeners which registered an `onError` handler report
+        // errors themselves, so logging here would only duplicate their output.
         this.options.db.logger.log({
           level: LogLevels.error,
           message: 'Error in watched query',

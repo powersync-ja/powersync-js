@@ -49,7 +49,7 @@ describe('useQuery', () => {
     // The log has to carry the underlying error, otherwise it does not help with discovery.
     expect(
       errorRecords.some(
-        (record) => record.message == expectedLogMessage && (record.error as Error)?.message == expectedMessage
+        (record) => record.message.includes(expectedLogMessage) && (record.error as Error)?.message == expectedMessage
       )
     ).toBe(true);
     // The issue reports an empty console, so assert on the actual developer-visible output too.
@@ -153,6 +153,33 @@ describe('useQuery', () => {
           timeout: 2000,
           interval: 100
         });
+      });
+
+      it('should include the generated SQL when a runQueryOnce query fails to execute', async () => {
+        const db = openPowerSync();
+        const spies = spyOnErrorLogs(db);
+
+        // `compile` succeeds here, only `execute` fails. The compiled SQL is the interesting part of such
+        // a failure, since the caller only ever supplied a query builder.
+        const sql = 'SELECT * from lists WHERE name = ?';
+        const query: commonSdk.CompilableQuery<any> = {
+          compile: () => ({ sql, parameters: ['a name'] }),
+          execute: async () => {
+            throw new Error('simulated execute failure');
+          }
+        };
+
+        renderHook(() => useQuery(query, [], { runQueryOnce: true }), {
+          wrapper: ({ children }) => testWrapper({ children, db })
+        });
+
+        await waitFor(
+          async () => expectLoggedError(spies, 'simulated execute failure', `Error in watched query: ${sql}`),
+          {
+            timeout: 2000,
+            interval: 100
+          }
+        );
       });
 
       it('should log the error when a query with the runQueryOnce flag fails', async () => {
