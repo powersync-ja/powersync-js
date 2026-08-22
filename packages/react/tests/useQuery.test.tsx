@@ -647,6 +647,47 @@ describe('useQuery', () => {
         );
       });
 
+      it('should recover when a query compiles successfully after a failed compilation', async () => {
+        const db = openPowerSync();
+
+        // Emulates a conditionally constructed query, e.g. a Drizzle projection built from
+        // optional fields, which throws while being compiled on some renders but not others.
+        let compilationFails = true;
+        const query: commonSdk.CompilableQuery<{ a: string }> = {
+          execute: () => db.getAll<{ a: string }>('SELECT ? AS a', ['foo']),
+          compile: () => {
+            if (compilationFails) {
+              throw new Error('error');
+            }
+            return { sql: 'SELECT ? AS a', parameters: ['foo'] };
+          }
+        };
+
+        const { result, rerender } = renderHook(() => useQuery(query), {
+          wrapper: ({ children }) => testWrapper({ children, db })
+        });
+
+        await waitFor(
+          async () => {
+            expect(result.current.error).toEqual(Error('error'));
+          },
+          { timeout: 500, interval: 100 }
+        );
+
+        // The query now compiles. Rendering must not break the order of hooks.
+        compilationFails = false;
+        expect(() => rerender()).not.toThrow();
+
+        await waitFor(
+          async () => {
+            const currentResult = result.current;
+            expect(currentResult.error).toBeFalsy();
+            expect(currentResult.data).toEqual([{ a: 'foo' }]);
+          },
+          { timeout: 500, interval: 100 }
+        );
+      });
+
       it('should use an existing WatchedQuery instance', async () => {
         const db = openPowerSync();
 
