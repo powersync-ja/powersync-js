@@ -933,6 +933,80 @@ describe('useQuery', () => {
         expect(finalState.isFetching).toEqual(false);
         expect(finalState.isLoading).toEqual(false);
       });
+
+      it('should forward throttleMs to the watched query', async () => {
+        const db = openPowerSync();
+        const throttleMs = 1234;
+
+        // Spy on the watched query construction to assert the option reaches it.
+        // Asserting on the received option avoids depending on wall clock throttle windows.
+        const baseCustomQuery = db.customQuery;
+        let watchOptions: commonSdk.WatchedQueryOptions | undefined;
+
+        vi.spyOn(db, 'customQuery').mockImplementation((query) => {
+          const builder = baseCustomQuery.call(db, query);
+          const baseWatch = builder.watch;
+
+          // The hooks use the `watch` method if no rowComparator is set
+          vi.spyOn(builder, 'watch').mockImplementation((buildOptions) => {
+            watchOptions = buildOptions;
+            return baseWatch.call(builder, buildOptions);
+          });
+
+          return builder;
+        });
+
+        renderHook(() => useQuery('SELECT * from lists', [], { throttleMs }), {
+          wrapper: ({ children }) => testWrapper({ children, db })
+        });
+
+        await waitFor(
+          async () => {
+            expect(watchOptions?.throttleMs).toEqual(throttleMs);
+          },
+          { timeout: 500, interval: 100 }
+        );
+      });
+
+      it('should forward throttleMs to the differential watched query', async () => {
+        const db = openPowerSync();
+        const throttleMs = 1234;
+
+        const baseCustomQuery = db.customQuery;
+        let watchOptions: commonSdk.WatchedQueryOptions | undefined;
+
+        vi.spyOn(db, 'customQuery').mockImplementation((query) => {
+          const builder = baseCustomQuery.call(db, query);
+          const baseDifferentialWatch = builder.differentialWatch;
+
+          // The hooks use the `differentialWatch` method if a rowComparator is set
+          vi.spyOn(builder, 'differentialWatch').mockImplementation((buildOptions) => {
+            watchOptions = buildOptions;
+            return baseDifferentialWatch.call(builder, buildOptions);
+          });
+
+          return builder;
+        });
+
+        renderHook(
+          () =>
+            useQuery('SELECT * from lists', [], {
+              throttleMs,
+              rowComparator: {
+                keyBy: (item) => item.id,
+                compareBy: (item) => JSON.stringify(item)
+              }
+            }),
+          { wrapper: ({ children }) => testWrapper({ children, db }) }
+        );
+
+        await waitFor(
+          async () => {
+            expect(watchOptions?.throttleMs).toEqual(throttleMs);
+          },
+          { timeout: 500, interval: 100 }
+        );
+      });
     });
   });
 
