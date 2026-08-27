@@ -7,6 +7,11 @@ import type { WebSocketSyncStreamPlatform, WebSocketSupport } from '@powersync/s
 
 export const STREAMING_POST_TIMEOUT_MS = 30_000;
 
+/**
+ * Options configuring how the client issues HTTP requests.
+ *
+ * @public
+ */
 export interface NodeRemoteOptions {
   /**
    * @internal Only meant to be used for tests.
