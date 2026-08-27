@@ -20,7 +20,8 @@
     "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
     "watch": "tsc -b -w",
     "test": " pnpm prepare:core && vitest",
-    "test:exports": "attw --pack . --ignore-rules no-resolution cjs-resolves-to-esm"
+    "test:exports": "attw --pack . --ignore-rules no-resolution cjs-resolves-to-esm",
+    "api-diff": "api-extractor run --verbose"
   },
   "type": "module",
   "exports": {
@@ -69,7 +70,8 @@
     "bson": "catalog:",
     "drizzle-orm": "catalog:",
     "typescript": "catalog:",
-    "vitest": "catalog:"
+    "vitest": "catalog:",
+    "@microsoft/api-extractor": "catalog:"
   },
   "keywords": [
     "data sync",

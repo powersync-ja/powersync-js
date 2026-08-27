@@ -34,7 +34,8 @@
     "build:prod": "tsc -b",
     "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
     "test": "vitest",
-    "test:exports": "attw --pack . --ignore-rules no-resolution cjs-resolves-to-esm"
+    "test:exports": "attw --pack . --ignore-rules no-resolution cjs-resolves-to-esm",
+    "api-diff": "api-extractor run --verbose"
   },
   "devDependencies": {
     "@types/node": "catalog:",
