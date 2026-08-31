@@ -10,8 +10,8 @@
     "test:build": "pnpm build"
   },
   "dependencies": {
-    "@powersync/react": "^2.0.0",
-    "@powersync/web": "^2.2.0",
+    "@powersync/react": "^2.0.1",
+    "@powersync/web": "^2.3.0",
     "@supabase/supabase-js": "^2.43.1",
     "@vitejs/plugin-react": "^4.2.1",
     "@webflow/webflow-cli": "^1.6.9",

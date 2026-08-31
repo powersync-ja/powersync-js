@@ -1,5 +1,13 @@
 # @powersync/react
 
+## 2.0.1
+
+### Patch Changes
+
+- 3d0e2a3: Forward `throttleMs` from `useQuery` to the underlying watched query. It was accepted by the options type but never passed on, so the default 30ms throttle always applied.
+- Updated dependencies [a07998d]
+  - @powersync/common@2.2.0
+
 ## 2.0.0
 
 ### Major Changes
