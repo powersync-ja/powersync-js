@@ -12,11 +12,6 @@ export default defineConfig({
     emptyOutDir: true
   },
   envDir: '..', // Use this dir for env vars, not 'src'.
-  optimizeDeps: {
-    // Don't optimize these packages as they contain web workers and WASM files.
-    // https://github.com/vitejs/vite/issues/11672#issuecomment-1415820673
-    exclude: ['@powersync/web']
-  },
   worker: {
     format: 'es'
   },
