@@ -1,0 +1,49 @@
+{
+  "name": "@powersync/diagnostics-ui",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Host-neutral Vue UI for PowerSync live-attach diagnostics, driven by the Diagnostics Port.",
+  "license": "Apache-2.0",
+  "exports": {
+    ".": "./dist/index.js",
+    "./style.css": "./dist/style.css"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && pnpm build:css",
+    "build:css": "tailwindcss -i ./src/style.css -o ./dist/style.css",
+    "typecheck": "vue-tsc --noEmit",
+    "preview": "vite preview",
+    "clean": "rm -rf dist"
+  },
+  "files": [
+    "src",
+    "dist"
+  ],
+  "dependencies": {
+    "@nanostores/vue": "^1.1.0",
+    "@powersync/diagnostics-core": "workspace:*",
+    "@tanstack/vue-table": "^8.21.3",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-vue-next": "^1.0.0",
+    "nanostores": "^1.5.2",
+    "reka-ui": "^2.10.4",
+    "tailwind-merge": "^3.6.0"
+  },
+  "devDependencies": {
+    "@powersync/common": "workspace:*",
+    "@powersync/web": "workspace:*",
+    "@tailwindcss/cli": "^4.3.3",
+    "@tailwindcss/vite": "^4.3.3",
+    "@vitejs/plugin-vue": "^6.0.8",
+    "tailwindcss": "^4.3.3",
+    "vite": "catalog:",
+    "vue": "^3.5.42",
+    "vue-tsc": "^3.3.11"
+  },
+  "peerDependencies": {
+    "vue": "^3.5.42"
+  }
+}

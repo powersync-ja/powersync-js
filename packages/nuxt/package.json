@@ -51,23 +51,25 @@
     "@nuxt/devtools-kit": "catalog:",
     "@nuxt/devtools-ui-kit": "catalog:",
     "@nuxt/kit": "^4.3.1",
+    "@powersync/diagnostics-core": "workspace:*",
+    "@powersync/diagnostics-ui": "workspace:*",
     "@tanstack/vue-table": "^8.21.3",
     "@vueuse/core": "^14.2.1",
     "@vueuse/nuxt": "^14.2.1",
+    "bson": "catalog:",
     "defu": "^6.1.4",
     "fuse.js": "^7.1.0",
     "mitt": "^3.0.1",
     "reka-ui": "^2.9.1",
     "shiki": "^3.23.0",
     "unocss": "^66.6.6",
-    "unstorage": "^1.17.4",
-    "bson": "catalog:"
+    "unstorage": "^1.17.4"
   },
   "peerDependencies": {
     "@powersync/kysely-driver": "workspace:^2.0.1",
+    "@powersync/shared-internals": "workspace:^1.1.1",
     "@powersync/vue": "workspace:^0.6.0",
-    "@powersync/web": "workspace:^2.2.0",
-    "@powersync/shared-internals": "workspace:^1.1.1"
+    "@powersync/web": "workspace:^2.2.0"
   },
   "peerDependenciesMeta": {
     "@powersync/kysely-driver": {
@@ -79,10 +81,10 @@
     "@nuxt/module-builder": "^1.0.2",
     "@nuxt/schema": "^4.3.1",
     "@nuxt/test-utils": "catalog:",
+    "@powersync/common": "workspace:*",
     "@powersync/kysely-driver": "workspace:*",
     "@powersync/vue": "workspace:*",
     "@powersync/web": "workspace:*",
-    "@powersync/common": "workspace:*",
     "comlink": "catalog:",
     "nuxt": "^4.3.1",
     "vitest": "catalog:",
