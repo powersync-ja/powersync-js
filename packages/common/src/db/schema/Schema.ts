@@ -1,5 +1,9 @@
+import { Column } from './Column.js';
+import { Index } from './Index.js';
+import { IndexedColumn } from './IndexedColumn.js';
 import { encodeTableOptions } from './internal.js';
 import { RawTable, RawTableType } from './RawTable.js';
+import type { SerializedSchema } from './SerializedSchema.js';
 import { ResolvedTable, RowType, Table } from './Table.js';
 
 type SchemaType = Record<string, Table<any>>;
@@ -76,6 +80,48 @@ export class Schema<S extends SchemaType = SchemaType> {
       tables: this.tables.map((t) => t.toJSON()),
       raw_tables: this.rawTables.map(Schema.rawTableToJson)
     };
+  }
+
+  /**
+   * Produces a complete, typed, round-trippable serialization of this schema — every table option,
+   * column, and index. Unlike {@link Schema.toJSON} (the core-extension payload), the result can be
+   * inspected and passed back to {@link Schema.fromSerialized}.
+   */
+  serialize(): SerializedSchema {
+    return {
+      tables: this.tables.map((table) => table.serialize()),
+      rawTables: this.rawTables.map((table) => ({ name: table.name }))
+    };
+  }
+
+  /**
+   * Reconstructs a {@link Schema} from the output of {@link Schema.serialize}. Raw tables are not
+   * reconstructed (they are managed by the application, not by the serialized representation).
+   */
+  static fromSerialized(serialized: SerializedSchema): Schema {
+    const tables = serialized.tables.map(
+      (table) =>
+        new ResolvedTable({
+          name: table.name,
+          viewName: table.viewNameOverride,
+          localOnly: table.localOnly,
+          insertOnly: table.insertOnly,
+          trackPrevious: table.trackPrevious,
+          trackMetadata: table.trackMetadata,
+          ignoreEmptyUpdates: table.ignoreEmptyUpdates,
+          columns: table.columns.map((column) => new Column({ name: column.name, type: column.type })),
+          indexes: table.indexes.map(
+            (index) =>
+              new Index({
+                name: index.name,
+                columns: index.columns.map(
+                  (column) => new IndexedColumn({ name: column.name, ascending: column.ascending })
+                )
+              })
+          )
+        })
+    );
+    return new Schema(tables);
   }
 
   /**

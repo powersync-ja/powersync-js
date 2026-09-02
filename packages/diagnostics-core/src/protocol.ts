@@ -109,44 +109,16 @@ export interface PortInfo {
   sdk: string | null;
 }
 
-/** A serialized column in {@link SerializedSchema}. */
-export interface SerializedColumn {
-  name: string;
-  type: string;
-}
-
-/** A serialized index column. */
-export interface SerializedIndexColumn {
-  name: string;
-  ascending: boolean;
-  type?: string;
-}
-
-/** A serialized index. */
-export interface SerializedIndex {
-  name: string;
-  columns: SerializedIndexColumn[];
-}
-
-/** A serialized table, matching the client's schema serializer output. */
-export interface SerializedTable {
-  name: string;
-  view_name?: string;
-  columns: SerializedColumn[];
-  indexes: SerializedIndex[];
-  local_only?: boolean;
-  insert_only?: boolean;
-  include_old?: boolean | string[];
-  include_old_only_when_changed?: boolean;
-  include_metadata?: boolean;
-  ignore_empty_update?: boolean;
-}
-
-/** The client's serialized schema, matching `db.schema.toJSON()`. */
-export interface SerializedSchema {
-  tables: SerializedTable[];
-  raw_tables?: unknown[];
-}
+// The serialized schema types are the SDK's canonical ones, produced by `db.schema.serialize()`.
+export type {
+  SerializedColumn,
+  SerializedIndex,
+  SerializedIndexColumn,
+  SerializedRawTable,
+  SerializedSchema,
+  SerializedTable,
+  SerializedTrackPrevious
+} from '@powersync/common';
 
 /** Write/control actions the UI can invoke on the live client. */
 export type ActionName = 'reconnect' | 'disconnect' | 'clearData' | 'subscribeStream' | 'unsubscribeStream';

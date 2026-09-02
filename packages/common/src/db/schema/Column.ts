@@ -1,3 +1,5 @@
+import type { SerializedColumn } from './SerializedSchema.js';
+
 /**
  * @see https://www.sqlite.org/lang_expr.html#castexpr
  * @public
@@ -72,6 +74,13 @@ export class Column {
     return {
       name: this.name,
       type: this.type
+    };
+  }
+
+  serialize(): SerializedColumn {
+    return {
+      name: this.name,
+      type: this.type ?? ColumnType.TEXT
     };
   }
 }
