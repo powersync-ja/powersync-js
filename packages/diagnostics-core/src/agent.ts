@@ -91,7 +91,11 @@ export class DiagnosticsAgent {
         )
       );
 
+      // Announce and immediately replay state, in case clients were already waiting.
       this.transport.send({ type: 'announce', role: 'agent' });
+      this.pushStatus(this.db.currentStatus);
+      void this.pushUploadQueue();
+      void this.pushBuckets();
     } catch (error) {
       this.stop();
       throw error;

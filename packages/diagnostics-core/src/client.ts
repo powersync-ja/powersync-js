@@ -39,6 +39,8 @@ export class DiagnosticsClient {
 
   private pending = new Map<string, { resolve: (value: any) => void; reject: (error: Error) => void }>();
   private sequence = 0;
+  // Namespaces request ids so multiple clients on one shared channel don't collide on responses.
+  private readonly clientId = Math.random().toString(36).slice(2, 10);
   private disposers: Unsubscribe[] = [];
 
   constructor(private transport: Transport) {}
@@ -95,7 +97,7 @@ export class DiagnosticsClient {
   }
 
   private request<T>(method: RequestMethod, params?: unknown): Promise<T> {
-    const id = `${++this.sequence}`;
+    const id = `${this.clientId}:${++this.sequence}`;
     return new Promise<T>((resolve, reject) => {
       this.pending.set(id, { resolve, reject });
       this.transport.send({ type: 'req', id, method, params } as RequestMessage);
@@ -107,6 +109,10 @@ export class DiagnosticsClient {
       case 'announce':
         if (message.role === 'agent') {
           this.connected.set(true);
+          // Re-subscribe so an agent that started after us replays current state.
+          for (const channel of CHANNELS) {
+            this.transport.send({ type: 'sub', channel });
+          }
         }
         break;
       case 'event':
