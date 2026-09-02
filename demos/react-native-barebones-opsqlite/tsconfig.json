@@ -1,7 +1,0 @@
-{
-  "extends": "@react-native/typescript-config",
-  "compilerOptions": {
-    "strict": true,
-    "composite": true
-  }
-}

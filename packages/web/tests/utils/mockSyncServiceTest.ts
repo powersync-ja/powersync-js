@@ -24,7 +24,9 @@ export const AppSchema = new Schema({
 });
 
 export type MockedTestConnector = {
-  [Key in keyof PowerSyncBackendConnector]: MockedFunction<PowerSyncBackendConnector[Key]>;
+  [Key in keyof Omit<PowerSyncBackendConnector, 'postCheckpointRequest'>]: MockedFunction<
+    PowerSyncBackendConnector[Key]
+  >;
 };
 /**
  * Creates a test connector with vi.fn implementations for testing.

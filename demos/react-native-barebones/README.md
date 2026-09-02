@@ -1,0 +1,45 @@
+# PowerSync React Native Barebones Demo
+
+## Overview
+
+This is a minimal example demonstrating a barebones React Native project without Expo. It shows an update to the local SQLite DB on app launch.
+
+
+## Getting Started
+
+Switch into the demo's directory:
+
+```bash
+cd demos/react-native-barebones
+```
+
+Use [pnpm](https://pnpm.io/installation) to install dependencies:
+
+```bash
+pnpm install
+```
+
+Run the development server:
+
+For iOS:
+
+First install pods:
+```bash
+cd ios
+pod install
+cd ..
+```
+
+Then run the project:
+```bash
+pnpm start
+pnpm ios
+```
+
+For Android:
+```bash
+pnpm start
+pnpm android
+```
+
+Then press `d` to open dev tools where you will see the console output showing the local SQLite DB insert.

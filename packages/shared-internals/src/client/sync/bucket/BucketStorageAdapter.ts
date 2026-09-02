@@ -60,6 +60,7 @@ export interface BucketStorageAdapter extends BaseObserverInterface<BucketStorag
 
   updateLocalTarget(cb: () => Promise<string>): Promise<UpdateLocalTargetResult>;
   handleCrudCheckpoint(lastClientId: number, writeCheckpoint?: string): Promise<void>;
+  readCheckpointRequestId(variant: 'next' | 'current' | 'seed', payload?: string): Promise<string>;
 
   /**
    * Get an unique client id.

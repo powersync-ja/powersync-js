@@ -80,6 +80,7 @@ export function useQuery<RowType = any>(
     queryChanged,
     options: {
       reportFetching: options.reportFetching,
+      throttleMs: options.throttleMs,
       // Maintains backwards compatibility with previous versions
       // Differentiation is opt-in by default
       // We emit new data for each table change by default.

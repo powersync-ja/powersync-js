@@ -101,7 +101,7 @@ To use the Expo File System attachment adapter please install expo-file-system (
       if (target.exists) {
         target.delete();
       }
-      new this.File(sourceUri).move(target);
+      await new this.File(sourceUri).move(target);
     }
     return new this.File(targetUri).size ?? 0;
   }

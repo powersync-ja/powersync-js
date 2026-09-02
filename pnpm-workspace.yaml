@@ -22,12 +22,12 @@ overrides:
 catalog:
   # We must depend on an exact version of wa-sqlite, as we want to update the core extension
   # (which can be breaking for SDKs) without a major revision.
-  '@journeyapps/wa-sqlite': 2.0.2
-  '@microsoft/api-extractor': ^7.58.7
+  '@journeyapps/wa-sqlite': 2.0.3
+  '@microsoft/api-extractor': ^7.59.0
   '@nuxt/devtools-kit': ^3.2.3
   '@nuxt/devtools-ui-kit': ^3.2.3
   '@nuxt/test-utils': ^4.0.3
-  '@op-engineering/op-sqlite': ^17.1.0
+  '@op-engineering/op-sqlite': ^18.1.1
   '@pnpm/workspace.find-packages': ^1000.0.55
   '@pnpm/workspace.read-manifest': ^1000.2.9
   '@rollup/plugin-alias': ^5.1.0
@@ -64,7 +64,6 @@ catalog:
   expo: ^56.0.0
 
 allowBuilds:
-  '@journeyapps/wa-sqlite': true
   '@parcel/watcher': false
   '@swc/core': true
   better-sqlite3: true
@@ -79,3 +78,8 @@ allowBuilds:
 
 trustPolicyExclude:
   - 'rollup@2.80.0' # Backport release published from trusted tag
+
+minimumReleaseAgeExclude:
+  - '@journeyapps/*'
+  - '@powersync/*'
+  - '@op-engineering/op-sqlite@18.1.1'

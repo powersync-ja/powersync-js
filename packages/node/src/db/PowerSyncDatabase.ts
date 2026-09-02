@@ -9,9 +9,7 @@ import {
 import {
   BasePowerSyncDatabase,
   AbstractStreamingSyncImplementation,
-  BucketStorageAdapter,
   CreateSyncImplementationOptions,
-  SqliteBucketStorage,
   openDatabase
 } from '@powersync/shared-internals';
 
@@ -21,6 +19,11 @@ import { NodeStreamingSyncImplementation } from '../sync/stream/NodeStreamingSyn
 import { WorkerConnectionPool } from './WorkerConnectionPool.js';
 import { NodeSQLOpenOptions } from './options.js';
 
+/**
+ * Database options specific to the PowerSync Node.js SDK.
+ *
+ * @public
+ */
 export type NodePowerSyncDatabaseOptions = BasePowerSyncDatabaseOptions &
   DatabaseSource<NodeSQLOpenOptions> & {
     /**
@@ -44,10 +47,6 @@ class NodePowerSyncDatabase extends BasePowerSyncDatabase<NodePowerSyncDatabaseO
     return openDatabase(this.options, (open) => new WorkerConnectionPool(open));
   }
 
-  protected generateBucketStorageAdapter(): BucketStorageAdapter {
-    return new SqliteBucketStorage(this.database, this.logger);
-  }
-
   protected generateSyncStreamImplementation(
     connector: PowerSyncBackendConnector,
     options: CreateSyncImplementationOptions
@@ -56,15 +55,8 @@ class NodePowerSyncDatabase extends BasePowerSyncDatabase<NodePowerSyncDatabaseO
     const remote = new NodeRemote(connector, logger, this.options.remoteOptions);
 
     return new NodeStreamingSyncImplementation({
-      adapter: this.bucketStorageAdapter,
-      remote,
-      uploadCrud: async () => {
-        await this.waitForReady();
-        await connector.uploadData(this);
-      },
-      ...options,
-      identifier: this.database.name,
-      logger
+      ...this.commonSyncOptions(connector, options),
+      remote
     });
   }
 }
@@ -82,8 +74,13 @@ class NodePowerSyncDatabase extends BasePowerSyncDatabase<NodePowerSyncDatabaseO
  *  }
  * });
  * ```
+ *
+ * @public
  */
 // Typed constructor to avoid leaking AbstractPowerSyncDatabase into the public interface
 export const PowerSyncDatabase: PowerSyncDatabaseConstructor<NodePowerSyncDatabaseOptions> = NodePowerSyncDatabase;
 
+/**
+ * @public
+ */
 export interface PowerSyncDatabase extends CommonPowerSyncDatabase {}

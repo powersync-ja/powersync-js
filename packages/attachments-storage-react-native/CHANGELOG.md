@@ -1,5 +1,16 @@
 # @powersync/attachments-storage-react-native
 
+## 0.1.0
+
+### Minor Changes
+
+- 5af3523: Add a streaming attachment transport (`AttachmentTransportAdapter`) and `AttachmentQueue.saveFileFromUri`, with native `createTransportAdapter` implementations for Node, Expo (SDK 56+), and React Native, so large files transfer without being buffered in JS memory.
+
+### Patch Changes
+
+- Updated dependencies [5af3523]
+  - @powersync/common@2.1.0
+
 ## 0.0.3
 
 ### Patch Changes

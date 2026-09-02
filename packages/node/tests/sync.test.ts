@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, vi } from 'vitest';
 
 import {
   CommonPowerSyncDatabase,
+  LogRecord,
   PowerSyncLogger,
   ProgressWithOperations,
   Schema,
@@ -21,6 +22,7 @@ import {
 } from './utils.js';
 import { BucketChecksum, OplogEntryJSON } from '@powersync/shared-internals/internal/sync_protocol';
 import { BasePowerSyncDatabase, BucketStorageAdapter } from '@powersync/shared-internals';
+import { asyncNotifier } from '../../shared-internals/src/utils/async.js';
 
 const defaultConnectOptions: SyncOptions = {
   // This might help with test stability/timeouts if a retry is needed.
@@ -30,6 +32,266 @@ const defaultConnectOptions: SyncOptions = {
 describe('Sync', () => {
   describe('json', () => defineSyncTests(false));
   describe('bson', () => defineSyncTests(true));
+
+  describe('checkpoint requests', () => {
+    mockSyncServiceTest('warns for custom connectors without requests being enabled', async ({ syncService }) => {
+      const records: LogRecord[] = [];
+
+      const database = await syncService.createDatabase({ logger: { log: records.push.bind(records) } });
+      const connector = new (class extends TestConnector {
+        async postCheckpointRequest(_clientId: string, requestId: string) {
+          return requestId;
+        }
+      })();
+
+      await database.connect(connector);
+      expect(records).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            message: expect.stringContaining(
+              'implements postCheckpointRequest, but connect() was called without checkpoint requests'
+            )
+          })
+        ])
+      );
+    });
+
+    mockSyncServiceTest('requests checkpoints for updates', async ({ syncService }) => {
+      const database = await syncService.createDatabase();
+      await database.connect(new TestConnector(), { checkpointMode: 'requests' });
+
+      await vi.waitFor(() => expect(syncService.checkpointRequests).toHaveLength(1));
+
+      await database.execute('INSERT INTO lists (id, name) VALUES (?, ?)', ['id', 'local write']);
+      const watched = database.watch('SELECT name FROM lists')[Symbol.asyncIterator]();
+      expect((await watched.next()).value.array).toStrictEqual([{ name: 'local write' }]);
+
+      // The local write should eventually be uploaded.
+      await vi.waitFor(() => expect(syncService.checkpointRequests).toHaveLength(2), { timeout: 2000 });
+
+      syncService.pushLine({
+        checkpoint: {
+          last_op_id: '1',
+          buckets: [bucket('a', 1)],
+          write_checkpoint: String(syncService.lastWriteCheckpoint)
+        }
+      });
+      syncService.pushLine({
+        data: {
+          bucket: 'a',
+          data: [
+            {
+              checksum: 0,
+              op_id: '1',
+              object_id: 'id',
+              object_type: 'lists',
+              op: 'REMOVE'
+            }
+          ]
+        }
+      });
+      syncService.pushLine({ checkpoint_complete: { last_op_id: '1' } });
+      expect((await watched.next()).value.array).toStrictEqual([]);
+    });
+
+    mockSyncServiceTest('reports download error when requesting checkpoints fails', async ({ syncService }) => {
+      const database = await syncService.createDatabase();
+      syncService.installRequestInterceptor(async (request) => {
+        if (request.url.includes('/sync/checkpoint-request')) {
+          return new Response('not found', { status: 404 });
+        }
+        return undefined;
+      });
+
+      database.connect(new TestConnector(), { checkpointMode: 'requests' });
+      await database.waitForStatus((s) => s.downloadError != null);
+      expect(database.currentStatus.connected).toBeFalsy();
+    });
+
+    mockSyncServiceTest('reposts current checkpoint until applied', async ({ syncService }) => {
+      const checkpointRequests = asyncNotifier();
+      const neverAbort = new AbortController().signal;
+      syncService.installRequestInterceptor(async (request) => {
+        if (request.url.includes('/sync/checkpoint-request')) {
+          checkpointRequests.notify();
+        }
+      });
+      const database = await syncService.createDatabase();
+
+      vi.useFakeTimers();
+      await database.connect(new TestConnector(), { checkpointMode: 'requests' });
+      // Wait for the initial post (seed)
+      await checkpointRequests.waitForNotification(neverAbort);
+
+      for (let i = 0; i < 10; i++) {
+        let didPostCheckpointRequestAgain = false;
+        checkpointRequests.waitForNotification(neverAbort).finally(() => (didPostCheckpointRequestAgain = true));
+
+        while (!didPostCheckpointRequestAgain) {
+          await vi.advanceTimersToNextTimerAsync();
+        }
+      }
+
+      // Finally, include the checkpoint.
+      syncService.pushLine({ checkpoint: { last_op_id: '0', buckets: [], write_checkpoint: '1' } });
+      syncService.pushLine({ checkpoint_complete: { last_op_id: '0' } });
+      await database.waitForFirstSync();
+
+      const totalRequests = syncService.checkpointRequests.length;
+      // Which means we shouldn't keep requesting it.
+      await vi.advanceTimersByTimeAsync(60 * 60 * 1000);
+      expect(syncService.checkpointRequests.length).toStrictEqual(totalRequests);
+
+      vi.useRealTimers();
+    });
+
+    mockSyncServiceTest('download is retried on checkpoint request', async ({ syncService }) => {
+      const db = await syncService.createDatabase();
+
+      await db.connect(new TestConnector(), { checkpointMode: 'requests', retryDelayMs: 10_000 });
+
+      // Destroy the initial connection by sending a bogus line
+      const start = performance.now();
+      syncService.pushLine({ checkpoint: { buckets: [], last_op_id: 'invalid line' } });
+      await db.waitForStatus((s) => s.downloadError != null);
+
+      // Trigger an upload here. Because the upload needs a seeded sync iteration, we should reconnect immediately
+      // instead of after the configured 10s delay.
+      await db.execute('INSERT INTO lists (id, name) VALUES (uuid(), ?)', ['restart plz']);
+
+      await db.waitForStatus((s) => s.connected);
+      const end = performance.now();
+      expect(end - start).toBeLessThan(5_000);
+    });
+
+    mockSyncServiceTest('can use checkpoint method from connector', async ({ syncService }) => {
+      const didRequestCheckpoint = Promise.withResolvers<void>();
+      const connector = new (class extends TestConnector {
+        async postCheckpointRequest(_clientId: string, requestId: string) {
+          expect(requestId).toStrictEqual('1');
+          didRequestCheckpoint.resolve();
+
+          return requestId;
+        }
+      })();
+
+      const db = await syncService.createDatabase();
+      await db.connect(connector, { checkpointMode: 'requests' });
+      await didRequestCheckpoint.promise;
+    });
+
+    mockSyncServiceTest('reconciles checkpoint state on token expiry', async ({ syncService }) => {
+      const db = await syncService.createDatabase();
+      syncService.lastWriteCheckpoint = 100;
+      await db.connect(new TestConnector(), { checkpointMode: 'requests' });
+      await vi.waitFor(() => expect(syncService.checkpointRequests).toHaveLength(1));
+
+      // Simulate what would happen if we suddenly switched users after the old token expired. The client expects a
+      // checkpoint of 100, for another user the service wouldn't have that counter yet. The client must request a
+      // checkpoint with the existing id, allowing the service to recognize that this device + user combo needs higher
+      // checkpoint ids.
+      syncService.lastWriteCheckpoint = 0;
+      syncService.pushLine({ token_expires_in: 5 });
+      await vi.waitFor(() => expect(syncService.checkpointRequests).toHaveLength(2));
+      expect(syncService.lastWriteCheckpoint).toStrictEqual(100);
+    });
+
+    mockSyncServiceTest('reads sync lines before checkpoint requests are ready', async ({ syncService }) => {
+      const hasInitialRequest = Promise.withResolvers<void>();
+      const completeInitialRequest = Promise.withResolvers<void>();
+      syncService.installRequestInterceptor(async (request) => {
+        if (request.url.includes('/sync/checkpoint-request')) {
+          hasInitialRequest.resolve();
+          await completeInitialRequest.promise;
+        }
+      });
+
+      const db = await syncService.createDatabase();
+      await db.connect(new TestConnector(), { checkpointMode: 'requests' });
+      await hasInitialRequest.promise;
+
+      syncService.pushLine({ checkpoint: { last_op_id: '0', buckets: [], write_checkpoint: '1' } });
+      await db.waitForStatus((s) => s.downloading);
+      completeInitialRequest.resolve();
+    });
+
+    describe('requestCheckpoint', () => {
+      mockSyncServiceTest('fails when disconnected', async ({ syncService }) => {
+        const db = await syncService.createDatabase();
+        expect(db.requestCheckpoint()).rejects.toThrow(/sync client is disconnected/);
+      });
+
+      mockSyncServiceTest('fails when connected with legacy mode', async ({ syncService }) => {
+        const db = await syncService.createDatabase();
+        await db.connect(new TestConnector());
+        expect(db.requestCheckpoint()).rejects.toThrow(/with legacy checkpoint mode, cannot request/);
+      });
+
+      mockSyncServiceTest('waits until data is applied', async ({ syncService }) => {
+        const db = await syncService.createDatabase();
+        await db.connect(new TestConnector(), { checkpointMode: 'requests' });
+
+        const checkpoint = await db.requestCheckpoint();
+        syncService.pushLine({ checkpoint: { last_op_id: '0', buckets: [], write_checkpoint: '2' } });
+        expect(checkpoint.hasSynced).toBeFalsy();
+        syncService.pushLine({ checkpoint_complete: { last_op_id: '0' } });
+
+        await checkpoint.waitForSync();
+        expect(checkpoint.hasSynced).toBeTruthy();
+      });
+
+      mockSyncServiceTest('throws on disconnect but can request again', async ({ syncService }) => {
+        const db = await syncService.createDatabase();
+        await db.connect(new TestConnector(), { checkpointMode: 'requests' });
+        const checkpoint = await db.requestCheckpoint();
+
+        const failureExpectation = expect(checkpoint.waitForSync()).rejects.toThrow(/sync client is disconnected/);
+        await db.disconnect();
+        await failureExpectation;
+
+        await db.connect(new TestConnector(), { checkpointMode: 'requests' });
+        syncService.pushLine({ checkpoint: { last_op_id: '0', buckets: [], write_checkpoint: '2' } });
+        syncService.pushLine({ checkpoint_complete: { last_op_id: '0' } });
+        await checkpoint.waitForSync();
+      });
+
+      mockSyncServiceTest('fails when reconnecting with legacy mode', async ({ syncService }) => {
+        const db = await syncService.createDatabase();
+        await db.connect(new TestConnector(), { checkpointMode: 'requests' });
+        const checkpoint = await db.requestCheckpoint();
+
+        await db.disconnect();
+        await db.connect(new TestConnector(), { checkpointMode: 'legacy' });
+        expect(checkpoint.waitForSync()).rejects.toThrow(/Connected with legacy checkpoint mode/);
+      });
+
+      mockSyncServiceTest('fails on sync errors', async ({ syncService }) => {
+        const db = await syncService.createDatabase();
+        await db.connect(new TestConnector(), { checkpointMode: 'requests' });
+        const checkpoint = await db.requestCheckpoint();
+
+        const failureExpectation = expect(checkpoint.waitForSync()).rejects.toThrow(
+          /Sync error while waiting for checkpoint request/
+        );
+        syncService.pushLine({ checkpoint: { buckets: [], last_op_id: 'invalid line' } });
+        await failureExpectation;
+      });
+
+      mockSyncServiceTest('can abort waiting for requests', async ({ syncService }) => {
+        const db = await syncService.createDatabase();
+        await db.connect(new TestConnector(), { checkpointMode: 'requests' });
+        const checkpoint = await db.requestCheckpoint();
+
+        const controller = new AbortController();
+        const failureExpectation = expect(checkpoint.waitForSync({ signal: controller.signal })).rejects.toThrow(
+          /custom abort reason/
+        );
+
+        controller.abort('custom abort reason');
+        await failureExpectation;
+      });
+    });
+  });
 
   mockSyncServiceTest('can migrate between sync implementations', async ({ syncService }) => {
     let database = await syncService.createDatabase();

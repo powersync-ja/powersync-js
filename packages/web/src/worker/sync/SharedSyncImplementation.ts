@@ -60,7 +60,7 @@ export type ManualSharedSyncPayload = {
 export type SharedSyncInitOptions = {
   streamOptions: Omit<
     WebStreamingSyncImplementationOptions,
-    'adapter' | 'uploadCrud' | 'remote' | 'subscriptions' | 'logger'
+    'adapter' | 'uploadCrud' | 'postCheckpointRequest' | 'remote' | 'subscriptions' | 'logger'
   >;
   dbParams: ResolvedWebSQLOpenOptions;
   enableBroadcastLogs: boolean;
@@ -86,14 +86,6 @@ export type WrappedSyncPort = {
 };
 
 /**
- * @internal
- */
-export type RemoteOperationAbortController = {
-  controller: AbortController;
-  activePort: WrappedSyncPort;
-};
-
-/**
  * HACK: The shared implementation wraps and provides its own
  * PowerSyncBackendConnector when generating the streaming sync implementation.
  * We provide this unused placeholder when connecting with the ConnectionManager.
@@ -109,9 +101,6 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
 
   protected isInitialized: Promise<void>;
   protected statusListener?: () => void;
-
-  protected fetchCredentialsController?: RemoteOperationAbortController;
-  protected uploadDataController?: RemoteOperationAbortController;
 
   protected syncParams: SharedSyncInitOptions | null;
   protected lastConnectOptions: ResolvedSyncOptions | undefined;
@@ -334,18 +323,6 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
       // Remove from the list of active ports
       this.ports.splice(index, 1);
 
-      /**
-       * The port might currently be in use. Any active functions might
-       * not resolve. Abort them here.
-       */
-      [this.fetchCredentialsController, this.uploadDataController].forEach((abortController) => {
-        if (abortController?.activePort == port) {
-          abortController!.controller.abort(
-            new AbortOperation('Closing pending requests after client port is removed')
-          );
-        }
-      });
-
       // Close the worker wrapped database connection, we can't accurately rely on this connection
       for (const closeListener of trackedPort.closeListeners) {
         await closeListener();
@@ -363,10 +340,8 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
     });
   }
 
-  async getWriteCheckpoint(): Promise<string> {
-    return this.withSyncImplementation(async (sync) => {
-      return sync.getWriteCheckpoint();
-    });
+  requestCheckpoint() {
+    return this.withSyncImplementation((sync) => sync.requestCheckpoint());
   }
 
   protected async withSyncImplementation<T>(callback: (sync: StreamingSyncImplementation) => Promise<T>): Promise<T> {
@@ -411,63 +386,53 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
               this.logger.log({ level: LogLevels.error, message: 'error invalidating credentials', error });
             }
           },
-          fetchCredentials: async () => {
-            const lastPort = await this.getLastWrappedPort();
-            if (!lastPort) {
-              throw new Error('No client port found to fetch credentials');
-            }
-            return new Promise(async (resolve, reject) => {
-              const abortController = new AbortController();
-              this.fetchCredentialsController = {
-                controller: abortController,
-                activePort: lastPort
-              };
+          fetchCredentials: () => {
+            return this.#useConnector((port) => {
+              this.logger.log({
+                level: LogLevels.info,
+                message: 'calling the last port client provider for credentials'
+              });
 
-              abortController.signal.onabort = reject;
-              try {
-                this.logger.log({
-                  level: LogLevels.info,
-                  message: 'calling the last port client provider for credentials'
-                });
-                resolve(await lastPort.clientProvider.fetchCredentials());
-              } catch (ex) {
-                reject(ex);
-              } finally {
-                this.fetchCredentialsController = undefined;
-              }
-            });
+              return port.clientProvider.fetchCredentials();
+            }, 'fetchCredentials');
           }
         },
         this.logger
       ),
-      uploadCrud: async () => {
-        const lastPort = await this.getLastWrappedPort();
-        if (!lastPort) {
-          throw new Error('No client port found to upload crud');
-        }
-
-        return new Promise(async (resolve, reject) => {
-          const abortController = new AbortController();
-          this.uploadDataController = {
-            controller: abortController,
-            activePort: lastPort
-          };
-
-          // Resolving will make it retry
-          abortController.signal.onabort = () => resolve();
-          try {
-            resolve(await lastPort.clientProvider.uploadCrud());
-          } catch (ex) {
-            reject(ex);
-          } finally {
-            this.uploadDataController = undefined;
-          }
-        });
+      uploadCrud: () => {
+        return this.#useConnector((port) => port.clientProvider.uploadCrud(), 'uploadCrud');
+      },
+      postCheckpointRequest: (clientId, requestId) => {
+        return this.#useConnector(
+          (port) => port.clientProvider.postCheckpointRequest(clientId, requestId),
+          'postCheckpointRequest'
+        );
       },
       ...syncParams.streamOptions,
       subscriptions: this.subscriptions,
       // Logger cannot be transferred just yet
       logger: this.logger
+    });
+  }
+
+  async #useConnector<T>(inner: (port: WrappedSyncPort) => Promise<T>, debugContext: string): Promise<T> {
+    const lastPort = await this.getLastWrappedPort();
+    if (!lastPort) {
+      throw new Error(`No client port found for ${debugContext}`);
+    }
+
+    return new Promise((resolve, reject) => {
+      function portClosed() {
+        reject(new Error(`Tab closed while handling ${debugContext}`));
+      }
+
+      lastPort.closeListeners.push(portClosed);
+
+      inner(lastPort)
+        .then(resolve, reject)
+        .finally(() => {
+          lastPort.closeListeners.splice(lastPort.closeListeners.indexOf(portClosed), 1);
+        });
     });
   }
 

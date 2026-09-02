@@ -150,11 +150,20 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
     const hadPendingOptions = !!this.pendingConnectionOptions;
 
     // Update pending options to the latest values
+    const resolvedOptions = resolveSyncOptions(options, this.options.defaultConnectionMethod);
     this.pendingConnectionOptions = {
       connector,
-      options: resolveSyncOptions(options, this.options.defaultConnectionMethod),
+      options: resolvedOptions,
       schema: serializedSchema
     };
+
+    if (connector.postCheckpointRequest && resolvedOptions.checkpointMode == 'legacy') {
+      this.logger.log({
+        level: LogLevels.warn,
+        message:
+          'The backend connector implements postCheckpointRequest, but connect() was called without checkpoint requests enabled.'
+      });
+    }
 
     // Disconnecting here provides aborting in progress connection attempts.
     // The connectInternal method will clear pending options once it starts connecting (with the options).
@@ -225,6 +234,7 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
 
         this.pendingConnectionOptions = null;
 
+        const subscriptionsAtStart = this.subscriptionIdentity;
         const { sync, onDispose } = await this.options.createSyncImplementation(connector, {
           subscriptions: this.activeStreams,
           serializedSchema: schema
@@ -233,6 +243,11 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
         this.syncStreamImplementation = sync;
         this.syncDisposer = onDispose;
         await this.syncStreamImplementation.waitForReady();
+
+        // Subscriptions changed while creating the sync stream implementation, update it now.
+        if (this.subscriptionIdentity !== subscriptionsAtStart) {
+          this.syncStreamImplementation.updateSubscriptions(this.activeStreams);
+        }
         resolve();
       } catch (error) {
         reject(error);
@@ -353,6 +368,13 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
    */
   get activeStreams() {
     return [...this.locallyActiveSubscriptions.values()].map((a) => ({ name: a.name, params: a.parameters }));
+  }
+
+  /**
+   * Identifies the current set of subscriptions, for detecting a change across an await.
+   */
+  private get subscriptionIdentity() {
+    return [...this.locallyActiveSubscriptions.keys()].join('\n');
   }
 
   private subscriptionsMayHaveChanged() {

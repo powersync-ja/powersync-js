@@ -254,6 +254,24 @@ export interface BatchedUpdateNotification {
     tables: string[];
 }
 
+// @public
+export type CheckpointMode = 'legacy' | 'requests' | {
+    requests: CheckpointRequestsOptions;
+};
+
+// @alpha
+export interface CheckpointRequest {
+    readonly hasSynced: boolean;
+    waitForSync(options?: {
+        signal?: AbortSignal;
+    }): Promise<void>;
+}
+
+// @public
+export interface CheckpointRequestsOptions {
+    retryDelay: number;
+}
+
 // @public (undocumented)
 export class Column {
     constructor(options: ColumnOptions);
@@ -330,6 +348,8 @@ export interface CommonPowerSyncDatabase extends BaseObserverInterface<PowerSync
     readTransaction<T>(callback: (tx: Transaction) => Promise<T>, lockTimeout?: number): Promise<T>;
     // (undocumented)
     readonly ready: boolean;
+    // @alpha
+    requestCheckpoint(): Promise<CheckpointRequest>;
     resolveTables(sql: string, parameters?: any[], options?: SQLWatchOptions): Promise<string[]>;
     readonly schema: Schema;
     // (undocumented)
@@ -742,6 +762,7 @@ export type PendingStatementParameter = 'Id' | {
 // @public (undocumented)
 export interface PowerSyncBackendConnector {
     fetchCredentials: () => Promise<PowerSyncCredentials | null>;
+    postCheckpointRequest?(clientId: string, requestId: string): Promise<string>;
     uploadData: (database: CommonPowerSyncDatabase) => Promise<void>;
 }
 
@@ -1037,6 +1058,7 @@ export interface SyncDataFlowStatus {
 // @public
 export interface SyncOptions {
     appMetadata?: Record<string, string>;
+    checkpointMode?: CheckpointMode;
     connectionMethod?: SyncStreamConnectionMethod;
     crudUploadThrottleMs?: number;
     // (undocumented)

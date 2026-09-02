@@ -46,7 +46,7 @@
     "postversion": "node tool/update_version.js"
   },
   "peerDependencies": {
-    "@powersync/common": "workspace:*"
+    "@powersync/common": "workspace:^2.1.0"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "catalog:",
@@ -62,6 +62,7 @@
     "rollup": "catalog:",
     "rollup-plugin-dts": "catalog:",
     "rsocket-core": "1.0.0-alpha.3",
-    "rsocket-websocket-client": "1.0.0-alpha.3"
+    "rsocket-websocket-client": "1.0.0-alpha.3",
+    "@powersync/common": "workspace:*"
   }
 }

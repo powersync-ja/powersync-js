@@ -16,6 +16,7 @@ import { ArrayQueryDefinition, Query } from './Query.js';
 import { WatchCompatibleQuery } from './watched/WatchedQuery.js';
 import { Mutex } from '../utils/mutex.js';
 import { QueryResult } from '../db/QueryResult.js';
+import { CheckpointRequest } from './sync/CheckpointRequest.js';
 
 /**
  * @public
@@ -232,6 +233,19 @@ export interface CommonPowerSyncDatabase extends BaseObserverInterface<PowerSync
    * @returns A {@link SyncStream} instance that can be subscribed to.
    */
   syncStream(name: string, params?: Record<string, any>): SyncStream;
+
+  /**
+   * Requests a checkpoint from the PowerSync service.
+   *
+   * The returned request can be awaited (using {@link CheckpointRequest#waitForSync}) to confirm that the local
+   * database has applied server-side changes up to the checkpoint. This method requires an active or connecting sync
+   * client connected with a {@link CheckpointMode} set to `requests` and PowerSync service version 1.24.0 or later.
+   *
+   * It can throw for connection, mode, authentication, or service request failures.
+   *
+   * @alpha
+   */
+  requestCheckpoint(): Promise<CheckpointRequest>;
 
   /**
    * Close the database, releasing resources.
