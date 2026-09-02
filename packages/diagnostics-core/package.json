@@ -1,0 +1,37 @@
+{
+  "name": "@powersync/diagnostics-core",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Framework-agnostic core for PowerSync live-attach diagnostics: the Diagnostics Port contract, agent, client, and transports.",
+  "license": "Apache-2.0",
+  "main": "lib/src/index.js",
+  "types": "lib/src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/src/index.d.ts",
+      "default": "./lib/src/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "build:prod": "tsc -b",
+    "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
+    "watch": "tsc --build -w"
+  },
+  "files": [
+    "lib",
+    "src"
+  ],
+  "peerDependencies": {
+    "@powersync/common": "workspace:^2.1.0"
+  },
+  "devDependencies": {
+    "@powersync/common": "workspace:*",
+    "@types/node": "catalog:",
+    "typescript": "catalog:"
+  },
+  "dependencies": {
+    "nanostores": "^1.5.2"
+  }
+}
