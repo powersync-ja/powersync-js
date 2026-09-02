@@ -2,6 +2,7 @@ import { Column, ColumnsType, ExtractColumnValueType } from './Column.js';
 import { Index } from './Index.js';
 import { IndexedColumn } from './IndexedColumn.js';
 import { encodeTableOptions } from './internal.js';
+import type { SerializedTable } from './SerializedSchema.js';
 
 /**
  * powersync-sqlite-core limits the number of column per table to 1999, due to internal SQLite limits.
@@ -215,6 +216,25 @@ export class ResolvedTable {
       columns: this.columns.map((c) => c.toJSON()),
       indexes: this.indexes.map((e) => e.toJSON(this)),
       ...encodeTableOptions(this)
+    };
+  }
+
+  serialize(): SerializedTable {
+    const trackPrevious = this.trackPrevious;
+    return {
+      name: this.name,
+      viewName: this.viewName,
+      viewNameOverride: this.viewNameOverride,
+      localOnly: this.localOnly,
+      insertOnly: this.insertOnly,
+      trackPrevious:
+        typeof trackPrevious === 'object'
+          ? { columns: trackPrevious.columns, onlyWhenChanged: trackPrevious.onlyWhenChanged ?? false }
+          : trackPrevious,
+      trackMetadata: this.trackMetadata,
+      ignoreEmptyUpdates: this.ignoreEmptyUpdates,
+      columns: this.columns.map((c) => c.serialize()),
+      indexes: this.indexes.map((i) => i.serialize())
     };
   }
 

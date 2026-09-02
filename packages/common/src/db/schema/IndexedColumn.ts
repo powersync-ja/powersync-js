@@ -1,4 +1,5 @@
 import { ColumnType } from './Column.js';
+import type { SerializedIndexColumn } from './SerializedSchema.js';
 import { ResolvedTable } from './Table.js';
 
 /**
@@ -43,6 +44,13 @@ export class IndexedColumn {
       name: this.name,
       ascending: this.ascending,
       type: table.columns.find((column) => column.name === this.name)?.type ?? ColumnType.TEXT
+    };
+  }
+
+  serialize(): SerializedIndexColumn {
+    return {
+      name: this.name,
+      ascending: this.ascending ?? true
     };
   }
 }

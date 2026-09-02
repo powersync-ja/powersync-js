@@ -13,17 +13,6 @@ import {
 import { toStreamStates, toSyncState } from './state.js';
 import { Transport } from './transport.js';
 
-/**
- * Accessors present on the concrete database base class but not on the public
- * `CommonPowerSyncDatabase` interface. Promoting these to the interface is a small SDK follow-up.
- */
-interface ConnectionAccess {
-  connector?: { fetchCredentials(): Promise<{ endpoint?: string; token?: string } | null> } | null;
-  connectionOptions?: { connectionMethod?: string; params?: Record<string, unknown> } | null;
-}
-
-type LiveDatabase = CommonPowerSyncDatabase & ConnectionAccess;
-
 export interface DiagnosticsAgentOptions {
   /** A label for the SDK hosting this agent, supplied by whoever installs it (e.g. `@powersync/web`). */
   sdk?: string;
@@ -214,7 +203,7 @@ export class DiagnosticsAgent {
       case 'query':
         return this.runQuery(message.params.sql, message.params.params);
       case 'getSchema':
-        return this.db.schema.toJSON();
+        return this.db.schema.serialize();
       case 'getInfo':
         return this.getInfo();
       case 'getUploadQueueStats': {
@@ -233,7 +222,7 @@ export class DiagnosticsAgent {
   }
 
   private async getInfo(): Promise<PortInfo> {
-    const db = this.db as LiveDatabase;
+    const db = this.db;
 
     let endpoint: string | null = null;
     let userId: string | null = null;
@@ -264,7 +253,7 @@ export class DiagnosticsAgent {
       endpoint,
       userId,
       clientId,
-      connectionMethod: db.connectionOptions?.connectionMethod ?? null,
+      connectionMethod: (db.connectionOptions?.connectionMethod as string | undefined) ?? null,
       params: db.connectionOptions?.params ?? null,
       connected: this.db.currentStatus?.connected ?? false,
       sqliteCoreVersion,
@@ -273,7 +262,7 @@ export class DiagnosticsAgent {
   }
 
   private async runAction(request: ActionRequest): Promise<{ ok: true }> {
-    const db = this.db as LiveDatabase;
+    const db = this.db;
     switch (request.action) {
       case 'disconnect':
         await this.db.disconnect();
@@ -284,7 +273,7 @@ export class DiagnosticsAgent {
         const options = db.connectionOptions;
         await this.db.disconnectAndClear();
         if (connector) {
-          await this.db.connect(connector as any, options as any);
+          await this.db.connect(connector, options ?? undefined);
         }
         break;
       }
@@ -293,7 +282,7 @@ export class DiagnosticsAgent {
         const options = db.connectionOptions;
         await this.db.disconnect();
         if (connector) {
-          await this.db.connect(connector as any, options as any);
+          await this.db.connect(connector, options ?? undefined);
         }
         break;
       }

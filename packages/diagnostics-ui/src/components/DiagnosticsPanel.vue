@@ -6,6 +6,7 @@ import SyncStatusTab from './tabs/SyncStatusTab.vue';
 import DataInspectorTab from './tabs/DataInspectorTab.vue';
 import BucketsTab from './tabs/BucketsTab.vue';
 import StreamsTab from './tabs/StreamsTab.vue';
+import SchemaTab from './tabs/SchemaTab.vue';
 
 const { connected, status } = useDiagnostics();
 
@@ -13,7 +14,8 @@ const tabs = [
   { value: 'status', label: 'Sync Status' },
   { value: 'data', label: 'Data Inspector' },
   { value: 'buckets', label: 'Buckets' },
-  { value: 'streams', label: 'Streams' }
+  { value: 'streams', label: 'Streams' },
+  { value: 'schema', label: 'Schema' }
 ];
 </script>
 
@@ -44,6 +46,7 @@ const tabs = [
         <TabsContent value="data" class="h-full focus-visible:outline-none"><DataInspectorTab /></TabsContent>
         <TabsContent value="buckets" class="p-4 focus-visible:outline-none"><BucketsTab /></TabsContent>
         <TabsContent value="streams" class="p-4 focus-visible:outline-none"><StreamsTab /></TabsContent>
+        <TabsContent value="schema" class="p-4 focus-visible:outline-none"><SchemaTab /></TabsContent>
       </div>
     </TabsRoot>
   </div>
