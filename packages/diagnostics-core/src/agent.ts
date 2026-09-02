@@ -1,4 +1,4 @@
-import type { CommonPowerSyncDatabase, SyncStatus } from '@powersync/common';
+import type { CommonPowerSyncDatabase, SyncStatus, SyncStreamSubscription } from '@powersync/common';
 import {
   ActionRequest,
   BucketState,
@@ -10,7 +10,7 @@ import {
   UploadQueueState,
   WireMessage
 } from './protocol.js';
-import { toStreamStates, toSyncState } from './snapshot.js';
+import { toStreamStates, toSyncState } from './state.js';
 import { Transport } from './transport.js';
 
 /**
@@ -34,12 +34,22 @@ export interface DiagnosticsAgentOptions {
 /**
  * Runs next to a live PowerSync client and serves the Diagnostics Port over a {@link Transport}.
  *
- * Every status change is forwarded as a serialized snapshot (the push bridge), and requests are
+ * Every status change is forwarded as serialized state (the push bridge), and requests are
  * answered by querying the live client. No live SDK object ever crosses the transport.
  */
+/** Arguments for the subscribeStream/unsubscribeStream actions. */
+interface StreamActionArgs {
+  name: string;
+  params?: Record<string, any>;
+  ttl?: number;
+  priority?: 0 | 1 | 2 | 3;
+}
+
 export class DiagnosticsAgent {
   private disposers: Array<() => void> = [];
   private started = false;
+  /** Debug subscriptions created via the Port, keyed by name + serialized params, so they can be released. */
+  private streamHandles = new Map<string, SyncStreamSubscription>();
 
   constructor(
     private db: CommonPowerSyncDatabase,
@@ -62,7 +72,7 @@ export class DiagnosticsAgent {
         })
       );
 
-      // Push bridge: forward every status change as a serialized snapshot.
+      // Push bridge: forward every status change as serialized state.
       this.disposers.push(
         this.db.registerListener({
           statusChanged: (status: SyncStatus) => {
@@ -264,24 +274,49 @@ export class DiagnosticsAgent {
       case 'disconnect':
         await this.db.disconnect();
         break;
-      case 'clearData':
-        await this.db.disconnectAndClear();
-        break;
-      case 'reconnect': {
+      case 'clearData': {
+        // Capture before clearing, then reconnect so the client re-syncs from scratch.
         const connector = db.connector;
-        await this.db.disconnect();
+        const options = db.connectionOptions;
+        await this.db.disconnectAndClear();
         if (connector) {
-          await this.db.connect(connector as any, db.connectionOptions as any);
+          await this.db.connect(connector as any, options as any);
         }
         break;
       }
-      case 'subscribeStream':
-      case 'unsubscribeStream':
-        // Stream subscribe/unsubscribe is not yet wired.
-        throw new Error(`Action not implemented: ${request.action}`);
+      case 'reconnect': {
+        const connector = db.connector;
+        const options = db.connectionOptions;
+        await this.db.disconnect();
+        if (connector) {
+          await this.db.connect(connector as any, options as any);
+        }
+        break;
+      }
+      case 'subscribeStream': {
+        const { name, params, ttl, priority } = request.args as StreamActionArgs;
+        // TTL defaults to 0 so a forgotten debug subscription is evicted as soon as it is released.
+        const subscription = await this.db.syncStream(name, params).subscribe({ ttl: ttl ?? 0, priority });
+        this.streamHandles.set(streamKey(name, params), subscription);
+        break;
+      }
+      case 'unsubscribeStream': {
+        const { name, params } = request.args as StreamActionArgs;
+        const key = streamKey(name, params);
+        const handle = this.streamHandles.get(key);
+        if (handle) {
+          handle.unsubscribe();
+          this.streamHandles.delete(key);
+        }
+        break;
+      }
     }
     return { ok: true };
   }
+}
+
+function streamKey(name: string, params?: Record<string, unknown>): string {
+  return `${name}|${JSON.stringify(params ?? null)}`;
 }
 
 function errorMessage(error: unknown): string {
