@@ -1,32 +1,28 @@
 import {
   WebPowerSyncDatabase,
-  Schema,
-  SharedWebStreamingSyncImplementation,
-  WebRemote,
-  WebStreamingSyncImplementation,
   type DisconnectAndClearOptions,
   type PowerSyncBackendConnector,
   type WebPowerSyncDatabaseOptions,
-  type WebDBAdapter,
-  LogLevels,
   type SyncOptions,
   type CommonPowerSyncDatabase,
-  type PowerSyncDatabaseConstructor,
-  PowerSyncDatabase
+  type PowerSyncDatabaseConstructor
 } from '@powersync/web';
-import { type StreamingSyncImplementation, type CreateSyncImplementationOptions } from '@powersync/shared-internals';
-import type { DynamicSchemaManager } from './DynamicSchemaManager';
-import { usePowerSyncInspector } from '../composables/usePowerSyncInspector';
-import { useDiagnosticsLogger } from '../composables/useDiagnosticsLogger';
-import { shallowRef, type ShallowRef } from 'vue';
+import { BroadcastChannelTransport, DiagnosticsAgent } from '@powersync/diagnostics-core';
 // @ts-ignore
 import { useRuntimeConfig } from '#app';
-import { RustClientInterceptor } from './RustClientInterceptor';
+
+function isTopWindow(): boolean {
+  try {
+    return typeof window !== 'undefined' && window.self === window.top;
+  } catch {
+    // A cross-origin parent throws on access; treat as embedded.
+    return false;
+  }
+}
 
 export class NuxtDatabaseImplementation extends WebPowerSyncDatabase {
-  private schemaManager!: DynamicSchemaManager;
   private _connector: PowerSyncBackendConnector | null = null;
-  private useDiagnostics: boolean = false;
+  private diagnosticsAgent?: DiagnosticsAgent;
 
   get dbOptions(): WebPowerSyncDatabaseOptions {
     return this.options;
@@ -38,121 +34,53 @@ export class NuxtDatabaseImplementation extends WebPowerSyncDatabase {
 
   constructor(options: WebPowerSyncDatabaseOptions) {
     const useDiagnostics = useRuntimeConfig().public.powerSyncModuleOptions.useDiagnostics ?? false;
-    if (useDiagnostics) {
-      const { logger } = useDiagnosticsLogger();
-      const { getCurrentSchemaManager, diagnosticsSchema } = usePowerSyncInspector();
-      // Create schema manager before calling super
-      const currentSchemaManager = getCurrentSchemaManager();
 
-      // we need to force multitabe as the devtools is basically another tab running in the same browser context
-      if ('database' in options) {
-        options.database.enableMultiTabs = true;
-        options.broadcastLogs = true;
-      }
-
-      // override logger to use the logger from the utils/Logger.ts file
-      options.logger = logger;
-      // add diagnostics schema to the app schema
-      options.schema = new Schema([...options.schema.tables, ...diagnosticsSchema.tables]);
-      super(options);
-
-      // Set instance property and clear global
-      this.schemaManager = currentSchemaManager;
-      this.useDiagnostics = true;
-    } else {
-      super(options);
-      this.useDiagnostics = false;
+    if (useDiagnostics && 'database' in options) {
+      // The DevTools inspector iframe runs as a second tab in the same browser context.
+      options.database.enableMultiTabs = true;
     }
-  }
 
-  protected override generateSyncStreamImplementation(
-    connector: PowerSyncBackendConnector,
-    options: CreateSyncImplementationOptions
-  ): StreamingSyncImplementation {
-    if (this.useDiagnostics) {
-      const { logger } = useDiagnosticsLogger();
-      const { getCurrentSchemaManager } = usePowerSyncInspector();
+    super(options);
 
-      const currentSchemaManager = getCurrentSchemaManager();
-      const schemaManager = currentSchemaManager || this.schemaManager;
-
-      const adapter = new RustClientInterceptor(
-        shallowRef(this) as ShallowRef<PowerSyncDatabase>,
-        shallowRef(schemaManager) as ShallowRef<DynamicSchemaManager>
-      );
-
-      if (this.resolvedOpenOptions.enableMultiTabs) {
-        if (!this.enableBroadcastLogs) {
-          const warning = `
-            Multiple tabs are enabled, but broadcasting of logs is disabled.
-            Logs for shared sync worker will only be available in the shared worker context
-          `;
-          logger ? logger.log({ level: LogLevels.warn, message: warning }) : console.warn(warning);
-        }
-        return new SharedWebStreamingSyncImplementation({
-          ...this.commonSyncOptions(connector, options),
-          adapter,
-          remote: new WebRemote(connector, logger),
-          logger,
-          db: this.database as WebDBAdapter,
-          logLevel: this.resolvedOpenOptions.databaseWorkerLogLevel ?? LogLevels.info,
-          enableBroadcastLogs: this.enableBroadcastLogs
+    // Attach the diagnostics agent to the real client in the top window. The inspector iframe
+    // talks to it over a BroadcastChannel and does not attach an agent of its own.
+    if (useDiagnostics && isTopWindow()) {
+      this.waitForReady().then(() => {
+        this.diagnosticsAgent = new DiagnosticsAgent(this, new BroadcastChannelTransport(), {
+          sdk: '@powersync/web'
         });
-      } else {
-        return new WebStreamingSyncImplementation({
-          ...this.commonSyncOptions(connector, options),
-          adapter,
-          remote: new WebRemote(connector, logger),
-          identifier: 'database' in this.options ? this.options.database.dbFilename : 'diagnostics-sync',
-          logger
-        });
-      }
-    } else {
-      return super.generateSyncStreamImplementation(connector, options);
+        this.diagnosticsAgent.start();
+      });
     }
   }
 
   override async connect(connector: PowerSyncBackendConnector, options?: SyncOptions) {
-    // Override client implementation when in diagnostics
     this._connector = connector;
     await super.connect(connector, options);
   }
 
   override async disconnect() {
-    this._connector = null;
+    // Retain the connector so diagnostics can reconnect after a manual disconnect.
     await super.disconnect();
   }
 
   override async disconnectAndClear(options?: DisconnectAndClearOptions) {
-    this._connector = null;
     await super.disconnectAndClear(options);
   }
 }
 
 /**
- * An extended PowerSync database class that includes diagnostic capabilities for use with the PowerSync Inspector.
- *
- * This class automatically configures diagnostics when `useDiagnostics: true` is set in the module configuration.
- * It provides enhanced VFS support, schema management, and logging capabilities for the inspector.
+ * A PowerSync database that attaches the diagnostics agent when `useDiagnostics: true` is set in the
+ * module configuration, exposing the live client to the DevTools inspector over a BroadcastChannel.
+ * With diagnostics disabled it behaves like a standard `PowerSyncDatabase`.
  *
  * @example
  * ```typescript
- * import { NuxtPowerSyncDatabase } from '@powersync/nuxt'
- *
  * const db = new NuxtPowerSyncDatabase({
- *   database: {
- *     dbFilename: 'your-db-filename.sqlite',
- *   },
- *   schema: yourSchema,
- * })
+ *   database: { dbFilename: 'your-db-filename.sqlite' },
+ *   schema: yourSchema
+ * });
  * ```
- *
- * @remarks
- * - When diagnostics are enabled, automatically uses cooperative sync VFS for improved compatibility
- * - Stores connector internally for inspector access
- * - Integrates with dynamic schema management for inspector features
- * - Automatically configures logging when diagnostics are enabled
- * - When diagnostics are disabled, behaves like a standard `PowerSyncDatabase`
  */
 export const NuxtPowerSyncDatabase: PowerSyncDatabaseConstructor<WebPowerSyncDatabaseOptions> =
   NuxtDatabaseImplementation;
