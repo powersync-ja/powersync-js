@@ -60,9 +60,9 @@ onMounted(async () => {
         v-for="t in schema?.tables ?? []"
         :key="t.name"
         class="block w-full truncate rounded px-2 py-1 text-left text-sm hover:bg-accent"
-        @click="selectTable(t.view_name ?? t.name)"
+        @click="selectTable(t.viewName)"
       >
-        {{ t.view_name ?? t.name }}
+        {{ t.viewName }}
       </button>
     </aside>
 

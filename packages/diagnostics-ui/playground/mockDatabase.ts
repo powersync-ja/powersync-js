@@ -50,21 +50,25 @@ export class MockDatabase {
   ];
 
   readonly schema = {
-    toJSON: () => ({
+    serialize: () => ({
       tables: [
         {
           name: 'tasks',
-          view_name: 'tasks',
+          viewName: 'tasks',
+          localOnly: false,
+          insertOnly: false,
+          trackPrevious: false as boolean,
+          trackMetadata: true,
+          ignoreEmptyUpdates: false,
           columns: [
-            { name: 'id', type: 'text' },
-            { name: 'description', type: 'text' },
-            { name: 'completed', type: 'integer' },
-            { name: 'user_id', type: 'text' }
+            { name: 'description', type: 'TEXT' },
+            { name: 'completed', type: 'INTEGER' },
+            { name: 'user_id', type: 'TEXT' }
           ],
-          indexes: []
+          indexes: [{ name: 'by_user', columns: [{ name: 'user_id', ascending: true }] }]
         }
       ],
-      raw_tables: []
+      rawTables: []
     })
   };
 

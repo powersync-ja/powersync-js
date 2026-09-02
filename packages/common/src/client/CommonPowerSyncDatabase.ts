@@ -167,6 +167,18 @@ export interface CommonPowerSyncDatabase extends BaseObserverInterface<PowerSync
    */
   get connected(): boolean;
 
+  /**
+   * The connector passed to the most recent {@link CommonPowerSyncDatabase.connect} call, or null
+   * if {@link CommonPowerSyncDatabase.connect} has not been called.
+   */
+  get connector(): PowerSyncBackendConnector | null;
+
+  /**
+   * The connection options passed to the most recent {@link CommonPowerSyncDatabase.connect} call,
+   * or null if {@link CommonPowerSyncDatabase.connect} has not been called.
+   */
+  get connectionOptions(): SyncOptions | null;
+
   get connecting(): boolean;
 
   /**
