@@ -1,13 +1,4 @@
-import {
-  defineNuxtModule,
-  createResolver,
-  addPlugin,
-  addImports,
-  extendPages,
-  addLayout,
-  addComponentsDir,
-  findPath
-} from '@nuxt/kit';
+import { defineNuxtModule, createResolver, addPlugin, addImports, extendPages, findPath } from '@nuxt/kit';
 import { defu } from 'defu';
 import { setupDevToolsUI } from './devtools';
 import { addImportsFrom } from './runtime/utils/addImportsFrom';
@@ -57,7 +48,6 @@ export default defineNuxtModule<PowerSyncNuxtModuleOptions>({
     kysely: false
   },
   moduleDependencies: {
-    '@nuxt/devtools-ui-kit': {},
     '@vueuse/nuxt': {}
   },
   async setup(options, nuxt) {
@@ -90,16 +80,6 @@ export default defineNuxtModule<PowerSyncNuxtModuleOptions>({
       from: resolver.resolve('./runtime/utils/NuxtPowerSyncDatabase')
     });
 
-    addImports({
-      name: 'usePowerSyncInspector',
-      from: resolver.resolve('./runtime/composables/usePowerSyncInspector')
-    });
-
-    addImports({
-      name: 'usePowerSyncInspectorDiagnostics',
-      from: resolver.resolve('./runtime/composables/usePowerSyncInspectorDiagnostics')
-    });
-
     // Conditionally add Kysely composable if enabled
     if (options.kysely) {
       addImports({
@@ -112,13 +92,6 @@ export default defineNuxtModule<PowerSyncNuxtModuleOptions>({
       name: 'useDiagnosticsLogger',
       from: resolver.resolve('./runtime/composables/useDiagnosticsLogger')
     });
-
-    // From the runtime directory
-    addComponentsDir({
-      path: resolver.resolve('runtime/components')
-    });
-
-    addLayout(resolver.resolve('./runtime/layouts/powersync-inspector-layout.vue'), 'powersync-inspector-layout');
 
     extendPages((pages) => {
       pages.push({
