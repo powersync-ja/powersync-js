@@ -1,0 +1,28 @@
+{
+  "name": "@powersync/diagnostics-extension",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Chrome DevTools extension for PowerSync live-attach diagnostics (WXT).",
+  "license": "Apache-2.0",
+  "scripts": {
+    "dev": "wxt",
+    "build": "wxt build",
+    "zip": "wxt zip",
+    "prepare:wxt": "wxt prepare",
+    "clean": "rm -rf .output .wxt"
+  },
+  "devDependencies": {
+    "@wxt-dev/module-vue": "^1.0.3",
+    "wxt": "^0.21.4"
+  },
+  "dependencies": {
+    "@nanostores/vue": "^1.1.0",
+    "@powersync/diagnostics-core": "workspace:*",
+    "@powersync/diagnostics-ui": "workspace:*",
+    "clsx": "^2.1.1",
+    "reka-ui": "^2.10.4",
+    "tailwind-merge": "^3.6.0",
+    "vue": "^3.5.42"
+  }
+}

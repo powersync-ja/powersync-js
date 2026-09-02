@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { ref, watch } from 'vue';
 import type { PortInfo } from '@powersync/diagnostics-core';
 import { useDiagnostics } from '../../composables/diagnostics';
 import { formatBytes, formatNumber, formatRelative } from '../../lib/format';
@@ -8,7 +8,7 @@ import Badge from '../ui/Badge.vue';
 import Button from '../ui/Button.vue';
 import Stat from '../ui/Stat.vue';
 
-const { client, status, uploadQueue } = useDiagnostics();
+const { client, status, uploadQueue, connected } = useDiagnostics();
 const info = ref<PortInfo | null>(null);
 
 async function refreshInfo() {
@@ -18,7 +18,9 @@ async function refreshInfo() {
     // ignore
   }
 }
-onMounted(refreshInfo);
+
+// Fetch once connected; re-fetch if the agent reconnects (getInfo sent before the agent exists would hang).
+watch(connected, (isConnected) => isConnected && refreshInfo(), { immediate: true });
 </script>
 
 <template>
