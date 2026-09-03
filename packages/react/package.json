@@ -1,6 +1,6 @@
 {
   "name": "@powersync/react",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
@@ -33,7 +33,7 @@
   },
   "homepage": "https://docs.powersync.com",
   "peerDependencies": {
-    "@powersync/common": "workspace:^2.1.0",
+    "@powersync/common": "workspace:^2.2.0",
     "react": "*"
   },
   "devDependencies": {

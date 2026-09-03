@@ -1,5 +1,14 @@
 # @powersync/adapter-sql-js
 
+## 0.0.22
+
+### Patch Changes
+
+- Updated dependencies [aa1f171]
+- Updated dependencies [a07998d]
+  - @powersync/shared-internals@1.2.0
+  - @powersync/common@2.2.0
+
 ## 0.0.21
 
 ### Patch Changes

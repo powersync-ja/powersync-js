@@ -25,9 +25,9 @@
     "@capacitor/core": "^8.0.0",
     "@capacitor/ios": "^8.0.0",
     "@capacitor/splash-screen": "^8.0.0",
-    "@powersync/capacitor": "^0.8.2",
-    "@powersync/react": "^2.0.0",
-    "@powersync/web": "^2.2.0",
+    "@powersync/capacitor": "^0.9.0",
+    "@powersync/react": "^2.0.1",
+    "@powersync/web": "^2.3.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.23.0"

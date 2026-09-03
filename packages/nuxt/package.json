@@ -1,6 +1,6 @@
 {
   "name": "@powersync/nuxt",
-  "version": "0.0.9",
+  "version": "0.1.0",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
@@ -66,8 +66,8 @@
   "peerDependencies": {
     "@powersync/kysely-driver": "workspace:^2.0.1",
     "@powersync/vue": "workspace:^0.6.0",
-    "@powersync/web": "workspace:^2.2.0",
-    "@powersync/shared-internals": "workspace:^1.1.1"
+    "@powersync/web": "workspace:^2.3.0",
+    "@powersync/shared-internals": "workspace:^1.2.0"
   },
   "peerDependenciesMeta": {
     "@powersync/kysely-driver": {
