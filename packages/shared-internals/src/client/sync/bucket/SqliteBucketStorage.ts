@@ -92,7 +92,7 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
       if (seqAfter != sequenceBefore) {
         this.logger.log({
           level: LogLevels.debug,
-          message: `New data uploaded since write checpoint ${opId} - need new write checkpoint (sequence updated)`
+          message: `New data uploaded since write checkpoint ${opId} - need new write checkpoint (sequence updated)`
         });
 
         // New crud data may have been uploaded since we got the checkpoint. Abort.
