@@ -253,7 +253,7 @@ export class DiagnosticsAgent {
       endpoint,
       userId,
       clientId,
-      connectionMethod: (db.connectionOptions?.connectionMethod as string | undefined) ?? null,
+      connectionMethod: db.connectionOptions?.connectionMethod ?? null,
       params: db.connectionOptions?.params ?? null,
       connected: this.db.currentStatus?.connected ?? false,
       sqliteCoreVersion,
