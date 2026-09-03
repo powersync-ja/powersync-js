@@ -11,10 +11,6 @@ Using this package is not necessary for PowerSync on servers, see [our documenta
 
 See a summary of features [here](https://docs.powersync.com/client-sdk-references/node).
 
-## Beta Release
-
-The `@powersync/node` package is currently in a Beta release.
-
 ## Installation
 
 ### Install Package
