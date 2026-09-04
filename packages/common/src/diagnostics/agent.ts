@@ -1,10 +1,8 @@
-import type {
-  CommonPowerSyncDatabase,
-  PowerSyncBackendConnector,
-  SyncOptions,
-  SyncStatus,
-  SyncStreamSubscription
-} from '@powersync/common';
+import type { CommonPowerSyncDatabase } from '../client/CommonPowerSyncDatabase.js';
+import type { PowerSyncBackendConnector } from '../client/connection/PowerSyncBackendConnector.js';
+import type { SyncOptions } from '../client/sync/options.js';
+import type { SyncStreamSubscription } from '../client/sync/sync-streams.js';
+import type { SyncStatus } from '../db/crud/SyncStatus.js';
 import {
   ActionRequest,
   BucketState,
@@ -16,6 +14,7 @@ import {
   UploadQueueState,
   WireMessage
 } from './protocol.js';
+import { CoreDiagnosticsEvent, DiagnosticsEventSource } from './event-source.js';
 import { toStreamStates, toSyncState } from './state.js';
 import { Transport } from './transport.js';
 
@@ -24,14 +23,13 @@ export interface DiagnosticsAgentOptions {
   sdk?: string;
   /** Debounce for re-reading bucket stats after internal-table changes. */
   bucketThrottleMs?: number;
+  /**
+   * Delivers core diagnostics events (per-bucket `target_count`). Supplied by the runtime, since how
+   * the events reach the agent is environment-specific. Omit when core diagnostics aren't enabled.
+   */
+  eventSource?: DiagnosticsEventSource;
 }
 
-/**
- * Runs next to a live PowerSync client and serves the Diagnostics Port over a {@link Transport}.
- *
- * Every status change is forwarded as serialized state (the push bridge), and requests are
- * answered by querying the live client. No live SDK object ever crosses the transport.
- */
 /** Arguments for the subscribeStream/unsubscribeStream actions. */
 interface StreamActionArgs {
   name: string;
@@ -40,6 +38,14 @@ interface StreamActionArgs {
   priority?: 0 | 1 | 2 | 3;
 }
 
+/**
+ * Runs next to a live PowerSync client and serves the Diagnostics Port over a {@link Transport}.
+ *
+ * Every status change is forwarded as serialized state (the push bridge), and requests are
+ * answered by querying the live client. No live SDK object ever crosses the transport. The agent
+ * depends only on the public {@link CommonPowerSyncDatabase} interface and its injected ports, so a
+ * single implementation covers every JS runtime (web, React Native, node).
+ */
 export class DiagnosticsAgent {
   private disposers: Array<() => void> = [];
   private started = false;
@@ -86,12 +92,12 @@ export class DiagnosticsAgent {
 
       this.captureConnection();
 
-      // Consume the core diagnostics stream (per-bucket target counts + inferred schema). The channel
-      // reaches this page even when sync runs in a shared worker.
-      if (typeof BroadcastChannel !== 'undefined') {
-        const diagnosticsChannel = new BroadcastChannel('powersync-diagnostics-events');
-        diagnosticsChannel.onmessage = (event: MessageEvent) => this.handleDiagnosticsEvent(event.data);
-        this.disposers.push(() => diagnosticsChannel.close());
+      // Consume the core diagnostics stream (per-bucket target counts + inferred schema) when the
+      // runtime supplies a source.
+      if (this.options.eventSource) {
+        this.disposers.push(this.options.eventSource.onEvent((event) => this.handleDiagnosticsEvent(event)));
+        const eventSource = this.options.eventSource;
+        this.disposers.push(() => eventSource.dispose());
       }
 
       // Re-read bucket stats when internal tables change.
@@ -190,8 +196,7 @@ export class DiagnosticsAgent {
     const downloading = this.db.currentStatus?.downloading ?? false;
     const withSize =
       'SELECT name, count_at_last + count_since_last AS ops, downloaded_size AS size, last_op FROM ps_buckets ORDER BY name';
-    const withoutSize =
-      'SELECT name, count_at_last + count_since_last AS ops, last_op FROM ps_buckets ORDER BY name';
+    const withoutSize = 'SELECT name, count_at_last + count_since_last AS ops, last_op FROM ps_buckets ORDER BY name';
 
     let rows: Record<string, any>[];
     try {
@@ -215,14 +220,11 @@ export class DiagnosticsAgent {
     });
   }
 
-  private handleDiagnosticsEvent(event: {
-    BucketStateChange?: { changes: { name: string; progress: { target_count: number } }[] };
-  }): void {
-    const change = event?.BucketStateChange;
-    if (!change) {
+  private handleDiagnosticsEvent(event: CoreDiagnosticsEvent): void {
+    if (!('BucketStateChange' in event)) {
       return;
     }
-    for (const bucket of change.changes) {
+    for (const bucket of event.BucketStateChange.changes) {
       this.bucketTargets.set(bucket.name, bucket.progress.target_count);
     }
     void this.pushBuckets();

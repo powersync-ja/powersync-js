@@ -6,7 +6,8 @@
 
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted } from 'vue';
-import { BroadcastChannelTransport, DiagnosticsClient } from '@powersync/diagnostics-core';
+import { BroadcastChannelTransport } from '@powersync/web';
+import { DiagnosticsClient } from '@powersync/diagnostics-core';
 import { DiagnosticsPanel, provideDiagnostics } from '@powersync/diagnostics-ui';
 import '@powersync/diagnostics-ui/style.css';
 // @ts-ignore

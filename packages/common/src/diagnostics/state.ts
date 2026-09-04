@@ -1,10 +1,6 @@
-import type {
-  ProgressWithOperations,
-  SyncPriorityStatus,
-  SyncStatus,
-  SyncStreamStatus,
-  SyncSubscriptionDescription
-} from '@powersync/common';
+import type { SyncSubscriptionDescription } from '../client/sync/sync-streams.js';
+import type { ProgressWithOperations } from '../db/crud/SyncProgress.js';
+import type { SyncPriorityStatus, SyncStatus, SyncStreamStatus } from '../db/crud/SyncStatus.js';
 import { PriorityState, ProgressState, StreamState, SyncState } from './protocol.js';
 
 /** Maps the live SDK sync status into plain, serializable state the transport can carry. */

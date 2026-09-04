@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from 'vue';
 import type { CommonPowerSyncDatabase } from '@powersync/common';
-import { DiagnosticsAgent, DiagnosticsClient } from '@powersync/diagnostics-core';
+import { DiagnosticsAgent } from '@powersync/common/diagnostics';
+import { DiagnosticsClient } from '@powersync/diagnostics-core';
 import { DiagnosticsPanel, provideDiagnostics } from '../src';
+import { BroadcastEventSource } from './broadcastEventSource';
 import { createLoopback } from './loopback';
 import { createMockDatabase } from './mockDatabase';
 
@@ -11,7 +13,8 @@ const dark = ref(true);
 const [agentTransport, clientTransport] = createLoopback();
 const db = createMockDatabase();
 const agent = new DiagnosticsAgent(db as unknown as CommonPowerSyncDatabase, agentTransport, {
-  sdk: '@powersync/web (mock)'
+  sdk: '@powersync/web (mock)',
+  eventSource: new BroadcastEventSource()
 });
 const client = new DiagnosticsClient(clientTransport);
 
