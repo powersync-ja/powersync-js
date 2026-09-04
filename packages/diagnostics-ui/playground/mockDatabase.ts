@@ -209,6 +209,21 @@ export class MockDatabase {
     if (this.simInterval) {
       clearInterval(this.simInterval);
     }
+
+    // Emulate the core diagnostics stream so per-bucket totals appear in the Buckets tab.
+    if (typeof BroadcastChannel !== 'undefined') {
+      const channel = new BroadcastChannel('powersync-diagnostics-events');
+      channel.postMessage({
+        BucketStateChange: {
+          changes: [
+            { name: 'user_tasks[]', progress: { target_count: 142 } },
+            { name: 'global[]', progress: { target_count: 18 } }
+          ],
+          incremental: false
+        }
+      });
+      channel.close();
+    }
     this.dyn.downloading = true;
     this.dyn.hasSynced = false;
     let fraction = 0;
