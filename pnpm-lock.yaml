@@ -427,6 +427,9 @@ importers:
       '@tanstack/vue-table':
         specifier: ^8.21.3
         version: 8.21.3(vue@3.5.42(typescript@6.0.3))
+      '@tanstack/vue-virtual':
+        specifier: ^3.13.36
+        version: 3.13.36(vue@3.5.42(typescript@6.0.3))
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -442,6 +445,9 @@ importers:
       reka-ui:
         specifier: ^2.10.4
         version: 2.10.4(vue@3.5.42(typescript@6.0.3))
+      shiki:
+        specifier: ^3.23.0
+        version: 3.23.0
       tailwind-merge:
         specifier: ^3.6.0
         version: 3.6.0

@@ -1,8 +1,12 @@
 <script setup lang="ts">
+import { onMounted, ref } from 'vue';
 import { TabsRoot, TabsList, TabsTrigger, TabsContent } from 'reka-ui';
 import StatusBar from './StatusBar.vue';
 import Logo from './ui/Logo.vue';
+import EmptyState from './ui/EmptyState.vue';
+import CodeTabs from './ui/CodeTabs.vue';
 import { useTheme } from '../composables/theme';
+import { useDiagnostics } from '../composables/diagnostics';
 import SyncStatusTab from './tabs/SyncStatusTab.vue';
 import DataInspectorTab from './tabs/DataInspectorTab.vue';
 import BucketsTab from './tabs/BucketsTab.vue';
@@ -10,8 +14,48 @@ import StreamsTab from './tabs/StreamsTab.vue';
 import ConfigTab from './tabs/ConfigTab.vue';
 import IconSun from '~icons/carbon/sun';
 import IconMoon from '~icons/carbon/moon';
+import IconConnecting from '~icons/carbon/circle-dash';
+import IconOffline from '~icons/carbon/connection-signal-off';
 
 const { isDark, toggle } = useTheme();
+const { connected } = useDiagnostics();
+
+// Brief grace period so a normal handshake doesn't flash the "no client" screen.
+const waiting = ref(true);
+onMounted(() => setTimeout(() => (waiting.value = false), 1500));
+
+const setupTabs = [
+  {
+    label: 'JavaScript',
+    lang: 'javascript',
+    code: `import { enableDiagnostics } from '@powersync/web';
+
+const db = new PowerSyncDatabase({ /* ... */ });
+
+// Attach the diagnostics agent (dev only).
+if (import.meta.env.DEV) {
+  enableDiagnostics(db);
+}
+
+// Enable the core diagnostics stream for per-bucket progress.
+db.connect(connector, { diagnostics: true });`
+  },
+  {
+    label: 'Dart',
+    lang: 'dart',
+    code: `import 'package:powersync/diagnostics.dart';
+
+final db = PowerSyncDatabase(schema: schema, path: path);
+
+// Attach the diagnostics agent (dev only).
+if (kDebugMode) {
+  enableDiagnostics(db);
+}
+
+// Enable the core diagnostics stream for per-bucket progress.
+await db.connect(connector: connector, diagnostics: true);`
+  }
+];
 
 const tabs = [
   { value: 'status', label: 'Sync Status' },
@@ -46,7 +90,27 @@ const tabs = [
     <!-- Persistent, real-time status bar (visible on every tab) -->
     <StatusBar />
 
-    <TabsRoot default-value="status" class="flex min-h-0 flex-1 flex-col">
+    <!-- No client attached: guide the developer to wire diagnostics up. -->
+    <div v-if="!connected" class="min-h-0 flex-1 overflow-auto">
+      <EmptyState
+        v-if="waiting"
+        :icon="IconConnecting"
+        spin
+        title="Connecting to client…"
+        description="Looking for a PowerSync client with the diagnostics agent attached."
+      />
+      <EmptyState
+        v-else
+        :icon="IconOffline"
+        tone="warning"
+        title="No PowerSync client detected"
+        description="The diagnostics agent isn't attached to a running client. Enable it in your app during development:"
+      >
+        <CodeTabs :tabs="setupTabs" />
+      </EmptyState>
+    </div>
+
+    <TabsRoot v-else default-value="status" class="flex min-h-0 flex-1 flex-col">
       <TabsList class="flex gap-0.5 border-b px-1.5">
         <TabsTrigger
           v-for="t in tabs"

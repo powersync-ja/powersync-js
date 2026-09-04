@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useDiagnostics } from '../composables/diagnostics';
-import { formatNumber, formatRelative } from '../lib/format';
+import { formatCompact, formatRelative } from '../lib/format';
 import IconWifi from '~icons/carbon/wifi';
 import IconWifiOff from '~icons/carbon/wifi-off';
 import IconWarning from '~icons/carbon/warning-alt';
@@ -84,7 +84,7 @@ const lastSynced = computed(() => (status.value?.lastSyncedAt ? formatRelative(s
     <!-- Aggregate stats -->
     <span class="inline-flex items-center gap-1" title="Buckets · total downloaded operations">
       <IconBuckets class="size-3.5" />
-      {{ formatNumber(bucketCount) }} buckets · {{ formatNumber(totalOps) }} ops
+      {{ formatCompact(bucketCount) }} buckets · {{ formatCompact(totalOps) }} ops
     </span>
     <span
       class="inline-flex items-center gap-1"
@@ -92,7 +92,7 @@ const lastSynced = computed(() => (status.value?.lastSyncedAt ? formatRelative(s
       title="Local changes waiting to upload (pending CRUD queue)"
     >
       <IconQueue class="size-3.5" />
-      {{ formatNumber(pending) }} to upload
+      {{ formatCompact(pending) }} to upload
     </span>
     <span v-if="lastSynced" class="inline-flex items-center gap-1" title="Last synced">
       <IconTime class="size-3.5" />
