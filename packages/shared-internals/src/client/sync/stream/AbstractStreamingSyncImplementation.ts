@@ -250,6 +250,10 @@ export abstract class AbstractStreamingSyncImplementation
          * Keep track of the first item in the CRUD queue for the last `uploadCrud` iteration.
          */
         let checkedCrudItem: CrudEntry | undefined;
+        /**
+         * Consecutive retries caused by a local write that `nextCrudItem` did not see, reset once an upload succeeds.
+         */
+        let unseenWriteRetries = 0;
 
         while (!signal.aborted) {
           try {
@@ -274,20 +278,35 @@ The next upload iteration will be delayed.`
 
               checkedCrudItem = nextCrudItem;
               await this.options.uploadCrud();
+              unseenWriteRetries = 0;
               this.updateJsSyncState({ uploadError: undefined });
             } else {
               // Uploading is completed
-              const neededUpdate = await this.options.adapter.updateLocalTarget(() => {
+              const localTarget = await this.options.adapter.updateLocalTarget(() => {
                 if (options.checkpointMode === 'legacy') {
                   return this.getLegacyWriteCheckpoint();
                 } else {
                   return this.requestNextCheckpointFromService(signal);
                 }
               });
-              if (neededUpdate) {
+              if (localTarget == 'updated_checkpoint') {
                 this.notifyCompletedUploads?.();
-              } else if (checkedCrudItem != null) {
-                // Only log this if there was something to upload
+              } else if (localTarget == 'new_data') {
+                // `updateLocalTarget` compares the CRUD queue inside a write transaction, so it can see a local write
+                // that `nextCrudItem()` did not. That write still needs to be uploaded and no checkpoint can be
+                // applied until it is, so retry instead of parking the loop.
+                //
+                // The first retry runs immediately, because the row is normally visible by then and delaying it would
+                // add latency to an ordinary upload. Later retries wait: the exit condition is `nextCrudItem()`
+                // observing the row, so if the two reads keep disagreeing an unthrottled loop would request write
+                // checkpoints as fast as the event loop allows.
+                if (unseenWriteRetries++ > 0) {
+                  await this.delayRetry(signal, options.crudUploadThrottleMs);
+                }
+                continue;
+              } else if (localTarget == 'no_crud_sequence' && checkedCrudItem != null) {
+                // Only log this if there was something to upload. `sequence_changed` is excluded because
+                // `updateLocalTarget` has already reported that a new write checkpoint is needed.
                 this.logger.log({ level: LogLevels.debug, message: 'Upload complete, no write checkpoint needed.' });
               }
               break;
