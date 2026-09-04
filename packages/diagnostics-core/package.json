@@ -1,10 +1,22 @@
 {
   "name": "@powersync/diagnostics-core",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.1.0",
   "type": "module",
-  "description": "Framework-agnostic host side of PowerSync live-attach diagnostics: the Diagnostics Port client, re-exporting the Port contract from @powersync/common.",
+  "description": "Framework-agnostic host side of PowerSync live-attach diagnostics: the Diagnostics Port client and host transports, re-exporting the Port contract from @powersync/common.",
+  "author": "PowerSync",
   "license": "Apache-2.0",
+  "homepage": "https://docs.powersync.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/powersync-ja/powersync-js.git"
+  },
+  "bugs": {
+    "url": "https://github.com/powersync-ja/powersync-js/issues"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
   "main": "lib/src/index.js",
   "types": "lib/src/index.d.ts",
   "exports": {

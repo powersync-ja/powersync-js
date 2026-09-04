@@ -13,6 +13,7 @@
     "clean": "rm -rf .output .wxt"
   },
   "devDependencies": {
+    "@types/chrome": "^0.2.8",
     "@wxt-dev/module-vue": "^1.0.3",
     "wxt": "^0.21.4"
   },

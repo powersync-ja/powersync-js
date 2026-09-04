@@ -1,18 +1,35 @@
 {
   "name": "@powersync/diagnostics-ui",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.1.0",
   "type": "module",
   "description": "Host-neutral Vue UI for PowerSync live-attach diagnostics, driven by the Diagnostics Port.",
+  "author": "PowerSync",
   "license": "Apache-2.0",
+  "homepage": "https://docs.powersync.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/powersync-ja/powersync-js.git"
+  },
+  "bugs": {
+    "url": "https://github.com/powersync-ja/powersync-js/issues"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
   "exports": {
-    ".": "./dist/index.js",
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
     "./style.css": "./dist/style.css"
   },
   "scripts": {
     "dev": "vite",
-    "build": "vite build && pnpm build:css",
+    "build": "pnpm clean && vite build && pnpm build:css && pnpm build:types && pnpm build:standalone",
     "build:css": "tailwindcss -i ./src/style.css -o ./dist/style.css",
+    "build:types": "vue-tsc -p tsconfig.build.json",
+    "build:standalone": "vite build --config vite.standalone.config.ts",
     "typecheck": "vue-tsc --noEmit",
     "preview": "vite preview",
     "clean": "rm -rf dist"
