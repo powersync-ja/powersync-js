@@ -12,11 +12,11 @@ import {
   SerializedSchema,
   StreamState,
   SyncState,
+  Transport,
   Unsubscribe,
   UploadQueueState,
   WireMessage
-} from './protocol.js';
-import { Transport } from './transport.js';
+} from '@powersync/common/diagnostics/contract';
 
 const CHANNELS: Channel[] = ['status', 'streams', 'buckets', 'logs', 'uploadQueue'];
 const MAX_LOGS = 2000;

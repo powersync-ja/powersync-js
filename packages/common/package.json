@@ -12,6 +12,14 @@
     ".": {
       "types": "./lib/index.d.ts",
       "default": "./lib/index.js"
+    },
+    "./diagnostics": {
+      "types": "./lib/diagnostics/index.d.ts",
+      "default": "./lib/diagnostics/index.js"
+    },
+    "./diagnostics/contract": {
+      "types": "./lib/diagnostics/contract.d.ts",
+      "default": "./lib/diagnostics/contract.js"
     }
   },
   "author": "PowerSync",

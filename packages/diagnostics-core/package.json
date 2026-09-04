@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Framework-agnostic core for PowerSync live-attach diagnostics: the Diagnostics Port contract, agent, client, and transports.",
+  "description": "Framework-agnostic host side of PowerSync live-attach diagnostics: the Diagnostics Port client, re-exporting the Port contract from @powersync/common.",
   "license": "Apache-2.0",
   "main": "lib/src/index.js",
   "types": "lib/src/index.d.ts",

@@ -1,8 +1,9 @@
 import type { CommonPowerSyncDatabase } from '@powersync/common';
-import { DiagnosticsAgent, DiagnosticsAgentOptions } from './agent.js';
-import { BroadcastChannelTransport } from './transport.js';
+import { DiagnosticsAgent, DiagnosticsAgentOptions } from '@powersync/common/diagnostics';
+import { BroadcastChannelEventSource } from './BroadcastChannelEventSource.js';
+import { BroadcastChannelTransport } from './BroadcastChannelTransport.js';
 
-export interface EnableDiagnosticsOptions extends DiagnosticsAgentOptions {
+export interface EnableDiagnosticsOptions extends Omit<DiagnosticsAgentOptions, 'eventSource'> {
   /** The same-origin BroadcastChannel name the DevTools/extension client connects on. */
   channelName?: string;
 }
@@ -27,7 +28,10 @@ export function enableDiagnostics(
   options: EnableDiagnosticsOptions = {}
 ): DiagnosticsAgent {
   const { channelName, ...agentOptions } = options;
-  const agent = new DiagnosticsAgent(db, new BroadcastChannelTransport(channelName), agentOptions);
+  const agent = new DiagnosticsAgent(db, new BroadcastChannelTransport(channelName), {
+    ...agentOptions,
+    eventSource: new BroadcastChannelEventSource()
+  });
   agent.start();
   return agent;
 }

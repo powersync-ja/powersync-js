@@ -118,7 +118,7 @@ export type {
   SerializedSchema,
   SerializedTable,
   SerializedTrackPrevious
-} from '@powersync/common';
+} from '../db/schema/SerializedSchema.js';
 
 /** Write/control actions the UI can invoke on the live client. */
 export type ActionName = 'reconnect' | 'disconnect' | 'clearData' | 'subscribeStream' | 'unsubscribeStream';

@@ -8,3 +8,7 @@ export * from './db/sync/SharedWebStreamingSyncImplementation.js';
 export * from './db/sync/WebRemote.js';
 export * from './db/sync/WebStreamingSyncImplementation.js';
 export * from './db/adapters/WebDBAdapter.js';
+
+// Opt-in live-attach diagnostics: the BroadcastChannel transport + core-diagnostics event source
+// and the `enableDiagnostics` convenience. The agent core itself lives in `@powersync/common`.
+export * from './diagnostics/index.js';
