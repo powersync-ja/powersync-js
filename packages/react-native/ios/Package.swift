@@ -2,7 +2,7 @@
 import PackageDescription
 
 // When updating this, also update the version in powersync-react-native.podspec and android/build.gradle
-let coreExtensionVersion: Version = "0.5.2"
+let coreExtensionVersion: Version = "0.5.3"
 
 let packageName = "PowerSyncReactNative"
 

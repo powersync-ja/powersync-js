@@ -23,7 +23,7 @@ Pod::Spec.new do |s|
   s.ios.deployment_target = '15.0'
   s.dependency 'Capacitor'
   s.swift_version = '5.1'
-  s.dependency "powersync-sqlite-core", "~> 0.5.2"
+  s.dependency "powersync-sqlite-core", "~> 0.5.3"
    s.xcconfig = {
     'OTHER_CFLAGS' => '$(inherited) -DSQLITE_DBCONFIG_ENABLE_LOAD_EXTENSION=1',
     'HEADER_SEARCH_PATHS' => '$(inherited) "$(PODS_ROOT)/SQLCipher"'
