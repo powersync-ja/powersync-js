@@ -12,7 +12,7 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/ionic-team/capacitor-swift-pm.git", from: "8.0.0"),
         .package(url: "https://github.com/sqlcipher/SQLCipher.swift.git", from: "4.0.0"),
-        .package(url: "https://github.com/powersync-ja/powersync-sqlite-core-swift.git", from: "0.4.12")
+        .package(url: "https://github.com/powersync-ja/powersync-sqlite-core-swift.git", from: "0.5.3")
     ],
     targets: [
         .target(
