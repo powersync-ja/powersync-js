@@ -102,6 +102,10 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
 
   private currentOptions: ResolvedSyncOptions | null;
 
+  // The connector of the active connection. Retained alongside currentOptions so `connector` reflects
+  // the live connection, not just the brief pending-options window before connecting starts.
+  private currentConnector: PowerSyncBackendConnector | null;
+
   syncStreamImplementation: StreamingSyncImplementation | null;
 
   /**
@@ -125,11 +129,12 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
     this.pendingConnectionOptions = null;
     this.syncStreamImplementation = null;
     this.currentOptions = null;
+    this.currentConnector = null;
     this.syncDisposer = null;
   }
 
   get connector() {
-    return this.pendingConnectionOptions?.connector ?? null;
+    return this.currentConnector ?? this.pendingConnectionOptions?.connector ?? null;
   }
 
   get connectionOptions() {
@@ -231,6 +236,7 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
         const { connector, options, schema } = this.pendingConnectionOptions;
         appliedOptions = options;
         this.currentOptions = options;
+        this.currentConnector = connector;
 
         this.pendingConnectionOptions = null;
 
@@ -279,6 +285,7 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
     // This will help abort pending connects
     this.pendingConnectionOptions = null;
     this.currentOptions = null;
+    this.currentConnector = null;
     await this.disconnectInternal();
   }
 
