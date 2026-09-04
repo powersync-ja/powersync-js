@@ -22,6 +22,8 @@ export default defineBackground(() => {
           panelPorts.set(tabId, port);
           return;
         }
+        // Keepalive: delivering it here already reset the worker's idle timer; don't forward it.
+        if (env.kind === 'ping') return;
         if (tabId != null) contentPorts.get(tabId)?.postMessage(env);
       });
       port.onDisconnect.addListener(() => {
