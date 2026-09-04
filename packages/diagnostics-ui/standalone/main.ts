@@ -11,7 +11,8 @@ provideDiagnostics(client);
 
 createApp({
   setup() {
-    return () => h('div', { class: 'dark', style: 'height: 100vh' }, [h(DiagnosticsPanel)]);
+    // The panel owns its own theme (self-applies `.dark`); no host-forced class.
+    return () => h('div', { style: 'height: 100vh' }, [h(DiagnosticsPanel)]);
   }
 }).mount('#app');
 

@@ -25,7 +25,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="dark" style="height: 100vh">
+  <div style="height: 100vh">
     <DiagnosticsPanel />
   </div>
 </template>
