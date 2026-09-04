@@ -99,6 +99,14 @@ export class DiagnosticsClient {
     return this.action({ action: 'clearData' });
   }
 
+  /**
+   * Requests a checkpoint and resolves once the client is caught up with the service (uploads
+   * flushed + latest downloads applied). Rejects if the SDK/connection doesn't support it.
+   */
+  requestCheckpoint(): Promise<{ ok: true }> {
+    return this.action({ action: 'requestCheckpoint' });
+  }
+
   /** Clears the locally accumulated log buffer. */
   clearLogs(): void {
     this.logs.set([]);

@@ -8,6 +8,7 @@ import {
   BucketState,
   Channel,
   EventMessage,
+  LogRecord,
   PortInfo,
   QueryResult,
   RequestMessage,
@@ -99,6 +100,10 @@ export class DiagnosticsAgent {
         const eventSource = this.options.eventSource;
         this.disposers.push(() => eventSource.dispose());
       }
+
+      // Capture SDK log output by wrapping the client's logger, forwarding each record to the logs
+      // channel. Restored on stop.
+      this.captureLogs();
 
       // Re-read bucket stats when internal tables change.
       this.disposers.push(
@@ -220,6 +225,40 @@ export class DiagnosticsAgent {
     });
   }
 
+  /** Wraps `db.logger.log` so every SDK log record is forwarded to the logs channel; restores on stop. */
+  private captureLogs(): void {
+    try {
+      const logger = this.db.logger as { log?: (record: { level: number; message: string; error?: unknown }) => void };
+      if (!logger || typeof logger.log !== 'function') {
+        return;
+      }
+      const original = logger.log.bind(logger);
+      logger.log = (record) => {
+        original(record);
+        try {
+          this.pushLog(record);
+        } catch {
+          // Never let diagnostics break the app's logging.
+        }
+      };
+      this.disposers.push(() => {
+        logger.log = original;
+      });
+    } catch {
+      // Logger not patchable — logs simply won't stream.
+    }
+  }
+
+  private pushLog(record: { level: number; message: string; error?: unknown }): void {
+    const entry: LogRecord = {
+      timestamp: Date.now(),
+      level: logLevelName(record.level),
+      message: record.message,
+      args: record.error == null ? undefined : [record.error instanceof Error ? record.error.message : record.error]
+    };
+    this.emit({ type: 'event', channel: 'logs', payload: [entry] });
+  }
+
   private handleDiagnosticsEvent(event: CoreDiagnosticsEvent): void {
     if (!('BucketStateChange' in event)) {
       return;
@@ -331,6 +370,16 @@ export class DiagnosticsAgent {
         await this.reconnect();
         break;
       }
+      case 'requestCheckpoint': {
+        // Confirms the client is caught up with the service right now (pending uploads flushed +
+        // latest downloads applied). Requires the app to connect with `checkpointMode: 'requests'`.
+        if (typeof this.db.requestCheckpoint !== 'function') {
+          throw new Error('requestCheckpoint is not available in this SDK version.');
+        }
+        const checkpoint = await this.db.requestCheckpoint();
+        await checkpoint.waitForSync({ signal: AbortSignal.timeout(120_000) });
+        break;
+      }
       case 'subscribeStream': {
         const { name, params, ttl, priority } = request.args as StreamActionArgs;
         // TTL defaults to 0 so a forgotten debug subscription is evicted as soon as it is released.
@@ -359,6 +408,15 @@ function streamKey(name: string, params?: Record<string, unknown>): string {
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
+}
+
+/** Maps a numeric SDK log level (see `LogLevels`) to its name. */
+function logLevelName(level: number): string {
+  if (level >= 50) return 'error';
+  if (level >= 40) return 'warn';
+  if (level >= 30) return 'info';
+  if (level >= 20) return 'debug';
+  return 'trace';
 }
 
 function decodeJwtSubject(token: string): string | null {
