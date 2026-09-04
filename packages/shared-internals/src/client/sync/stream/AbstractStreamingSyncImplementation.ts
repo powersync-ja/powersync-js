@@ -18,7 +18,8 @@ import {
   CoreSyncStatus,
   Instruction,
   NonInterruptingInstruction,
-  isInterruptingInstruction
+  isInterruptingInstruction,
+  DiagnosticsEvent
 } from './core-instruction.js';
 import {
   doneResult,
@@ -133,6 +134,7 @@ export abstract class AbstractStreamingSyncImplementation
   private connectionMayHaveChanged = false;
   private crudUploadNotifier = asyncNotifier();
   private checkpoints = new CheckpointStateSignals();
+  private diagnosticsChannel?: BroadcastChannel;
 
   private notifyCompletedUploads?: () => void;
   private handleActiveStreamsChange?: () => void;
@@ -186,6 +188,20 @@ export abstract class AbstractStreamingSyncImplementation
     super.dispose();
     this.crudUpdateListener?.();
     this.crudUpdateListener = undefined;
+    this.diagnosticsChannel?.close();
+    this.diagnosticsChannel = undefined;
+  }
+
+  /**
+   * Broadcasts a core diagnostics event on a same-origin channel for diagnostics tooling to consume.
+   * Works from a shared worker to the page. No-op where BroadcastChannel is unavailable.
+   */
+  emitDiagnostics(event: DiagnosticsEvent): void {
+    if (typeof BroadcastChannel === 'undefined') {
+      return;
+    }
+    this.diagnosticsChannel ??= new BroadcastChannel('powersync-diagnostics-events');
+    this.diagnosticsChannel.postMessage(event);
   }
 
   abstract obtainLock<T>(lockOptions: LockOptions<T>): Promise<T>;
@@ -690,6 +706,10 @@ The next upload iteration will be delayed.`
       if (serializedSchema) {
         options.schema = serializedSchema;
       }
+      if (resolvedOptions.diagnostics) {
+        // An empty object enables the core's diagnostics event stream (Option<DiagnosticOptions>).
+        options.diagnostics = {};
+      }
 
       return invokePowerSyncControl(PowerSyncControlCommand.START, JSON.stringify(options));
     }
@@ -774,6 +794,10 @@ The next upload iteration will be delayed.`
         // Not necessary on JS platforms.
       } else if ('DidCompleteSync' in instruction) {
         syncImplementation.updateJsSyncState({ downloadError: undefined });
+      } else if ('HandleDiagnostics' in instruction) {
+        // Emitted only when diagnostics are enabled on the sync stream. Broadcast to diagnostics
+        // tooling; the channel reaches the page even when sync runs in a shared worker.
+        syncImplementation.emitDiagnostics(instruction.HandleDiagnostics);
       }
     }
 

@@ -1,4 +1,10 @@
-import type { CommonPowerSyncDatabase, SyncStatus, SyncStreamSubscription } from '@powersync/common';
+import type {
+  CommonPowerSyncDatabase,
+  PowerSyncBackendConnector,
+  SyncOptions,
+  SyncStatus,
+  SyncStreamSubscription
+} from '@powersync/common';
 import {
   ActionRequest,
   BucketState,
@@ -39,6 +45,11 @@ export class DiagnosticsAgent {
   private started = false;
   /** Debug subscriptions created via the Port, keyed by name + serialized params, so they can be released. */
   private streamHandles = new Map<string, SyncStreamSubscription>();
+  // Retained so reconnect / clear work after a disconnect, when the DB no longer exposes the connector.
+  private lastConnector: PowerSyncBackendConnector | null = null;
+  private lastConnectionOptions: SyncOptions | null = null;
+  // Per-bucket total operation counts, from the core diagnostics stream (not available in ps_buckets).
+  private bucketTargets = new Map<string, number>();
 
   constructor(
     private db: CommonPowerSyncDatabase,
@@ -65,12 +76,23 @@ export class DiagnosticsAgent {
       this.disposers.push(
         this.db.registerListener({
           statusChanged: (status: SyncStatus) => {
+            this.captureConnection();
             this.pushStatus(status);
             void this.pushUploadQueue();
             void this.pushBuckets();
           }
         })
       );
+
+      this.captureConnection();
+
+      // Consume the core diagnostics stream (per-bucket target counts + inferred schema). The channel
+      // reaches this page even when sync runs in a shared worker.
+      if (typeof BroadcastChannel !== 'undefined') {
+        const diagnosticsChannel = new BroadcastChannel('powersync-diagnostics-events');
+        diagnosticsChannel.onmessage = (event: MessageEvent) => this.handleDiagnosticsEvent(event.data);
+        this.disposers.push(() => diagnosticsChannel.close());
+      }
 
       // Re-read bucket stats when internal tables change.
       this.disposers.push(
@@ -179,14 +201,31 @@ export class DiagnosticsAgent {
       rows = await this.db.getAll(withoutSize);
     }
 
-    return rows.map((row) => ({
-      name: String(row.name),
-      downloadedOperations: Number(row.ops) || 0,
-      totalOperations: null,
-      downloadedSize: row.size == null ? null : Number(row.size),
-      lastOp: row.last_op == null ? null : String(row.last_op),
-      downloading
-    }));
+    return rows.map((row) => {
+      const name = String(row.name);
+      return {
+        name,
+        downloadedOperations: Number(row.ops) || 0,
+        // Per-bucket total from the core diagnostics stream (ps_buckets has no such column).
+        totalOperations: this.bucketTargets.get(name) ?? null,
+        downloadedSize: row.size == null ? null : Number(row.size),
+        lastOp: row.last_op == null ? null : String(row.last_op),
+        downloading
+      };
+    });
+  }
+
+  private handleDiagnosticsEvent(event: {
+    BucketStateChange?: { changes: { name: string; progress: { target_count: number } }[] };
+  }): void {
+    const change = event?.BucketStateChange;
+    if (!change) {
+      return;
+    }
+    for (const bucket of change.changes) {
+      this.bucketTargets.set(bucket.name, bucket.progress.target_count);
+    }
+    void this.pushBuckets();
   }
 
   private async handleRequest(message: RequestMessage): Promise<void> {
@@ -261,29 +300,33 @@ export class DiagnosticsAgent {
     };
   }
 
+  private captureConnection(): void {
+    const connector = this.db.connector;
+    if (connector) {
+      this.lastConnector = connector;
+      this.lastConnectionOptions = this.db.connectionOptions;
+    }
+  }
+
+  private async reconnect(): Promise<void> {
+    if (this.lastConnector) {
+      await this.db.connect(this.lastConnector, this.lastConnectionOptions ?? undefined);
+    }
+  }
+
   private async runAction(request: ActionRequest): Promise<{ ok: true }> {
-    const db = this.db;
     switch (request.action) {
       case 'disconnect':
         await this.db.disconnect();
         break;
       case 'clearData': {
-        // Capture before clearing, then reconnect so the client re-syncs from scratch.
-        const connector = db.connector;
-        const options = db.connectionOptions;
         await this.db.disconnectAndClear();
-        if (connector) {
-          await this.db.connect(connector, options ?? undefined);
-        }
+        await this.reconnect();
         break;
       }
       case 'reconnect': {
-        const connector = db.connector;
-        const options = db.connectionOptions;
         await this.db.disconnect();
-        if (connector) {
-          await this.db.connect(connector, options ?? undefined);
-        }
+        await this.reconnect();
         break;
       }
       case 'subscribeStream': {

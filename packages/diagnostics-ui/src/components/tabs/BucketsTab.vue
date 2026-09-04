@@ -23,7 +23,14 @@ const { buckets } = useDiagnostics();
         <tbody>
           <tr v-for="b in buckets" :key="b.name" class="border-t">
             <td class="px-3 py-2 font-mono">{{ b.name }}</td>
-            <td class="px-3 py-2 text-right tabular-nums">{{ formatNumber(b.downloadedOperations) }}</td>
+            <td class="px-3 py-2 text-right tabular-nums">
+              {{ formatNumber(b.downloadedOperations) }}<span
+                v-if="b.totalOperations != null"
+                class="text-muted-foreground"
+              >
+                / {{ formatNumber(b.totalOperations) }}</span
+              >
+            </td>
             <td class="px-3 py-2 text-right tabular-nums">{{ formatBytes(b.downloadedSize) }}</td>
             <td class="px-3 py-2 font-mono text-xs">{{ b.lastOp ?? '—' }}</td>
             <td class="px-3 py-2">

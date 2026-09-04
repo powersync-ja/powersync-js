@@ -1,14 +1,21 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
-import type { SerializedSchema, SerializedTable } from '@powersync/diagnostics-core';
+import type { PortInfo, SerializedSchema, SerializedTable } from '@powersync/diagnostics-core';
 import { useDiagnostics } from '../../composables/diagnostics';
+import { formatParams } from '../../lib/format';
 import Card from '../ui/Card.vue';
 import Badge from '../ui/Badge.vue';
 
 const { client, connected } = useDiagnostics();
+const info = ref<PortInfo | null>(null);
 const schema = ref<SerializedSchema | null>(null);
 
 async function load() {
+  try {
+    info.value = await client.getInfo();
+  } catch {
+    // ignore
+  }
   try {
     schema.value = await client.getSchema();
   } catch {
@@ -34,6 +41,25 @@ function indexColumns(columns: { name: string; ascending: boolean }[]): string {
 
 <template>
   <div class="space-y-4">
+    <Card>
+      <div class="p-3 text-sm">
+        <div class="mb-2 flex items-center justify-between">
+          <span class="text-xs font-medium text-muted-foreground">Connection</span>
+          <button class="text-xs text-muted-foreground hover:text-foreground" @click="load">Refresh</button>
+        </div>
+        <div class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
+          <span class="text-muted-foreground">Endpoint</span><span class="truncate font-mono">{{ info?.endpoint ?? '—' }}</span>
+          <span class="text-muted-foreground">User ID</span><span class="truncate font-mono">{{ info?.userId ?? '—' }}</span>
+          <span class="text-muted-foreground">Client ID</span><span class="truncate font-mono">{{ info?.clientId ?? '—' }}</span>
+          <span class="text-muted-foreground">Method</span><span class="font-mono">{{ info?.connectionMethod ?? '—' }}</span>
+          <span class="text-muted-foreground">Params</span><span class="font-mono">{{ formatParams(info?.params) }}</span>
+          <span class="text-muted-foreground">SDK</span><span class="font-mono">{{ info?.sdk ?? '—' }}</span>
+          <span class="text-muted-foreground">Core version</span><span class="font-mono">{{ info?.sqliteCoreVersion ?? '—' }}</span>
+        </div>
+      </div>
+    </Card>
+
+    <div class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Schema</div>
     <div v-if="!schema" class="text-muted-foreground">Loading schema…</div>
     <div v-else-if="!schema.tables.length" class="text-muted-foreground">No tables.</div>
     <Card v-for="table in schema?.tables ?? []" :key="table.name">
