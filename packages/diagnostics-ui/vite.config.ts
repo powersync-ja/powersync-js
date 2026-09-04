@@ -2,11 +2,12 @@ import { fileURLToPath, URL } from 'node:url';
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import tailwindcss from '@tailwindcss/vite';
+import Icons from 'unplugin-icons/vite';
 
 // `vite` (dev) serves the playground; `vite build` produces the compiled library in dist/.
 // The library ships compiled ESM (no raw .vue), so consumers like Nuxt/WXT resolve plain JS.
 export default defineConfig({
-  plugins: [vue(), tailwindcss()],
+  plugins: [vue(), tailwindcss(), Icons({ compiler: 'vue3' })],
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
     dedupe: ['vue', 'nanostores']

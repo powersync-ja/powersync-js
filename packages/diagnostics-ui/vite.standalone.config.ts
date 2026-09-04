@@ -2,6 +2,7 @@ import { fileURLToPath, URL } from 'node:url';
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import tailwindcss from '@tailwindcss/vite';
+import Icons from 'unplugin-icons/vite';
 
 // Builds the standalone, self-contained diagnostics page (dist/standalone/) that any host can embed
 // in an iframe. It talks to the agent over a `postMessage` transport, so the embedder relays wire
@@ -10,7 +11,7 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
   root: fileURLToPath(new URL('./standalone', import.meta.url)),
   base: './',
-  plugins: [vue(), tailwindcss()],
+  plugins: [vue(), tailwindcss(), Icons({ compiler: 'vue3' })],
   resolve: { dedupe: ['vue', 'nanostores'] },
   build: {
     outDir: fileURLToPath(new URL('./dist/standalone', import.meta.url)),
