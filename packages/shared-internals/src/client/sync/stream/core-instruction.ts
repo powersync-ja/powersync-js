@@ -16,7 +16,29 @@ export type NonInterruptingInstruction =
   | { UpdateSyncStatus: UpdateSyncStatus }
   | { FetchCredentials: FetchCredentials }
   | { FlushFileSystem: any }
-  | { DidCompleteSync: any };
+  | { DidCompleteSync: any }
+  | { HandleDiagnostics: DiagnosticsEvent };
+
+/**
+ * Emitted by the core extension when diagnostics are enabled on the sync stream (see
+ * {@link https://github.com/powersync-ja/powersync-sqlite-core diagnostics}). Reports detailed
+ * per-bucket download state — including the per-bucket `target_count` that is otherwise internal to
+ * the core — and inferred column types as data is downloaded.
+ */
+export type DiagnosticsEvent =
+  | { BucketStateChange: { changes: BucketDownloadState[]; incremental: boolean } }
+  | { SchemaChange: ObservedSchemaColumn };
+
+export interface BucketDownloadState {
+  name: string;
+  progress: BucketProgress;
+}
+
+export interface ObservedSchemaColumn {
+  table: string;
+  column: string;
+  value_type: 'Null' | 'String' | 'Integer' | 'Real';
+}
 
 export interface LogLine {
   severity: 'DEBUG' | 'INFO' | 'WARNING';

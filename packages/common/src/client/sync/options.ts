@@ -54,6 +54,13 @@ export interface SyncOptions {
    * The mode used to request checkpoints from the service (used after uploading local data).
    */
   checkpointMode?: CheckpointMode;
+
+  /**
+   * Enables the core extension's diagnostics event stream — detailed per-bucket download stats
+   * (including per-bucket `target_count`) and inferred column types — delivered as
+   * `HandleDiagnostics` instructions. Off by default.
+   */
+  diagnostics?: boolean;
 }
 
 /**
