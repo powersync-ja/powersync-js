@@ -45,6 +45,7 @@
     "@tanstack/vue-virtual": "^3.13.36",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "fuse.js": "^7.5.0",
     "lucide-vue-next": "^1.0.0",
     "nanostores": "^1.5.2",
     "reka-ui": "^2.10.4",

@@ -7,7 +7,8 @@ export interface CrudOp {
   id: number;
   op: string | null;
   tbl: string | null;
-  row_id: string | null;
+  /** The full serialized CRUD entry (the operation, stringified). */
+  data: string | null;
 }
 
 const props = defineProps<{ ops: CrudOp[] }>();
@@ -37,9 +38,9 @@ const totalSize = computed(() => rowVirtualizer.value.getTotalSize());
       >
         <span class="w-12 shrink-0 truncate tabular-nums text-muted-foreground/50">#{{ ops[row.index].id }}</span>
         <OpBadge :op="ops[row.index].op" class="w-14 shrink-0" />
-        <span class="shrink-0 font-mono">{{ ops[row.index].tbl ?? 'unknown' }}</span>
-        <span class="min-w-0 flex-1 truncate font-mono text-muted-foreground" :title="ops[row.index].row_id ?? undefined">
-          {{ ops[row.index].row_id ?? '' }}
+        <span class="w-20 shrink-0 truncate font-mono">{{ ops[row.index].tbl ?? 'unknown' }}</span>
+        <span class="min-w-0 flex-1 truncate font-mono text-muted-foreground/80" :title="ops[row.index].data ?? undefined">
+          {{ ops[row.index].data ?? '' }}
         </span>
       </div>
     </div>

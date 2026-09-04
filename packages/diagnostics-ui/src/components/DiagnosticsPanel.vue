@@ -7,18 +7,23 @@ import EmptyState from './ui/EmptyState.vue';
 import CodeTabs from './ui/CodeTabs.vue';
 import { useTheme } from '../composables/theme';
 import { useDiagnostics } from '../composables/diagnostics';
+import { useSyncActions } from '../composables/actions';
 import SyncStatusTab from './tabs/SyncStatusTab.vue';
 import DataInspectorTab from './tabs/DataInspectorTab.vue';
 import BucketsTab from './tabs/BucketsTab.vue';
 import StreamsTab from './tabs/StreamsTab.vue';
 import ConfigTab from './tabs/ConfigTab.vue';
+import LogsTab from './tabs/LogsTab.vue';
 import IconSun from '~icons/carbon/sun';
 import IconMoon from '~icons/carbon/moon';
 import IconConnecting from '~icons/carbon/circle-dash';
 import IconOffline from '~icons/carbon/connection-signal-off';
+import IconSync from '~icons/carbon/update-now';
+import IconReset from '~icons/carbon/reset';
 
 const { isDark, toggle } = useTheme();
 const { connected } = useDiagnostics();
+const { syncing, clearing, syncNow, clearAndResync } = useSyncActions();
 
 // Brief grace period so a normal handshake doesn't flash the "no client" screen.
 const waiting = ref(true);
@@ -62,7 +67,8 @@ const tabs = [
   { value: 'data', label: 'Data Inspector' },
   { value: 'buckets', label: 'Buckets' },
   { value: 'streams', label: 'Streams' },
-  { value: 'config', label: 'Config' }
+  { value: 'config', label: 'Config' },
+  { value: 'logs', label: 'Logs' }
 ];
 </script>
 
@@ -75,16 +81,42 @@ const tabs = [
         <span class="font-semibold tracking-tight">PowerSync</span>
         <span class="text-xs text-muted-foreground">Diagnostics</span>
       </span>
-      <button
-        type="button"
-        class="rounded p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-        :title="isDark ? 'Switch to light' : 'Switch to dark'"
-        :aria-label="isDark ? 'Switch to light theme' : 'Switch to dark theme'"
-        @click="toggle"
-      >
-        <IconSun v-if="isDark" class="size-4" />
-        <IconMoon v-else class="size-4" />
-      </button>
+      <div class="flex items-center gap-0.5">
+        <!-- Global sync actions, available from every tab -->
+        <template v-if="connected">
+          <button
+            type="button"
+            class="rounded p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-50"
+            title="Sync now (request a checkpoint and wait until caught up)"
+            aria-label="Sync now"
+            :disabled="syncing"
+            @click="syncNow"
+          >
+            <IconSync :class="['size-4', syncing && 'animate-spin']" />
+          </button>
+          <button
+            type="button"
+            class="rounded p-1 text-muted-foreground transition-colors hover:bg-destructive/15 hover:text-destructive disabled:opacity-50"
+            title="Clear &amp; re-sync (wipe local data and download again)"
+            aria-label="Clear and re-sync"
+            :disabled="clearing"
+            @click="clearAndResync"
+          >
+            <IconReset :class="['size-4', clearing && 'animate-spin']" />
+          </button>
+          <span class="mx-0.5 h-4 w-px bg-border" aria-hidden="true" />
+        </template>
+        <button
+          type="button"
+          class="rounded p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          :title="isDark ? 'Switch to light' : 'Switch to dark'"
+          :aria-label="isDark ? 'Switch to light theme' : 'Switch to dark theme'"
+          @click="toggle"
+        >
+          <IconSun v-if="isDark" class="size-4" />
+          <IconMoon v-else class="size-4" />
+        </button>
+      </div>
     </header>
 
     <!-- Persistent, real-time status bar (visible on every tab) -->
@@ -128,6 +160,7 @@ const tabs = [
         <TabsContent value="buckets" class="p-3 focus-visible:outline-none"><BucketsTab /></TabsContent>
         <TabsContent value="streams" class="p-3 focus-visible:outline-none"><StreamsTab /></TabsContent>
         <TabsContent value="config" class="p-3 focus-visible:outline-none"><ConfigTab /></TabsContent>
+        <TabsContent value="logs" class="h-full focus-visible:outline-none"><LogsTab /></TabsContent>
       </div>
     </TabsRoot>
   </div>
