@@ -1,4 +1,5 @@
 import {
+  enableDiagnostics,
   WebPowerSyncDatabase,
   type PowerSyncBackendConnector,
   type WebPowerSyncDatabaseOptions,
@@ -6,7 +7,6 @@ import {
   type CommonPowerSyncDatabase,
   type PowerSyncDatabaseConstructor
 } from '@powersync/web';
-import { enableDiagnostics } from '@powersync/diagnostics-core';
 // @ts-ignore
 import { useRuntimeConfig } from '#app';
 
