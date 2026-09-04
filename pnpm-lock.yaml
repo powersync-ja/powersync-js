@@ -1071,6 +1071,9 @@ importers:
         specifier: ^3.5.42
         version: 3.5.42(typescript@6.0.3)
     devDependencies:
+      '@types/chrome':
+        specifier: ^0.2.8
+        version: 0.2.8
       '@wxt-dev/module-vue':
         specifier: ^1.0.3
         version: 1.0.3(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.0))(vue@3.5.42(typescript@6.0.3))(wxt@0.21.4(@rspack/core@1.7.12(@swc/helpers@0.5.23))(esbuild@0.28.2)(eslint@8.57.1(supports-color@10.2.2))(oxc-parser@0.131.0)(rolldown@1.2.7)(rollup@4.14.3)(typescript@6.0.3)(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.0))(webpack@5.110.3(@swc/core@1.16.1(@swc/helpers@0.5.23))(@swc/html@1.16.1)(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.26))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.26)(uglify-js@3.19.3)))
@@ -6809,6 +6812,9 @@ packages:
 
   '@types/chance@1.1.8':
     resolution: {integrity: sha512-isycXjm4a88/zl3n9lfgMcEClR9wUi+m72lkE9MvEbkgZDQrKzolWbonBiUqDNAJFIwO9GKjzmJFq79qtKVTAQ==}
+
+  '@types/chrome@0.2.8':
+    resolution: {integrity: sha512-dznDYMiJUyuc7b+78PxnWhaGOonmbX/OmcWu7NE42sg/yTLJMYnJ7Uah40SLPNFiCh8reqcthk7vOva2+MSvzw==}
 
   '@types/connect-history-api-fallback@1.5.4':
     resolution: {integrity: sha512-n6Cr2xS1h4uAulPRdlw6Jl6s1oG8KrVilPN2yUITEs+K48EzMJJ3W1xy8K5eWuFvjp3R74AOIGSmp2UfBJ8HFw==}
@@ -26146,6 +26152,11 @@ snapshots:
       assertion-error: 2.0.1
 
   '@types/chance@1.1.8': {}
+
+  '@types/chrome@0.2.8':
+    dependencies:
+      '@types/filesystem': 0.0.36
+      '@types/har-format': 1.2.16
 
   '@types/connect-history-api-fallback@1.5.4':
     dependencies:
