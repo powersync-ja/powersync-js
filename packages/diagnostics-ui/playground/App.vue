@@ -21,10 +21,15 @@ const client = new DiagnosticsClient(clientTransport);
 
 provideDiagnostics(client);
 
+// Preview the broken/no-client onboarding screen: open http://localhost:5199/?noclient
+const noClient = new URLSearchParams(location.search).has('noclient');
+
 onMounted(() => {
-  agent.start();
   client.start();
-  db.simulate();
+  if (!noClient) {
+    agent.start();
+    db.simulate();
+  }
 });
 
 onUnmounted(() => {

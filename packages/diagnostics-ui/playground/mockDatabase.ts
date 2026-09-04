@@ -115,7 +115,7 @@ export class MockDatabase {
   }
 
   async getUploadQueueStats(): Promise<{ count: number; size: number | null }> {
-    return { count: 3, size: 1536 };
+    return { count: 1543, size: 812345 };
   }
 
   async getAll<T = any>(sql: string): Promise<T[]> {
@@ -127,6 +127,20 @@ export class MockDatabase {
         { name: 'user_tasks[]', ops: 142, size: 48213, last_op: '1042' },
         { name: 'global[]', ops: 18, size: 3120, last_op: '88' }
       ] as T[];
+    }
+    if (/count\(\*\)[\s\S]*ps_crud/i.test(sql)) {
+      return [{ n: 1543 }] as T[];
+    }
+    if (/ps_crud/i.test(sql)) {
+      const ops = ['PUT', 'PATCH', 'DELETE'];
+      const tables = ['todos', 'lists', 'users', 'comments'];
+      // Oldest first (lowest id = next to upload), matching a real ps_crud ORDER BY id.
+      return Array.from({ length: 1543 }, (_, i) => ({
+        id: 4200 + i,
+        op: ops[i % ops.length],
+        tbl: tables[i % tables.length],
+        row_id: `row-${(i * 7 + 3).toString(16)}`
+      })) as T[];
     }
     return [
       { id: 'a1', description: 'Buy milk', completed: 0, user_id: 'mock-user-123' },
