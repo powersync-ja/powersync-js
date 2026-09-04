@@ -1,5 +1,5 @@
-// The host/inspector side of the Diagnostics Port: the client the UI drives.
 export * from './client.js';
+export * from './PostMessageTransport.js';
 
 // Re-export the Port contract from its home in `@powersync/common` so host consumers import the
 // protocol + transport types from one place. The agent is deliberately not re-exported here — it

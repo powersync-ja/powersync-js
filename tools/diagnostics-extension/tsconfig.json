@@ -1,0 +1,11 @@
+{
+  // WXT generates .wxt/tsconfig.json (auto-imports like defineContentScript, and the browser globals).
+  // Extending it is what makes the IDE and tsc resolve them. Regenerate with `wxt prepare` (or
+  // `pnpm prepare:wxt`) if .wxt is missing, e.g. after `clean`.
+  "extends": "./.wxt/tsconfig.json",
+  "compilerOptions": {
+    // The panel/background/content scripts use the `chrome.*` namespace directly (DevTools panels are
+    // chrome-only), which @types/chrome provides. WXT ships the `browser` global but not `chrome`.
+    "types": ["chrome"]
+  }
+}
