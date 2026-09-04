@@ -47,6 +47,14 @@ export class DiagnosticsClient {
 
   start(): void {
     this.disposers.push(this.transport.onMessage((message) => this.handleMessage(message)));
+    this.resync();
+  }
+
+  /**
+   * Re-announces and re-subscribes so the agent replays current state. Called on start, and safe to
+   * call again after a transport reconnect (e.g. an extension's background worker was restarted).
+   */
+  resync(): void {
     this.transport.send({ type: 'announce', role: 'client' });
     for (const channel of CHANNELS) {
       this.transport.send({ type: 'sub', channel });
