@@ -231,7 +231,8 @@ export class AttachmentContext {
     );
 
     const archivedAttachments = results.map(attachmentFromSql);
-    if (archivedAttachments.length === 0) return false;
+    // Nothing above the cache limit, so the paginated cleanup in `expireCache` is complete.
+    if (archivedAttachments.length === 0) return true;
 
     await callback?.(archivedAttachments);
     this.logger.log({
