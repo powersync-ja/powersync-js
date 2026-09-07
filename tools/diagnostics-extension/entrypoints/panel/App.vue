@@ -1,9 +1,16 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted } from 'vue';
 import { DiagnosticsClient } from '@powersync/diagnostics-core';
-import { DiagnosticsPanel, provideDiagnostics } from '@powersync/diagnostics-ui';
+import { DiagnosticsPanel, provideDiagnostics, useTheme } from '@powersync/diagnostics-ui';
 import '@powersync/diagnostics-ui/style.css';
 import { RuntimeTransport } from '../../lib/runtime-transport';
+
+// Match the panel's theme to Chrome DevTools' theme (themeName is 'dark' or 'default'/light).
+try {
+  useTheme().setTheme(chrome.devtools.panels.themeName === 'dark');
+} catch {
+  // themeName unavailable — fall back to the panel's own default.
+}
 
 // The panel runs in the DevTools context and knows which tab it is inspecting.
 const transport = new RuntimeTransport(chrome.devtools.inspectedWindow.tabId);
