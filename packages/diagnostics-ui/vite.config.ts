@@ -34,7 +34,11 @@ export default defineConfig({
         'tailwind-merge',
         'class-variance-authority',
         /^@powersync\//
-      ]
+      ],
+      // Emit a single chunk. Code-splitting Shiki's dynamic imports produced a chunk that mixed an
+      // externalized `import { h } from 'vue'` with Shiki's own `var h`, which stricter parsers
+      // (wxt/rolldown in the extension build) reject as a redeclaration. One chunk de-conflicts cleanly.
+      output: { inlineDynamicImports: true }
     }
   },
   server: { port: 5199 }

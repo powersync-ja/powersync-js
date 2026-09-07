@@ -5,6 +5,13 @@ import { defineConfig } from 'wxt';
 // BroadcastChannel) via a MAIN-world content script, an isolated relay, and the background worker.
 export default defineConfig({
   modules: ['@wxt-dev/module-vue'],
+  // Use esbuild/postcss for CSS, not lightningcss: lightningcss rewrites diagnostics-ui's precompiled
+  // Tailwind v4 `@layer`/`color-scheme` CSS in a way that breaks dark-mode token resolution (borders
+  // rendered light). Nuxt consumes the same CSS untransformed and looks correct.
+  vite: () => ({
+    css: { transformer: 'postcss' },
+    build: { cssMinify: 'esbuild' }
+  }),
   manifest: {
     name: 'PowerSync Diagnostics',
     description: 'Inspect a live PowerSync client from Chrome DevTools.',

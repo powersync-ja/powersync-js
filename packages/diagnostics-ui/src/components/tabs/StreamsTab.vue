@@ -24,7 +24,7 @@ onMounted(() => (timer = setInterval(() => (now.value = Date.now()), 1000)));
 onUnmounted(() => timer && clearInterval(timer));
 
 function ttl(expiresAt: number | null): string {
-  if (expiresAt == null) return 'no expiry';
+  if (expiresAt == null || !Number.isFinite(expiresAt)) return 'no expiry';
   const ms = expiresAt - now.value;
   if (ms <= 0) return 'expired';
   const s = Math.floor(ms / 1000);
@@ -74,7 +74,10 @@ async function subscribe() {
 async function unsubscribe(s: StreamState) {
   error.value = '';
   try {
-    await client.action({ action: 'unsubscribeStream', args: { name: s.name, params: s.params } });
+    // Deep-clone params to a plain object — s.params comes from a reactive store, and a reactive
+    // proxy can't be structured-cloned by the transport's postMessage ("could not be cloned").
+    const params = s.params ? (JSON.parse(JSON.stringify(s.params)) as Record<string, unknown>) : undefined;
+    await client.action({ action: 'unsubscribeStream', args: { name: s.name, params } });
   } catch (e) {
     error.value = String((e as Error).message ?? e);
   }

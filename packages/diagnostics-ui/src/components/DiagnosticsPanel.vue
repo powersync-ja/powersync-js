@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import { TabsRoot, TabsList, TabsTrigger, TabsContent } from 'reka-ui';
 import StatusBar from './StatusBar.vue';
 import Logo from './ui/Logo.vue';
@@ -70,6 +70,26 @@ const tabs = [
   { value: 'config', label: 'Config' },
   { value: 'logs', label: 'Logs' }
 ];
+
+// Keep the selected tab across refreshes (per viewer).
+const TAB_KEY = 'powersync-diagnostics-tab';
+function initialTab(): string {
+  try {
+    const stored = localStorage.getItem(TAB_KEY);
+    if (stored && tabs.some((t) => t.value === stored)) return stored;
+  } catch {
+    // localStorage unavailable
+  }
+  return 'status';
+}
+const activeTab = ref(initialTab());
+watch(activeTab, (value) => {
+  try {
+    localStorage.setItem(TAB_KEY, value);
+  } catch {
+    // best-effort
+  }
+});
 </script>
 
 <template>
@@ -142,7 +162,7 @@ const tabs = [
       </EmptyState>
     </div>
 
-    <TabsRoot v-else default-value="status" class="flex min-h-0 flex-1 flex-col">
+    <TabsRoot v-else v-model="activeTab" class="flex min-h-0 flex-1 flex-col">
       <TabsList class="flex gap-0.5 border-b px-1.5">
         <TabsTrigger
           v-for="t in tabs"
