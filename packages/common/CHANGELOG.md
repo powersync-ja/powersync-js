@@ -1,5 +1,11 @@
 # @powersync/common
 
+## 2.2.1
+
+### Patch Changes
+
+- 7223ab2: Fix `AttachmentQueue.expireCache()` never returning when there is nothing to delete.
+
 ## 2.2.0
 
 ### Minor Changes

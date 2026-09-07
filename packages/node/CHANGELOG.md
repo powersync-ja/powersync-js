@@ -1,5 +1,14 @@
 # @powersync/node
 
+## 1.0.1
+
+### Patch Changes
+
+- eaeb6a4: Update PowerSync SQLite core extension to version 0.5.3.
+- Updated dependencies [7223ab2]
+  - @powersync/common@2.2.1
+  - @powersync/shared-internals@1.2.0
+
 ## 1.0.0
 
 ### Major Changes

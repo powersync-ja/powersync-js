@@ -1,5 +1,14 @@
 # @powersync/capacitor
 
+## 0.9.1
+
+### Patch Changes
+
+- eaeb6a4: Update PowerSync SQLite core extension to version 0.5.3.
+- Updated dependencies [eaeb6a4]
+  - @powersync/web@2.3.1
+  - @powersync/shared-internals@1.2.0
+
 ## 0.9.0
 
 ### Minor Changes
