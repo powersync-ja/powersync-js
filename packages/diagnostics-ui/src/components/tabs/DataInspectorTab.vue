@@ -10,6 +10,7 @@ import DataTable from '../ui/DataTable.vue';
 import IconView from '~icons/carbon/data-view';
 import IconTable from '~icons/carbon/table';
 import IconRun from '~icons/carbon/play-filled-alt';
+import IconLoading from '~icons/carbon/circle-dash';
 
 interface DbObject {
   name: string;
@@ -102,7 +103,9 @@ onMounted(() => {
       <div class="space-y-2 border-b p-2">
         <SqlEditor v-model="sql" placeholder="Enter SQL — ⌘/Ctrl+Enter to run" @run="run" />
         <div class="flex items-center gap-3 text-xs">
-          <Button size="sm" :disabled="running" @click="run"><IconRun class="size-3.5" /> {{ running ? 'Running…' : 'Run' }}</Button>
+          <Button size="sm" :disabled="running" @click="run">
+            <component :is="running ? IconLoading : IconRun" :class="['size-3.5', running && 'animate-spin']" /> {{ running ? 'Running…' : 'Run' }}
+          </Button>
           <span class="text-muted-foreground">⌘/Ctrl+Enter</span>
           <span v-if="result && !error" class="tabular-nums text-muted-foreground">{{ result.rowCount }} rows</span>
           <span v-if="error" class="truncate text-destructive" :title="error">{{ error }}</span>

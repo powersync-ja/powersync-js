@@ -24,6 +24,7 @@ export function useSyncActions() {
 
   async function clearAndResync() {
     clearing.value = true;
+    syncError.value = null;
     try {
       await client.clearData();
     } catch {
@@ -39,7 +40,10 @@ export function useSyncActions() {
     syncError,
     syncNow,
     clearAndResync,
-    reconnect: () => client.reconnect(),
+    reconnect: () => {
+      syncError.value = null;
+      return client.reconnect();
+    },
     disconnect: () => client.disconnect()
   };
 }
