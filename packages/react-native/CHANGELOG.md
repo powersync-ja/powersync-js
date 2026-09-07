@@ -1,5 +1,16 @@
 # @powersync/react-native
 
+## 2.2.1
+
+### Patch Changes
+
+- eaeb6a4: Update PowerSync SQLite core extension to version 0.5.3.
+- 70e292b: Android: Support `android.builtInKotlin=true` with Android Gradle Plugin version 9 or later.
+- Updated dependencies [7223ab2]
+  - @powersync/common@2.2.1
+  - @powersync/react@2.0.1
+  - @powersync/shared-internals@1.2.0
+
 ## 2.2.0
 
 ### Minor Changes
