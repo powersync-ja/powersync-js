@@ -166,6 +166,14 @@ export abstract class AbstractQueryProcessor<
 
     // Wait for the schema to be set before listening to changes
     await db.waitForReady();
+
+    // close() might have been called while waiting for the database to be ready. At that point
+    // disposeListeners was not assigned yet, so dispose the closing listener here.
+    if (this._closed) {
+      disposeCloseListener();
+      return;
+    }
+
     const disposeSchemaListener = db.registerListener({
       schemaChanged: async () => {
         await this.runWithReporting(async () => {

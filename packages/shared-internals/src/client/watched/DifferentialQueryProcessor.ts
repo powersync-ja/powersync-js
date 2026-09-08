@@ -147,6 +147,12 @@ export class DifferentialQueryProcessor<RowType>
       tables: options.settings.triggerOnTables
     });
 
+    // The query might have been closed or aborted while resolving tables.
+    // Registering the change listener at this point would leak it.
+    if (this.closed || abortSignal.aborted) {
+      return;
+    }
+
     let currentMap: DataHashMap<RowType> = new Map();
 
     // populate the currentMap from the placeholder data
