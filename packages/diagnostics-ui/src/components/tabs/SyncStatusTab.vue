@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import type { PortInfo } from '@powersync/diagnostics-core';
+import type { ProtocolInfo } from '@powersync/diagnostics-core';
 import { useDiagnostics } from '../../composables/diagnostics';
 import { useSyncActions } from '../../composables/actions';
 import { formatBytes, formatCompact, formatPrecise } from '../../lib/format';
@@ -23,7 +23,7 @@ import IconLayers from '~icons/carbon/layers';
 const { client, connected, status, uploadQueue } = useDiagnostics();
 const { syncing, syncError, syncNow, clearAndResync, reconnect, disconnect } = useSyncActions();
 
-const info = ref<PortInfo | null>(null);
+const info = ref<ProtocolInfo | null>(null);
 const pendingOps = ref<CrudOp[]>([]);
 
 async function loadInfo() {

@@ -1,5 +1,4 @@
 import { IndexedColumn } from './IndexedColumn.js';
-import type { SerializedIndex } from './SerializedSchema.js';
 import { ResolvedTable } from './Table.js';
 
 /**
@@ -41,13 +40,6 @@ export class Index {
     return {
       name: this.name,
       columns: this.columns.map((c) => c.toJSON(table))
-    };
-  }
-
-  serialize(): SerializedIndex {
-    return {
-      name: this.name,
-      columns: this.columns.map((c) => c.serialize())
     };
   }
 }

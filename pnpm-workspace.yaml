@@ -83,3 +83,4 @@ minimumReleaseAgeExclude:
   - '@journeyapps/*'
   - '@powersync/*'
   - '@op-engineering/op-sqlite@18.1.1'
+  - '@rolldown/binding-openharmony-arm64@1.2.8'
