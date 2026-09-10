@@ -36,7 +36,6 @@ export * from './db/schema/Index.js';
 export * from './db/schema/IndexedColumn.js';
 export { PendingStatement, PendingStatementParameter, RawTableType } from './db/schema/RawTable.js';
 export * from './db/schema/Schema.js';
-export * from './db/schema/SerializedSchema.js';
 export * from './db/schema/Table.js';
 
 export * from './client/Query.js';

@@ -3,7 +3,7 @@ import { Unsubscribe, WireMessage } from './protocol.js';
 export type MessageHandler = (message: WireMessage) => void;
 
 /**
- * A duplex message channel carrying the Diagnostics Port protocol.
+ * A duplex message channel carrying the Diagnostics Protocol.
  *
  * The only per-environment part of the stack: a concrete transport is supplied by whoever hosts the
  * agent or client (e.g. a same-origin BroadcastChannel in `@powersync/web`, an extension message

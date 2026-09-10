@@ -9,9 +9,10 @@ import {
   Channel,
   EventMessage,
   LogRecord,
-  PortInfo,
+  ProtocolInfo,
   QueryResult,
   RequestMessage,
+  SchemaPayload,
   UploadQueueState,
   WireMessage
 } from './protocol.js';
@@ -29,6 +30,23 @@ export interface DiagnosticsAgentOptions {
    * the events reach the agent is environment-specific. Omit when core diagnostics aren't enabled.
    */
   eventSource?: DiagnosticsEventSource;
+  /**
+   * Read access to the live connection, supplied by the runtime that installs the agent. Omit when the
+   * runtime cannot expose it; endpoint/user info and reconnect are then unavailable.
+   */
+  connection?: DiagnosticsConnectionAccess;
+}
+
+/**
+ * Read access to the live connection. The concrete database exposes its connector and options, but
+ * they are not part of the public database interface, so the runtime glue (which can see the concrete
+ * type) hands them in rather than the agent reaching for them.
+ */
+export interface DiagnosticsConnectionAccess {
+  /** The connector of the active (or most recent) connection, or null before `connect()`. */
+  getConnector(): PowerSyncBackendConnector | null;
+  /** The options of the active (or most recent) connection, or null before `connect()`. */
+  getConnectionOptions(): SyncOptions | null;
 }
 
 /** Arguments for the subscribeStream/unsubscribeStream actions. */
@@ -40,17 +58,18 @@ interface StreamActionArgs {
 }
 
 /**
- * Runs next to a live PowerSync client and serves the Diagnostics Port over a {@link Transport}.
+ * Runs next to a live PowerSync client and serves the Diagnostics Protocol over a {@link Transport}.
  *
  * Every status change is forwarded as serialized state (the push bridge), and requests are
  * answered by querying the live client. No live SDK object ever crosses the transport. The agent
- * depends only on the public {@link CommonPowerSyncDatabase} interface and its injected ports, so a
- * single implementation covers every JS runtime (web, React Native, node).
+ * depends only on the public {@link CommonPowerSyncDatabase} interface plus what the runtime injects
+ * (event source, connection access), so a single implementation covers every JS runtime (web, React
+ * Native, node) without widening the public interface.
  */
 export class DiagnosticsAgent {
   private disposers: Array<() => void> = [];
   private started = false;
-  /** Debug subscriptions created via the Port, keyed by name + serialized params, so they can be released. */
+  /** Debug subscriptions created via the Protocol, keyed by name + serialized params, so they can be released. */
   private streamHandles = new Map<string, SyncStreamSubscription>();
   // Retained so reconnect / clear work after a disconnect, when the DB no longer exposes the connector.
   private lastConnector: PowerSyncBackendConnector | null = null;
@@ -283,7 +302,8 @@ export class DiagnosticsAgent {
       case 'query':
         return this.runQuery(message.params.sql, message.params.params);
       case 'getSchema':
-        return this.db.schema.serialize();
+        // The core payload: what the client already sends to `powersync_replace_schema`.
+        return this.db.schema.toJSON() as SchemaPayload;
       case 'getInfo':
         return this.getInfo();
       case 'getUploadQueueStats': {
@@ -301,13 +321,13 @@ export class DiagnosticsAgent {
     return { columns, rows, rowCount: rows.length };
   }
 
-  private async getInfo(): Promise<PortInfo> {
-    const db = this.db;
+  private async getInfo(): Promise<ProtocolInfo> {
+    const connection = this.options.connection;
 
     let endpoint: string | null = null;
     let userId: string | null = null;
     try {
-      const credentials = await db.connector?.fetchCredentials();
+      const credentials = await connection?.getConnector()?.fetchCredentials();
       endpoint = credentials?.endpoint ?? null;
       userId = credentials?.token ? decodeJwtSubject(credentials.token) : null;
     } catch {
@@ -329,12 +349,13 @@ export class DiagnosticsAgent {
       // Non-fatal.
     }
 
+    const connectionOptions = connection?.getConnectionOptions() ?? null;
     return {
       endpoint,
       userId,
       clientId,
-      connectionMethod: db.connectionOptions?.connectionMethod ?? null,
-      params: db.connectionOptions?.params ?? null,
+      connectionMethod: connectionOptions?.connectionMethod ?? null,
+      params: connectionOptions?.params ?? null,
       connected: this.db.currentStatus?.connected ?? false,
       sqliteCoreVersion,
       sdk: this.options.sdk ?? null
@@ -342,10 +363,11 @@ export class DiagnosticsAgent {
   }
 
   private captureConnection(): void {
-    const connector = this.db.connector;
+    const connection = this.options.connection;
+    const connector = connection?.getConnector() ?? null;
     if (connector) {
       this.lastConnector = connector;
-      this.lastConnectionOptions = this.db.connectionOptions;
+      this.lastConnectionOptions = connection?.getConnectionOptions() ?? null;
     }
   }
 

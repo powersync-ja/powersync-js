@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted } from 'vue';
-import type { CommonPowerSyncDatabase } from '@powersync/common';
+import type { CommonPowerSyncDatabase, PowerSyncBackendConnector, SyncOptions } from '@powersync/common';
 import { DiagnosticsAgent } from '@powersync/common/diagnostics';
 import { DiagnosticsClient } from '@powersync/diagnostics-core';
 import { DiagnosticsPanel, provideDiagnostics, useTheme } from '../src';
@@ -15,7 +15,12 @@ const [agentTransport, clientTransport] = createLoopback();
 const db = createMockDatabase();
 const agent = new DiagnosticsAgent(db as unknown as CommonPowerSyncDatabase, agentTransport, {
   sdk: '@powersync/web (mock)',
-  eventSource: new BroadcastEventSource()
+  eventSource: new BroadcastEventSource(),
+  // The harness plays the runtime glue: it hands the agent connection access, as `enableDiagnostics` does.
+  connection: {
+    getConnector: () => db.connector as unknown as PowerSyncBackendConnector,
+    getConnectionOptions: () => db.connectionOptions as unknown as SyncOptions
+  }
 });
 const client = new DiagnosticsClient(clientTransport);
 

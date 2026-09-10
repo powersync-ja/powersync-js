@@ -3,7 +3,7 @@ import { DiagnosticsClient, PostMessageTransport } from '@powersync/diagnostics-
 import { DiagnosticsPanel, provideDiagnostics } from '../src';
 import '../src/style.css';
 
-// Embed contract: this page runs in an iframe and speaks the Diagnostics Port over `postMessage` to
+// Embed contract: this page runs in an iframe and speaks the Diagnostics Protocol over `postMessage` to
 // its parent window. The embedder relays those wire messages to the live agent over whatever channel
 // it has (VM service, chrome bridge, WebSocket) and posts agent messages back onto this frame.
 const client = new DiagnosticsClient(new PostMessageTransport());

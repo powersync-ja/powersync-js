@@ -1,5 +1,5 @@
 /**
- * The Diagnostics Port contract.
+ * The Diagnostics Protocol contract.
  *
  * Everything the diagnostics UI needs collapses to this narrow, JSON-serializable surface:
  * a read/write SQL query, a handful of request/response calls, and a set of push channels.
@@ -97,7 +97,7 @@ export interface LogRecord {
 }
 
 /** Connection metadata for the attached client. */
-export interface PortInfo {
+export interface ProtocolInfo {
   endpoint: string | null;
   userId: string | null;
   clientId: string | null;
@@ -109,16 +109,53 @@ export interface PortInfo {
   sdk: string | null;
 }
 
-// The serialized schema types are the SDK's canonical ones, produced by `db.schema.serialize()`.
-export type {
-  SerializedColumn,
-  SerializedIndex,
-  SerializedIndexColumn,
-  SerializedRawTable,
-  SerializedSchema,
-  SerializedTable,
-  SerializedTrackPrevious
-} from '../db/schema/SerializedSchema.js';
+// --- schema ---
+//
+// The schema crosses the wire as the SQLite core receives it: the exact JSON payload every SDK
+// already sends to `powersync_replace_schema`. Reusing the core payload keeps `getSchema` uniform
+// across SDKs, since none of them needs a second serializer for diagnostics.
+
+export interface SchemaColumn {
+  name: string;
+  type: string;
+}
+
+export interface SchemaIndexColumn {
+  name: string;
+  ascending: boolean;
+  type: string;
+}
+
+export interface SchemaIndex {
+  name: string;
+  columns: SchemaIndexColumn[];
+}
+
+export interface SchemaTable {
+  name: string;
+  /** The effective view name; equals `name` unless overridden. */
+  view_name: string;
+  columns: SchemaColumn[];
+  indexes: SchemaIndex[];
+  local_only: boolean;
+  insert_only: boolean;
+  /** Previous-value tracking: on/off, or the names of the tracked columns. */
+  include_old: boolean | string[];
+  include_old_only_when_changed: boolean;
+  include_metadata: boolean;
+  ignore_empty_update: boolean;
+}
+
+/** An application-managed table. Diagnostics reads only `name`; the other fields are core trigger options. */
+export interface SchemaRawTable {
+  name: string;
+  [field: string]: unknown;
+}
+
+export interface SchemaPayload {
+  tables: SchemaTable[];
+  raw_tables: SchemaRawTable[];
+}
 
 /** Write/control actions the UI can invoke on the live client. */
 export type ActionName =

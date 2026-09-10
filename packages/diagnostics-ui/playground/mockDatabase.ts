@@ -77,33 +77,36 @@ export class MockDatabase {
     }
   ];
 
+  // The core schema payload, the same shape `powersync_replace_schema` receives.
   readonly schema = {
-    serialize: () => ({
+    toJSON: () => ({
       tables: [
         {
           name: 'tasks',
-          viewName: 'tasks',
-          localOnly: false,
-          insertOnly: false,
-          trackPrevious: false as boolean,
-          trackMetadata: true,
-          ignoreEmptyUpdates: false,
+          view_name: 'tasks',
+          local_only: false,
+          insert_only: false,
+          include_old: false as boolean | string[],
+          include_old_only_when_changed: false,
+          include_metadata: true,
+          ignore_empty_update: false,
           columns: [
             { name: 'description', type: 'TEXT' },
             { name: 'completed', type: 'INTEGER' },
             { name: 'user_id', type: 'TEXT' },
             { name: 'list_id', type: 'TEXT' }
           ],
-          indexes: [{ name: 'by_user', columns: [{ name: 'user_id', ascending: true }] }]
+          indexes: [{ name: 'by_user', columns: [{ name: 'user_id', ascending: true, type: 'TEXT' }] }]
         },
         {
           name: 'lists',
-          viewName: 'lists',
-          localOnly: false,
-          insertOnly: false,
-          trackPrevious: false as boolean,
-          trackMetadata: false,
-          ignoreEmptyUpdates: false,
+          view_name: 'lists',
+          local_only: false,
+          insert_only: false,
+          include_old: false as boolean | string[],
+          include_old_only_when_changed: false,
+          include_metadata: false,
+          ignore_empty_update: false,
           columns: [
             { name: 'name', type: 'TEXT' },
             { name: 'owner_id', type: 'TEXT' },
@@ -113,12 +116,13 @@ export class MockDatabase {
         },
         {
           name: 'drafts',
-          viewName: 'drafts',
-          localOnly: true,
-          insertOnly: false,
-          trackPrevious: false as boolean,
-          trackMetadata: false,
-          ignoreEmptyUpdates: true,
+          view_name: 'drafts',
+          local_only: true,
+          insert_only: false,
+          include_old: false as boolean | string[],
+          include_old_only_when_changed: false,
+          include_metadata: false,
+          ignore_empty_update: true,
           columns: [
             { name: 'body', type: 'TEXT' },
             { name: 'updated_at', type: 'INTEGER' }
@@ -126,7 +130,7 @@ export class MockDatabase {
           indexes: []
         }
       ],
-      rawTables: []
+      raw_tables: []
     })
   };
 
