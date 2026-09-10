@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import type { PortInfo, SerializedSchema, SerializedTable } from '@powersync/diagnostics-core';
+import type { ProtocolInfo, SchemaPayload, SchemaTable } from '@powersync/diagnostics-core';
 import { useDiagnostics } from '../../composables/diagnostics';
 import { useFuzzySearch } from '../../composables/fuzzy';
 import { formatParams } from '../../lib/format';
@@ -21,8 +21,8 @@ import IconTable from '~icons/carbon/table';
 import IconRefresh from '~icons/carbon/renew';
 
 const { client, connected } = useDiagnostics();
-const info = ref<PortInfo | null>(null);
-const schema = ref<SerializedSchema | null>(null);
+const info = ref<ProtocolInfo | null>(null);
+const schema = ref<SchemaPayload | null>(null);
 
 const connView = ref<'structured' | 'json'>('structured');
 const schemaView = ref<'tree' | 'json'>('json');
@@ -58,14 +58,19 @@ function isOpen(name: string): boolean {
   return query.value.trim() ? true : expanded.value.has(name);
 }
 
-function tableFlags(table: SerializedTable): string[] {
+// Flags come straight from the core schema payload (snake_case), the shape every SDK already produces.
+function tableFlags(table: SchemaTable): string[] {
   const flags: string[] = [];
-  if (table.localOnly) flags.push('local-only');
-  if (table.insertOnly) flags.push('insert-only');
-  if (table.trackMetadata) flags.push('metadata');
-  if (table.trackPrevious) flags.push('track-previous');
-  if (table.ignoreEmptyUpdates) flags.push('ignore-empty-updates');
+  if (table.local_only) flags.push('local-only');
+  if (table.insert_only) flags.push('insert-only');
+  if (table.include_metadata) flags.push('metadata');
+  if (table.include_old) flags.push('track-previous');
+  if (table.ignore_empty_update) flags.push('ignore-empty-updates');
   return flags;
+}
+// The core carries only the effective view name; it was overridden when it differs from the table name.
+function hasViewOverride(table: SchemaTable): boolean {
+  return table.view_name !== table.name;
 }
 function indexColumns(columns: { name: string; ascending: boolean }[]): string {
   return columns.map((c) => c.name + (c.ascending ? '' : ' ↓')).join(', ');
@@ -122,7 +127,7 @@ function indexColumns(columns: { name: string; ascending: boolean }[]): string {
               <IconTable class="size-3.5 shrink-0 text-muted-foreground" />
               <span class="font-mono font-medium">{{ table.name }}</span>
               <span class="text-muted-foreground">{{ table.columns.length }} cols</span>
-              <span v-if="table.viewNameOverride" class="text-muted-foreground">· view: {{ table.viewName }}</span>
+              <span v-if="hasViewOverride(table)" class="text-muted-foreground">· view: {{ table.view_name }}</span>
               <span class="flex flex-1 flex-wrap justify-end gap-1">
                 <Badge v-for="flag in tableFlags(table)" :key="flag" variant="muted">{{ flag }}</Badge>
               </span>
@@ -142,8 +147,8 @@ function indexColumns(columns: { name: string; ascending: boolean }[]): string {
               </div>
             </div>
           </div>
-          <div v-if="schema.rawTables.length" class="px-1 text-[11px] text-muted-foreground">
-            Raw tables: <span class="font-mono">{{ schema.rawTables.map((t) => t.name).join(', ') }}</span>
+          <div v-if="schema.raw_tables.length" class="px-1 text-[11px] text-muted-foreground">
+            Raw tables: <span class="font-mono">{{ schema.raw_tables.map((t) => t.name).join(', ') }}</span>
           </div>
         </div>
       </template>

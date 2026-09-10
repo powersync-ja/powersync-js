@@ -5,11 +5,11 @@ import {
   Channel,
   EventMessage,
   LogRecord,
-  PortInfo,
+  ProtocolInfo,
   QueryResult,
   RequestMessage,
   RequestMethod,
-  SerializedSchema,
+  SchemaPayload,
   StreamState,
   SyncState,
   Transport,
@@ -22,7 +22,7 @@ const CHANNELS: Channel[] = ['status', 'streams', 'buckets', 'logs', 'uploadQueu
 const MAX_LOGS = 2000;
 
 /**
- * The client side of the Diagnostics Port, used by the UI.
+ * The client side of the Diagnostics Protocol, used by the UI.
  *
  * Wraps a {@link Transport}, exposes request/response methods and write actions, and mirrors the
  * agent's push channels into nanostores atoms. Consumers subscribe to these atoms (e.g. via
@@ -75,12 +75,12 @@ export class DiagnosticsClient {
     return this.request<QueryResult>('query', { sql, params });
   }
 
-  getSchema(): Promise<SerializedSchema> {
-    return this.request<SerializedSchema>('getSchema');
+  getSchema(): Promise<SchemaPayload> {
+    return this.request<SchemaPayload>('getSchema');
   }
 
-  getInfo(): Promise<PortInfo> {
-    return this.request<PortInfo>('getInfo');
+  getInfo(): Promise<ProtocolInfo> {
+    return this.request<ProtocolInfo>('getInfo');
   }
 
   action(request: ActionRequest): Promise<{ ok: true }> {
