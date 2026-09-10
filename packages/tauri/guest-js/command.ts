@@ -6,6 +6,7 @@ export interface OpenDatabase {
   name: string;
   // Serialized schema for core extension
   schema: unknown;
+  encryption_key?: string;
 }
 
 export interface ExecuteSql {
