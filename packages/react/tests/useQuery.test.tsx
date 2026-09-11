@@ -5,7 +5,7 @@ import { eq } from 'drizzle-orm';
 import { sqliteTable, text } from 'drizzle-orm/sqlite-core';
 import pDefer from 'p-defer';
 import React, { useEffect } from 'react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 import { PowerSyncContext } from '../src/hooks/PowerSyncContext';
 import { useQuery } from '../src/hooks/watched/useQuery';
 import { useWatchedQuerySubscription } from '../src/hooks/watched/useWatchedQuerySubscription';
@@ -21,6 +21,47 @@ describe('useQuery', () => {
   const baseWrapper = ({ children, db }) => (
     <PowerSyncContext.Provider value={db}>{children}</PowerSyncContext.Provider>
   );
+
+  /**
+   * Watches both the database logger (the structured record) and `console.error` (what a developer
+   * actually sees, since the default logger forwards error records there).
+   */
+  const spyOnErrorLogs = (db: commonSdk.AbstractPowerSyncDatabase) => {
+    const logger = vi.spyOn(db.logger, 'log');
+    const consoleError = vi.spyOn(console, 'error');
+    onTestFinished(() => {
+      logger.mockRestore();
+      consoleError.mockRestore();
+    });
+    return { logger, consoleError };
+  };
+
+  const expectLoggedError = (
+    spies: ReturnType<typeof spyOnErrorLogs>,
+    expectedMessage: string,
+    expectedLogMessage = 'Error in watched query'
+  ) => {
+    const errorRecords = spies.logger.mock.calls
+      .map(([record]) => record)
+      .filter((record) => record.level >= commonSdk.LogLevels.error);
+
+    expect(errorRecords.length).toBeGreaterThan(0);
+    // The log has to carry the underlying error, otherwise it does not help with discovery.
+    expect(
+      errorRecords.some(
+        (record) => record.message.includes(expectedLogMessage) && (record.error as Error)?.message == expectedMessage
+      )
+    ).toBe(true);
+    // The issue reports an empty console, so assert on the actual developer-visible output too.
+    expect(
+      spies.consoleError.mock.calls.some(
+        ([message, error]) =>
+          typeof message == 'string' &&
+          message.includes(expectedLogMessage) &&
+          (error as Error)?.message == expectedMessage
+      )
+    ).toBe(true);
+  };
 
   const testCases = [
     {
@@ -74,6 +115,85 @@ describe('useQuery', () => {
           },
           { timeout: 500, interval: 100 }
         );
+      });
+
+      it('should log the error when a watched query fails to resolve its tables', async () => {
+        const db = openPowerSync();
+        const spies = spyOnErrorLogs(db);
+
+        renderHook(() => useQuery('SELECT * from faketable', []), {
+          wrapper: ({ children }) => testWrapper({ children, db })
+        });
+
+        await waitFor(async () => expectLoggedError(spies, 'no such table: faketable'), {
+          timeout: 2000,
+          interval: 100
+        });
+      });
+
+      it('should log the error when a watched query fails while executing', async () => {
+        const db = openPowerSync();
+        const spies = spyOnErrorLogs(db);
+
+        // The tables of this query resolve successfully, the failure only happens once the query is
+        // executed. This is the path a query builder such as Kysely takes when the generated SQL is
+        // valid but execution fails at runtime.
+        const query: commonSdk.CompilableQuery<any> = {
+          compile: () => ({ sql: 'SELECT * from lists', parameters: [] }),
+          execute: async () => {
+            throw new Error('simulated execute failure');
+          }
+        };
+
+        renderHook(() => useQuery(query), {
+          wrapper: ({ children }) => testWrapper({ children, db })
+        });
+
+        await waitFor(async () => expectLoggedError(spies, 'simulated execute failure'), {
+          timeout: 2000,
+          interval: 100
+        });
+      });
+
+      it('should include the generated SQL when a runQueryOnce query fails to execute', async () => {
+        const db = openPowerSync();
+        const spies = spyOnErrorLogs(db);
+
+        // `compile` succeeds here, only `execute` fails. The compiled SQL is the interesting part of such
+        // a failure, since the caller only ever supplied a query builder.
+        const sql = 'SELECT * from lists WHERE name = ?';
+        const query: commonSdk.CompilableQuery<any> = {
+          compile: () => ({ sql, parameters: ['a name'] }),
+          execute: async () => {
+            throw new Error('simulated execute failure');
+          }
+        };
+
+        renderHook(() => useQuery(query, [], { runQueryOnce: true }), {
+          wrapper: ({ children }) => testWrapper({ children, db })
+        });
+
+        await waitFor(
+          async () => expectLoggedError(spies, 'simulated execute failure', `Error in watched query: ${sql}`),
+          {
+            timeout: 2000,
+            interval: 100
+          }
+        );
+      });
+
+      it('should log the error when a query with the runQueryOnce flag fails', async () => {
+        const db = openPowerSync();
+        const spies = spyOnErrorLogs(db);
+
+        renderHook(() => useQuery('SELECT * from faketable', [], { runQueryOnce: true }), {
+          wrapper: ({ children }) => testWrapper({ children, db })
+        });
+
+        await waitFor(async () => expectLoggedError(spies, 'no such table: faketable'), {
+          timeout: 2000,
+          interval: 100
+        });
       });
 
       it('should rerun the query when refresh is used', async () => {

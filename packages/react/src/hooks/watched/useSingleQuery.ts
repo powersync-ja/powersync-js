@@ -1,3 +1,4 @@
+import { CompiledQuery, LogLevels } from '@powersync/common';
 import React from 'react';
 import { QueryResult } from './watch-types.js';
 import { InternalHookOptions } from './watch-utils.js';
@@ -18,8 +19,11 @@ export const useSingleQuery = <RowType = any>(options: InternalHookOptions<RowTy
   const runQuery = React.useCallback(
     async (signal?: AbortSignal) => {
       setOutputState((prev) => ({ ...prev, isLoading: true, isFetching: true, error: undefined }));
+      // Declared here, but only assigned inside the try block, so that the generated SQL can be reported
+      // when `execute` fails. It stays undefined if `compile` itself is what threw.
+      let compiledQuery: CompiledQuery | undefined;
       try {
-        const compiledQuery = query.compile();
+        compiledQuery = query.compile();
         const result = await query.execute({
           sql: compiledQuery.sql,
           parameters: [...compiledQuery.parameters],
@@ -36,6 +40,13 @@ export const useSingleQuery = <RowType = any>(options: InternalHookOptions<RowTy
           error: undefined
         }));
       } catch (error) {
+        // Matches the logging done by watched queries, so that `runQueryOnce` failures are just as
+        // discoverable.
+        powerSync.logger.log({
+          level: LogLevels.error,
+          message: compiledQuery ? `Error in watched query: ${compiledQuery.sql}` : 'Error in watched query',
+          error
+        });
         setOutputState((prev) => ({
           ...prev,
           isLoading: false,
