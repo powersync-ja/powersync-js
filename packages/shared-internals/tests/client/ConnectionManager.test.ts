@@ -23,6 +23,8 @@ class MockStreamingSyncImplementation
 {
   isConnected = false;
   isReady = false;
+  disconnectCalls = 0;
+  disconnectError: Error | null = null;
   readonly receivedUpdates: SubscribedStream[][] = [];
 
   constructor(
@@ -43,7 +45,11 @@ class MockStreamingSyncImplementation
   }
 
   async disconnect() {
+    this.disconnectCalls++;
     this.isConnected = false;
+    if (this.disconnectError) {
+      throw this.disconnectError;
+    }
   }
 
   async getWriteCheckpoint() {
@@ -197,6 +203,41 @@ describe('ConnectionManager', () => {
       expect(names(harness.sync.effectiveSubscriptions)).toEqual([]);
 
       await harness.manager.disconnect();
+    });
+  });
+
+  describe('failed disconnect', () => {
+    test('does not reuse a rejected disconnect for later disconnect and connect', async () => {
+      const harness = managerWithCreateHook();
+      await harness.manager.connect(connector, {}, {});
+      const error = new Error('transient teardown failure');
+      harness.sync.disconnectError = error;
+
+      await expect(harness.manager.disconnect()).rejects.toBe(error);
+      // performDisconnect already nulled the sync implementation, so a retry has nothing to tear down.
+      await expect(harness.manager.disconnect()).resolves.toBeUndefined();
+      expect(harness.syncs[0].disconnectCalls).toBe(1);
+
+      await harness.manager.connect(connector, {}, {});
+      expect(harness.syncs).toHaveLength(2);
+
+      await harness.manager.disconnect();
+    });
+
+    test('concurrent disconnects share the in-flight rejection, then a later call retries', async () => {
+      const harness = managerWithCreateHook();
+      await harness.manager.connect(connector, {}, {});
+      const error = new Error('transient teardown failure');
+      harness.sync.disconnectError = error;
+
+      const first = harness.manager.disconnect();
+      const second = harness.manager.disconnect();
+
+      await expect(first).rejects.toBe(error);
+      await expect(second).rejects.toBe(error);
+
+      await expect(harness.manager.disconnect()).resolves.toBeUndefined();
+      expect(harness.syncs[0].disconnectCalls).toBe(1);
     });
   });
 });

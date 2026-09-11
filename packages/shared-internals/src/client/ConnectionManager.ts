@@ -290,8 +290,11 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
 
     this.disconnectingPromise = this.performDisconnect();
 
-    await this.disconnectingPromise;
-    this.disconnectingPromise = null;
+    try {
+      await this.disconnectingPromise;
+    } finally {
+      this.disconnectingPromise = null;
+    }
   }
 
   protected async performDisconnect() {
