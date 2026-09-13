@@ -39,6 +39,7 @@ export * from './db/schema/Schema.js';
 export * from './db/schema/Table.js';
 
 export * from './client/Query.js';
+export * from './client/plugins/WatchedQueryPlugin.js';
 export * from './client/triggers/sanitizeSQL.js';
 export * from './client/triggers/TriggerManager.js';
 export * from './client/watched/GetAllQuery.js';
