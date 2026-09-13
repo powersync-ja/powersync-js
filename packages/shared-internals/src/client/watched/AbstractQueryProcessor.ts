@@ -146,7 +146,8 @@ export abstract class AbstractQueryProcessor<
       signature: querySignature(compiled),
       compiled,
       dataIsArray: Array.isArray(this.options.placeholderData),
-      extensionOptions: undefined, // per-plugin value filled by forEachHook below
+      extensionOptions: undefined, // per-plugin value filled in by WatchedQueryPluginRegistry.createHooks
+      extensions: this.options.watchOptions.extensions,
       db: this.options.db as any
     };
   }

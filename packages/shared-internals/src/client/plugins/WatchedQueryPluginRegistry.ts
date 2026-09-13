@@ -21,6 +21,17 @@ export interface ActiveQueryHooks {
   hooks: WatchedQueryHooks;
 }
 
+/** Per-plugin-id shallow merge; the second argument (watch-level) wins. */
+export function mergeExtensions(
+  base: Record<string, unknown> | undefined,
+  override: Record<string, unknown> | undefined
+): Record<string, unknown> | undefined {
+  if (!base && !override) {
+    return undefined;
+  }
+  return { ...base, ...override };
+}
+
 export class WatchedQueryPluginRegistry {
   private readonly plugins: WatchedQueryPlugin[];
   private readonly detached = new Set<string>();
@@ -85,7 +96,10 @@ export class WatchedQueryPluginRegistry {
         continue;
       }
       try {
-        const hooks = plugin.onWatchedQueryCreate?.(context);
+        const hooks = plugin.onWatchedQueryCreate?.({
+          ...context,
+          extensionOptions: context.extensions?.[plugin.id]
+        });
         if (hooks) {
           active.push({ pluginId: plugin.id, hooks });
         }

@@ -47,6 +47,8 @@ export interface WatchedQueryPluginContext {
   readonly dataIsArray: boolean;
   /** The value under `extensions[plugin.id]` in the query's options, if any. */
   readonly extensionOptions: unknown;
+  /** The full merged per-query extensions record. Prefer {@link extensionOptions}. */
+  readonly extensions?: Record<string, unknown>;
   readonly db: CommonPowerSyncDatabase;
 }
 
