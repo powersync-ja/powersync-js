@@ -78,7 +78,9 @@ export abstract class AbstractQueryProcessor<
       isFetching: this.reportFetching, // Only set to true if we will report updates in future
       error: null,
       lastUpdated: null,
-      data: this.options.placeholderData
+      data: this.options.placeholderData,
+      source: 'placeholder',
+      sourceMeta: null
     };
   }
 
@@ -132,7 +134,9 @@ export abstract class AbstractQueryProcessor<
    */
   protected abstract linkQuery(options: LinkQueryOptions<Data>): Promise<void>;
 
-  protected async updateState(update: Partial<MutableWatchedQueryState<Data>>) {
+  protected async updateState(
+    update: Partial<MutableWatchedQueryState<Data>> & { source?: string; sourceMeta?: unknown }
+  ) {
     if (this._closed) {
       return;
     }
@@ -142,6 +146,11 @@ export abstract class AbstractQueryProcessor<
       // An error always stops for the current fetching state
       update.isFetching = false;
       update.isLoading = false;
+    }
+
+    if (typeof update.data !== 'undefined' && typeof update.source === 'undefined') {
+      update.source = 'live';
+      update.sourceMeta = null;
     }
 
     Object.assign(this.state, { lastUpdated: new Date() } satisfies Partial<WatchedQueryState<Data>>, update);
