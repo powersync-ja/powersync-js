@@ -66,9 +66,34 @@ export class DifferentialQueryProcessor<RowType>
 {
   protected comparator: DifferentialWatchedQueryComparator<RowType>;
 
+  /**
+   * Keyed snapshot of the last emitted result, used to compute the next diff. Held on
+   * the instance so plugin-seeded data arriving after link can reseed it (spec rule 2:
+   * seeded data behaves exactly like a previous emission).
+   */
+  private currentMap: DataHashMap<RowType> = new Map();
+
   constructor(protected options: DifferentialQueryProcessorOptions<RowType>) {
     super(options);
     this.comparator = options.rowComparator ?? DEFAULT_ROW_COMPARATOR;
+  }
+
+  private seedComparisonMap(rows: ReadonlyArray<Readonly<RowType>>): void {
+    const seeded: DataHashMap<RowType> = new Map();
+    rows.forEach((item) => {
+      seeded.set(this.comparator.keyBy(item), {
+        hash: this.comparator.compareBy(item),
+        item
+      });
+    });
+    this.currentMap = seeded;
+  }
+
+  protected override onSeededDataAdopted(rows: readonly unknown[]): void {
+    // Runs only on the async seed path (post-construction — comparator is assigned).
+    // The synchronous seedInitial path needs no call: linkQuery seeds from state.data,
+    // which already holds the seeded rows.
+    this.seedComparisonMap(rows as ReadonlyArray<Readonly<RowType>>);
   }
 
   /*
@@ -147,15 +172,7 @@ export class DifferentialQueryProcessor<RowType>
       tables: options.settings.triggerOnTables
     });
 
-    let currentMap: DataHashMap<RowType> = new Map();
-
-    // populate the currentMap from the placeholder data
-    this.state.data.forEach((item) => {
-      currentMap.set(this.comparator.keyBy(item), {
-        hash: this.comparator.compareBy(item),
-        item
-      });
-    });
+    this.seedComparisonMap(this.state.data);
 
     db.onChangeWithCallback(
       {
@@ -192,15 +209,18 @@ export class DifferentialQueryProcessor<RowType>
               partialStateUpdate.isLoading = false;
             }
 
-            const { diff, hasChanged, map } = this.differentiate(result, currentMap);
+            const { diff, hasChanged, map } = this.differentiate(result, this.currentMap);
             // Update for future comparisons
-            currentMap = map;
+            this.currentMap = map;
+
+            // Always update data on a live result to transition from seeded/placeholder to 'live'
+            // (spec rule 2: seeded data behaves exactly like a previous emission)
+            Object.assign(partialStateUpdate, {
+              data: diff.all
+            });
 
             if (hasChanged) {
               await this.iterateAsyncListenersWithError((l) => l.onDiff?.(diff));
-              Object.assign(partialStateUpdate, {
-                data: diff.all
-              });
             }
 
             if (this.state.error) {
