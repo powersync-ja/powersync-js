@@ -68,6 +68,14 @@ export abstract class AbstractQueryProcessor<
   private pluginHooks: ActiveQueryHooks[] | null = null;
   /** True once a live result has reached the state. Gates every seed. */
   private hasLiveResult = false;
+  /**
+   * True once a plugin-seeded result has been adopted for the current hook generation.
+   * Enforces first-adopted-wins across `trySeed` calls (two plugins, or the same plugin
+   * calling `seed()` twice) — without this, a later seed would silently overwrite an
+   * already-adopted one even though `hasLiveResult`/`_closed`/`signal.aborted` are all
+   * still false. Reset alongside `hasLiveResult` whenever hooks are rebound.
+   */
+  private hasAdoptedSeed = false;
   /** Set while hooks were deferred because the registry had not opened yet. */
   private hooksDeferred = false;
 
@@ -158,9 +166,10 @@ export abstract class AbstractQueryProcessor<
   }
 
   private trySeed(result: SeededResult, signal: AbortSignal): boolean {
-    if (this.hasLiveResult || this._closed || signal.aborted) {
+    if (this.hasLiveResult || this.hasAdoptedSeed || this._closed || signal.aborted) {
       return false;
     }
+    this.hasAdoptedSeed = true;
     this.onSeededDataAdopted(result.data);
     // Same `data?: Data` override linkQuery implementations use to satisfy updateState's
     // MutableWatchedQueryState<Data> parameter — Data isn't assignable to MutableDeep<Data>
@@ -220,26 +229,32 @@ export abstract class AbstractQueryProcessor<
     this.pluginHooks = null;
   }
 
-  protected async updateSettingsInternal(settings: Settings, signal: AbortSignal) {
+  protected async updateSettingsInternal(settings: Settings, signal: AbortSignal, isInitialSetup = false) {
     // This may have been aborted while awaiting or if multiple calls to `updateSettings` were made
     if (this._closed || signal.aborted) {
       return;
     }
 
-    // The very first call to this method is the "initial setup" call made from init(),
-    // passing the same `watchOptions` object that already produced this.pluginHooks
-    // (in the constructor, or in init()'s deferred-hooks block). Only an actual settings
-    // change — a different `settings` object — should dispose and recreate hooks; doing
-    // so unconditionally would tear down and rebuild hooks once per query for no reason,
-    // double-counting onWatchedQueryCreate/onDispose calls.
-    const settingsChanged = settings !== this.options.watchOptions;
     this.options.watchOptions = settings;
 
-    if (settingsChanged || !this.pluginHooks) {
+    // `isInitialSetup` is true only for the single call init() makes right after
+    // construction — at that point this.pluginHooks already reflects the current
+    // settings (created in the constructor, or in init()'s deferred-hooks block), so
+    // there is nothing to rebind yet.
+    //
+    // Every OTHER call — a real settings change via the public `updateSettings()`, or
+    // AbstractQueryProcessor's own `schemaChanged` listener re-linking with the exact
+    // same settings object — must unconditionally dispose and recreate hooks with a
+    // fresh signal. Object identity of `settings` plays no part: schemaChanged always
+    // re-links with the SAME reference, and its onLink registrations must still be
+    // rebound against the new (non-aborted) signal, or seeding silently dies for the
+    // rest of the query's life after the first schema change.
+    if (!isInitialSetup) {
       this.hasLiveResult = false;
+      this.hasAdoptedSeed = false;
       this.disposePluginHooks();
       const registry: WatchedQueryPluginRegistry | undefined = (this.options.db as any).pluginRegistry;
-      if (registry?.isOpen) {
+      if (registry?.hasPlugins && registry.isOpen) {
         this.pluginHooks = registry.createHooks(this.buildPluginContext());
         const reseed = this.consultInitialSeed();
         if (reseed) {
@@ -347,7 +362,7 @@ export abstract class AbstractQueryProcessor<
     if (this.hooksDeferred) {
       this.hooksDeferred = false;
       const registry: WatchedQueryPluginRegistry | undefined = (this.options.db as any).pluginRegistry;
-      if (registry?.isOpen) {
+      if (registry?.hasPlugins && registry.isOpen) {
         this.pluginHooks = registry.createHooks(this.buildPluginContext());
         const deferredSeed = this.consultInitialSeed();
         if (deferredSeed) {
@@ -372,7 +387,7 @@ export abstract class AbstractQueryProcessor<
 
     // Initial setup
     await this.runWithReporting(async () => {
-      await this.updateSettingsInternal(this.options.watchOptions, signal);
+      await this.updateSettingsInternal(this.options.watchOptions, signal, true);
     });
   }
 
