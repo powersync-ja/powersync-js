@@ -213,11 +213,15 @@ export class DifferentialQueryProcessor<RowType>
             // Update for future comparisons
             this.currentMap = map;
 
-            // Always update data on a live result to transition from seeded/placeholder to 'live'
-            // (spec rule 2: seeded data behaves exactly like a previous emission)
-            Object.assign(partialStateUpdate, {
-              data: diff.all
-            });
+            // Update data on state-source transition (cache/placeholder → live) or on actual changes.
+            // Spec rule 2: seeded data behaves exactly like a previous emission. The first live
+            // result diffs against seeded rows and must transition the state to 'live', even if
+            // the result hasn't changed. After the transition, only hasChanged updates (no churn).
+            if (hasChanged || this.state.source !== 'live') {
+              Object.assign(partialStateUpdate, {
+                data: diff.all
+              });
+            }
 
             if (hasChanged) {
               await this.iterateAsyncListenersWithError((l) => l.onDiff?.(diff));
