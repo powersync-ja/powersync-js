@@ -243,4 +243,84 @@ describe('plugin hook dispatch', () => {
     expect(processor.state.data).toEqual([{ id: 'deferred' }]);
     await processor.close();
   });
+
+  it('a schemaChanged-style re-link (same settings object) still rebinds onLink hooks', async () => {
+    const { db } = createTestProcessorHost();
+    let onLinkCount = 0;
+    let latestSeed: ((r: SeededResult) => boolean) | undefined;
+    let latestSignal: AbortSignal | undefined;
+    db.pluginRegistry = openRegistry({
+      id: 'cache',
+      onWatchedQueryCreate: () => ({
+        onLink: (seed, signal) => {
+          onLinkCount++;
+          latestSeed = seed;
+          latestSignal = signal;
+        }
+      })
+    });
+
+    let n = 0;
+    // Distinguishable per-call result, so we can tell the second generation's live data
+    // has actually landed (rather than just observing the stale 'live' source from before).
+    const watchOptions = { query: createStubQuery('S', () => [{ id: 'live', n: ++n }]) };
+    const processor = new OnChangeQueryProcessor<unknown[]>({
+      db: db as any,
+      placeholderData: [],
+      watchOptions
+    });
+
+    await vi.waitFor(() => expect(processor.state.data).toEqual([{ id: 'live', n: 1 }]));
+    expect(onLinkCount).toBe(1);
+
+    // AbstractQueryProcessor's own `schemaChanged` listener re-links via
+    // `this.updateSettings(this.options.watchOptions)` — the exact same settings object,
+    // not a new one. Simulate that here directly.
+    await processor.updateSettings(watchOptions);
+
+    // A NEW onLink registration must have occurred despite the identical settings object.
+    await vi.waitFor(() => expect(onLinkCount).toBe(2));
+    // The new signal (from updateSettings' fresh abortController) must not be aborted.
+    expect(latestSignal!.aborted).toBe(false);
+
+    // Once this generation's live data has landed, a seed via the NEW callback is
+    // rejected — specifically because live data exists, not because of an aborted signal.
+    await vi.waitFor(() => expect(processor.state.data).toEqual([{ id: 'live', n: 2 }]));
+    expect(latestSeed!(seeded([{ id: 'stale' }]))).toBe(false);
+    expect(latestSignal!.aborted).toBe(false);
+
+    await processor.close();
+  });
+
+  it('first onLink seed adopted synchronously wins; a second is rejected', async () => {
+    const { db } = createTestProcessorHost();
+    db.pluginRegistry = openRegistry(
+      {
+        id: 'a',
+        onWatchedQueryCreate: () => ({
+          onLink: (seed) => {
+            expect(seed(seeded([{ from: 'a' }], 'a'))).toBe(true);
+          }
+        })
+      },
+      {
+        id: 'b',
+        onWatchedQueryCreate: () => ({
+          onLink: (seed) => {
+            expect(seed(seeded([{ from: 'b' }], 'b'))).toBe(false);
+          }
+        })
+      }
+    );
+
+    const processor = new OnChangeQueryProcessor<unknown[]>({
+      db: db as any,
+      placeholderData: [],
+      watchOptions: { query: createStubQuery('S', () => new Promise<never>(() => {}) as any) }
+    });
+
+    await vi.waitFor(() => expect(processor.state.source).toBe('a'));
+    expect(processor.state.data).toEqual([{ from: 'a' }]);
+    await processor.close();
+  });
 });
