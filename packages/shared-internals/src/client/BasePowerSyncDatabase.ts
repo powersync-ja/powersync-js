@@ -51,6 +51,7 @@ import {
 import { CoreSyncStatus } from './sync/stream/core-instruction.js';
 import { CrudEntryImpl, CrudEntryJSON } from './sync/bucket/CrudEntry.js';
 import { OnChangeQueryProcessor } from './watched/OnChangeQueryProcessor.js';
+import { WatchedQueryPluginRegistry } from './plugins/WatchedQueryPluginRegistry.js';
 import { EventQueue, throttleTrailing } from '../utils/async.js';
 import { ControlledExecutor } from '../utils/ControlledExecutor.js';
 import { DEFAULT_WATCH_THROTTLE_MS } from './watched/WatchedQuery.js';
@@ -142,6 +143,9 @@ export abstract class BasePowerSyncDatabase<Options extends BasePowerSyncDatabas
 
   logger: PowerSyncLogger;
 
+  /** @internal */
+  readonly pluginRegistry: WatchedQueryPluginRegistry;
+
   constructor(protected options: Options) {
     super();
     this.logger = options.logger ?? createConsoleLogger();
@@ -161,6 +165,7 @@ export abstract class BasePowerSyncDatabase<Options extends BasePowerSyncDatabas
     this.ready = false;
     this.sdkVersion = '';
     this.runExclusiveMutex = new Mutex();
+    this.pluginRegistry = new WatchedQueryPluginRegistry(options.plugins ?? [], this.logger);
 
     // Start async init
     this.subscriptions = {
@@ -361,6 +366,11 @@ export abstract class BasePowerSyncDatabase<Options extends BasePowerSyncDatabas
     await this.resolveOfflineSyncStatus();
     await this.database.execute('PRAGMA RECURSIVE_TRIGGERS=TRUE');
     await this.triggersImpl.cleanupResources();
+    // Deviation from the brief: open the plugin registry BEFORE flipping `ready` to
+    // true. `waitForReady()` returns synchronously once `ready` is true, so opening
+    // the registry first guarantees no query construction can ever observe
+    // ready=true with a closed registry.
+    this.pluginRegistry.open({ db: this, logger: this.logger });
     this.ready = true;
     this.iterateListeners((cb) => cb.initialized?.());
   }
@@ -463,6 +473,8 @@ export abstract class BasePowerSyncDatabase<Options extends BasePowerSyncDatabas
 
     // The data has been deleted - reset the sync status
     await this.resolveOfflineSyncStatus();
+
+    this.iterateListeners((cb) => cb.cleared?.());
   }
 
   syncStream(name: string, params?: Record<string, any>): SyncStream {
@@ -501,6 +513,7 @@ export abstract class BasePowerSyncDatabase<Options extends BasePowerSyncDatabas
     }
 
     await this.connectionManager.close();
+    await this.pluginRegistry.dispose();
     await this.database.close();
     this.closed = true;
     await this.iterateAsyncListeners(async (cb) => cb.closed?.());
@@ -687,7 +700,7 @@ SELECT * FROM crud_entries;
   }
 
   query<RowType>(query: ArrayQueryDefinition<RowType>): Query<RowType> {
-    const { sql, parameters = [], mapper } = query;
+    const { sql, parameters = [], mapper, extensions } = query;
     const compatibleQuery: WatchCompatibleQuery<RowType[]> = {
       compile: () => ({
         sql,
@@ -698,7 +711,7 @@ SELECT * FROM crud_entries;
         return mapper ? result.map(mapper) : (result as RowType[]);
       }
     };
-    return this.customQuery(compatibleQuery);
+    return new CustomQuery({ db: this, query: compatibleQuery, defaultExtensions: extensions });
   }
 
   customQuery<RowType>(query: WatchCompatibleQuery<RowType[]>): Query<RowType> {
@@ -723,6 +736,8 @@ SELECT * FROM crud_entries;
     const watchedQuery = new OnChangeQueryProcessor({
       db: this,
       comparator,
+      // placeholderData is intentionally not an array: plugins receive
+      // dataIsArray: false for this legacy path and are expected to ignore it.
       placeholderData: null as unknown as QueryResult, // FIXME
       watchOptions: {
         query: {
