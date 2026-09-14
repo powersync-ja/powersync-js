@@ -13,7 +13,9 @@ export const useSingleQuery = <RowType = any>(options: InternalHookOptions<RowTy
     isFetching: true,
     data: [],
     error: undefined,
-    source: 'live',
+    // Nothing has been read from the database yet — `data` is the empty placeholder,
+    // not a result. It becomes 'live' when the one-shot query resolves.
+    source: 'placeholder',
     sourceMeta: null
   });
 
@@ -24,7 +26,6 @@ export const useSingleQuery = <RowType = any>(options: InternalHookOptions<RowTy
         isLoading: true,
         isFetching: true,
         error: undefined,
-        source: 'live',
         sourceMeta: null
       }));
       try {
@@ -53,7 +54,8 @@ export const useSingleQuery = <RowType = any>(options: InternalHookOptions<RowTy
           isFetching: false,
           data: [],
           error,
-          source: 'live',
+          // `source` is deliberately left as-is: a failed refresh does not change
+          // where the data currently on screen came from.
           sourceMeta: null
         }));
       }

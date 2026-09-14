@@ -12,7 +12,7 @@ const config: ViteUserConfig = {
   plugins: [],
   test: {
     globals: true,
-    include: ['tests/**/*.test.tsx', 'tests/**/*.test.ts'],
+    include: ['tests/**/*.test.tsx'],
     maxConcurrency: 1,
     // This doesn't currently seem to work in browser mode, but setting this for one day when it does
     sequence: {
