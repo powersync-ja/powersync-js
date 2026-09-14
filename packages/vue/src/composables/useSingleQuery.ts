@@ -103,7 +103,11 @@ export const useSingleQuery = <T = any>(
     isFetching.value = false;
   };
 
-  const source = ref('live');
+  // Nothing has been read from the database yet — `data` is the empty placeholder, not
+  // a result. Flips to 'live' when the one-shot query resolves; an error leaves
+  // whatever was current, since a failed refresh does not change where the rows on
+  // screen came from.
+  const source = ref('placeholder');
   const sourceMeta = ref<unknown>(null);
 
   if (!powerSync || !powerSync.value) {
@@ -116,6 +120,8 @@ export const useSingleQuery = <T = any>(
     finishLoading();
     data.value = result;
     error.value = undefined;
+    source.value = 'live';
+    sourceMeta.value = null;
   };
 
   const handleError = (e: Error) => {

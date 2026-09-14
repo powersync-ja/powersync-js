@@ -97,11 +97,11 @@ export function useQuery<RowType = any>(
   return (runOnce ? single : watched) ?? _loadingState;
 }
 
-const _loadingState = {
+const _loadingState: QueryResult<any> = {
   isLoading: true,
   isFetching: false,
   data: [],
   error: undefined,
-  source: 'placeholder' as string,
+  source: 'placeholder',
   sourceMeta: null
 };
