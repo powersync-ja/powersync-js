@@ -12,12 +12,21 @@ export const useSingleQuery = <RowType = any>(options: InternalHookOptions<RowTy
     isLoading: true,
     isFetching: true,
     data: [],
-    error: undefined
+    error: undefined,
+    source: 'live',
+    sourceMeta: null
   });
 
   const runQuery = React.useCallback(
     async (signal?: AbortSignal) => {
-      setOutputState((prev) => ({ ...prev, isLoading: true, isFetching: true, error: undefined }));
+      setOutputState((prev) => ({
+        ...prev,
+        isLoading: true,
+        isFetching: true,
+        error: undefined,
+        source: 'live',
+        sourceMeta: null
+      }));
       try {
         const compiledQuery = query.compile();
         const result = await query.execute({
@@ -33,7 +42,9 @@ export const useSingleQuery = <RowType = any>(options: InternalHookOptions<RowTy
           isLoading: false,
           isFetching: false,
           data: result,
-          error: undefined
+          error: undefined,
+          source: 'live',
+          sourceMeta: null
         }));
       } catch (error) {
         setOutputState((prev) => ({
@@ -41,7 +52,9 @@ export const useSingleQuery = <RowType = any>(options: InternalHookOptions<RowTy
           isLoading: false,
           isFetching: false,
           data: [],
-          error
+          error,
+          source: 'live',
+          sourceMeta: null
         }));
       }
     },

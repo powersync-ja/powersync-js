@@ -52,6 +52,13 @@ export interface AdditionalOptions<RowType = unknown> extends Omit<SQLOnChangeOp
    * is not relevant to the consumer.
    */
   reportFetching?: boolean;
+  /**
+   * Per-query options addressed to watched-query plugins by id,
+   * e.g. `{ cache: false }`.
+   *
+   * @alpha
+   */
+  extensions?: Record<string, unknown>;
 }
 
 export type WatchedQueryResult<T> = {
@@ -69,6 +76,10 @@ export type WatchedQueryResult<T> = {
    * Function used to run the query again.
    */
   refresh?: () => Promise<void>;
+  /** Where `data` came from: 'placeholder', 'live', or a plugin tag. @alpha */
+  readonly source: Ref<string>;
+  /** Plugin-defined detail about seeded data, else null. @alpha */
+  readonly sourceMeta: Ref<unknown>;
 };
 
 export const useSingleQuery = <T = any>(
@@ -92,10 +103,13 @@ export const useSingleQuery = <T = any>(
     isFetching.value = false;
   };
 
+  const source = ref('live');
+  const sourceMeta = ref<unknown>(null);
+
   if (!powerSync || !powerSync.value) {
     finishLoading();
     error.value = new Error('PowerSync not configured.');
-    return { data, isLoading, isFetching, error };
+    return { data, isLoading, isFetching, error, source, sourceMeta };
   }
 
   const handleResult = (result: T[]) => {
@@ -160,6 +174,8 @@ export const useSingleQuery = <T = any>(
     isLoading,
     isFetching,
     error,
+    source,
+    sourceMeta,
     refresh: () => {
       if (!toValue(options.active ?? true)) {
         return Promise.resolve();

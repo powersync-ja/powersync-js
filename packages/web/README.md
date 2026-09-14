@@ -51,6 +51,28 @@ export const db = new PowerSyncDatabase({
 });
 ```
 
+### Watched-query plugins (alpha)
+
+Plugins can observe watched queries and seed results ahead of the live query — the
+[query cache](https://github.com/gartz/powersync-query-cache) uses this to paint a
+screen's last result instantly on refresh, before the local database has opened.
+
+```ts
+new PowerSyncDatabase({
+  schema: AppSchema,
+  database: { dbFilename: 'app.db' },
+  plugins: [myPlugin]
+});
+
+// Per-query plugin options:
+db.query({ sql, parameters, extensions: { cache: false } });
+```
+
+`WatchedQueryState.source` reports `'placeholder'`, `'live'`, or the plugin's tag
+(e.g. `'cache'`) while seeded data is showing; `sourceMeta` carries plugin detail.
+Note for suspense users: a plugin seed resolves `useSuspenseQuery` immediately with
+`source !== 'live'` data — check `source` before treating rows as authoritative.
+
 ## Webpack
 
 See the [example Webpack config](https://github.com/powersync-ja/powersync-js/blob/main/demos/example-webpack/webpack.config.js) for details on polyfills and requirements.

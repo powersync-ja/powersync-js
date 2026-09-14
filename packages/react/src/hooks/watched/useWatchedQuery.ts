@@ -25,11 +25,13 @@ export const useWatchedQuery = <RowType = unknown>(
       ? powerSync.customQuery(query).differentialWatch({
           rowComparator: hookOptions.rowComparator,
           reportFetching: hookOptions.reportFetching,
-          throttleMs: hookOptions.throttleMs
+          throttleMs: hookOptions.throttleMs,
+          extensions: hookOptions.extensions
         })
       : powerSync.customQuery(query).watch({
           reportFetching: hookOptions.reportFetching,
-          throttleMs: hookOptions.throttleMs
+          throttleMs: hookOptions.throttleMs,
+          extensions: hookOptions.extensions
         });
     return watch;
   }
@@ -67,7 +69,8 @@ export const useWatchedQuery = <RowType = unknown>(
     watchedQuery?.updateSettings({
       query,
       throttleMs: hookOptions.throttleMs,
-      reportFetching: hookOptions.reportFetching
+      reportFetching: hookOptions.reportFetching,
+      extensions: hookOptions.extensions
     });
     // This could have been called multiple times, clear any old listeners.
     disposePendingUpdateListener.current?.();
@@ -88,6 +91,8 @@ export const useWatchedQuery = <RowType = unknown>(
     data: result?.data ?? [],
     isLoading: result?.isLoading ?? true,
     error: result?.error,
-    isFetching: result?.isFetching || shouldReportCurrentlyFetching
+    isFetching: result?.isFetching || shouldReportCurrentlyFetching,
+    source: result?.source ?? 'placeholder',
+    sourceMeta: result?.sourceMeta ?? null
   };
 };
