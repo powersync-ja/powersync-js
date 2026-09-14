@@ -427,21 +427,28 @@ export abstract class AbstractQueryProcessor<
     // Wait for the schema to be set before listening to changes
     await db.waitForReady();
 
-    // The query may have been closed (or its settings replaced) while waiting. Creating
-    // hooks past that point would hand a plugin a live-looking query that nothing will
-    // ever dispose — `close()` has already run its `disposePluginHooks()`, so those
-    // hooks would never receive `onDispose`.
-    if (this._closed || signal.aborted) {
+    // The query may have been closed while waiting — `close()` has already run its
+    // `disposePluginHooks()`, so hooks created past that point would never receive
+    // `onDispose`, and the listeners below would leak against a dead processor.
+    if (this._closed) {
       disposeCloseListener();
       return;
     }
+
+    // A superseding updateSettings() may have aborted this generation while we were
+    // waiting. Its queued updateSettingsInternal owns hook creation and linking with a
+    // fresh signal — hooks created here would hand plugins an onLink whose signal is
+    // already dead. Skip this generation's hook work only: the close/schema listeners
+    // below belong to the processor, not the generation, and nothing else ever
+    // registers them.
+    const superseded = signal.aborted;
 
     // Hooks deferred at construction (pre-ready query): create them now, after
     // onDatabaseOpen has run, and route their seedInitial through the async guard.
     if (this.hooksDeferred) {
       this.hooksDeferred = false;
       const registry = this.pluginRegistry;
-      if (registry?.hasPlugins && registry.isOpen) {
+      if (!superseded && registry?.hasPlugins && registry.isOpen) {
         this.createHookGeneration(registry);
         const deferredSeed = this.consultInitialSeed();
         if (deferredSeed) {
@@ -449,7 +456,9 @@ export abstract class AbstractQueryProcessor<
         }
       }
     }
-    this.startPluginLinks(signal);
+    if (!superseded) {
+      this.startPluginLinks(signal);
+    }
 
     const disposeSchemaListener = db.registerListener({
       schemaChanged: async () => {
