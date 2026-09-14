@@ -45,10 +45,11 @@ export interface WatchedQueryPluginContext {
    * plugins that seed or persist data should return undefined when this is false.
    */
   readonly dataIsArray: boolean;
-  /** The value under `extensions[plugin.id]` in the query's options, if any. */
+  /**
+   * The value under `extensions[plugin.id]` in the query's options, if any. A plugin
+   * sees only its own entry — there is no plugin-to-plugin communication.
+   */
   readonly extensionOptions: unknown;
-  /** The full merged per-query extensions record. Prefer {@link extensionOptions}. */
-  readonly extensions?: Record<string, unknown>;
   readonly db: CommonPowerSyncDatabase;
 }
 
@@ -59,9 +60,9 @@ export interface WatchedQueryPluginContext {
  */
 export interface SeededResult {
   data: readonly unknown[];
-  /** Provenance tag surfaced as {@link WatchedQueryState.source}, e.g. 'cache'. */
+  /** Provenance tag surfaced as the watched query state's `source`, e.g. 'cache'. */
   source: string;
-  /** Plugin-defined detail surfaced as {@link WatchedQueryState.sourceMeta}. */
+  /** Plugin-defined detail surfaced as the watched query state's `sourceMeta`. */
   sourceMeta?: unknown;
 }
 

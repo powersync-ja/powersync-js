@@ -93,4 +93,33 @@ describe('WatchedQueryPluginRegistry', () => {
     expect(() => registry.open(dbContext)).not.toThrow();
     expect(registry.createHooks(queryContext())).toHaveLength(0);
   });
+
+  it('hands each plugin only its own extension options', () => {
+    const seen: Record<string, unknown> = {};
+    const make = (id: string): WatchedQueryPlugin => ({
+      id,
+      onWatchedQueryCreate: (context) => {
+        seen[id] = context.extensionOptions;
+        return {};
+      }
+    });
+    const registry = new WatchedQueryPluginRegistry([make('a'), make('b')], logger);
+    registry.open(dbContext);
+
+    registry.createHooks(queryContext(), { a: 1, b: { ttlMs: 5 }, c: 'not addressed to either' });
+    expect(seen).toEqual({ a: 1, b: { ttlMs: 5 } });
+  });
+
+  it('dispose is terminal — a reopened registry stays closed', async () => {
+    const onOpen = vi.fn();
+    const registry = new WatchedQueryPluginRegistry([{ id: 'a', onDatabaseOpen: onOpen }], logger);
+
+    registry.open(dbContext);
+    await registry.dispose();
+    expect(registry.isOpen).toBe(false);
+
+    registry.open(dbContext);
+    expect(registry.isOpen).toBe(false);
+    expect(onOpen).toHaveBeenCalledTimes(1);
+  });
 });

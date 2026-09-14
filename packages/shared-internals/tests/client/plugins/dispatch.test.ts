@@ -1,6 +1,7 @@
 import { createConsoleLogger, LogLevels, SeededResult, WatchedQueryPlugin } from '@powersync/common';
 import { describe, expect, it, vi } from 'vitest';
 import { WatchedQueryPluginRegistry } from '../../../src/client/plugins/WatchedQueryPluginRegistry.js';
+import { DifferentialQueryProcessor } from '../../../src/client/watched/DifferentialQueryProcessor.js';
 import { OnChangeQueryProcessor } from '../../../src/client/watched/OnChangeQueryProcessor.js';
 import { createStubQuery, createTestProcessorHost } from './harness.js';
 
@@ -289,6 +290,272 @@ describe('plugin hook dispatch', () => {
     expect(latestSeed!(seeded([{ id: 'stale' }]))).toBe(false);
     expect(latestSignal!.aborted).toBe(false);
 
+    await processor.close();
+  });
+
+  it('transitions off a seed even when a comparator calls the live result unchanged', async () => {
+    // Regression: the onChange processor only assigned `data` when the comparator
+    // reported a change. A plugin seed whose rows equal the first live result then left
+    // the query stranded on `source: 'cache'` — no data assignment, so no live result
+    // was ever recorded and `onResult` never fired.
+    const { db } = createTestProcessorHost();
+    const results: unknown[] = [];
+    db.pluginRegistry = openRegistry({
+      id: 'cache',
+      onWatchedQueryCreate: () => ({
+        seedInitial: () => seeded([{ id: 'a' }]),
+        onResult: (rows) => void results.push(rows)
+      })
+    });
+
+    const processor = new OnChangeQueryProcessor<unknown[]>({
+      db: db as any,
+      // A comparator that considers every result equal to the previous one.
+      comparator: { checkEquality: () => true },
+      placeholderData: [],
+      watchOptions: { query: createStubQuery('S', () => [{ id: 'a' }]) }
+    });
+
+    expect(processor.state.source).toBe('cache');
+    await vi.waitFor(() => expect(processor.state.source).toBe('live'));
+    expect(processor.state.data).toEqual([{ id: 'a' }]);
+    expect(processor.state.sourceMeta).toBeNull();
+    // The live result reached the plugin too.
+    await vi.waitFor(() => expect(results).toEqual([[{ id: 'a' }]]));
+    await processor.close();
+  });
+
+  it('a late async seed cannot overwrite the synchronous seed already painted', async () => {
+    // Regression: `constructInitialState` painted the sync seed without arming the
+    // adopted-seed guard, so a slower plugin read resolving afterwards overwrote newer
+    // rows with older ones.
+    const { db } = createTestProcessorHost();
+    let seedFn: ((r: SeededResult) => boolean) | undefined;
+    db.pluginRegistry = openRegistry({
+      id: 'cache',
+      onWatchedQueryCreate: () => ({
+        seedInitial: () => seeded([{ id: 'sync' }], 'sync'),
+        onLink: (seed) => (seedFn = seed)
+      })
+    });
+
+    const processor = new OnChangeQueryProcessor<unknown[]>({
+      db: db as any,
+      placeholderData: [],
+      watchOptions: { query: createStubQuery('S', () => new Promise<never>(() => {}) as any) }
+    });
+
+    expect(processor.state.data).toEqual([{ id: 'sync' }]);
+    await vi.waitFor(() => expect(seedFn).toBeDefined());
+
+    expect(seedFn!(seeded([{ id: 'async' }], 'async'))).toBe(false);
+    expect(processor.state.data).toEqual([{ id: 'sync' }]);
+    expect(processor.state.source).toBe('sync');
+    await processor.close();
+  });
+
+  it('a seed leaves isFetching alone when reportFetching is false', async () => {
+    const { db } = createTestProcessorHost();
+    db.pluginRegistry = openRegistry({
+      id: 'cache',
+      onWatchedQueryCreate: () => ({ seedInitial: () => seeded([{ id: 'a' }]) })
+    });
+
+    const processor = new OnChangeQueryProcessor<unknown[]>({
+      db: db as any,
+      placeholderData: [],
+      watchOptions: {
+        reportFetching: false,
+        query: createStubQuery('S', () => new Promise<never>(() => {}) as any)
+      }
+    });
+
+    // Previously hardcoded to true on the seed path, which left it stuck true forever
+    // for a consumer that opted out of fetching reports.
+    expect(processor.state.isFetching).toBe(false);
+    await processor.close();
+  });
+
+  it('a same-signature re-link rebinds hooks without repainting cached data', async () => {
+    // Regression: the re-link path reset the seeding guards unconditionally, so the
+    // `schemaChanged` self-re-link (same settings object) re-consulted `seedInitial`
+    // and painted stale cached rows back over live data already on screen.
+    const { db } = createTestProcessorHost();
+    let onLinkCount = 0;
+    let seedInitialCalls = 0;
+    let latestSeed: ((r: SeededResult) => boolean) | undefined;
+    let latestSignal: AbortSignal | undefined;
+    db.pluginRegistry = openRegistry({
+      id: 'cache',
+      onWatchedQueryCreate: () => ({
+        seedInitial: () => {
+          seedInitialCalls++;
+          return seeded([{ id: 'cached' }]);
+        },
+        onLink: (seed, signal) => {
+          onLinkCount++;
+          latestSeed = seed;
+          latestSignal = signal;
+        }
+      })
+    });
+
+    const watchOptions = { query: createStubQuery('S', () => [{ id: 'live' }]) };
+    const processor = new OnChangeQueryProcessor<unknown[]>({ db: db as any, placeholderData: [], watchOptions });
+
+    expect(processor.state.source).toBe('cache');
+    await vi.waitFor(() => expect(processor.state.source).toBe('live'));
+    expect(seedInitialCalls).toBe(1);
+    await vi.waitFor(() => expect(onLinkCount).toBe(1));
+
+    // The same settings object, exactly as the schemaChanged listener re-links.
+    await processor.updateSettings(watchOptions);
+
+    // Hooks ARE rebound, with a fresh, non-aborted signal...
+    await vi.waitFor(() => expect(onLinkCount).toBe(2));
+    expect(latestSignal!.aborted).toBe(false);
+    // ...but the guards stayed closed: same query signature, live data already on screen.
+    expect(seedInitialCalls).toBe(1);
+    expect(latestSeed!(seeded([{ id: 'stale' }]))).toBe(false);
+    expect(processor.state.source).toBe('live');
+    expect(processor.state.data).toEqual([{ id: 'live' }]);
+    await processor.close();
+  });
+
+  it('a re-link for a DIFFERENT query does reopen the seeding guards', async () => {
+    const { db } = createTestProcessorHost();
+    const seedInitialSignatures: string[] = [];
+    db.pluginRegistry = openRegistry({
+      id: 'cache',
+      onWatchedQueryCreate: (ctx) => ({
+        seedInitial: () => {
+          seedInitialSignatures.push(ctx.signature);
+          return seeded([{ from: ctx.signature }]);
+        }
+      })
+    });
+
+    const processor = new OnChangeQueryProcessor<unknown[]>({
+      db: db as any,
+      placeholderData: [],
+      watchOptions: { query: createStubQuery('SELECT a', () => [{ id: 'live-a' }]) }
+    });
+    await vi.waitFor(() => expect(processor.state.source).toBe('live'));
+
+    await processor.updateSettings({ query: createStubQuery('SELECT b', () => new Promise<never>(() => {}) as any) });
+
+    await vi.waitFor(() => expect(seedInitialSignatures).toHaveLength(2));
+    expect(seedInitialSignatures[1]).toContain('SELECT b');
+    expect(processor.state.source).toBe('cache');
+    expect(processor.state.data).toEqual([{ from: seedInitialSignatures[1] }]);
+    await processor.close();
+  });
+
+  it('a plugin sees only its own extensionOptions', () => {
+    const { db } = createTestProcessorHost();
+    const seen: Record<string, unknown> = {};
+    db.pluginRegistry = openRegistry(
+      {
+        id: 'a',
+        onWatchedQueryCreate: (ctx) => {
+          seen.a = ctx.extensionOptions;
+          // There is no plugin-to-plugin channel on the context.
+          expect('extensions' in ctx).toBe(false);
+          return undefined;
+        }
+      },
+      {
+        id: 'b',
+        onWatchedQueryCreate: (ctx) => {
+          seen.b = ctx.extensionOptions;
+          return undefined;
+        }
+      }
+    );
+
+    const processor = new OnChangeQueryProcessor<unknown[]>({
+      db: db as any,
+      placeholderData: [],
+      watchOptions: {
+        extensions: { a: { ttl: 1 }, b: false },
+        query: createStubQuery('S', () => new Promise<never>(() => {}) as any)
+      }
+    });
+
+    expect(seen).toEqual({ a: { ttl: 1 }, b: false });
+    void processor.close();
+  });
+
+  it('re-merges definition-level extensions on every settings change', async () => {
+    const { db } = createTestProcessorHost();
+    const seen: unknown[] = [];
+    db.pluginRegistry = openRegistry({
+      id: 'cache',
+      onWatchedQueryCreate: (ctx) => {
+        seen.push(ctx.extensionOptions);
+        return undefined;
+      }
+    });
+
+    const processor = new OnChangeQueryProcessor<unknown[]>({
+      db: db as any,
+      placeholderData: [],
+      defaultExtensions: { cache: { ttlMs: 5 } },
+      watchOptions: { query: createStubQuery('SELECT a', () => [1]) }
+    });
+    await vi.waitFor(() => expect(processor.state.source).toBe('live'));
+    expect(seen).toEqual([{ ttlMs: 5 }]);
+
+    // A settings change carrying no extensions of its own must not drop the
+    // definition's — `updateSettings` replaces watchOptions wholesale.
+    await processor.updateSettings({ query: createStubQuery('SELECT b', () => [2]) });
+    await vi.waitFor(() => expect(seen).toHaveLength(2));
+    expect(seen[1]).toEqual({ ttlMs: 5 });
+
+    // Watch-level options still win over the definition's.
+    await processor.updateSettings({
+      query: createStubQuery('SELECT c', () => [3]),
+      extensions: { cache: false }
+    });
+    await vi.waitFor(() => expect(seen).toHaveLength(3));
+    expect(seen[2]).toBe(false);
+    await processor.close();
+  });
+
+  it('a seed whose adoption throws is rejected, not half-applied', async () => {
+    const { db } = createTestProcessorHost();
+    let seedFn: ((r: SeededResult) => boolean) | undefined;
+    db.pluginRegistry = openRegistry({
+      id: 'cache',
+      onWatchedQueryCreate: () => ({ onLink: (seed) => (seedFn = seed) })
+    });
+
+    let boom = true;
+    const processor = new DifferentialQueryProcessor<{ id: string }>({
+      db: db as any,
+      placeholderData: [],
+      // `onSeededDataAdopted` reseeds the keyed snapshot through this user code.
+      rowComparator: {
+        keyBy: (item) => {
+          if (boom) {
+            throw new Error('comparator exploded');
+          }
+          return item.id;
+        },
+        compareBy: (item) => JSON.stringify(item)
+      },
+      watchOptions: { query: createStubQuery('S', () => new Promise<never>(() => {}) as any) }
+    });
+
+    await vi.waitFor(() => expect(seedFn).toBeDefined());
+    expect(seedFn!(seeded([{ id: 'a' }]))).toBe(false);
+    expect(processor.state.source).toBe('placeholder');
+    expect(processor.state.data).toEqual([]);
+
+    // The guard was released, so a later well-behaved seed is still accepted.
+    boom = false;
+    expect(seedFn!(seeded([{ id: 'b' }]))).toBe(true);
+    expect(processor.state.source).toBe('cache');
     await processor.close();
   });
 
