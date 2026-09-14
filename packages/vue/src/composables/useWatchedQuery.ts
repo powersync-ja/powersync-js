@@ -13,6 +13,8 @@ export const useWatchedQuery = <T = any>(
   const error = ref<Error | undefined>(undefined);
   const isLoading = ref(true);
   const isFetching = ref(true);
+  const source = ref('placeholder');
+  const sourceMeta = ref<unknown>(null);
 
   const powerSync = usePowerSync();
   const logger = powerSync?.value?.logger ?? console;
@@ -25,7 +27,7 @@ export const useWatchedQuery = <T = any>(
   if (!powerSync || !powerSync.value) {
     finishLoading();
     error.value = new Error('PowerSync not configured.');
-    return { data, isLoading, isFetching, error };
+    return { data, isLoading, isFetching, error, source, sourceMeta };
   }
 
   const handleError = (e: Error) => {
@@ -69,11 +71,13 @@ export const useWatchedQuery = <T = any>(
       ? powerSync.value.customQuery(compatibleQuery).differentialWatch({
           rowComparator: options.rowComparator,
           throttleMs: options.throttleMs,
-          reportFetching: options.reportFetching
+          reportFetching: options.reportFetching,
+          extensions: options.extensions
         })
       : powerSync.value.customQuery(compatibleQuery).watch({
           throttleMs: options.throttleMs,
-          reportFetching: options.reportFetching
+          reportFetching: options.reportFetching,
+          extensions: options.extensions
         });
 
     const disposer = watch.registerListener({
@@ -81,6 +85,8 @@ export const useWatchedQuery = <T = any>(
         isLoading.value = state.isLoading;
         isFetching.value = state.isFetching;
         data.value = state.data;
+        source.value = state.source;
+        sourceMeta.value = state.sourceMeta;
         if (state.error) {
           const wrappedError = new Error('PowerSync failed to fetch data: ' + state.error.message);
           wrappedError.cause = state.error;
@@ -101,6 +107,8 @@ export const useWatchedQuery = <T = any>(
     data,
     isLoading,
     isFetching,
-    error
+    error,
+    source,
+    sourceMeta
   };
 };
