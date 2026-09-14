@@ -590,4 +590,75 @@ describe('plugin hook dispatch', () => {
     expect(processor.state.data).toEqual([{ from: 'a' }]);
     await processor.close();
   });
+
+  it('updateSettings racing init() keeps the close and schema listeners registered', async () => {
+    // Regression: init()'s post-waitForReady guard treated a superseding
+    // updateSettings() (signal aborted, query still open) like a close — it disposed
+    // the closing listener and returned before ever registering the schemaChanged
+    // listener. The queued updateSettingsInternal then linked the query normally, so
+    // everything LOOKED fine, but db.close() no longer cascaded into the query and
+    // schema changes silently stopped re-linking it, forever.
+    const { db } = createTestProcessorHost();
+
+    // Track which db listeners are currently registered (disposal removes them).
+    const activeListeners = new Set<any>();
+    const originalRegister = db.registerListener;
+    db.registerListener = (listener: any) => {
+      activeListeners.add(listener);
+      const dispose = originalRegister(listener);
+      return () => {
+        activeListeners.delete(listener);
+        dispose();
+      };
+    };
+
+    // Hold init() suspended inside waitForReady so updateSettings can overtake it.
+    let releaseReady: () => void = () => {};
+    db.waitForReady = vi.fn(() => new Promise<void>((r) => (releaseReady = r)));
+
+    let onLinkCount = 0;
+    let latestSignal: AbortSignal | undefined;
+    db.pluginRegistry = openRegistry({
+      id: 'cache',
+      onWatchedQueryCreate: () => ({
+        onLink: (_seed, signal) => {
+          onLinkCount++;
+          latestSignal = signal;
+        }
+      })
+    });
+
+    let n = 0;
+    const watchOptions = { query: createStubQuery('S', () => [{ id: 'live', n: ++n }]) };
+    const processor = new OnChangeQueryProcessor<unknown[]>({
+      db: db as any,
+      placeholderData: [],
+      watchOptions
+    });
+
+    // Supersede the initial generation while init() is still parked at waitForReady,
+    // then let init() resume with an already-aborted signal.
+    const settingsUpdated = processor.updateSettings(watchOptions);
+    releaseReady();
+    await settingsUpdated;
+
+    // The queued generation owns linking: it must have linked once, with a live signal.
+    await vi.waitFor(() => expect(processor.state.data).toEqual([{ id: 'live', n: 1 }]));
+    expect(processor.state.source).toBe('live');
+    expect(onLinkCount).toBe(1);
+    expect(latestSignal!.aborted).toBe(false);
+
+    // The schemaChanged listener must exist and still re-link the query.
+    const schemaListeners = [...activeListeners].filter((l) => l.schemaChanged);
+    expect(schemaListeners).toHaveLength(1);
+    await schemaListeners[0].schemaChanged();
+    await vi.waitFor(() => expect(onLinkCount).toBe(2));
+    await vi.waitFor(() => expect(processor.state.data).toEqual([{ id: 'live', n: 2 }]));
+
+    // The closing listener must exist and still cascade db.close() into the query.
+    const closingListeners = [...activeListeners].filter((l) => l.closing);
+    expect(closingListeners).toHaveLength(1);
+    await closingListeners[0].closing();
+    expect(processor.closed).toBe(true);
+  });
 });
