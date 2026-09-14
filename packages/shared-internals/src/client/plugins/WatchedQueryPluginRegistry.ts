@@ -8,11 +8,8 @@ import {
 } from '@powersync/common';
 
 /**
- * Owns the registered plugins and the fail-safe boundary around every call into them.
- *
- * Lifecycle: constructed with the database (cheap, touches nothing), `open()`ed from
- * `initialize()` once the database is ready — NEVER from a constructor, where subclass
- * fields of the database are not yet assigned — and `dispose()`d on close.
+ * One plugin's hooks for one watched query, tagged with the plugin they came from so a
+ * throwing hook can be attributed and dropped.
  *
  * @internal
  */
@@ -32,11 +29,22 @@ export function mergeExtensions(
   return { ...base, ...override };
 }
 
+/**
+ * Owns the registered plugins and the fail-safe boundary around every call into them.
+ *
+ * Lifecycle: constructed with the database (cheap, touches nothing), `open()`ed from
+ * `initialize()` once the database is ready — NEVER from a constructor, where subclass
+ * fields of the database are not yet assigned — and `dispose()`d on close. Disposal is
+ * terminal: a disposed registry cannot be reopened.
+ *
+ * @internal
+ */
 export class WatchedQueryPluginRegistry {
   private readonly plugins: WatchedQueryPlugin[];
   private readonly detached = new Set<string>();
   private readonly disposers: Array<() => void | Promise<void>> = [];
   private _isOpen = false;
+  private _isDisposed = false;
 
   constructor(
     plugins: WatchedQueryPlugin[],
@@ -64,6 +72,15 @@ export class WatchedQueryPluginRegistry {
     if (this._isOpen) {
       return;
     }
+    if (this._isDisposed) {
+      // The database is closed; its plugins have already had their disposers run.
+      // Re-running onDatabaseOpen would hand them a dead database.
+      this.logger.log({
+        level: LogLevels.warn,
+        message: 'Watched-query plugin registry was reopened after disposal; ignoring.'
+      });
+      return;
+    }
     this._isOpen = true;
     for (const plugin of this.plugins) {
       try {
@@ -86,10 +103,17 @@ export class WatchedQueryPluginRegistry {
       }
     }
     this._isOpen = false;
+    this._isDisposed = true;
   }
 
-  /** Creates this query's hooks from every attached plugin, in registration order. */
-  createHooks(context: WatchedQueryPluginContext): ActiveQueryHooks[] {
+  /**
+   * Creates this query's hooks from every attached plugin, in registration order.
+   *
+   * `extensions` is the query's merged per-plugin options record. It is passed here
+   * rather than on the context so that each plugin only ever sees its OWN entry —
+   * plugins do not communicate, and must not be able to read each other's options.
+   */
+  createHooks(context: WatchedQueryPluginContext, extensions?: Record<string, unknown>): ActiveQueryHooks[] {
     const active: ActiveQueryHooks[] = [];
     for (const plugin of this.plugins) {
       if (this.detached.has(plugin.id)) {
@@ -98,7 +122,7 @@ export class WatchedQueryPluginRegistry {
       try {
         const hooks = plugin.onWatchedQueryCreate?.({
           ...context,
-          extensionOptions: context.extensions?.[plugin.id]
+          extensionOptions: extensions?.[plugin.id]
         });
         if (hooks) {
           active.push({ pluginId: plugin.id, hooks });

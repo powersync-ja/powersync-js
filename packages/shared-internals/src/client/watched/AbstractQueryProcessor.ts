@@ -10,7 +10,11 @@ import {
   WatchedQueryState
 } from '@powersync/common';
 import { MetaBaseObserver } from '../../utils/MetaBaseObserver.js';
-import { ActiveQueryHooks, WatchedQueryPluginRegistry } from '../plugins/WatchedQueryPluginRegistry.js';
+import {
+  ActiveQueryHooks,
+  mergeExtensions,
+  WatchedQueryPluginRegistry
+} from '../plugins/WatchedQueryPluginRegistry.js';
 import { querySignature } from '../plugins/signature.js';
 import { BasePowerSyncDatabase } from '../BasePowerSyncDatabase.js';
 
@@ -21,6 +25,12 @@ export interface AbstractQueryProcessorOptions<Data, Settings extends WatchedQue
   db: BasePowerSyncDatabase;
   watchOptions: Settings;
   placeholderData: Data;
+  /**
+   * Plugin options declared on the query definition this processor was built from.
+   * Merged under (and overridden by) the per-watch `extensions` on every settings
+   * change, so a definition-level extension survives `updateSettings()`.
+   */
+  defaultExtensions?: Record<string, unknown>;
 }
 
 /**
@@ -78,6 +88,14 @@ export abstract class AbstractQueryProcessor<
   private hasAdoptedSeed = false;
   /** Set while hooks were deferred because the registry had not opened yet. */
   private hooksDeferred = false;
+  /**
+   * The query signature the current hook generation was created for, or undefined when
+   * there is no generation. A re-link whose signature is unchanged (the `schemaChanged`
+   * self-re-link, or an `updateSettings()` that only touches throttling) rebinds hooks
+   * but must NOT reopen the seeding guards — doing so lets a plugin repaint stale
+   * seeded data over live data that is already on screen.
+   */
+  private generationSignature: string | undefined;
 
   get closed() {
     return this._closed;
@@ -88,10 +106,10 @@ export abstract class AbstractQueryProcessor<
     this.abortController = new AbortController();
     this._closed = false;
 
-    const registry: WatchedQueryPluginRegistry | undefined = (this.options.db as any).pluginRegistry;
+    const registry = this.pluginRegistry;
     if (registry?.hasPlugins) {
       if (registry.isOpen) {
-        this.pluginHooks = registry.createHooks(this.buildPluginContext());
+        this.createHookGeneration(registry);
       } else {
         // Query constructed before the database finished initializing — plugins may
         // assume onDatabaseOpen ran first (spec rule 8), so defer creation to init().
@@ -107,9 +125,13 @@ export abstract class AbstractQueryProcessor<
   protected constructInitialState(): WatchedQueryState<Data> {
     const seed = this.consultInitialSeed();
     if (seed) {
+      // First-adopted-wins applies to the synchronous seed too: without this, an async
+      // seed that resolves later (an older, slower plugin read) would overwrite the
+      // newer rows already painted here.
+      this.hasAdoptedSeed = true;
       return {
         isLoading: false,
-        isFetching: true,
+        isFetching: this.reportFetching,
         error: null,
         lastUpdated: new Date(),
         data: seed.data as Data,
@@ -132,12 +154,27 @@ export abstract class AbstractQueryProcessor<
     return this.options.watchOptions.reportFetching ?? true;
   }
 
+  private get pluginRegistry(): WatchedQueryPluginRegistry | undefined {
+    // Optional at runtime: the processor is also exercised against minimal database
+    // stubs that carry no registry at all.
+    return this.options.db?.pluginRegistry;
+  }
+
+  /**
+   * Definition-level extensions merged under the current watch-level ones. Recomputed
+   * on every settings change — `updateSettings()` replaces `watchOptions` wholesale, so
+   * a merge done once at construction would silently drop the definition's options.
+   */
+  private resolveExtensions(): Record<string, unknown> | undefined {
+    return mergeExtensions(this.options.defaultExtensions, this.options.watchOptions.extensions);
+  }
+
   private buildPluginContext(): WatchedQueryPluginContext {
     let compiled = { sql: '', parameters: [] as unknown[] };
     try {
       // `Settings` (constrained only to `WatchedQueryOptions`) does not itself declare
       // `query` — every concrete settings type (WatchedQuerySettings,
-      // DifferentialWatchedQuerySettings, ...) does. Same shape as the `db` cast below.
+      // DifferentialWatchedQuerySettings, ...) does.
       compiled = (this.options.watchOptions as any).query.compile() as typeof compiled;
     } catch {
       // A query that cannot compile yet still runs; plugins just see an empty signature.
@@ -147,9 +184,22 @@ export abstract class AbstractQueryProcessor<
       compiled,
       dataIsArray: Array.isArray(this.options.placeholderData),
       extensionOptions: undefined, // per-plugin value filled in by WatchedQueryPluginRegistry.createHooks
-      extensions: this.options.watchOptions.extensions,
-      db: this.options.db as any
+      db: this.options.db
     };
+  }
+
+  /**
+   * Creates this generation's hooks and records the signature they were built for.
+   *
+   * @returns true when that signature differs from the previous generation's — i.e.
+   * this is a genuinely different query and the seeding guards may be reopened.
+   */
+  private createHookGeneration(registry: WatchedQueryPluginRegistry): boolean {
+    const context = this.buildPluginContext();
+    const signatureChanged = context.signature !== this.generationSignature;
+    this.generationSignature = context.signature;
+    this.pluginHooks = registry.createHooks(context, this.resolveExtensions());
+    return signatureChanged;
   }
 
   /** Runs one hook fail-safe; a throwing plugin is dropped from this query. */
@@ -171,7 +221,20 @@ export abstract class AbstractQueryProcessor<
       return false;
     }
     this.hasAdoptedSeed = true;
-    this.onSeededDataAdopted(result.data);
+    try {
+      // Runs user-supplied comparator code (the differential processor reseeds its
+      // keyed snapshot here). A throw must not escape into the plugin's `seed()` call,
+      // and must not leave the guard armed with nothing painted.
+      this.onSeededDataAdopted(result.data);
+    } catch (error) {
+      this.hasAdoptedSeed = false;
+      this.options.db.logger.log({
+        level: LogLevels.warn,
+        message: 'Watched query rejected plugin-seeded data: adopting it threw.',
+        error
+      });
+      return false;
+    }
     // Same `data?: Data` override linkQuery implementations use to satisfy updateState's
     // MutableWatchedQueryState<Data> parameter — Data isn't assignable to MutableDeep<Data>
     // for a bare generic, even though it always is once Data is concrete.
@@ -250,18 +313,26 @@ export abstract class AbstractQueryProcessor<
     // re-links with the SAME reference, and its onLink registrations must still be
     // rebound against the new (non-aborted) signal, or seeding silently dies for the
     // rest of the query's life after the first schema change.
+    //
+    // Reopening the seeding guards is a SEPARATE decision, taken on the query
+    // signature: a re-link for the same query must not let a plugin repaint cached
+    // rows over the live data already on screen.
     if (!isInitialSetup) {
-      this.hasLiveResult = false;
-      this.hasAdoptedSeed = false;
       this.disposePluginHooks();
-      const registry: WatchedQueryPluginRegistry | undefined = (this.options.db as any).pluginRegistry;
+      const registry = this.pluginRegistry;
       if (registry?.hasPlugins && registry.isOpen) {
-        this.pluginHooks = registry.createHooks(this.buildPluginContext());
-        const reseed = this.consultInitialSeed();
-        if (reseed) {
-          this.trySeed(reseed, signal);
+        if (this.createHookGeneration(registry)) {
+          // A different query: nothing on screen belongs to it, so seeding starts over.
+          this.hasLiveResult = false;
+          this.hasAdoptedSeed = false;
+          const reseed = this.consultInitialSeed();
+          if (reseed) {
+            this.trySeed(reseed, signal);
+          }
         }
         this.startPluginLinks(signal);
+      } else {
+        this.generationSignature = undefined;
       }
     }
 
@@ -303,9 +374,7 @@ export abstract class AbstractQueryProcessor<
    */
   protected abstract linkQuery(options: LinkQueryOptions<Data>): Promise<void>;
 
-  protected async updateState(
-    update: Partial<MutableWatchedQueryState<Data>> & { source?: string; sourceMeta?: unknown }
-  ) {
+  protected async updateState(update: Partial<MutableWatchedQueryState<Data>>) {
     if (this._closed) {
       return;
     }
@@ -334,7 +403,7 @@ export abstract class AbstractQueryProcessor<
 
     if (typeof emittedLiveData !== 'undefined' && this.pluginHooks) {
       const info: LiveResultInfo = {
-        hasSynced: (this.options.db as any).currentStatus?.hasSynced,
+        hasSynced: this.options.db.currentStatus?.hasSynced,
         dataIsArray: Array.isArray(emittedLiveData)
       };
       for (const entry of [...this.pluginHooks]) {
@@ -358,13 +427,22 @@ export abstract class AbstractQueryProcessor<
     // Wait for the schema to be set before listening to changes
     await db.waitForReady();
 
+    // The query may have been closed (or its settings replaced) while waiting. Creating
+    // hooks past that point would hand a plugin a live-looking query that nothing will
+    // ever dispose — `close()` has already run its `disposePluginHooks()`, so those
+    // hooks would never receive `onDispose`.
+    if (this._closed || signal.aborted) {
+      disposeCloseListener();
+      return;
+    }
+
     // Hooks deferred at construction (pre-ready query): create them now, after
     // onDatabaseOpen has run, and route their seedInitial through the async guard.
     if (this.hooksDeferred) {
       this.hooksDeferred = false;
-      const registry: WatchedQueryPluginRegistry | undefined = (this.options.db as any).pluginRegistry;
+      const registry = this.pluginRegistry;
       if (registry?.hasPlugins && registry.isOpen) {
-        this.pluginHooks = registry.createHooks(this.buildPluginContext());
+        this.createHookGeneration(registry);
         const deferredSeed = this.consultInitialSeed();
         if (deferredSeed) {
           this.trySeed(deferredSeed, signal);

@@ -43,6 +43,9 @@ export class CustomQuery<RowType> implements Query<RowType> {
       db: this.options.db,
       comparator: watchOptions?.comparator ?? FalsyComparator,
       placeholderData: watchOptions?.placeholderData ?? [],
+      // The processor re-merges these on every settings change; merging only here
+      // would drop them the first time a consumer calls `updateSettings()`.
+      defaultExtensions: this.options.defaultExtensions,
       watchOptions: {
         ...this.resolveOptions(watchOptions),
         query: this.options.query
@@ -55,6 +58,7 @@ export class CustomQuery<RowType> implements Query<RowType> {
       db: this.options.db,
       rowComparator: differentialWatchOptions?.rowComparator,
       placeholderData: differentialWatchOptions?.placeholderData ?? [],
+      defaultExtensions: this.options.defaultExtensions,
       watchOptions: {
         ...this.resolveOptions(differentialWatchOptions),
         query: this.options.query

@@ -708,13 +708,20 @@ SELECT * FROM crud_entries;
         return mapper ? result.map(mapper) : (result as RowType[]);
       }
     };
-    return new CustomQuery({ db: this, query: compatibleQuery, defaultExtensions: extensions });
+    // Routed through `customQuery` so a subclass overriding that one extension point
+    // also governs queries built from an `ArrayQueryDefinition`.
+    return this.customQuery(compatibleQuery, extensions);
   }
 
-  customQuery<RowType>(query: WatchCompatibleQuery<RowType[]>): Query<RowType> {
+  customQuery<RowType>(
+    query: WatchCompatibleQuery<RowType[]>,
+    /** Plugin options declared on the definition this query came from, if any. */
+    defaultExtensions?: Record<string, unknown>
+  ): Query<RowType> {
     return new CustomQuery({
       db: this,
-      query
+      query,
+      defaultExtensions
     });
   }
 
