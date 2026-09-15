@@ -122,6 +122,15 @@ export class CapacitorSQLiteAdapter extends DBAdapter {
     // only check a JS side map of connections.
     // On hot reload this JS cache can be cleared, while the connection
     // still exists natively. and `createConnection` will fail if it already exists.
+    //
+    // A previous JS context may also have died in the middle of a transaction, for example a live reload
+    // while the sync client was applying data. On Android the native connection then stays inside that
+    // transaction on the Capacitor plugin thread, and closing the database does not release a connection
+    // which is still in a transaction. The database file stays write-locked and every later
+    // `BEGIN IMMEDIATE` fails with "database is locked (code 5)" until the process is killed.
+    // Rolling the stale transaction back first lets `closeConnection` actually close the connection.
+    await this.rollbackStaleTransaction(this.options.dbFilename, false);
+    await this.rollbackStaleTransaction(this.options.dbFilename, true);
     await sqlite.closeConnection(this.options.dbFilename, false).catch(() => {});
     await sqlite.closeConnection(this.options.dbFilename, true).catch(() => {});
 
@@ -152,6 +161,21 @@ export class CapacitorSQLiteAdapter extends DBAdapter {
       await this.readConnection.query(extensionQuery);
     }
     await this.writeConnection.query("SELECT powersync_update_hooks('install')");
+  }
+
+  /**
+   * Ends a transaction left open on a native connection by a previous JS context.
+   * Errors are expected and ignored when no native connection exists yet (cold start).
+   */
+  private async rollbackStaleTransaction(database: string, readonly: boolean) {
+    try {
+      const { result } = await CapacitorSQLite.isTransactionActive({ database, readonly });
+      if (result) {
+        await CapacitorSQLite.rollbackTransaction({ database, readonly });
+      }
+    } catch {
+      // No native connection for this database (yet), nothing to roll back.
+    }
   }
 
   async close(): Promise<void> {
