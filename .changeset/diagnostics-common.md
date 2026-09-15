@@ -2,4 +2,4 @@
 '@powersync/common': minor
 ---
 
-Add live-attach diagnostics support: a tree-shakeable `diagnostics` subpath (agent + protocol) and a `diagnostics` sync option.
+Add a `diagnostics` sync option that enables the SQLite core's diagnostics event stream.

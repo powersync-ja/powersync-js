@@ -1,11 +1,9 @@
-import type { SyncSubscriptionDescription } from '../client/sync/sync-streams.js';
-import type { ProgressWithOperations } from '../db/crud/SyncProgress.js';
-import type { SyncPriorityStatus, SyncStatus, SyncStreamStatus } from '../db/crud/SyncStatus.js';
-import { PriorityState, ProgressState, StreamState, SyncState } from './protocol.js';
+import type { LiveProgress, LivePriorityStatus, LiveStreamStatus, LiveSyncStatus } from './live-database.js';
+import type { PriorityState, ProgressState, StreamState, SyncState } from './shapes.js';
 
-/** Maps the live SDK sync status into plain, serializable state the transport can carry. */
+/** Maps the live SDK sync status into plain, serializable protocol state. */
 
-function toProgress(progress: ProgressWithOperations | null | undefined): ProgressState | null {
+function toProgress(progress: LiveProgress | null | undefined): ProgressState | null {
   if (!progress) {
     return null;
   }
@@ -20,8 +18,12 @@ function toEpoch(date: Date | null | undefined): number | null {
   return date ? date.getTime() : null;
 }
 
-export function toSyncState(status: SyncStatus): SyncState {
-  const priorities: PriorityState[] = (status.priorityStatusEntries ?? []).map((entry: SyncPriorityStatus) => ({
+function errorText(error: { message?: string } | null | undefined): string | null {
+  return error ? String(error.message ?? error) : null;
+}
+
+export function toSyncState(status: LiveSyncStatus): SyncState {
+  const priorities: PriorityState[] = (status.priorityStatusEntries ?? []).map((entry: LivePriorityStatus) => ({
     priority: entry.priority,
     lastSyncedAt: toEpoch(entry.lastSyncedAt),
     hasSynced: entry.hasSynced ?? null
@@ -36,15 +38,15 @@ export function toSyncState(status: SyncStatus): SyncState {
     lastSyncedAt: toEpoch(status.lastSyncedAt),
     downloadProgress: toProgress(status.downloadProgress),
     priorities,
-    downloadError: status.downloadError ? String(status.downloadError.message ?? status.downloadError) : null,
-    uploadError: status.uploadError ? String(status.uploadError.message ?? status.uploadError) : null,
+    downloadError: errorText(status.downloadError),
+    uploadError: errorText(status.uploadError),
     message: status.getMessage()
   };
 }
 
-export function toStreamStates(status: SyncStatus): StreamState[] {
-  return (status.syncStreams ?? []).map((stream: SyncStreamStatus) => {
-    const subscription: SyncSubscriptionDescription = stream.subscription;
+export function toStreamStates(status: LiveSyncStatus): StreamState[] {
+  return (status.syncStreams ?? []).map((stream: LiveStreamStatus) => {
+    const subscription = stream.subscription;
     return {
       name: subscription.name,
       priority: stream.priority,

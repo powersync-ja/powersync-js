@@ -2,4 +2,4 @@
 '@powersync/web': minor
 ---
 
-Add `enableDiagnostics()` and a BroadcastChannel diagnostics transport for live-attach diagnostics.
+Add a `@powersync/web/devtools` subpath that lists the page's open databases for development tooling.

@@ -1,10 +1,10 @@
-import type { CoreDiagnosticsEvent, DiagnosticsEventSource, Unsubscribe } from '@powersync/common/diagnostics/contract';
+import type { CoreDiagnosticsEvent, CoreEventSource, Unsubscribe } from '@powersync/diagnostics-core';
 
 /**
- * Playground event source: consumes the diagnostics events the mock database broadcasts, mirroring
- * `@powersync/web`'s `BroadcastChannelEventSource` without pulling the full web SDK into the harness.
+ * Playground event source: consumes the core diagnostics events the mock database broadcasts, the way
+ * a web runtime would consume events from the sync worker.
  */
-export class BroadcastEventSource implements DiagnosticsEventSource {
+export class BroadcastEventSource implements CoreEventSource {
   private channel = new BroadcastChannel('powersync-diagnostics-events');
 
   onEvent(handler: (event: CoreDiagnosticsEvent) => void): Unsubscribe {

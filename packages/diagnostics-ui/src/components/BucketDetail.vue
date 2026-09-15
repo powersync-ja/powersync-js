@@ -22,10 +22,10 @@ async function load() {
   loading.value = true;
   error.value = null;
   try {
-    const res = await client.query(
-      'SELECT op_id, row_type, row_id, data FROM ps_oplog WHERE bucket = (SELECT id FROM ps_buckets WHERE name = ?) ORDER BY op_id DESC LIMIT 1000',
-      [props.bucket.name]
-    );
+    const res = await client.runQuery({
+      sql: 'SELECT op_id, row_type, row_id, data FROM ps_oplog WHERE bucket = (SELECT id FROM ps_buckets WHERE name = ?) ORDER BY op_id DESC LIMIT 1000',
+      params: [props.bucket.name]
+    });
     columns.value = res.columns;
     rows.value = res.rows;
   } catch (e) {

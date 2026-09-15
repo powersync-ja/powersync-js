@@ -3,18 +3,14 @@
   "compilerOptions": {
     "declaration": true,
     "forceConsistentCasingInFileNames": true,
-    "lib": [
-      "DOM",
-      "ES2020",
-      "WebWorker"
-    ],
+    "lib": ["DOM", "ES2022"],
     "module": "node16",
     "moduleResolution": "node16",
-    "target": "es2020",
+    "target": "es2022",
     "outDir": "./lib",
-    "strict": true
+    "strict": true,
+    "types": ["node"]
   },
-  "include": [
-    "src/**/*"
-  ]
+  "include": ["src/**/*"],
+  "references": [{ "path": "../diagnostics-core" }, { "path": "../web" }]
 }

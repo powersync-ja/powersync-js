@@ -1,0 +1,60 @@
+{
+  "name": "@powersync/diagnostics-vite",
+  "version": "0.1.0",
+  "description": "Vite DevTools plugin that attaches PowerSync diagnostics to a running app in development",
+  "type": "module",
+  "main": "lib/src/index.js",
+  "types": "lib/src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/src/index.d.ts",
+      "default": "./lib/src/index.js"
+    },
+    "./client": {
+      "types": "./lib/src/client.d.ts",
+      "default": "./lib/src/client.js"
+    }
+  },
+  "author": "PowerSync",
+  "license": "Apache-2.0",
+  "files": [
+    "lib",
+    "src"
+  ],
+  "repository": "https://github.com/powersync-ja/powersync-js",
+  "bugs": {
+    "url": "https://github.com/powersync-ja/powersync-js/issues"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
+  "homepage": "https://docs.powersync.com",
+  "scripts": {
+    "build": "tsc -b",
+    "build:prod": "tsc -b",
+    "clean": "rm -rf lib tsconfig.tsbuildinfo",
+    "watch": "tsc --build -w"
+  },
+  "peerDependencies": {
+    "@powersync/web": "workspace:^2.2.0",
+    "@vitejs/devtools-kit": ">=0.7.0",
+    "vite": ">=7.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@vitejs/devtools-kit": {
+      "optional": true
+    }
+  },
+  "dependencies": {
+    "@powersync/diagnostics-core": "workspace:*",
+    "@powersync/diagnostics-ui": "workspace:*"
+  },
+  "devDependencies": {
+    "@powersync/web": "workspace:*",
+    "@types/node": "catalog:",
+    "@vitejs/devtools-kit": "^0.7.3",
+    "typescript": "catalog:",
+    "vite": "catalog:"
+  }
+}

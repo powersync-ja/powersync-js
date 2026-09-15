@@ -22,7 +22,8 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
-    "./style.css": "./dist/style.css"
+    "./style.css": "./dist/style.css",
+    "./package.json": "./package.json"
   },
   "scripts": {
     "dev": "vite",
@@ -41,12 +42,9 @@
   "dependencies": {
     "@nanostores/vue": "^1.1.0",
     "@powersync/diagnostics-core": "workspace:*",
-    "@tanstack/vue-table": "^8.21.3",
     "@tanstack/vue-virtual": "^3.13.36",
-    "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "fuse.js": "^7.5.0",
-    "lucide-vue-next": "^1.0.0",
     "nanostores": "^1.5.2",
     "reka-ui": "^2.10.4",
     "shiki": "^3.23.0",
@@ -54,8 +52,6 @@
   },
   "devDependencies": {
     "@iconify-json/carbon": "^1.2.26",
-    "@powersync/common": "workspace:*",
-    "@powersync/web": "workspace:*",
     "@tailwindcss/cli": "^4.3.3",
     "@tailwindcss/vite": "^4.3.3",
     "@vitejs/plugin-vue": "^6.0.8",

@@ -28,11 +28,8 @@ export default defineConfig({
         'nanostores',
         '@nanostores/vue',
         'reka-ui',
-        '@tanstack/vue-table',
-        'lucide-vue-next',
         'clsx',
         'tailwind-merge',
-        'class-variance-authority',
         /^@powersync\//
       ],
       // Emit a single chunk. Code-splitting Shiki's dynamic imports produced a chunk that mixed an

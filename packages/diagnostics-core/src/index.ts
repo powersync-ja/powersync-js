@@ -3,19 +3,11 @@
 export * from './shapes.js';
 export * from './integration.js';
 
-export * from './client.js';
-export * from './PostMessageTransport.js';
+// The JavaScript integration (runs in the app page) and the structural database it reads.
+export * from './live-database.js';
+export * from './agent.js';
+export * from './state.js';
 
-// Transitional: the wire-level contract still lives in `@powersync/common` until consumers move to
-// `SdkIntegration`. Only the transport/wire types are taken from it; the shapes above are canonical.
-export type {
-  Transport,
-  MessageHandler,
-  WireMessage,
-  RequestMessage,
-  ResponseMessage,
-  EventMessage,
-  Channel,
-  RequestMethod,
-  DiagnosticsEventSource
-} from '@powersync/common/diagnostics/contract';
+// Moving an integration across an iframe boundary, and deriving UI state from its events.
+export * from './bridge.js';
+export * from './store.js';

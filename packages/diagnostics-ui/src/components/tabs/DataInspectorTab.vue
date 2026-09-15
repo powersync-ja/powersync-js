@@ -31,9 +31,9 @@ const tables = computed(() => filtered.value.filter((o) => o.type === 'table'));
 
 async function loadObjects() {
   try {
-    const res = await client.query(
-      "SELECT name, type FROM sqlite_master WHERE type IN ('table', 'view') AND name NOT LIKE 'sqlite_%' ORDER BY type DESC, name"
-    );
+    const res = await client.runQuery({
+      sql: "SELECT name, type FROM sqlite_master WHERE type IN ('table', 'view') AND name NOT LIKE 'sqlite_%' ORDER BY type DESC, name"
+    });
     objects.value = res.rows as unknown as DbObject[];
   } catch {
     objects.value = [];
@@ -44,7 +44,7 @@ async function run() {
   running.value = true;
   error.value = '';
   try {
-    result.value = await client.query(sql.value);
+    result.value = await client.runQuery({ sql: sql.value });
   } catch (e) {
     error.value = String((e as Error).message ?? e);
     result.value = null;

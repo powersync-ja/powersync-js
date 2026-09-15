@@ -1,5 +1,14 @@
 @import 'tailwindcss';
 
+/*
+ * Tailwind scans for utility classes relative to the build's root. The standalone build roots at
+ * `standalone/`, which would hide every component in `src/`, so the sources are named explicitly.
+ * Paths are relative to this file.
+ */
+@source '../src';
+@source '../standalone';
+@source '../playground';
+
 @custom-variant dark (&:is(.dark *));
 
 :root {
