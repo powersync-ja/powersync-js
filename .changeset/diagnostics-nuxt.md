@@ -2,4 +2,4 @@
 '@powersync/nuxt': minor
 ---
 
-Replace the DevTools inspector with the shared diagnostics UI driven by an `SdkIntegration`; `NuxtPowerSyncDatabase` is deprecated in favour of the diagnostics Vite plugin.
+Unify diagnostics with the other PowerSync hosts: the Nuxt DevTools tab now shows the shared diagnostics UI, served by `@powersync/diagnostics-vite` outside the app's router so it needs no app configuration. `NuxtPowerSyncDatabase` is removed; use `PowerSyncDatabase` with `connect(connector, { diagnostics: true })`.

@@ -4,14 +4,11 @@
  * PowerSync Nuxt Module - Public API
  *
  * This module provides PowerSync integration for Nuxt applications with built-in diagnostics
- * and inspector capabilities.
+ * in Nuxt DevTools.
  */
 
 // Module Options
 export type { PowerSyncNuxtModuleOptions } from './module.js';
-
-// Database Class
-export { NuxtPowerSyncDatabase } from './runtime/utils/NuxtPowerSyncDatabase.js';
 
 // Composables
 export { usePowerSyncKysely } from './runtime/composables/usePowerSyncKysely.js';

@@ -22,7 +22,7 @@ PowerSync Nuxt module integrated with the [Nuxt Devtools](https://github.com/nux
 
 - **Real-time offline-first sync** — PowerSync keeps a local SQLite database in sync with your backend (Postgres, MongoDB, MySQL, or SQL Server). Your app reads from local SQLite and works offline; changes sync automatically when the connection is restored.
 - **Auto-imported composables** — `usePowerSync()`, `useQuery()`, and `usePowerSyncKysely()` are available in every component without explicit imports.
-- **Built-in diagnostics** — View connection and sync status, inspect sync buckets and config, and tail real-time logs via the PowerSync Inspector — accessible at `/__powersync-inspector` or through Nuxt Devtools.
+- **Built-in diagnostics** — View connection and sync status, inspect sync buckets, streams, and config, and tail real-time logs in the PowerSync tab of Nuxt DevTools.
 - **Data inspection** — Browse your local SQLite database in the browser without external tools — useful for verifying what data has synced and debugging data issues during development.
 - **Kysely support** — Opt-in type-safe queries via `@powersync/kysely-driver`, enabled with `kysely: true` in your PowerSync config.
 
@@ -67,14 +67,14 @@ export default defineNuxtConfig({
 2. Create a PowerSync plugin (e.g., `plugins/powersync.client.ts`):
 
 ```typescript
-import { NuxtPowerSyncDatabase } from '@powersync/nuxt';
+import { PowerSyncDatabase } from '@powersync/web';
 import { createPowerSyncPlugin } from '@powersync/nuxt';
 import { AppSchema } from '~/powersync/AppSchema';
 import { PowerSyncConnector } from '~/powersync/PowerSyncConnector';
 
 export default defineNuxtPlugin({
   async setup(nuxtApp) {
-    const db = new NuxtPowerSyncDatabase({
+    const db = new PowerSyncDatabase({
       database: {
         dbFilename: 'your-db-filename.sqlite'
       },
@@ -180,14 +180,14 @@ export class PowerSyncConnector implements PowerSyncBackendConnector {
 Finally, putting everything together, create a [plugin](https://nuxt.com/docs/4.x/guide/directory-structure/app/plugins) called `powersync.client.ts` to setup PowerSync.
 
 ```typescript
+import { PowerSyncDatabase } from '@powersync/web';
 import { createPowerSyncPlugin } from '@powersync/nuxt';
-import { NuxtPowerSyncDatabase } from '@powersync/nuxt';
 import { AppSchema } from '~/powersync/AppSchema';
 import { PowerSyncConnector } from '~/powersync/PowerSyncConnector';
 
 export default defineNuxtPlugin({
   async setup(nuxtApp) {
-    const db = new NuxtPowerSyncDatabase({
+    const db = new PowerSyncDatabase({
       database: {
         dbFilename: 'a-db-name.sqlite'
       },
@@ -250,7 +250,7 @@ const users = await db.selectFrom('users').selectAll().execute();
 
 ### Enabling Diagnostics
 
-To enable the PowerSync Inspector with diagnostics capabilities:
+Diagnostics show the live state of your app's own PowerSync client in a **PowerSync** tab in Nuxt DevTools. They run in development only; nothing is added to a production build.
 
 1. **Enable diagnostics in your config**:
 
@@ -271,74 +271,49 @@ export default defineNuxtConfig({
 });
 ```
 
-When `useDiagnostics: true` is set, `NuxtPowerSyncDatabase` automatically:
+With `useDiagnostics: true`, the module loads the diagnostics agent into your app during `nuxt dev`, serves the diagnostics UI, and registers the tab. The UI is served outside your app's router, so route middleware such as an auth guard does not apply to it.
 
-- Extend your schema with diagnostics schema
-- Sets up diagnostics recording
-- Stores the connector internally (accessible via diagnostics)
-- Configures logging for diagnostics
-
-2. **Accessing PowerSync Inspector**:
-
-Once diagnostics are enabled, you can access the [PowerSync Inspector](#powersync-inspector):
-
-- **Via Nuxt Devtools**: Open Devtools and look for the PowerSync tab
-- **Direct URL**: `http://localhost:3000/__powersync-inspector`
-
-## PowerSync Inspector
-
-PowerSync Inspector is a tool that helps inspect and diagnose the state of your PowerSync client directly from your app in real-time.
-
-<div align="center">
-  <img src="./img/inspector.png" alt="PowerSync Logo" />
-</div>
-
-### Setup
-
-To setup the PowerSync inspector, you need to follow the steps in the [Enabling Diagnostics](#enabling-diagnostics) section.
-
-Once setup, the inspector can be accessed on the `http://localhost:3000/__powersync-inspector` route or via the [Nuxt Devtools](#nuxt-devtools).
-
-### Features
-
-#### Sync Status
-
-The `Sync Status` tab provides a real-time view of the sync status of your PowerSync client, including:
-
-- Connection status
-- Sync progress
-- Upload queue statistics
-- Error monitoring
-
-#### Data Inspector
-
-Browse and inspect your local database tables and data with powerful filtering and search capabilities.
-
-#### Config Inspector
-
-View and inspect your PowerSync configuration, connection options, and schema information.
-
-#### Logs
-
-Real-time logging of PowerSync operations with syntax highlighting and search functionality.
-
-#### Nuxt Devtools
-
-The inspector is also available in the Nuxt Devtools as a tab, providing seamless integration with your development workflow.
-
-## Known Issues
-
-1. PowerSync Inspector relies on `unocss` as a transitive dependency. It might clash with your existing setup, for example if you use Tailwind CSS.
-
-To fix this, you can add the following to your `nuxt.config.ts`:
+2. **Enable the core diagnostics stream** when you connect. This gives the Buckets tab per-bucket totals:
 
 ```typescript
-export default defineNuxtConfig({
-  unocss: {
-    autoImport: false
-  }
-});
+await db.connect(connector, { diagnostics: true });
 ```
+
+3. **Open Nuxt DevTools** and select the **PowerSync** tab.
+
+## PowerSync Diagnostics
+
+The diagnostics UI helps you inspect and diagnose the state of your PowerSync client from inside your app, in real time.
+
+### Tabs
+
+- **Sync Status** — connection state, sync progress, the upload queue, priority sync, and a "Sync now" checkpoint request.
+- **Data Inspector** — a searchable table and view tree, and a SQL console with syntax highlighting.
+- **Buckets** — per-bucket downloaded and total operations, size, and a drill-down into a bucket's operations.
+- **Streams** — sync stream subscriptions with progress, TTL, and priority, and a subscribe/unsubscribe form.
+- **Config** — connection details and the schema as a tree or JSON.
+- **Logs** — client logs with a level filter and search.
+
+### How it works
+
+The module uses [`@powersync/diagnostics-vite`](https://github.com/powersync-ja/powersync-js/tree/main/packages/diagnostics-vite). The same diagnostics UI also works in a plain Vite app and in other hosts. See that package for details.
+
+### Migrating from `NuxtPowerSyncDatabase`
+
+Earlier versions shipped a `NuxtPowerSyncDatabase` subclass that enabled diagnostics on connect. It is removed. Use a plain `PowerSyncDatabase` from `@powersync/web` and pass the option yourself:
+
+```diff
+- import { NuxtPowerSyncDatabase } from '@powersync/nuxt';
++ import { PowerSyncDatabase } from '@powersync/web';
+
+- const db = new NuxtPowerSyncDatabase({ database: { dbFilename: 'app.sqlite' }, schema: AppSchema });
++ const db = new PowerSyncDatabase({ database: { dbFilename: 'app.sqlite' }, schema: AppSchema });
+
+- await db.connect(connector);
++ await db.connect(connector, { diagnostics: true });
+```
+
+The `useDiagnostics: true` module option still controls the DevTools tab and the in-app agent; it is the one switch for the development tooling.
 
 ## Development
 
