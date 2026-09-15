@@ -18,10 +18,11 @@ import { addImportsFrom } from './runtime/utils/addImportsFrom';
  */
 export interface PowerSyncNuxtModuleOptions {
   /**
-   * Enable diagnostics and the PowerSync Inspector.
+   * Enable the PowerSync diagnostics tab in Nuxt DevTools.
    *
-   * When set to `true`, enables diagnostics recording and makes the PowerSync Inspector available.
-   * The inspector provides real-time monitoring, data inspection, and debugging tools.
+   * When `true`, the module loads the diagnostics agent into the app during `nuxt dev`, serves the
+   * diagnostics UI, and registers the DevTools tab. Nothing is added to a production build. Pass
+   * `{ diagnostics: true }` to `connect()` as well to get per-bucket totals from the SQLite core.
    *
    * @default false
    */
@@ -73,12 +74,6 @@ export default defineNuxtModule<PowerSyncNuxtModuleOptions>({
     }
 
     addPlugin(resolver.resolve('./runtime/plugin.client'));
-
-    // expose the composables
-    addImports({
-      name: 'NuxtPowerSyncDatabase',
-      from: resolver.resolve('./runtime/utils/NuxtPowerSyncDatabase')
-    });
 
     // Conditionally add Kysely composable if enabled
     if (options.kysely) {
