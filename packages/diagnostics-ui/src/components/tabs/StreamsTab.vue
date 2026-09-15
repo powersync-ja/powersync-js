@@ -59,7 +59,13 @@ async function subscribe() {
       return;
     }
   }
-  const priority = priorityInput.value === '' ? undefined : Number(priorityInput.value);
+  // The SDK accepts priorities 0–3 only; anything else is a form error, not a request.
+  const priorityValue = priorityInput.value === '' ? undefined : Number(priorityInput.value);
+  if (priorityValue !== undefined && ![0, 1, 2, 3].includes(priorityValue)) {
+    error.value = 'Priority must be 0, 1, 2 or 3';
+    return;
+  }
+  const priority = priorityValue as 0 | 1 | 2 | 3 | undefined;
   try {
     await client.action({ action: 'subscribeStream', args: { name: name.value, params, ttl: ttlInput.value, priority } });
     name.value = '';
@@ -73,6 +79,10 @@ async function subscribe() {
 
 async function unsubscribe(s: StreamState) {
   error.value = '';
+  // A stream without a name cannot be addressed for release.
+  if (!s.name) {
+    return;
+  }
   try {
     // Deep-clone params to a plain object — s.params comes from a reactive store, and a reactive
     // proxy can't be structured-cloned by the transport's postMessage ("could not be cloned").

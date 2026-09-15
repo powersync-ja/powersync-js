@@ -1,4 +1,4 @@
-import { defineNuxtModule, createResolver, addPlugin, addImports, extendPages, findPath } from '@nuxt/kit';
+import { defineNuxtModule, createResolver, addPlugin, addImports, findPath } from '@nuxt/kit';
 import { defu } from 'defu';
 import { setupDevToolsUI } from './devtools';
 import { addImportsFrom } from './runtime/utils/addImportsFrom';
@@ -93,15 +93,6 @@ export default defineNuxtModule<PowerSyncNuxtModuleOptions>({
       from: resolver.resolve('./runtime/composables/useDiagnosticsLogger')
     });
 
-    extendPages((pages) => {
-      pages.push({
-        path: '/__powersync-inspector',
-        // file: resolver.resolve("#build/pages/__powersync-inspector.vue"),
-        file: resolver.resolve('./runtime/pages/__powersync-inspector.vue'),
-        name: 'Powersync Inspector'
-      });
-    });
-
     addImportsFrom(
       [
         'createPowerSyncPlugin',
@@ -121,7 +112,7 @@ export default defineNuxtModule<PowerSyncNuxtModuleOptions>({
 
     // Ensure the packages are transpiled
     nuxt.options.build.transpile = nuxt.options.build.transpile || [];
-    nuxt.options.build.transpile.push('reka-ui', '@tanstack/vue-table', '@powersync/web', '@journeyapps/wa-sqlite');
+    nuxt.options.build.transpile.push('@powersync/web', '@journeyapps/wa-sqlite');
 
     // Conditionally add Kysely driver to transpile list if enabled
     if (options.kysely) {
@@ -188,6 +179,15 @@ export default defineNuxtModule<PowerSyncNuxtModuleOptions>({
       // Add plugin to existing plugins array
       const plugins = config.plugins || [];
       plugins.push(vitePlugin);
+
+      // In diagnostics mode during development, serve the diagnostics UI and register the dock. The
+      // in-page client is loaded by this module's runtime plugin (Nuxt renders HTML through Nitro, so
+      // Vite's HTML injection never runs here); the DevTools tab reaches it through the page.
+      if (options.useDiagnostics && nuxt.options.dev) {
+        const { default: powersyncDevtools } = await import('@powersync/diagnostics-vite');
+        plugins.push(powersyncDevtools({ inject: 'none' }));
+      }
+
       // @ts-ignore - plugins is read-only but we need to modify it
       config.plugins = plugins;
     });

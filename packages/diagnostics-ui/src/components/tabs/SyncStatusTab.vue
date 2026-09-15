@@ -36,9 +36,9 @@ async function loadInfo() {
 async function loadPending() {
   try {
     // Oldest first: the lowest id is the next operation to upload.
-    const res = await client.query(
-      "SELECT id, json_extract(data, '$.op') AS op, json_extract(data, '$.type') AS tbl, data FROM ps_crud ORDER BY id"
-    );
+    const res = await client.runQuery({
+      sql: "SELECT id, json_extract(data, '$.op') AS op, json_extract(data, '$.type') AS tbl, data FROM ps_crud ORDER BY id"
+    });
     pendingOps.value = res.rows as unknown as CrudOp[];
   } catch {
     pendingOps.value = [];

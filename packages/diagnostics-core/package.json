@@ -35,15 +35,12 @@
     "lib",
     "src"
   ],
-  "peerDependencies": {
-    "@powersync/common": "workspace:^2.1.0"
-  },
   "devDependencies": {
-    "@powersync/common": "workspace:*",
     "@types/node": "catalog:",
     "typescript": "catalog:"
   },
   "dependencies": {
+    "comlink": "catalog:",
     "nanostores": "^1.5.2"
   }
 }

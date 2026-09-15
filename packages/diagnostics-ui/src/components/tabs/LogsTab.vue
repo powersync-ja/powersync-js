@@ -8,7 +8,7 @@ import SearchInput from '../ui/SearchInput.vue';
 import Button from '../ui/Button.vue';
 import IconClear from '~icons/carbon/trash-can';
 
-const { client, logs } = useDiagnostics();
+const { logs, clearLogs } = useDiagnostics();
 
 const LEVELS = ['trace', 'debug', 'info', 'warn', 'error'] as const;
 const enabled = ref(new Set<string>(LEVELS));
@@ -64,7 +64,7 @@ function argsText(args: readonly unknown[] | undefined): string {
       </div>
       <SearchInput v-model="query" placeholder="Search logs…" class="w-48" />
       <span class="tabular-nums text-xs text-muted-foreground">{{ results.length }}</span>
-      <Button size="sm" variant="ghost" class="ml-auto" @click="client.clearLogs()"><IconClear class="size-3.5" /> Clear</Button>
+      <Button size="sm" variant="ghost" class="ml-auto" @click="clearLogs()"><IconClear class="size-3.5" /> Clear</Button>
     </div>
 
     <div ref="parentRef" class="min-h-0 flex-1 overflow-auto font-mono text-xs">

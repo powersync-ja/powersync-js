@@ -33,14 +33,12 @@ const setupTabs = [
   {
     label: 'JavaScript',
     lang: 'javascript',
-    code: `import { enableDiagnostics } from '@powersync/web';
+    code: `// vite.config.ts — the plugin attaches diagnostics in dev only; nothing ships to production.
+import powersyncDevtools from '@powersync/diagnostics-vite';
 
-const db = new PowerSyncDatabase({ /* ... */ });
-
-// Attach the diagnostics agent (dev only).
-if (import.meta.env.DEV) {
-  enableDiagnostics(db);
-}
+export default defineConfig({
+  plugins: [powersyncDevtools()]
+});
 
 // Enable the core diagnostics stream for per-bucket progress.
 db.connect(connector, { diagnostics: true });`
@@ -48,14 +46,9 @@ db.connect(connector, { diagnostics: true });`
   {
     label: 'Dart',
     lang: 'dart',
-    code: `import 'package:powersync/diagnostics.dart';
-
+    code: `// Diagnostics are on in debug builds and off in release builds. Open the
+// PowerSync tab in Flutter DevTools while the app runs.
 final db = PowerSyncDatabase(schema: schema, path: path);
-
-// Attach the diagnostics agent (dev only).
-if (kDebugMode) {
-  enableDiagnostics(db);
-}
 
 // Enable the core diagnostics stream for per-bucket progress.
 await db.connect(connector: connector, diagnostics: true);`

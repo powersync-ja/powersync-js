@@ -1,26 +1,27 @@
 import type { Nuxt } from 'nuxt/schema';
-import { createResolver } from '@nuxt/kit';
+import { UI_ROUTE } from '@powersync/diagnostics-vite';
 
+/**
+ * Registers the PowerSync tab in Nuxt DevTools.
+ *
+ * The tab is an iframe onto the diagnostics UI that the diagnostics Vite plugin serves at
+ * {@link UI_ROUTE}. That route is static and outside the app's router, so no route middleware (for
+ * example an auth guard) can redirect it, and the app needs no configuration for it.
+ */
 export function setupDevToolsUI(nuxt: Nuxt) {
   const port = nuxt.options.devServer?.port || 3000;
-  const DEVTOOLS_UI_ROUTE = `http://localhost:${port}/__powersync-inspector`;
 
   // Devtools requires a URL starting with http:// or https:// to recognize it as an image otherwise it will be inferred as an Iconify icon
   const iconUrl = `http://localhost:${port}/assets/powersync-icon.svg`;
 
   nuxt.hook('devtools:customTabs', (tabs: any[]) => {
     tabs.push({
-      // unique identifier
       name: 'powersync-inspector',
-      // title to display in the tab
-      title: 'Powersync Inspector',
-      // any icon from Iconify, or a URL to an image
-      // Using HTTP URL so devtools recognizes it as an image URL
+      title: 'PowerSync',
       icon: iconUrl,
-      // iframe view
       view: {
         type: 'iframe',
-        src: DEVTOOLS_UI_ROUTE
+        src: `http://localhost:${port}${UI_ROUTE}`
       }
     });
   });
