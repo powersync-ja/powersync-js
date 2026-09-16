@@ -210,9 +210,9 @@ class SyncStreamStatusView implements SyncStreamStatus {
       active: core.active,
       isDefault: core.is_default,
       hasExplicitSubscription: core.has_explicit_subscription,
-      expiresAt: core.expires_at != null ? new Date(core.expires_at * 1000) : null,
+      expiresAt: coreTimestampToDate(core.expires_at) ?? null,
       hasSynced: core.last_synced_at != null,
-      lastSyncedAt: core.last_synced_at != null ? new Date(core.last_synced_at * 1000) : null
+      lastSyncedAt: coreTimestampToDate(core.last_synced_at) ?? null
     };
   }
 

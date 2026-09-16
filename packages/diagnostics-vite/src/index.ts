@@ -60,7 +60,8 @@ export default function powersyncDevtools(options: PowerSyncDevToolsOptions = {}
       ctx.docks.register({
         id: 'powersync',
         title: options.title ?? 'PowerSync',
-        icon: 'ph:database-duotone',
+        // The PowerSync mark, served with the UI (`standalone/public` in the UI package).
+        icon: `${UI_ROUTE}powersync-icon.svg`,
         type: 'iframe',
         url: UI_ROUTE,
         category: 'app'
