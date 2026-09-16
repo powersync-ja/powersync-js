@@ -44,6 +44,14 @@ describe('CheckpointStateSignals', () => {
       await expect(pendingResult).resolves.toBe(false);
     });
 
+    test('settles when a disconnect already aborted the signal before waiting', async () => {
+      const signals = new CheckpointStateSignals();
+      const abort = new AbortController();
+      abort.abort();
+
+      await expect(signals.waitForCheckpointRequestsReady(abort.signal, false)).resolves.toBe(false);
+    }, 500);
+
     test('supports concurrent waiters', async () => {
       const signals = new CheckpointStateSignals();
 

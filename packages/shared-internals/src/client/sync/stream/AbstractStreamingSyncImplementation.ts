@@ -57,11 +57,20 @@ export interface LockOptions<T> {
 export interface AbstractStreamingSyncImplementationOptions {
   adapter: BucketStorageAdapter;
   subscriptions: SubscribedStream[];
-  uploadCrud: () => Promise<void>;
+  /**
+   * Uploads pending CRUD data with the connector.
+   *
+   * `signal` is aborted when the sync client disconnects. Implementations that forward this call across a context
+   * boundary (such as the web shared worker calling into a tab) must stop waiting once it aborts: `disconnect()` awaits
+   * the sync loops, so a call that can never settle also prevents every subsequent `connect()` from resolving.
+   */
+  uploadCrud: (signal?: AbortSignal) => Promise<void>;
   /**
    * Posts a checkpoint request with the connector, returning null if the connector doesn't support that.
+   *
+   * See {@link AbstractStreamingSyncImplementationOptions.uploadCrud} for the semantics of `signal`.
    */
-  postCheckpointRequest: (clientId: string, requestId: string) => Promise<string | null> | null;
+  postCheckpointRequest: (clientId: string, requestId: string, signal?: AbortSignal) => Promise<string | null> | null;
   /**
    * An identifier for which PowerSync DB this sync implementation is
    * linked to. Most commonly DB name, but not restricted to DB name.
@@ -191,7 +200,9 @@ export abstract class AbstractStreamingSyncImplementation
   abstract obtainLock<T>(lockOptions: LockOptions<T>): Promise<T>;
 
   private async requestNextCheckpointFromService(abort: AbortSignal): Promise<string> {
-    await this.checkpoints.waitForCheckpointRequestsReady(abort);
+    if (!(await this.checkpoints.waitForCheckpointRequestsReady(abort))) {
+      abort.throwIfAborted();
+    }
 
     const nextCheckpointRequestId = await this.options.adapter.readCheckpointRequestId('next');
     const clientId = await this.options.adapter.getClientId();
@@ -204,7 +215,11 @@ export abstract class AbstractStreamingSyncImplementation
   private async requestCheckpointFromService(signal: AbortSignal, request: CheckpointRequestPayload): Promise<string> {
     // First, check if we can use a custom checkpoint request implementation.
     {
-      const customResponse = await this.options.postCheckpointRequest(request.client_id, request.checkpoint_request_id);
+      const customResponse = await this.options.postCheckpointRequest(
+        request.client_id,
+        request.checkpoint_request_id,
+        signal
+      );
       if (customResponse != null) {
         return customResponse;
       }
@@ -273,7 +288,7 @@ The next upload iteration will be delayed.`
               }
 
               checkedCrudItem = nextCrudItem;
-              await this.options.uploadCrud();
+              await this.options.uploadCrud(signal);
               this.updateJsSyncState({ uploadError: undefined });
             } else {
               // Uploading is completed
@@ -455,7 +470,12 @@ The next upload iteration will be delayed.`
          * The WebRemote should only abort pending fetch requests or close active Readable streams.
          */
 
-        if (ex instanceof AbortOperation) {
+        // Distinguish stopping because we were asked to from failing on our own. Note that this is not the same as
+        // `ex instanceof AbortOperation`: an abort raised further down (such as a connector call that timed out) is a
+        // genuine failure that should be reported and retried with a delay.
+        const stoppedOnRequest = signal.aborted;
+
+        if (stoppedOnRequest) {
           this.logger.log({ level: LogLevels.warn, message: 'Sync aborted', error: ex });
           shouldDelayRetry = false;
           // A disconnect was requested, we should not delay since there is no explicit retry
@@ -470,7 +490,11 @@ The next upload iteration will be delayed.`
           this.logger.log({ level: LogLevels.error, message: 'Sync error', error: ex });
         }
 
-        this.updateJsSyncState({ downloadError: ex as Error });
+        if (!stoppedOnRequest) {
+          // Stopping on request is not a download failure. Recording it as one strands the error on the status:
+          // `downloadError` is only cleared by a completed sync, which can no longer happen once we have stopped.
+          this.updateJsSyncState({ downloadError: ex as Error });
+        }
       } finally {
         this.checkpoints.downloadIterationEnded();
         this.notifyCompletedUploads = undefined;
@@ -625,7 +649,9 @@ The next upload iteration will be delayed.`
 
     while (!abort.aborted) {
       try {
-        await this.checkpoints.waitForCheckpointRequestsReady(abort, false);
+        if (!(await this.checkpoints.waitForCheckpointRequestsReady(abort, false))) {
+          return;
+        }
 
         const requestId = await this.options.adapter.readCheckpointRequestId('current');
         // Give the request some time to sync.
@@ -642,7 +668,9 @@ The next upload iteration will be delayed.`
         }
 
         // Make sure we're online and ready before making the request
-        await this.checkpoints.waitForCheckpointRequestsReady(abort, false);
+        if (!(await this.checkpoints.waitForCheckpointRequestsReady(abort, false))) {
+          return;
+        }
 
         // It's safe if this request races with a new one. The service will reject it.
         this.logger.log({ level: LogLevels.debug, message: `Retry checkpoint request ${requestId}` });
