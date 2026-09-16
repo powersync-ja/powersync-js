@@ -267,6 +267,9 @@ export abstract class BasePowerSyncDatabase<Options extends BasePowerSyncDatabas
     return {
       ...options,
       adapter: this.bucketStorageAdapter,
+      // These run the connector in the same context as the sync client, so there is no cross-context call that could
+      // stall independently of it. The abort signal is therefore not forwarded: `PowerSyncBackendConnector` takes no
+      // signal, and a user-supplied promise cannot be cancelled from here anyway.
       uploadCrud: async () => {
         await this.waitForReady();
         await connector.uploadData(this);

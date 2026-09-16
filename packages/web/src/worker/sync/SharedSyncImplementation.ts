@@ -93,6 +93,23 @@ export type WrappedSyncPort = {
 const CONNECTOR_PLACEHOLDER = {} as PowerSyncBackendConnector;
 
 /**
+ * How long to wait for a client tab to answer a call before giving up on it.
+ */
+const CONNECTOR_CALL_TIMEOUT_MS = 30_000;
+
+type UseConnectorOptions = {
+  /**
+   * Aborted when the sync client disconnects.
+   */
+  signal?: AbortSignal;
+  /**
+   * Fail the call if the tab has not responded within this many milliseconds. `null` waits indefinitely, which is only
+   * appropriate for calls that are unbounded by nature and already covered by {@link UseConnectorOptions.signal}.
+   */
+  timeoutMs?: number | null;
+};
+
+/**
  * @internal
  * Shared sync implementation which runs inside a shared webworker
  */
@@ -137,7 +154,7 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
         await this.waitForReady();
 
         const sync = this.generateStreamingImplementation();
-        const onDispose = sync.registerListener({
+        const removeStatusListener = sync.registerListener({
           statusChanged: (snapshot) => {
             this.syncStatus = snapshot;
             const json = snapshot.toJSON();
@@ -147,7 +164,16 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
 
         return {
           sync,
-          onDispose
+          onDispose: () => {
+            removeStatusListener();
+
+            // Drop the JavaScript state along with the implementation that produced it: it describes in-flight work of
+            // a sync client that no longer exists. `addPort` hands this status to every tab that connects afterwards,
+            // so a `downloadError` left here is shown by tabs that never saw the failure, and nothing can clear it
+            // because only a completed sync does. The core status is kept - `hasSynced` and `lastSyncedAt` are
+            // persisted facts that remain true while disconnected.
+            this.syncStatus &&= new SyncStatusSnapshot(this.syncStatus.core, {});
+          }
         };
       },
       logger: this.logger,
@@ -387,25 +413,36 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
             }
           },
           fetchCredentials: () => {
-            return this.#useConnector((port) => {
-              this.logger.log({
-                level: LogLevels.info,
-                message: 'calling the last port client provider for credentials'
-              });
+            return this.#useConnector(
+              (port) => {
+                this.logger.log({
+                  level: LogLevels.info,
+                  message: 'calling the last port client provider for credentials'
+                });
 
-              return port.clientProvider.fetchCredentials();
-            }, 'fetchCredentials');
+                return port.clientProvider.fetchCredentials();
+              },
+              'fetchCredentials',
+              // No sync abort signal reaches the remote, so this relies on the timeout alone.
+              { timeoutMs: CONNECTOR_CALL_TIMEOUT_MS }
+            );
           }
         },
         this.logger
       ),
-      uploadCrud: () => {
-        return this.#useConnector((port) => port.clientProvider.uploadCrud(), 'uploadCrud');
+      uploadCrud: (signal) => {
+        return this.#useConnector((port) => port.clientProvider.uploadCrud(), 'uploadCrud', {
+          signal,
+          // Uploads are user-defined and legitimately unbounded (large batches over slow connections), so a timeout
+          // would cut valid work short. Disconnecting aborts the signal, which is what releases this.
+          timeoutMs: null
+        });
       },
-      postCheckpointRequest: (clientId, requestId) => {
+      postCheckpointRequest: (clientId, requestId, signal) => {
         return this.#useConnector(
           (port) => port.clientProvider.postCheckpointRequest(clientId, requestId),
-          'postCheckpointRequest'
+          'postCheckpointRequest',
+          { signal, timeoutMs: CONNECTOR_CALL_TIMEOUT_MS }
         );
       },
       ...syncParams.streamOptions,
@@ -415,25 +452,77 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
     });
   }
 
-  async #useConnector<T>(inner: (port: WrappedSyncPort) => Promise<T>, debugContext: string): Promise<T> {
-    const lastPort = await this.getLastWrappedPort();
-    if (!lastPort) {
-      throw new Error(`No client port found for ${debugContext}`);
+  /**
+   * Calls into a client tab.
+   *
+   * A tab can stop servicing its message port without ever closing it: it may be frozen or in the back/forward cache,
+   * or its sync implementation may have been abandoned without being disposed. Comlink has no timeout of its own, so a
+   * call to such a port settles neither way, and the `closeListeners` below only fire for ports we know have closed.
+   *
+   * That is not a local problem. `disconnect()` awaits the sync loops, so a single call that can never settle wedges
+   * the disconnect, and with it every `connect()` queued behind it. Every call is therefore bounded by the caller's
+   * abort signal, a timeout, or both.
+   */
+  async #useConnector<T>(
+    inner: (port: WrappedSyncPort) => Promise<T>,
+    debugContext: string,
+    options: UseConnectorOptions = {}
+  ): Promise<T> {
+    const { signal, timeoutMs = CONNECTOR_CALL_TIMEOUT_MS } = options;
+
+    const controller = new AbortController();
+    const abortWith = (reason: string) => {
+      if (controller.signal.aborted) {
+        return;
+      }
+      this.logger.log({ level: LogLevels.warn, message: `Aborting ${debugContext}: ${reason}` });
+      controller.abort(new AbortOperation(`Aborted ${debugContext}: ${reason}`));
+    };
+
+    const timeout =
+      timeoutMs == null
+        ? undefined
+        : setTimeout(() => abortWith(`the client tab did not respond within ${timeoutMs}ms`), timeoutMs);
+
+    const onRequestedAbort = () => abortWith('the sync client disconnected');
+    signal?.addEventListener('abort', onRequestedAbort, { once: true });
+    if (signal?.aborted) {
+      onRequestedAbort();
     }
 
-    return new Promise((resolve, reject) => {
-      function portClosed() {
-        reject(new Error(`Tab closed while handling ${debugContext}`));
-      }
+    try {
+      return await withAbort({
+        signal: controller.signal,
+        // Resolving the port takes the portMutex, which is held while other ports are being removed, so it has to be
+        // inside the guard as well.
+        action: async () => {
+          const lastPort = await this.getLastWrappedPort();
+          if (!lastPort) {
+            throw new Error(`No client port found for ${debugContext}`);
+          }
 
-      lastPort.closeListeners.push(portClosed);
+          return await new Promise<T>((resolve, reject) => {
+            const portClosed = () => {
+              reject(new Error(`Tab closed while handling ${debugContext}`));
+            };
 
-      inner(lastPort)
-        .then(resolve, reject)
-        .finally(() => {
-          lastPort.closeListeners.splice(lastPort.closeListeners.indexOf(portClosed), 1);
-        });
-    });
+            lastPort.closeListeners.push(portClosed);
+
+            inner(lastPort)
+              .then(resolve, reject)
+              .finally(() => {
+                const index = lastPort.closeListeners.indexOf(portClosed);
+                if (index >= 0) {
+                  lastPort.closeListeners.splice(index, 1);
+                }
+              });
+          });
+        }
+      });
+    } finally {
+      clearTimeout(timeout);
+      signal?.removeEventListener('abort', onRequestedAbort);
+    }
   }
 
   /**
@@ -619,15 +708,19 @@ function withAbort<T>(options: {
   cleanupOnAbort?: (result: T) => void;
 }): Promise<T> {
   const { action, signal, cleanupOnAbort } = options;
+  // Callers that abort with an `Error` reason get it propagated, so the failure says what actually went wrong.
+  const abortError = () =>
+    signal.reason instanceof Error ? signal.reason : new AbortOperation('Operation aborted by abort controller');
+
   return new Promise((resolve, reject) => {
     if (signal.aborted) {
-      reject(new AbortOperation('Operation aborted by abort controller'));
+      reject(abortError());
       return;
     }
 
     function handleAbort() {
       signal.removeEventListener('abort', handleAbort);
-      reject(new AbortOperation('Operation aborted by abort controller'));
+      reject(abortError());
     }
 
     signal.addEventListener('abort', handleAbort, { once: true });
