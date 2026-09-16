@@ -31,7 +31,8 @@ export function createDiagnosticsStores(integration: SdkIntegration): Diagnostic
   const uploadQueue = atom<UploadQueueState | null>(null);
   const logs: WritableAtom<LogRecord[]> = atom<LogRecord[]>([]);
 
-  const unsubscribe = integration.observeEvents((event) => {
+  // The subscription settles asynchronously; the stores exist at once so the UI can bind to them.
+  const subscription = integration.observeEvents((event) => {
     connected.set(true);
     switch (event.type) {
       case 'status':
@@ -62,6 +63,8 @@ export function createDiagnosticsStores(integration: SdkIntegration): Diagnostic
     uploadQueue,
     logs,
     clearLogs: () => logs.set([]),
-    dispose: unsubscribe
+    dispose: () => {
+      void subscription.then((unsubscribe) => unsubscribe());
+    }
   };
 }

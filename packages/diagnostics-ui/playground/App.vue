@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted } from 'vue';
-import { JsAgent, connectIntegration, exposeIntegration, type LiveDatabase } from '@powersync/diagnostics-core';
+import { connectIntegration, exposeIntegration } from '@powersync/diagnostics-core';
+import { JsAgent, type LiveDatabase } from '@powersync/diagnostics-core/js';
 import { DiagnosticsPanel, provideDiagnostics, useTheme } from '../src';
 import { BroadcastEventSource } from './broadcastEventSource';
 import { createMockDatabase } from './mockDatabase';

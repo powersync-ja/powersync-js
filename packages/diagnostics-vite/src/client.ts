@@ -7,16 +7,14 @@
  * a production build: the plugin injects the module only when the dev server runs.
  */
 import {
-  JsAgent,
   PORT_MESSAGE,
   REQUEST_PORT_MESSAGE,
   exposeIntegration,
   type CoreDiagnosticsEvent,
-  type CoreEventSource,
-  type LiveDatabase,
   type SdkIntegration,
   type Unsubscribe
 } from '@powersync/diagnostics-core';
+import { JsAgent, type CoreEventSource } from '@powersync/diagnostics-core/js';
 import { observeRegisteredDatabases } from '@powersync/web/devtools';
 import type { WebPowerSyncDatabase } from '@powersync/web';
 
@@ -40,7 +38,8 @@ class BroadcastCoreEvents implements CoreEventSource {
 
 /** Builds the JavaScript integration over a live web database. */
 export function createIntegration(db: WebPowerSyncDatabase): SdkIntegration {
-  return new JsAgent(db as unknown as LiveDatabase, {
+  // No cast: the concrete database must satisfy the agent's structural database type, checked here.
+  return new JsAgent(db, {
     sdk: '@powersync/web',
     coreEvents: new BroadcastCoreEvents(),
     // The concrete database exposes its connection; the agent reads it through this accessor.
