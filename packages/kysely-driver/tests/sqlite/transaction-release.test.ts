@@ -1,4 +1,4 @@
-import { AbstractPowerSyncDatabase } from '@powersync/common';
+import { CommonPowerSyncDatabase } from '@powersync/common';
 import { Kysely, sql } from 'kysely';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { wrapPowerSyncWithKysely } from '../../src/sqlite/db.js';
@@ -11,7 +11,7 @@ const WRITE_TIMEOUT_MS = 3000;
  * Resolves with the write result, or rejects if the write does not finish in time, which means the
  * PowerSync write lock is still held by a transaction that was never released.
  */
-function writeWithTimeout(db: AbstractPowerSyncDatabase) {
+function writeWithTimeout(db: CommonPowerSyncDatabase) {
   return Promise.race([
     db.execute('INSERT INTO users (id, name) VALUES (uuid(), ?)', ['after']),
     new Promise((_, reject) =>
@@ -31,7 +31,7 @@ function writeWithTimeout(db: AbstractPowerSyncDatabase) {
  * otherwise the write lock is held forever and every later write hangs.
  */
 describe('transaction lock release', () => {
-  let powerSyncDb: AbstractPowerSyncDatabase;
+  let powerSyncDb: CommonPowerSyncDatabase;
   let db: Kysely<Database>;
 
   beforeEach(() => {
