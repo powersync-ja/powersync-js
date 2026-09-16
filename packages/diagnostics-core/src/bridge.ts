@@ -1,6 +1,5 @@
 import * as Comlink from 'comlink';
-import type { DiagnosticsEvent, SdkIntegration } from './integration.js';
-import type { Unsubscribe } from './shapes.js';
+import type { SdkIntegration } from './integration.js';
 
 /**
  * Moves an {@link SdkIntegration} across a `postMessage` boundary with comlink.
@@ -12,11 +11,6 @@ import type { Unsubscribe } from './shapes.js';
  * channel.
  */
 
-/** The shape exposed over comlink: `observeEvents` takes a proxied callback instead of a function. */
-type Remote = Omit<SdkIntegration, 'observeEvents'> & {
-  observeEvents(handler: (event: DiagnosticsEvent) => void): Promise<Unsubscribe>;
-};
-
 /** Sent by the UI side to ask the host for a dedicated port. */
 export const REQUEST_PORT_MESSAGE = 'powersync-diagnostics:request-port';
 /** Sent by the integration side to hand the UI its dedicated port. */
@@ -27,7 +21,8 @@ export const PORT_MESSAGE = 'powersync-diagnostics:port';
  * Returns a function that stops serving.
  */
 export function exposeIntegration(integration: SdkIntegration, port: MessagePort): () => void {
-  const remote: Remote = {
+  // Callbacks and the returned unsubscribe cross the boundary as comlink proxies.
+  const remote: SdkIntegration = {
     runQuery: (params) => integration.runQuery(params),
     getSchema: () => integration.getSchema(),
     getInfo: () => integration.getInfo(),
@@ -36,7 +31,7 @@ export function exposeIntegration(integration: SdkIntegration, port: MessagePort
     action: (request) => integration.action(request),
     close: () => integration.close(),
     async observeEvents(handler) {
-      const unsubscribe = integration.observeEvents((event) => {
+      const unsubscribe = await integration.observeEvents((event) => {
         void handler(event);
       });
       return Comlink.proxy(unsubscribe);
@@ -52,7 +47,7 @@ export function exposeIntegration(integration: SdkIntegration, port: MessagePort
  * The returned object implements {@link SdkIntegration} over the boundary.
  */
 export function connectIntegration(port: MessagePort): SdkIntegration {
-  const remote = Comlink.wrap<Remote>(port);
+  const remote = Comlink.wrap<SdkIntegration>(port);
   port.start();
   return {
     runQuery: (params) => remote.runQuery(params),
@@ -66,18 +61,10 @@ export function connectIntegration(port: MessagePort): SdkIntegration {
       remote[Comlink.releaseProxy]();
       port.close();
     },
-    observeEvents(handler) {
-      // The remote resolves to a proxied unsubscribe; keep the call synchronous for the caller.
-      const pending = remote.observeEvents(Comlink.proxy(handler));
-      let released = false;
-      void pending.then((unsubscribe) => {
-        if (released) {
-          void unsubscribe();
-        }
-      });
+    async observeEvents(handler) {
+      const unsubscribe = await remote.observeEvents(Comlink.proxy(handler));
       return () => {
-        released = true;
-        void pending.then((unsubscribe) => unsubscribe());
+        void unsubscribe();
       };
     }
   };

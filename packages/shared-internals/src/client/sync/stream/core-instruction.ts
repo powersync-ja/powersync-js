@@ -21,7 +21,7 @@ export type NonInterruptingInstruction =
 
 /**
  * Emitted by the core extension when diagnostics are enabled on the sync stream (see
- * {@link https://github.com/powersync-ja/powersync-sqlite-core diagnostics}). Reports detailed
+ * {@link https://github.com/powersync-ja/powersync-sqlite-core/blob/main/crates/core/src/sync/diagnostics.rs diagnostics.rs}). Reports detailed
  * per-bucket download state — including the per-bucket `target_count` that is otherwise internal to
  * the core — and inferred column types as data is downloaded.
  */

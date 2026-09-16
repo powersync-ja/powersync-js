@@ -6,11 +6,17 @@ Everything runs in development only. Nothing from this package reaches a product
 
 ## How it works
 
-The plugin does three things while the dev server runs:
+The plugin does two things while the dev server runs:
 
-1. It injects a small script into your app page. The script finds the app's open PowerSync databases and serves them to the diagnostics UI.
+1. It injects a small script into your app page. The script finds the app's open PowerSync databases and hands them to the diagnostics UI when the UI asks.
 2. It serves the diagnostics UI at `/__powersync_devtools/`. The UI is a static page outside your app's router, so no route guard or auth middleware applies to it.
-3. If [Vite DevTools](https://devtools.vite.dev) is enabled, it adds a **PowerSync** dock so the UI opens inside the app page.
+
+The UI only works inside your app page: it asks the page that embeds it for a connection to the script from step 1. So the plugin supports two hosts:
+
+- **Vite DevTools.** With [Vite DevTools](https://devtools.vite.dev) enabled, the plugin adds a **PowerSync** dock. The dock opens the UI in an iframe inside your app page.
+- **A framework's own DevTools.** A framework that embeds an iframe in the app page, such as Nuxt DevTools, points that iframe at `/__powersync_devtools/`. `@powersync/nuxt` does this.
+
+Opening `/__powersync_devtools/` directly in a browser tab shows "Waiting for the diagnostics integration…" and nothing else. There is no app page around it to connect to.
 
 ## Getting started
 
@@ -38,7 +44,7 @@ Enable the core diagnostics stream when you connect. This gives the Buckets tab 
 await db.connect(connector, { diagnostics: true });
 ```
 
-Start your dev server and open `http://localhost:5173/__powersync_devtools/` in an iframe, or open the **PowerSync** dock in Vite DevTools.
+Start your dev server and open the **PowerSync** dock in Vite DevTools. The first time, Vite DevTools asks you to confirm the browser with a one-time code printed in your terminal.
 
 ## Options
 
@@ -72,10 +78,8 @@ if (import.meta.env.DEV) {
 
 | You want                                    | You need                                                                                                        |
 | ------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| The diagnostics UI at `/__powersync_devtools/` | Vite `>= 7.0` and `@powersync/web >= 2.2`. This is all the plugin needs; open the URL in an iframe or a tab.  |
-| The **PowerSync** dock inside Vite DevTools   | Additionally Vite `>= 8.3` with `devtools: true` in your Vite config, which enables Vite DevTools. Optional.    |
-
-Without Vite DevTools, everything still works; you open the UI yourself instead of from a dock.
+| The **PowerSync** dock inside Vite DevTools   | Vite `>= 8.3` with `devtools: true` in your Vite config, plus `@powersync/web >= 2.2`.                       |
+| The UI inside a framework's DevTools (Nuxt) | Vite `>= 7.0` and `@powersync/web >= 2.2`. The framework integration embeds `/__powersync_devtools/` itself. |
 
 ## Related packages
 

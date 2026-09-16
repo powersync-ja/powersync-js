@@ -5,6 +5,9 @@
  * JSON-serializable data — no class instances, no live SDK objects — so the same shapes work for
  * every SDK and every host. This file deliberately imports nothing from any SDK package: the tool
  * owns these types, and each SDK maps its own objects onto them.
+ *
+ * Conventions: every time is epoch milliseconds; a value that does not apply is `null`; every
+ * shape is plain JSON (strings, numbers, booleans, null, arrays, plain objects).
  */
 
 /** Disposes a subscription or listener. */
@@ -19,7 +22,9 @@ export interface QueryParams {
 
 /** A serialized SQL result set. */
 export interface QueryResult {
+  /** Column names, in order. */
   columns: string[];
+  /** One object per row, keyed by column name. */
   rows: Record<string, unknown>[];
   rowCount: number;
 }
@@ -30,6 +35,7 @@ export interface QueryResult {
 export interface ProgressState {
   downloadedOperations: number;
   totalOperations: number;
+  /** `0` to `1`. */
   downloadedFraction: number;
 }
 
@@ -81,6 +87,7 @@ export interface StreamState {
 /** Per-bucket download stats, read from the core `ps_buckets` table. */
 export interface BucketState {
   name: string;
+  /** `count_at_last + count_since_last` from `ps_buckets`. */
   downloadedOperations: number;
   /** Total operations for the current checkpoint, or null when the core diagnostics stream is off. */
   totalOperations: number | null;
@@ -90,7 +97,7 @@ export interface BucketState {
   downloading: boolean;
 }
 
-/** Pending upload (CRUD) queue state. */
+/** Pending upload (CRUD) queue state. Recoverable in any SDK with SQL against `ps_crud`. */
 export interface UploadQueueState {
   count: number;
   /** Byte size, or null when not computed. */
@@ -99,7 +106,9 @@ export interface UploadQueueState {
 
 /** A captured client log line. */
 export interface LogRecord {
+  /** Epoch milliseconds. */
   timestamp: number;
+  /** One of `trace`, `debug`, `info`, `warn`, `error`. */
   level: string;
   message: string;
   args?: unknown[];
@@ -109,12 +118,18 @@ export interface LogRecord {
 
 /** Connection metadata for the attached client. */
 export interface ProtocolInfo {
+  /** The PowerSync service endpoint. */
   endpoint: string | null;
+  /** Derive from the token subject when the SDK does not expose it. */
   userId: string | null;
+  /** The PowerSync client id. */
   clientId: string | null;
+  /** For example `http` or `websocket`. */
   connectionMethod: string | null;
+  /** Client parameters sent on connect. */
   params: Record<string, unknown> | null;
   connected: boolean;
+  /** Core extension version, from `SELECT powersync_rs_version()`. */
   sqliteCoreVersion: string | null;
   /** A label for the SDK behind the integration (e.g. `@powersync/web`, `powersync` (Dart)); null when unknown. */
   sdk: string | null;
@@ -162,8 +177,14 @@ export interface SchemaRawTable {
   [field: string]: unknown;
 }
 
+/**
+ * The schema as the SQLite core receives it: the exact JSON the client sends to
+ * `powersync_replace_schema`. Every SDK already produces this, so `getSchema` costs no SDK a second
+ * serializer.
+ */
 export interface SchemaPayload {
   tables: SchemaTable[];
+  /** Application-managed tables. */
   raw_tables: SchemaRawTable[];
 }
 
@@ -180,7 +201,18 @@ export type CoreDiagnosticsEvent =
 
 // --- actions ---
 
-/** Control actions the tool can invoke on the live client. */
+/**
+ * Control actions the tool can invoke on the live client.
+ *
+ * | Action              | Args                       | Effect                                                                 |
+ * | ------------------- | -------------------------- | ---------------------------------------------------------------------- |
+ * | `reconnect`         |                            | Disconnect, then connect again with the last connector.                |
+ * | `disconnect`        |                            | Disconnect the client.                                                 |
+ * | `clearData`         |                            | Clear the local database, then connect again.                          |
+ * | `requestCheckpoint` |                            | Confirm the client is caught up. Needs checkpoint requests enabled.    |
+ * | `subscribeStream`   | {@link StreamActionArgs}   | Subscribe to a sync stream. `ttl` defaults to `0`.                     |
+ * | `unsubscribeStream` | `{ name, params? }`        | Release a subscription created with `subscribeStream`.                 |
+ */
 export type ActionName =
   | 'reconnect'
   | 'disconnect'
@@ -198,6 +230,7 @@ export interface StreamActionArgs {
   priority?: 0 | 1 | 2 | 3;
 }
 
+/** A control action and its arguments (only the stream actions take any). */
 export interface ActionRequest {
   action: ActionName;
   args?: StreamActionArgs;
