@@ -92,8 +92,13 @@ export class PowerSyncConnection implements DatabaseConnection {
       throw new Error('Transaction is not defined');
     }
 
-    await this.#tx.commit();
-    this.releaseTransaction();
+    try {
+      await this.#tx.commit();
+    } finally {
+      // The SQLite transaction is over whether or not COMMIT succeeded. Holding the write lock
+      // any longer would block every other write.
+      this.releaseTransaction();
+    }
   }
 
   async rollbackTransaction(): Promise<void> {
@@ -101,18 +106,29 @@ export class PowerSyncConnection implements DatabaseConnection {
       throw new Error('Transaction is not defined');
     }
 
-    await this.#tx.rollback();
-    this.releaseTransaction();
+    try {
+      await this.#tx.rollback();
+    } finally {
+      this.releaseTransaction();
+    }
   }
 
-  async releaseConnection(): Promise<void> {}
+  async releaseConnection(): Promise<void> {
+    // Kysely releases the connection after every transaction. If the transaction was never committed
+    // or rolled back, roll it back here so the write lock does not stay held.
+    if (this.#tx) {
+      try {
+        await this.#tx.rollback();
+      } catch {
+        // The transaction may already be over, nothing left to roll back.
+      } finally {
+        this.releaseTransaction();
+      }
+    }
+  }
 
   private releaseTransaction() {
-    if (!this.#completeTransaction) {
-      throw new Error(`Not able to release transaction`);
-    }
-
-    this.#completeTransaction();
+    this.#completeTransaction?.();
     this.#completeTransaction = null;
     this.#tx = null;
   }
