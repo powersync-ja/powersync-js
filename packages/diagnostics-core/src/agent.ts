@@ -128,7 +128,7 @@ export class JsAgent implements SdkIntegration {
     return { count: stats.count, size: stats.size ?? null };
   }
 
-  observeEvents(handler: (event: DiagnosticsEvent) => void): Unsubscribe {
+  async observeEvents(handler: (event: DiagnosticsEvent) => void): Promise<Unsubscribe> {
     this.handlers.add(handler);
     this.start();
     // A late subscriber receives the present state at once.

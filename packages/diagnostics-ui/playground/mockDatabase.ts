@@ -224,7 +224,7 @@ export class MockDatabase {
         { name: 'global[]', ops: 18, size: 3120, last_op: '88' }
       ] as T[];
     }
-    if (/count\(\*\)[\s\S]*ps_crud/i.test(sql)) {
+    if (/count\(\*\)/i.test(sql) && /ps_crud/i.test(sql)) {
       return [{ n: 1543 }] as T[];
     }
     if (/ps_crud/i.test(sql)) {

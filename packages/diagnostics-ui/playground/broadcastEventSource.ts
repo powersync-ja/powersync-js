@@ -1,4 +1,5 @@
-import type { CoreDiagnosticsEvent, CoreEventSource, Unsubscribe } from '@powersync/diagnostics-core';
+import type { CoreDiagnosticsEvent, Unsubscribe } from '@powersync/diagnostics-core';
+import type { CoreEventSource } from '@powersync/diagnostics-core/js';
 
 /**
  * Playground event source: consumes the core diagnostics events the mock database broadcasts, the way

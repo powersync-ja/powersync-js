@@ -1061,6 +1061,7 @@ export interface SyncOptions {
     checkpointMode?: CheckpointMode;
     connectionMethod?: SyncStreamConnectionMethod;
     crudUploadThrottleMs?: number;
+    diagnostics?: boolean;
     // (undocumented)
     fetchStrategy?: FetchStrategy;
     includeDefaultStreams?: boolean;
