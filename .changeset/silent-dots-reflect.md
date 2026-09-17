@@ -1,5 +1,5 @@
 ---
-'@powersync/diagnostics-vite': minor
+'@powersync/diagnostics': minor
 ---
 
-Initial release: a Vite plugin that injects the diagnostics agent, serves the diagnostics UI at `/__powersync_devtools/`, and registers a Vite DevTools dock.
+Initial release: PowerSync DevTools as a devframe definition, mounted as a Vite DevTools dock, a node dev server, a standalone window, and MCP tools.

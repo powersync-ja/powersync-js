@@ -250,7 +250,7 @@ const users = await db.selectFrom('users').selectAll().execute();
 
 ### Enabling Diagnostics
 
-Diagnostics show the live state of your app's own PowerSync client in a **PowerSync** tab in Nuxt DevTools. They run in development only; nothing is added to a production build.
+Diagnostics show the live state of your app's own PowerSync client inside Nuxt DevTools. They run in development only; nothing is added to a production build.
 
 1. **Enable diagnostics in your config**:
 
@@ -271,7 +271,10 @@ export default defineNuxtConfig({
 });
 ```
 
-With `useDiagnostics: true`, the module loads the diagnostics agent into your app during `nuxt dev`, serves the diagnostics UI, and registers the tab. The UI is served outside your app's router, so route middleware such as an auth guard does not apply to it.
+With `useDiagnostics: true`, the module picks the integration for your Nuxt DevTools version:
+
+- **Nuxt DevTools 3** (what Nuxt 4 ships): the module loads the diagnostics agent into your app during `nuxt dev`, serves the diagnostics UI, and registers a **PowerSync** tab. The UI is served outside your app's router, so route middleware such as an auth guard does not apply to it.
+- **Nuxt DevTools 4** (built on Vite DevTools): the module mounts the PowerSync devframe definition. You get a **PowerSync** dock and the MCP tools at `/__devtools/__mcp`, the same as a plain Vite app. The first time, DevTools asks you to confirm the browser with a one-time code printed in your terminal.
 
 2. **Enable the core diagnostics stream** when you connect. This gives the Buckets tab per-bucket totals:
 
@@ -279,7 +282,7 @@ With `useDiagnostics: true`, the module loads the diagnostics agent into your ap
 await db.connect(connector, { diagnostics: true });
 ```
 
-3. **Open Nuxt DevTools** and select the **PowerSync** tab.
+3. **Open Nuxt DevTools** and select the **PowerSync** tab or dock.
 
 ## PowerSync Diagnostics
 
@@ -296,7 +299,7 @@ The diagnostics UI helps you inspect and diagnose the state of your PowerSync cl
 
 ### How it works
 
-The module uses [`@powersync/diagnostics-vite`](https://github.com/powersync-ja/powersync-js/tree/main/packages/diagnostics-vite). The same diagnostics UI also works in a plain Vite app and in other hosts. See that package for details.
+The module uses [`@powersync/diagnostics`](https://github.com/powersync-ja/powersync-js/tree/main/packages/diagnostics). The same UI and the same MCP tools work in a plain Vite app, in a node app, and from the `powersync-devtools` CLI. See that package for details, including the MCP tool list.
 
 ### Migrating from `NuxtPowerSyncDatabase`
 

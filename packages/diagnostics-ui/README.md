@@ -15,11 +15,11 @@ It is built once and reused by every host. It reads data only through an `SdkInt
 
 ## Who uses it
 
-Most apps do not install this package directly. [`@powersync/diagnostics-vite`](https://github.com/powersync-ja/powersync-js/tree/main/packages/diagnostics-vite) serves the built UI for you, and [`@powersync/nuxt`](https://github.com/powersync-ja/powersync-js/tree/main/packages/nuxt) shows it as a Nuxt DevTools tab.
+Most apps do not install this package directly. [`@powersync/diagnostics`](https://github.com/powersync-ja/powersync-js/tree/main/packages/diagnostics) serves the built UI for you, and [`@powersync/nuxt`](https://github.com/powersync-ja/powersync-js/tree/main/packages/nuxt) shows it as a Nuxt DevTools tab.
 
 ## Embed the built page
 
-`dist/standalone/` is a self-contained page. Serve it from any origin, load it in an iframe, and hand it an `SdkIntegration` with `attachIframe` from `@powersync/diagnostics-core`. The page asks its host for the integration on load.
+`dist/standalone/` is a self-contained page. It finds its `SdkIntegration` in one of two ways, tried in this order: a [devframe](https://devfra.me) host that serves it (the `@powersync/diagnostics` definition), or a parent page that hands it a `MessagePort` with `attachIframe` from `@powersync/diagnostics-core`. Only this bootstrap (`standalone/`) knows about devframe; the components in `src/` take an `SdkIntegration` and nothing else.
 
 ## Use the component
 

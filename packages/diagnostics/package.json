@@ -1,7 +1,7 @@
 {
-  "name": "@powersync/diagnostics-vite",
+  "name": "@powersync/diagnostics",
   "version": "0.1.0",
-  "description": "Vite DevTools plugin that attaches PowerSync diagnostics to a running app in development",
+  "description": "PowerSync DevTools: a devframe definition that serves live PowerSync diagnostics as a Vite DevTools dock, a standalone window, a node dev server, and MCP tools.",
   "type": "module",
   "main": "lib/src/index.js",
   "types": "lib/src/index.d.ts",
@@ -10,16 +10,37 @@
       "types": "./lib/src/index.d.ts",
       "default": "./lib/src/index.js"
     },
+    "./vite": {
+      "types": "./lib/src/vite.d.ts",
+      "default": "./lib/src/vite.js"
+    },
+    "./vite-static": {
+      "types": "./lib/src/vite-static.d.ts",
+      "default": "./lib/src/vite-static.js"
+    },
     "./client": {
       "types": "./lib/src/client.d.ts",
       "default": "./lib/src/client.js"
+    },
+    "./page": {
+      "types": "./lib/src/page.d.ts",
+      "default": "./lib/src/page.js"
+    },
+    "./node": {
+      "types": "./lib/src/node.d.ts",
+      "default": "./lib/src/node.js"
+    },
+    "./agent": {
+      "types": "./lib/src/agent.d.ts",
+      "default": "./lib/src/agent.js"
     }
   },
   "author": "PowerSync",
   "license": "Apache-2.0",
   "files": [
     "lib",
-    "src"
+    "src",
+    "bin"
   ],
   "repository": "https://github.com/powersync-ja/powersync-js",
   "bugs": {
@@ -38,23 +59,37 @@
   },
   "peerDependencies": {
     "@powersync/web": "workspace:^2.2.0",
-    "@vitejs/devtools-kit": ">=0.7.0",
+    "@vitejs/devtools-kit": ">=0.7.5",
     "vite": ">=7.0.0"
   },
   "peerDependenciesMeta": {
+    "@powersync/web": {
+      "optional": true
+    },
     "@vitejs/devtools-kit": {
+      "optional": true
+    },
+    "vite": {
       "optional": true
     }
   },
   "dependencies": {
+    "@devframes/agentic": "1.0.0",
     "@powersync/diagnostics-core": "workspace:*",
-    "@powersync/diagnostics-ui": "workspace:*"
+    "@powersync/diagnostics-ui": "workspace:*",
+    "cac": "^7.0.0",
+    "devframe": "1.0.0",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@devframes/hub": "1.0.0",
     "@powersync/web": "workspace:*",
     "@types/node": "catalog:",
-    "@vitejs/devtools-kit": "^0.7.3",
+    "@vitejs/devtools-kit": "^0.7.5",
     "typescript": "catalog:",
     "vite": "catalog:"
+  },
+  "bin": {
+    "powersync-devtools": "./bin/powersync-devtools.mjs"
   }
 }

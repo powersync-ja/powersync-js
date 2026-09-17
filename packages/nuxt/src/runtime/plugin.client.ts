@@ -9,10 +9,11 @@ export default defineNuxtPlugin((nuxtApp: any) => {
   // In diagnostics mode during development, load the in-page diagnostics client so the DevTools tab
   // can attach to the app's live database. Nuxt renders HTML through Nitro, so this is where a page
   // script is injected rather than through Vite's HTML hooks. Dynamic import keeps it out of builds.
-  const diagnostics = runtimeConfig.public.powerSyncModuleOptions?.useDiagnostics;
-  console.info('[powersync-diagnostics] nuxt plugin: dev =', import.meta.dev, 'useDiagnostics =', diagnostics);
-  if (import.meta.dev && diagnostics) {
-    import('@powersync/diagnostics-vite/client').catch((error) => {
+  const moduleOptions = runtimeConfig.public.powerSyncModuleOptions ?? {};
+  console.info('[powersync-diagnostics] nuxt plugin: dev =', import.meta.dev, 'useDiagnostics =', moduleOptions.useDiagnostics, 'transport =', moduleOptions.diagnosticsTransport);
+  // Under Nuxt DevTools 4 the devframe dock script serves the page; only the postMessage agent is loaded here.
+  if (import.meta.dev && moduleOptions.useDiagnostics && moduleOptions.diagnosticsTransport === 'page') {
+    import('@powersync/diagnostics/page').catch((error) => {
       console.error('[powersync-diagnostics] failed to load the diagnostics client', error);
     });
   }
