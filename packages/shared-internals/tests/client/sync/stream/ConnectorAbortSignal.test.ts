@@ -18,7 +18,6 @@ class TestSync extends AbstractStreamingSyncImplementation {
     return this['_uploadAllCrud'](signal, syncOptions);
   }
 
-  // Not `requestCheckpoint`: that is a public method on the base class, and shadowing it changes its signature.
   runCheckpointRequest(signal: AbortSignal) {
     return this['requestCheckpointFromService'](signal, { client_id: 'client-1', checkpoint_request_id: '1' });
   }
@@ -32,11 +31,7 @@ function createSync(options: Partial<AbstractStreamingSyncImplementationOptions>
   } as unknown as AbstractStreamingSyncImplementationOptions);
 }
 
-/**
- * These calls cross a context boundary on the web (the shared worker calls into a tab), where they can otherwise stall
- * indefinitely. The worker relies on receiving this signal to bound them, so if it stopped being forwarded the guard
- * there would silently become a no-op.
- */
+// The shared worker needs this signal to stop waiting on unresponsive tabs.
 describe('connector calls receive the sync abort signal', () => {
   test('postCheckpointRequest', async () => {
     const postCheckpointRequest = vi.fn(async () => 'checkpoint-1');
