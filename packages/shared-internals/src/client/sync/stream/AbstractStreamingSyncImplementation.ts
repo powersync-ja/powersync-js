@@ -58,11 +58,9 @@ export interface AbstractStreamingSyncImplementationOptions {
   adapter: BucketStorageAdapter;
   subscriptions: SubscribedStream[];
   /**
-   * Uploads pending CRUD data with the connector.
-   *
-   * `signal` is aborted when the sync client disconnects. Implementations that forward this call across a context
-   * boundary (such as the web shared worker calling into a tab) must stop waiting once it aborts: `disconnect()` awaits
-   * the sync loops, so a call that can never settle also prevents every subsequent `connect()` from resolving.
+   * Uploads pending CRUD data.
+   * Cross-context implementations must stop waiting when `signal` aborts
+   * on disconnect, allowing the sync loops to finish.
    */
   uploadCrud: (signal?: AbortSignal) => Promise<void>;
   /**
@@ -470,9 +468,8 @@ The next upload iteration will be delayed.`
          * The WebRemote should only abort pending fetch requests or close active Readable streams.
          */
 
-        // Distinguish stopping because we were asked to from failing on our own. Note that this is not the same as
-        // `ex instanceof AbortOperation`: an abort raised further down (such as a connector call that timed out) is a
-        // genuine failure that should be reported and retried with a delay.
+        // Check the disconnect signal: connector timeouts also throw AbortOperation
+        // but must still be reported and retried.
         const stoppedOnRequest = signal.aborted;
 
         if (stoppedOnRequest) {
@@ -491,8 +488,7 @@ The next upload iteration will be delayed.`
         }
 
         if (!stoppedOnRequest) {
-          // Stopping on request is not a download failure. Recording it as one strands the error on the status:
-          // `downloadError` is only cleared by a completed sync, which can no longer happen once we have stopped.
+          // Don't record intentional disconnects as errors: they persist until a successful sync.
           this.updateJsSyncState({ downloadError: ex as Error });
         }
       } finally {
