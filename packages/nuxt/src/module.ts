@@ -1,4 +1,7 @@
+import { createRequire } from 'node:module';
+import { dirname, join } from 'node:path';
 import { defineNuxtModule, createResolver, addPlugin, addImports, findPath } from '@nuxt/kit';
+import type { Nuxt } from 'nuxt/schema';
 import { defu } from 'defu';
 import { setupDevToolsUI } from './devtools';
 import { addImportsFrom } from './runtime/utils/addImportsFrom';
@@ -53,11 +56,25 @@ export default defineNuxtModule<PowerSyncNuxtModuleOptions>({
   },
   async setup(options, nuxt) {
     const resolver = createResolver(import.meta.url);
+    // Nuxt installs its own modules (DevTools among them) after the app's, so the version is read once
+    // every module has run. Both consumers below fire later than that.
+    let devtoolsMajor = 3;
+    nuxt.hook('modules:done', () => {
+      devtoolsMajor = nuxtDevtoolsMajor(nuxt);
+      (nuxt.options.runtimeConfig.public.powerSyncModuleOptions as any).diagnosticsTransport = devtoolsMajor >= 4 ? 'devframe' : 'page';
+      // Nuxt DevTools 4 shows the devframe dock itself; only v3 needs the custom tab.
+      if (options.useDiagnostics && devtoolsMajor < 4) {
+        setupDevToolsUI(nuxt);
+      }
+    });
 
     nuxt.options.runtimeConfig.public.powerSyncModuleOptions = defu(
       nuxt.options.runtimeConfig.public.powerSyncModuleOptions as any,
       {
         useDiagnostics: options.useDiagnostics,
+        // Which page-side agent the runtime plugin loads: none under Nuxt DevTools 4 (the devframe dock
+        // script serves the page), the postMessage agent under Nuxt DevTools 3. Set in `modules:done`.
+        diagnosticsTransport: 'page',
         kysely: options.kysely
       }
     );
@@ -175,18 +192,45 @@ export default defineNuxtModule<PowerSyncNuxtModuleOptions>({
       const plugins = config.plugins || [];
       plugins.push(vitePlugin);
 
-      // In diagnostics mode during development, serve the diagnostics UI and register the dock. The
-      // in-page client is loaded by this module's runtime plugin (Nuxt renders HTML through Nitro, so
-      // Vite's HTML injection never runs here); the DevTools tab reaches it through the page.
+      // Diagnostics during development, by Nuxt DevTools generation.
       if (options.useDiagnostics && nuxt.options.dev) {
-        const { default: powersyncDevtools } = await import('@powersync/diagnostics-vite');
-        plugins.push(powersyncDevtools({ inject: 'none' }));
+        if (devtoolsMajor >= 4) {
+          // Nuxt DevTools 4 runs on Vite DevTools: mount the devframe definition. The dock, the page
+          // script and the MCP tools come with it.
+          const { default: powersyncDevtools } = await import('@powersync/diagnostics/vite');
+          plugins.push(powersyncDevtools());
+        } else {
+          // Nuxt DevTools 3 has no devframe hub: serve the UI as a static page for the custom tab. The
+          // runtime plugin loads the page agent that answers the tab over postMessage.
+          const { default: powersyncStatic } = await import('@powersync/diagnostics/vite-static');
+          plugins.push(powersyncStatic());
+        }
       }
 
       // @ts-ignore - plugins is read-only but we need to modify it
       config.plugins = plugins;
     });
 
-    setupDevToolsUI(nuxt);
   }
 });
+
+const DEVTOOLS_MODULES = ['@nuxt/devtools', '@nuxt/devtools-nightly', '@nuxt/devtools-edge'];
+
+/**
+ * The major version of the Nuxt DevTools module installed in the app. Read from Nuxt's record of
+ * installed modules (valid after `modules:done`), else from the package the app resolves; 3 when
+ * neither is available.
+ */
+function nuxtDevtoolsMajor(nuxt: Nuxt): number {
+  const installed = nuxt.options._installedModules.find((entry) => DEVTOOLS_MODULES.includes(entry.meta?.name ?? ''));
+  const fromMeta = installed?.meta?.version;
+  if (fromMeta) return Number(fromMeta.split('.')[0]) || 3;
+  try {
+    // Resolve from where the module was loaded, else from the app root.
+    const from = installed?.entryPath ? join(dirname(installed.entryPath), 'package.json') : join(nuxt.options.rootDir, 'package.json');
+    const pkg = createRequire(from)('@nuxt/devtools/package.json') as { version: string };
+    return Number(pkg.version.split('.')[0]) || 3;
+  } catch {
+    return 3;
+  }
+}

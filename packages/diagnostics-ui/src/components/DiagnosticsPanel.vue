@@ -34,7 +34,7 @@ const setupTabs = [
     label: 'JavaScript',
     lang: 'javascript',
     code: `// vite.config.ts — the plugin attaches diagnostics in dev only; nothing ships to production.
-import powersyncDevtools from '@powersync/diagnostics-vite';
+import powersyncDevtools from '@powersync/diagnostics';
 
 export default defineConfig({
   plugins: [powersyncDevtools()]
