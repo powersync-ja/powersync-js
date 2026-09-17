@@ -20,11 +20,22 @@ import { CheckpointRequest } from './sync/CheckpointRequest.js';
 import { WatchedQueryPlugin } from './plugins/WatchedQueryPlugin.js';
 
 /**
+ * Options passed to {@link CommonPowerSyncDatabase#disconnectAndClear}.
+ *
  * @public
  */
 export interface DisconnectAndClearOptions {
   /** When set to false, data in local-only tables is preserved. */
   clearLocal?: boolean;
+  /**
+   * A [soft] clear deletes publicly visible tables, but keeps internal copies of data synced in the database.
+   *
+   * This usually means that if {@link CommonPowerSyncDatabase#connect} is later called again with a JWT from the same
+   * user, the first sync is very fast because all internal data is still available. When a different user  logs in, no
+   * old data would be visible at any point. Using soft deletes is recommended where it's not a security issue that old
+   * data could be reconstructed from internal database tables.
+   */
+  soft?: boolean;
 }
 
 /**

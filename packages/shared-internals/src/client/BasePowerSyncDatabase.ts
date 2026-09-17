@@ -69,7 +69,8 @@ import { CheckpointRequestImpl } from './sync/CheckpointRequestImpl.js';
 const POWERSYNC_TABLE_MATCH = /(^ps_data__|^ps_data_local__)/;
 
 const DEFAULT_DISCONNECT_CLEAR_OPTIONS: DisconnectAndClearOptions = {
-  clearLocal: true
+  clearLocal: true,
+  soft: false
 };
 
 /**
@@ -462,10 +463,12 @@ export abstract class BasePowerSyncDatabase<Options extends BasePowerSyncDatabas
     await this.disconnect();
     await this.waitForReady();
 
-    const { clearLocal } = options;
+    let flags = 0;
+    if (options.clearLocal) flags |= 1;
+    if (options.soft) flags |= 2;
 
     await this.database.writeTransaction(async (tx) => {
-      await tx.execute('SELECT powersync_clear(?)', [clearLocal ? 1 : 0]);
+      await tx.execute('SELECT powersync_clear(?)', [flags]);
     });
 
     // The data has been deleted - reset the sync status

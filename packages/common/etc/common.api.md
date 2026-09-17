@@ -545,9 +545,10 @@ export enum DiffTriggerOperation {
     UPDATE = "UPDATE"
 }
 
-// @public (undocumented)
+// @public
 export interface DisconnectAndClearOptions {
     clearLocal?: boolean;
+    soft?: boolean;
 }
 
 // @public (undocumented)
