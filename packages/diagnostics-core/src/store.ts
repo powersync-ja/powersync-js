@@ -2,7 +2,13 @@ import { atom, type ReadableAtom, type WritableAtom } from 'nanostores';
 import type { SdkIntegration } from './integration.js';
 import type { BucketState, LogRecord, StreamState, SyncState, UploadQueueState } from './shapes.js';
 
-const MAX_LOGS = 2000;
+/** How many log records the stores keep before dropping the oldest. */
+export const DEFAULT_MAX_LOGS = 2000;
+
+export interface DiagnosticsStoresOptions {
+  /** Defaults to {@link DEFAULT_MAX_LOGS}. A host that shows the buffer size should read it from here. */
+  maxLogs?: number;
+}
 
 /**
  * Reactive stores derived from an {@link SdkIntegration}'s pushed events.
@@ -18,12 +24,18 @@ export interface DiagnosticsStores {
   readonly buckets: ReadableAtom<BucketState[]>;
   readonly uploadQueue: ReadableAtom<UploadQueueState | null>;
   readonly logs: ReadableAtom<LogRecord[]>;
+  /** The most log records `logs` holds. */
+  readonly maxLogs: number;
   clearLogs(): void;
   /** Stops listening to the integration. */
   dispose(): void;
 }
 
-export function createDiagnosticsStores(integration: SdkIntegration): DiagnosticsStores {
+export function createDiagnosticsStores(
+  integration: SdkIntegration,
+  options: DiagnosticsStoresOptions = {}
+): DiagnosticsStores {
+  const maxLogs = options.maxLogs ?? DEFAULT_MAX_LOGS;
   const connected = atom(false);
   const status = atom<SyncState | null>(null);
   const streams = atom<StreamState[]>([]);
@@ -48,7 +60,7 @@ export function createDiagnosticsStores(integration: SdkIntegration): Diagnostic
         uploadQueue.set(event.payload);
         break;
       case 'logs':
-        logs.set([...logs.get(), ...event.payload].slice(-MAX_LOGS));
+        logs.set([...logs.get(), ...event.payload].slice(-maxLogs));
         break;
       default:
         break;
@@ -62,6 +74,7 @@ export function createDiagnosticsStores(integration: SdkIntegration): Diagnostic
     buckets,
     uploadQueue,
     logs,
+    maxLogs,
     clearLogs: () => logs.set([]),
     dispose: () => {
       void subscription.then((unsubscribe) => unsubscribe());

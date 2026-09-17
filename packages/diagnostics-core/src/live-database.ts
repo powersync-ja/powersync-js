@@ -102,5 +102,9 @@ export interface LiveDatabase {
   syncStream(
     name: string,
     params?: Record<string, unknown>
-  ): { subscribe(options?: { ttl?: number; priority?: 0 | 1 | 2 | 3 }): Promise<LiveStreamHandle> };
+  ): {
+    subscribe(options?: { ttl?: number; priority?: 0 | 1 | 2 | 3 }): Promise<LiveStreamHandle>;
+    /** Drops every subscription to the stream. Absent on SDKs that predate it. */
+    unsubscribeAll?(): Promise<void>;
+  };
 }
