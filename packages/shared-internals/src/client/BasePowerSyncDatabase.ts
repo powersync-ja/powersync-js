@@ -269,6 +269,7 @@ export abstract class BasePowerSyncDatabase<Options extends BasePowerSyncDatabas
       ...options,
       adapter: this.bucketStorageAdapter,
       // PowerSyncBackendConnector accepts no abort signal; these callbacks await it directly.
+      // TODO: We should eventually forward the abort signal to controllers as well.
       uploadCrud: async () => {
         await this.waitForReady();
         await connector.uploadData(this);
