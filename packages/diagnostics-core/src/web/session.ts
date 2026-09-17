@@ -16,11 +16,11 @@ import type { SdkIntegration } from '../integration.js';
 import { decodeTokenSubject } from '../jwt.js';
 import { isObservedColumn, ObservedSchema, type ObservedSchemaDefinition } from '../observed-schema.js';
 import { createDiagnosticsStores, type DiagnosticsStores } from '../store.js';
-import { deleteDatabaseFiles } from './delete-database.js';
+import { deleteDatabaseFiles, type DeleteDatabaseOptions } from './delete-database.js';
 import { DevTokenConnector } from './dev-token-connector.js';
 import {
   createLocalStorageIdentityStore,
-  isSameIdentity,
+  keepsDataFor,
   type SessionIdentity,
   type SessionIdentityStore
 } from './session-identity.js';
@@ -142,25 +142,37 @@ async function observeStoredSchema(db: PowerSyncDatabase, schema: ObservedSchema
 }
 
 /**
- * Decides what of the last session's state this one keeps. Another user's (or instance's) rows are
- * not this session's to show, so they are cleared; for the same user only the runtime subscriptions
- * go, since they were made for a session that is over and would otherwise keep syncing until their
- * TTL ran out.
+ * Drops the last session's data unless this session is the same user on the same instance, before
+ * the database is opened.
+ *
+ * Another user's (or instance's) rows are not this session's to show, and neither are rows this
+ * session cannot account for. They go by deleting the database's files rather than through
+ * `disconnectAndClear()`, which deletes row by row and on a database of a gigabyte or more takes
+ * long enough to look like a hang. Doing it before the open means nothing holds the files, and the
+ * database that opens afterwards is simply empty.
  */
-async function prepareStoredState(
-  db: PowerSyncDatabase,
-  agent: JsAgent,
-  options: DiagnosticsSessionOptions,
-  identities: SessionIdentityStore
+async function claimDatabaseFor(
+  identity: SessionIdentity,
+  identities: SessionIdentityStore,
+  storage: DeleteDatabaseOptions
 ): Promise<void> {
-  const identity: SessionIdentity = { endpoint: options.endpoint, subject: decodeTokenSubject(options.token) };
-  const last = identities.read();
-  if (last !== null && !isSameIdentity(last, identity)) {
-    await db.disconnectAndClear();
-  } else {
-    await agent.action({ action: 'unsubscribeAllStreams' });
+  if (!keepsDataFor(identities.read(), identity)) {
+    await deleteDatabaseFiles(storage);
   }
+  // Recorded next to the deletion, so the store always says who the files on disk belong to, even
+  // if this session then fails to connect.
   identities.remember(identity);
+}
+
+/**
+ * Releases the subscriptions the last session made for the same user.
+ *
+ * They were made for a session that is over, and would otherwise keep syncing until their TTL ran
+ * out. What that session downloaded is kept, so connecting again resumes instead of syncing it all
+ * a second time.
+ */
+async function releaseLastSessionSubscriptions(agent: JsAgent): Promise<void> {
+  await agent.action({ action: 'unsubscribeAllStreams' });
 }
 
 /**
@@ -181,6 +193,11 @@ export async function openDiagnosticsSession(options: DiagnosticsSessionOptions)
   const dbFilename = storage.dbFilename ?? DEFAULT_DB_FILENAME;
   const vfs = storage.vfs ?? DEFAULT_VFS;
   const identities = options.identityStore ?? createLocalStorageIdentityStore();
+  const identity: SessionIdentity = { endpoint: options.endpoint, subject: decodeTokenSubject(options.token) };
+
+  // Before the database is opened: a database another user filled is deleted by its files, which is
+  // quick however large it grew, and nothing holds them yet.
+  await claimDatabaseFor(identity, identities, { dbFilename, vfs });
 
   const db = new PowerSyncDatabase({
     schema: new Schema([]),
@@ -263,7 +280,7 @@ export async function openDiagnosticsSession(options: DiagnosticsSessionOptions)
 
   try {
     await db.waitForReady();
-    await prepareStoredState(db, agent, options, identities);
+    await releaseLastSessionSubscriptions(agent);
     // The database is opened with an empty schema, which drops the views an earlier session
     // created, so the tables behind them are declared again before anything reads them.
     if (await observeStoredSchema(db, observedSchema)) {

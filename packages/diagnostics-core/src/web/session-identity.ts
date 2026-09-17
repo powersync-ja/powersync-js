@@ -19,6 +19,15 @@ export interface SessionIdentityStore {
 export const isSameIdentity = (a: SessionIdentity, b: SessionIdentity): boolean =>
   a.endpoint === b.endpoint && a.subject === b.subject;
 
+/**
+ * Whether a database the session `last` used may be kept for `identity`.
+ *
+ * No last session means the database cannot be shown to belong to this one, so it is not kept:
+ * rows another user downloaded are not this user's to see, and that is worth a re-sync.
+ */
+export const keepsDataFor = (last: SessionIdentity | null, identity: SessionIdentity): boolean =>
+  last !== null && isSameIdentity(last, identity);
+
 const DEFAULT_STORAGE_KEY = 'powersync-diagnostics:last-session';
 
 const parseIdentity = (text: string): SessionIdentity | null => {
