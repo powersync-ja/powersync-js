@@ -23,6 +23,7 @@ import type {
   Unsubscribe,
   UploadQueueState
 } from '@powersync/diagnostics-core';
+import { ACTION_NAMES, UNSUBSCRIBE_MODES } from '@powersync/diagnostics-core';
 import { DEVFRAME_ID, UI_ROUTE } from './constants.js';
 import type { SourceInfo } from './rpc-types.js';
 
@@ -139,7 +140,11 @@ function removeSource(sourceId: string): void {
  * Serves an integration that lives in this process (a node app's database). Events are pulled from
  * it directly. Returns a function that detaches it.
  */
-export async function registerIntegration(id: string, integration: SdkIntegration, sdk: string | null = null): Promise<Unsubscribe> {
+export async function registerIntegration(
+  id: string,
+  integration: SdkIntegration,
+  sdk: string | null = null
+): Promise<Unsubscribe> {
   const source: Source = { id, sdk, integration, alive: () => true, snapshots: new Map() };
   addSource(source);
   source.stop = await integration.observeEvents((event) => fanOut(id, event));
@@ -166,13 +171,15 @@ const queryParamsArg = z
   .describe('The query.');
 const actionRequestArg = z
   .object({
-    action: z.enum(['reconnect', 'disconnect', 'clearData', 'requestCheckpoint', 'subscribeStream', 'unsubscribeStream']),
+    // Built from the protocol's own list, so a new action is accepted here the moment it exists.
+    action: z.enum(ACTION_NAMES),
     args: z
       .object({
         name: z.string(),
         params: z.record(z.string(), z.unknown()).optional(),
         ttl: z.number().optional(),
-        priority: z.union([z.literal(0), z.literal(1), z.literal(2), z.literal(3)]).optional()
+        priority: z.union([z.literal(0), z.literal(1), z.literal(2), z.literal(3)]).optional(),
+        mode: z.enum(UNSUBSCRIBE_MODES).optional()
       })
       .optional()
       .describe('Stream name and options, for the stream actions only.')
@@ -280,7 +287,10 @@ export const definition = defineDevframe({
         jsonSerializable: true,
         args: [sourceIdArg],
         returns: anyResult,
-        agent: { description: 'Connection info of the PowerSync client: endpoint, user id, client id, connection method, core version.' },
+        agent: {
+          description:
+            'Connection info of the PowerSync client: endpoint, user id, client id, connection method, core version.'
+        },
         handler: (sourceId) => pickSource(sourceId).integration.getInfo()
       })
     );
@@ -291,7 +301,10 @@ export const definition = defineDevframe({
         jsonSerializable: true,
         args: [sourceIdArg],
         returns: anyResult,
-        agent: { description: 'The current sync status of the PowerSync client: connected, downloading, progress, last sync, errors.' },
+        agent: {
+          description:
+            'The current sync status of the PowerSync client: connected, downloading, progress, last sync, errors.'
+        },
         handler: (sourceId) => pickSource(sourceId).integration.currentSyncStatus()
       })
     );
@@ -315,7 +328,7 @@ export const definition = defineDevframe({
         returns: anyResult,
         agent: {
           description:
-            'Run a control action on the PowerSync client: reconnect, disconnect, clearData (wipes local data and re-syncs), requestCheckpoint, subscribeStream, unsubscribeStream.',
+            'Run a control action on the PowerSync client: reconnect, disconnect, clearData (wipes local data and re-syncs), requestCheckpoint, subscribeStream, unsubscribeStream (mode release, the default, starts the TTL; mode all drops every subscription to the stream), unsubscribeAllStreams.',
           safety: 'destructive'
         },
         handler: (request, sourceId) => pickSource(sourceId).integration.action(request as ActionRequest)

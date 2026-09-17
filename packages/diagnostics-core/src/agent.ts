@@ -1,4 +1,7 @@
 import type { DiagnosticsEvent, SdkIntegration } from './integration.js';
+import { decodeTokenSubject } from './jwt.js';
+import { logLevelName } from './log-levels.js';
+import { EXPLICIT_SUBSCRIPTIONS_SQL, parseSubscriptionRows } from './streams.js';
 import type {
   LiveConnectionAccess,
   LiveConnectionOptions,
@@ -86,7 +89,7 @@ export class JsAgent implements SdkIntegration {
     try {
       const credentials = await connection?.getConnector()?.fetchCredentials();
       endpoint = credentials?.endpoint ?? null;
-      userId = credentials?.token ? decodeJwtSubject(credentials.token) : null;
+      userId = credentials?.token ? decodeTokenSubject(credentials.token) : null;
     } catch {
       // Credentials are unavailable before connect().
     }
@@ -168,10 +171,25 @@ export class JsAgent implements SdkIntegration {
         break;
       }
       case 'unsubscribeStream': {
-        const { name, params } = request.args as StreamActionArgs;
+        const { name, params, mode } = request.args as StreamActionArgs;
         const key = streamKey(name, params);
         this.streamHandles.get(key)?.unsubscribe();
         this.streamHandles.delete(key);
+        if (mode === 'all') {
+          await this.unsubscribeAll(name, params);
+        }
+        break;
+      }
+      case 'unsubscribeAllStreams': {
+        // The core's table is the one place that lists every runtime subscription, whoever made it.
+        const rows = await this.db.getAll(EXPLICIT_SUBSCRIPTIONS_SQL);
+        for (const subscription of parseSubscriptionRows(rows)) {
+          await this.unsubscribeAll(subscription.name, subscription.params ?? undefined);
+        }
+        for (const handle of this.streamHandles.values()) {
+          handle.unsubscribe();
+        }
+        this.streamHandles.clear();
         break;
       }
     }
@@ -351,27 +369,17 @@ export class JsAgent implements SdkIntegration {
       await this.db.connect(this.lastConnector, this.lastConnectionOptions ?? undefined);
     }
   }
+
+  /** Drops every subscription to a stream, where the SDK can. Releasing a handle only starts a TTL. */
+  private async unsubscribeAll(name: string, params?: Record<string, unknown>): Promise<void> {
+    const stream = this.db.syncStream(name, params);
+    if (typeof stream.unsubscribeAll !== 'function') {
+      throw new Error('unsubscribeAll is not available in this SDK version.');
+    }
+    await stream.unsubscribeAll();
+  }
 }
 
 function streamKey(name: string, params?: Record<string, unknown>): string {
   return `${name}|${JSON.stringify(params ?? null)}`;
-}
-
-/** Maps a numeric SDK log level to its name. */
-function logLevelName(level: number): string {
-  if (level >= 50) return 'error';
-  if (level >= 40) return 'warn';
-  if (level >= 30) return 'info';
-  if (level >= 20) return 'debug';
-  return 'trace';
-}
-
-function decodeJwtSubject(token: string): string | null {
-  try {
-    const payload = token.split('.')[1];
-    const decoded = JSON.parse(atob(payload)) as { sub?: unknown };
-    return typeof decoded.sub === 'string' ? decoded.sub : null;
-  } catch {
-    return null;
-  }
 }

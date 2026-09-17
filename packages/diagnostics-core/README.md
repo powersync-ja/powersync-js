@@ -2,7 +2,7 @@
 
 This package (`packages/diagnostics-core`) defines the protocol between the [PowerSync](https://powersync.com) diagnostics tool and a PowerSync SDK, and ships the pieces that implement it for JavaScript.
 
-The main entrypoint imports nothing from any PowerSync SDK. The protocol is owned by the tool, and each SDK implements it in its own language.
+The main entrypoint imports nothing from any PowerSync SDK. The protocol is owned by the tool, and each SDK implements it in its own language. The one exception is the `./web` entrypoint, which opens a real `@powersync/web` database as a headless test client and so imports that SDK; hosts that only inspect an app's own client never load it.
 
 ## The protocol in one picture
 
@@ -28,12 +28,29 @@ The reference definition is the TypeScript itself: [`src/integration.ts`](./src/
 - **`SdkIntegration`** and **`DiagnosticsEvent`** — the interface an SDK implements so the diagnostics UI can inspect a live client: run SQL, read the schema and connection info, observe sync state, and run control actions.
 - **The data shapes** — `SyncState`, `StreamState`, `BucketState`, `SchemaPayload`, and the rest. Plain JSON, epoch milliseconds, `null` for "does not apply".
 - **The iframe bridge** — `exposeIntegration`, `connectIntegration`, `attachIframe`, and `awaitIntegration` move an integration across a `postMessage` boundary with [comlink](https://github.com/GoogleChromeLabs/comlink). The UI always runs in an iframe; the integration lives on the other side.
-- **`createDiagnosticsStores`** — reactive stores derived from an integration's events, for the UI.
+- **`createDiagnosticsStores`** — reactive stores derived from an integration's events, for the UI. Takes `maxLogs`; the size is exposed as `stores.maxLogs`.
+- **`withRequestTimeout`** — wraps an integration so a request whose other side has gone fails with `DiagnosticsRequestTimeoutError` instead of hanging.
+- **Shared logic** every host needs on top of the protocol, all working on plain data and SQL results:
+  - `readSyncConfigParameters` and `selectSubscribableStreams` — what a deployed Sync Config expects of clients: the connection parameters, and each stream's subscription parameters.
+  - `parseStreamBucketName`, `collectStreamStats`, `readStoredSubscriptions` — taking bucket names apart, rolling bucket stats up to the streams that produced them, and reading the core's subscription table.
+  - `readTableStats`, `readBucketStats`, `readSyncedTableNames` — rows, operations and size per table and per bucket, over `runQuery`.
+  - `collectImpersonationTarget`, `recoverConnectionParams`, `recoverSubscriptions` — what the service logs reveal about one client's session, enough to sync as it did.
+  - `ObservedSchema` — a client schema inferred from the columns the core reports (`SchemaChange` events) and from rows already stored, as plain data for a host to apply.
+  - `decodeTokenClaims`, `toLogEntry`, `filterLogEntries`, `withAutoLimit` — small helpers for tokens, log display and SQL consoles.
 
 `@powersync/diagnostics-core/js` (JavaScript hosts only):
 
 - **`JsAgent`** — the JavaScript implementation. It runs in the app page next to a live database and reads it through a structural `LiveDatabase` interface, so this package still imports no SDK. The seam is type-checked where a concrete database is passed in, in `@powersync/diagnostics`.
 - **`toSyncState`** and **`toStreamStates`** — the mapping from the SDK's sync status to the protocol shapes.
+- **`BroadcastCoreEvents`** — the source of the core diagnostics events the JavaScript sync client broadcasts when connected with `diagnostics: true`.
+
+`@powersync/diagnostics-core/web` (web hosts running their own test client; imports `@powersync/web`):
+
+- **`openDiagnosticsSession`** — opens a headless PowerSync client against an instance with a token you hold, and serves it as an `SdkIntegration` in-process, with stores. It reuses one local database across sessions, releases the last session's subscriptions, clears the database when the user or instance changes, and infers and applies a schema as the core reports columns.
+- **Storage options** — the VFS (`OPFSCoopSyncVFS` by default; IndexedDB slows down badly on large databases), the file name, the page cache and temporary storage.
+- **`session.reset()`**, **`closeAndDeleteDatabase`** and **`deleteDatabaseFiles`** — delete the database's files directly instead of clearing it row by row, which on a large database takes long enough to look like a hang. The first two disconnect and close first: a client still connected when its files go simply downloads everything again.
+- **`session.unsubscribeAll`** — the protocol's `unsubscribeStream` with `mode: 'all'`: drops every subscription to a stream so it stops syncing now, where releasing only starts a TTL. `unsubscribeAllStreams` does the same for every runtime subscription.
+- **`DevTokenConnector`** — a connector for a token the host already has; it never uploads.
 
 ## Who uses it
 

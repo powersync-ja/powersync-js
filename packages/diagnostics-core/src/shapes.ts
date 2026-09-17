@@ -211,15 +211,30 @@ export type CoreDiagnosticsEvent =
  * | `clearData`         |                            | Clear the local database, then connect again.                          |
  * | `requestCheckpoint` |                            | Confirm the client is caught up. Needs checkpoint requests enabled.    |
  * | `subscribeStream`   | {@link StreamActionArgs}   | Subscribe to a sync stream. `ttl` defaults to `0`.                     |
- * | `unsubscribeStream` | `{ name, params? }`        | Release a subscription created with `subscribeStream`.                 |
+ * | `unsubscribeStream` | `{ name, params?, mode? }` | Release a subscription created with `subscribeStream` (`mode: 'release'`, the default, which starts its TTL), or drop every subscription to the stream so it stops syncing now (`mode: 'all'`). |
+ * | `unsubscribeAllStreams` |                        | Drop every subscription made at runtime, on any stream. What a tool does when a session ends. |
  */
-export type ActionName =
-  | 'reconnect'
-  | 'disconnect'
-  | 'clearData'
-  | 'requestCheckpoint'
-  | 'subscribeStream'
-  | 'unsubscribeStream';
+export const ACTION_NAMES = [
+  'reconnect',
+  'disconnect',
+  'clearData',
+  'requestCheckpoint',
+  'subscribeStream',
+  'unsubscribeStream',
+  'unsubscribeAllStreams'
+] as const;
+
+/** One of {@link ACTION_NAMES}. Hosts that validate requests at a boundary build their check from that list, so it cannot drift from this type. */
+export type ActionName = (typeof ACTION_NAMES)[number];
+
+/**
+ * How `unsubscribeStream` lets go of a stream: `release` lets go of the subscription the tool made,
+ * and the stream stays until its TTL runs out; `all` drops every subscription to the stream, the
+ * app's included, so it stops syncing now.
+ */
+export const UNSUBSCRIBE_MODES = ['release', 'all'] as const;
+
+export type UnsubscribeMode = (typeof UNSUBSCRIBE_MODES)[number];
 
 /** Arguments for `subscribeStream` / `unsubscribeStream`. */
 export interface StreamActionArgs {
@@ -228,6 +243,8 @@ export interface StreamActionArgs {
   /** Seconds. Defaults to 0 so a forgotten debug subscription is evicted once released. */
   ttl?: number;
   priority?: 0 | 1 | 2 | 3;
+  /** For `unsubscribeStream`. Defaults to `release`. */
+  mode?: UnsubscribeMode;
 }
 
 /** A control action and its arguments (only the stream actions take any). */

@@ -2,7 +2,7 @@
   "name": "@powersync/diagnostics-core",
   "version": "0.1.0",
   "type": "module",
-  "description": "The PowerSync diagnostics protocol (SdkIntegration and its data shapes), the iframe bridge, and the JavaScript agent.",
+  "description": "The PowerSync diagnostics protocol (SdkIntegration and its data shapes), the iframe bridge, the JavaScript agent, and a headless web test client.",
   "author": "PowerSync",
   "license": "Apache-2.0",
   "homepage": "https://docs.powersync.com",
@@ -27,24 +27,39 @@
     "./js": {
       "types": "./lib/src/js.d.ts",
       "default": "./lib/src/js.js"
+    },
+    "./web": {
+      "types": "./lib/src/web.d.ts",
+      "default": "./lib/src/web.js"
     }
   },
   "scripts": {
     "build": "tsc -b",
     "build:prod": "tsc -b",
     "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
-    "watch": "tsc --build -w"
+    "watch": "tsc --build -w",
+    "test": "vitest"
   },
   "files": [
     "lib",
     "src"
   ],
   "devDependencies": {
+    "@powersync/web": "workspace:*",
     "@types/node": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   },
   "dependencies": {
     "comlink": "catalog:",
     "nanostores": "^1.5.2"
+  },
+  "peerDependencies": {
+    "@powersync/web": "workspace:^2.2.0"
+  },
+  "peerDependenciesMeta": {
+    "@powersync/web": {
+      "optional": true
+    }
   }
 }
