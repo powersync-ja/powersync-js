@@ -92,17 +92,6 @@ export type WrappedSyncPort = {
  */
 const CONNECTOR_PLACEHOLDER = {} as PowerSyncBackendConnector;
 
-const CONNECTOR_CALL_TIMEOUT_MS = 30_000;
-
-type UseConnectorOptions = {
-  /**
-   * Aborted when the sync client disconnects.
-   */
-  signal?: AbortSignal;
-  /** Response timeout in milliseconds. Use `null` only when bounded by `signal`. */
-  timeoutMs?: number | null;
-};
-
 /**
  * @internal
  * Shared sync implementation which runs inside a shared webworker
@@ -413,26 +402,20 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
 
                 return port.clientProvider.fetchCredentials();
               },
-              'fetchCredentials',
-              // No sync abort signal reaches the remote, so this relies on the timeout alone.
-              { timeoutMs: CONNECTOR_CALL_TIMEOUT_MS }
+              'fetchCredentials'
             );
           }
         },
         this.logger
       ),
       uploadCrud: (signal) => {
-        return this.#useConnector((port) => port.clientProvider.uploadCrud(), 'uploadCrud', {
-          signal,
-          // Large uploads may take arbitrarily long; disconnect ends the wait.
-          timeoutMs: null
-        });
+        return this.#useConnector((port) => port.clientProvider.uploadCrud(), 'uploadCrud', signal);
       },
       postCheckpointRequest: (clientId, requestId, signal) => {
         return this.#useConnector(
           (port) => port.clientProvider.postCheckpointRequest(clientId, requestId),
           'postCheckpointRequest',
-          { signal, timeoutMs: CONNECTOR_CALL_TIMEOUT_MS }
+          signal
         );
       },
       ...syncParams.streamOptions,
@@ -443,69 +426,39 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
   }
 
   /**
-   * Bounds calls into client tabs by an abort signal, a timeout, or both.
-   * Unresponsive tabs can leave Comlink calls pending without closing their ports,
-   * blocking `disconnect()` and subsequent `connect()` calls.
+   * Calls into a client tab, stopping the wait on disconnect when a signal is supplied.
    */
   async #useConnector<T>(
     inner: (port: WrappedSyncPort) => Promise<T>,
     debugContext: string,
-    options: UseConnectorOptions = {}
+    signal?: AbortSignal
   ): Promise<T> {
-    const { signal, timeoutMs = CONNECTOR_CALL_TIMEOUT_MS } = options;
-
-    const controller = new AbortController();
-    const abortWith = (reason: string) => {
-      if (controller.signal.aborted) {
-        return;
+    const action = async () => {
+      const lastPort = await this.getLastWrappedPort();
+      if (!lastPort) {
+        throw new Error(`No client port found for ${debugContext}`);
       }
-      this.logger.log({ level: LogLevels.warn, message: `Aborting ${debugContext}: ${reason}` });
-      controller.abort(new AbortOperation(`Aborted ${debugContext}: ${reason}`));
+
+      return await new Promise<T>((resolve, reject) => {
+        const portClosed = () => {
+          reject(new Error(`Tab closed while handling ${debugContext}`));
+        };
+
+        lastPort.closeListeners.push(portClosed);
+
+        inner(lastPort)
+          .then(resolve, reject)
+          .finally(() => {
+            const index = lastPort.closeListeners.indexOf(portClosed);
+            if (index >= 0) {
+              lastPort.closeListeners.splice(index, 1);
+            }
+          });
+      });
     };
 
-    const timeout =
-      timeoutMs == null
-        ? undefined
-        : setTimeout(() => abortWith(`the client tab did not respond within ${timeoutMs}ms`), timeoutMs);
-
-    const onRequestedAbort = () => abortWith('the sync client disconnected');
-    signal?.addEventListener('abort', onRequestedAbort, { once: true });
-    if (signal?.aborted) {
-      onRequestedAbort();
-    }
-
-    try {
-      return await withAbort({
-        signal: controller.signal,
-        // Include port lookup in the guard: port removal can hold portMutex.
-        action: async () => {
-          const lastPort = await this.getLastWrappedPort();
-          if (!lastPort) {
-            throw new Error(`No client port found for ${debugContext}`);
-          }
-
-          return await new Promise<T>((resolve, reject) => {
-            const portClosed = () => {
-              reject(new Error(`Tab closed while handling ${debugContext}`));
-            };
-
-            lastPort.closeListeners.push(portClosed);
-
-            inner(lastPort)
-              .then(resolve, reject)
-              .finally(() => {
-                const index = lastPort.closeListeners.indexOf(portClosed);
-                if (index >= 0) {
-                  lastPort.closeListeners.splice(index, 1);
-                }
-              });
-          });
-        }
-      });
-    } finally {
-      clearTimeout(timeout);
-      signal?.removeEventListener('abort', onRequestedAbort);
-    }
+    // Include port lookup in the guard: port removal can hold portMutex.
+    return signal ? withAbort({ signal, action }) : action();
   }
 
   /**
