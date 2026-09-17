@@ -32,12 +32,12 @@ The reference definition is the TypeScript itself: [`src/integration.ts`](./src/
 
 `@powersync/diagnostics-core/js` (JavaScript hosts only):
 
-- **`JsAgent`** — the JavaScript implementation. It runs in the app page next to a live database and reads it through a structural `LiveDatabase` interface, so this package still imports no SDK. The seam is type-checked where a concrete database is passed in, in `@powersync/diagnostics-vite`.
+- **`JsAgent`** — the JavaScript implementation. It runs in the app page next to a live database and reads it through a structural `LiveDatabase` interface, so this package still imports no SDK. The seam is type-checked where a concrete database is passed in, in `@powersync/diagnostics`.
 - **`toSyncState`** and **`toStreamStates`** — the mapping from the SDK's sync status to the protocol shapes.
 
 ## Who uses it
 
-Most apps do not use this package directly. Use [`@powersync/diagnostics-vite`](https://github.com/powersync-ja/powersync-js/tree/main/packages/diagnostics-vite), which runs the agent and serves the UI for you.
+Most apps do not use this package directly. Use [`@powersync/diagnostics`](https://github.com/powersync-ja/powersync-js/tree/main/packages/diagnostics), which runs the agent and serves the UI for you.
 
 Use this package directly when you build a new host or a new SDK integration.
 
@@ -70,7 +70,7 @@ The UI side calls `awaitIntegration()` and receives the port.
 
 ## Enablement per SDK
 
-- **JavaScript** — never shipped to production. The integration is injected only by the development tooling (the Vite plugin) when a dev server runs. The SDK carries only what the core needs: the `diagnostics` sync option that switches on the core event stream.
+- **JavaScript** — never shipped to production. The integration is loaded only by the development tooling (`@powersync/diagnostics`) when a dev server runs. The SDK carries only what the core needs: the `diagnostics` sync option that switches on the core event stream.
 - **Dart** — on by default in debug builds, off in release builds, as the Dart SDK already does.
 
 ## Run the JavaScript agent yourself
