@@ -199,7 +199,7 @@ export abstract class AbstractStreamingSyncImplementation
 
   private async requestNextCheckpointFromService(abort: AbortSignal): Promise<string> {
     if (!(await this.checkpoints.waitForCheckpointRequestsReady(abort))) {
-      abort.throwIfAborted();
+      throw abort.reason;
     }
 
     const nextCheckpointRequestId = await this.options.adapter.readCheckpointRequestId('next');
