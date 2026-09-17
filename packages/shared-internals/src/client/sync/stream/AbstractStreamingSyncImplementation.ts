@@ -468,8 +468,7 @@ The next upload iteration will be delayed.`
          * The WebRemote should only abort pending fetch requests or close active Readable streams.
          */
 
-        // Check the disconnect signal: connector timeouts also throw AbortOperation
-        // but must still be reported and retried.
+        // Check the disconnect signal: other aborts must still be reported and retried.
         const stoppedOnRequest = signal.aborted;
 
         if (stoppedOnRequest) {
