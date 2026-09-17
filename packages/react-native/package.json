@@ -19,9 +19,10 @@
     "react-native.config.js"
   ],
   "scripts": {
-    "build": "tsc -b",
-    "build:prod": "tsc -b",
-    "clean": "rm -rf lib tsconfig.tsbuildinfo",
+    "prepare:core": "node ../../tools/download-core.js react-native",
+    "build": "pnpm prepare:core && tsc -b",
+    "build:prod": "pnpm prepare:core && tsc -b",
+    "clean": "rm -rf lib tsconfig.tsbuildinfo android/core",
     "test": "vitest --config vitest.config.ts",
     "watch": "tsc -b -w"
   },

@@ -10,12 +10,11 @@
   "files": [
     "lib",
     "dist",
-    "download_core.js",
     "src"
   ],
   "scripts": {
-    "prepare:core": "node download_core.js",
-    "build": " pnpm prepare:core && tsc -b",
+    "prepare:core": "node ../../tools/download-core.js node",
+    "build": "pnpm prepare:core && tsc -b",
     "build:prod": "pnpm prepare:core && tsc -b",
     "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
     "watch": "tsc -b -w",
