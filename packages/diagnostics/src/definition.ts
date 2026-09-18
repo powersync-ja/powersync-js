@@ -10,6 +10,7 @@
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { defineDevframe, defineRpcFunction, type DevframeNodeContext, type DevframeNodeRpcSession } from 'devframe';
+import { boolean, describe, optional } from 'devframe/utils/simple-schema';
 import { z } from 'zod';
 import type {
   ActionRequest,
@@ -139,7 +140,11 @@ function removeSource(sourceId: string): void {
  * Serves an integration that lives in this process (a node app's database). Events are pulled from
  * it directly. Returns a function that detaches it.
  */
-export async function registerIntegration(id: string, integration: SdkIntegration, sdk: string | null = null): Promise<Unsubscribe> {
+export async function registerIntegration(
+  id: string,
+  integration: SdkIntegration,
+  sdk: string | null = null
+): Promise<Unsubscribe> {
   const source: Source = { id, sdk, integration, alive: () => true, snapshots: new Map() };
   addSource(source);
   source.stop = await integration.observeEvents((event) => fanOut(id, event));
@@ -156,8 +161,14 @@ export function uiDistDir(): string {
 const packageJson = createRequire(import.meta.url)('../../package.json') as { version: string; name: string };
 
 // --- argument schemas (Standard Schema through zod): validated on the wire and shown to agents ---
+// Agents see positional arguments as `arg0`, `arg1`, ... and every one is advertised as required, so
+// each description spells out that convention and which values may be null.
 
-const sourceIdArg = z.string().nullable().optional().describe('Which attached database; omit for the first one.');
+const sourceIdArg = z
+  .string()
+  .nullable()
+  .optional()
+  .describe('Id of the attached database, from powersync_sources. Null for the first one.');
 const queryParamsArg = z
   .object({
     sql: z.string().describe('SQL to run against the local SQLite database.'),
@@ -166,7 +177,14 @@ const queryParamsArg = z
   .describe('The query.');
 const actionRequestArg = z
   .object({
-    action: z.enum(['reconnect', 'disconnect', 'clearData', 'requestCheckpoint', 'subscribeStream', 'unsubscribeStream']),
+    action: z.enum([
+      'reconnect',
+      'disconnect',
+      'clearData',
+      'requestCheckpoint',
+      'subscribeStream',
+      'unsubscribeStream'
+    ]),
     args: z
       .object({
         name: z.string(),
@@ -191,7 +209,17 @@ export const definition = defineDevframe({
   // The PowerSync mark, shipped with the UI and served under the mount base.
   icon: `${UI_ROUTE}powersync-icon.svg`,
   clientAssets: uiDistDir(),
-  cli: { command: 'powersync-devtools', port: 9999 },
+  cli: {
+    command: 'powersync-devtools',
+    port: 9999,
+    // The CLI adapter derives the flag kind from this schema; its own helper is the one it unwraps.
+    flags: {
+      mcpAnyOrigin: describe(
+        optional(boolean()),
+        'Accept MCP requests without a loopback Origin header, for clients that send none'
+      )
+    }
+  },
   dock: {
     category: 'app',
     clientScript: {
@@ -256,7 +284,7 @@ export const definition = defineDevframe({
         returns: anyResult,
         agent: {
           description:
-            'Run SQL against the attached PowerSync SQLite database. App tables are views; the sync client state is in the ps_* tables (ps_buckets, ps_oplog, ps_crud, ps_stream_subscriptions). Returns columns and rows.',
+            'Run SQL against the attached PowerSync SQLite database. App tables are views; the sync client state is in the ps_* tables (ps_buckets, ps_oplog, ps_crud, ps_stream_subscriptions). Returns columns and rows. Arguments: arg0 = { sql, params? }, arg1 = database id or null for the first one.',
           safety: 'action'
         },
         handler: (params, sourceId) => pickSource(sourceId).integration.runQuery(params as QueryParams)
@@ -269,7 +297,10 @@ export const definition = defineDevframe({
         jsonSerializable: true,
         args: [sourceIdArg],
         returns: anyResult,
-        agent: { description: 'The client schema as the PowerSync SQLite core receives it: tables, columns, indexes.' },
+        agent: {
+          description:
+            'The client schema as the PowerSync SQLite core receives it: tables, columns, indexes. Argument: arg0 = database id or null for the first one.'
+        },
         handler: (sourceId) => pickSource(sourceId).integration.getSchema()
       })
     );
@@ -280,7 +311,10 @@ export const definition = defineDevframe({
         jsonSerializable: true,
         args: [sourceIdArg],
         returns: anyResult,
-        agent: { description: 'Connection info of the PowerSync client: endpoint, user id, client id, connection method, core version.' },
+        agent: {
+          description:
+            'Connection info of the PowerSync client: endpoint, user id, client id, connection method, core version. Argument: arg0 = database id or null for the first one.'
+        },
         handler: (sourceId) => pickSource(sourceId).integration.getInfo()
       })
     );
@@ -291,7 +325,10 @@ export const definition = defineDevframe({
         jsonSerializable: true,
         args: [sourceIdArg],
         returns: anyResult,
-        agent: { description: 'The current sync status of the PowerSync client: connected, downloading, progress, last sync, errors.' },
+        agent: {
+          description:
+            'The current sync status of the PowerSync client: connected, downloading, progress, last sync, errors. Argument: arg0 = database id or null for the first one.'
+        },
         handler: (sourceId) => pickSource(sourceId).integration.currentSyncStatus()
       })
     );
@@ -302,7 +339,10 @@ export const definition = defineDevframe({
         jsonSerializable: true,
         args: [sourceIdArg],
         returns: anyResult,
-        agent: { description: 'Pending local changes waiting to upload: count and size.' },
+        agent: {
+          description:
+            'Pending local changes waiting to upload: count and size. Argument: arg0 = database id or null for the first one.'
+        },
         handler: (sourceId) => pickSource(sourceId).integration.getUploadQueueStats()
       })
     );
@@ -315,7 +355,7 @@ export const definition = defineDevframe({
         returns: anyResult,
         agent: {
           description:
-            'Run a control action on the PowerSync client: reconnect, disconnect, clearData (wipes local data and re-syncs), requestCheckpoint, subscribeStream, unsubscribeStream.',
+            'Run a control action on the PowerSync client: reconnect, disconnect, clearData (wipes local data and re-syncs), requestCheckpoint, subscribeStream, unsubscribeStream. Arguments: arg0 = { action, args? }, arg1 = database id or null for the first one.',
           safety: 'destructive'
         },
         handler: (request, sourceId) => pickSource(sourceId).integration.action(request as ActionRequest)

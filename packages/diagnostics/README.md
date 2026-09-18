@@ -68,13 +68,14 @@ if (process.env.NODE_ENV !== 'production') {
 
 Your process serves the DevTools window at that port. The browser confirms itself with a one-time code printed in your terminal; pass `auth: false` to trust every local browser. MCP tools are at `<url>/__mcp`.
 
-Options: `port` (default 9999), `host`, `auth` (default `true`), `open` (open the browser, default `false`), `sdk` and `id` (labels shown in the UI).
+Options: `port` (default 9999), `host`, `auth` (default `true`), `open` (open the browser, default `false`), `sdk` and `id` (labels shown in the UI), `mcp` (the MCP endpoint, see [MCP](#mcp)).
 
 ## The CLI and remote apps
 
 ```bash
 npx powersync-devtools                 # a DevTools window on http://localhost:9999
 npx powersync-devtools --no-auth       # trust every local browser
+npx powersync-devtools --mcp-any-origin # accept MCP requests that carry no Origin header
 npx powersync-devtools mcp             # the same tools as a stdio MCP server
 ```
 
@@ -106,7 +107,17 @@ Every host exposes the same tools. Names are `powersync_<function>`; arguments a
 | `powersync_upload-queue` | `arg0: sourceId \| null`                            | pending uploads: count and size                                                              |
 | `powersync_action`       | `arg0: { action, args? }`, `arg1: sourceId \| null` | runs reconnect, disconnect, clearData, requestCheckpoint, subscribeStream, unsubscribeStream |
 
-Pass `null` for `sourceId` to use the first attached database. The Streamable HTTP endpoint requires a loopback `Origin` header. Example:
+Pass `null` for `sourceId` to use the first attached database.
+
+The Streamable HTTP endpoint accepts requests with a loopback `Origin` header; a request without one gets `403`. Browsers always send the header, some MCP clients do not. The check belongs to whoever hosts the endpoint, so it is turned off in a different place per host, and the server should then stay bound to localhost:
+
+| Host                       | Where                                                                                           |
+| -------------------------- | ----------------------------------------------------------------------------------------------- |
+| Vite (and Nuxt DevTools 4) | `devtools: { mcp: { allowedOrigins: false } }` in `vite.config.ts` (Vite DevTools' own setting) |
+| Node app                   | `enablePowerSyncDiagnostics(db, { mcp: { allowedOrigins: false } })`                            |
+| CLI                        | `powersync-devtools --mcp-any-origin`                                                           |
+
+The same `mcp` setting takes `false` to leave the endpoint off, or `{ authorization: '<bearer token>' }` to require a token instead. Example call:
 
 ```bash
 curl -X POST http://localhost:9999/__mcp \
