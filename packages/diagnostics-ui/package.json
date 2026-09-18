@@ -28,6 +28,7 @@
   "scripts": {
     "dev": "vite",
     "build": "pnpm clean && vite build && pnpm build:css && pnpm build:types && pnpm build:standalone",
+    "build:prod": "pnpm build",
     "build:css": "tailwindcss -i ./src/style.css -o ./dist/style.css",
     "build:types": "vue-tsc -p tsconfig.build.json",
     "build:standalone": "vite build --config vite.standalone.config.ts",
