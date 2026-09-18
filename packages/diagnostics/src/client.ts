@@ -15,6 +15,11 @@ export default function setup(context: DockClientScriptContext): void {
   let counter = 0;
   let currentId: string | null = null;
 
+  // A closing tab cannot wait for the release to complete: withdraw first, the heartbeat is the backstop.
+  window.addEventListener('pagehide', () => {
+    if (currentId) void context.rpc.call('powersync:page-unregister', currentId);
+  });
+
   observeRegisteredDatabases((databases) => {
     const database = databases[0] ?? null;
     if (!database) {

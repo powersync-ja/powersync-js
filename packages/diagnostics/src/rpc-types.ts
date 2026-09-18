@@ -35,12 +35,14 @@ declare module 'devframe/types' {
     'powersync:unobserve': () => void;
     'powersync:page-register': (sourceId: string, sdk: string | null) => void;
     'powersync:page-unregister': (sourceId: string) => void;
+    'powersync:page-heartbeat': (sourceId: string) => void;
     'powersync:page-event': (sourceId: string, event: DiagnosticsEvent) => void;
   }
 
   /** Functions a connected page or app serves; called by the node side on the session that announced the database. */
   interface DevframeRpcClientFunctions {
     'powersync:event': (sourceId: string, event: DiagnosticsEvent) => void;
+    'powersync:sources-changed': (sources: SourceInfo[]) => void;
     'powersync:page-query': (sourceId: string, params: QueryParams) => Promise<QueryResult>;
     'powersync:page-schema': (sourceId: string) => Promise<SchemaPayload>;
     'powersync:page-info': (sourceId: string) => Promise<ProtocolInfo>;

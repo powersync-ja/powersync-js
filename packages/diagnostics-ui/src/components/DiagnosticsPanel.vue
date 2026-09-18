@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { TabsRoot, TabsList, TabsTrigger, TabsContent } from 'reka-ui';
 import StatusBar from './StatusBar.vue';
 import Logo from './ui/Logo.vue';
@@ -22,21 +22,48 @@ import IconSync from '~icons/carbon/update-now';
 import IconReset from '~icons/carbon/reset';
 
 const { isDark, toggle } = useTheme();
-const { connected } = useDiagnostics();
+const { connected, sources, activeSource, selectSource } = useDiagnostics();
 const { syncing, clearing, syncNow, clearAndResync } = useSyncActions();
 
 // Brief grace period so a normal handshake doesn't flash the "no client" screen.
 const waiting = ref(true);
 onMounted(() => setTimeout(() => (waiting.value = false), 1500));
 
+// A host that fronts several databases reports which are attached; none means no app is serving one.
+const noSource = computed(() => sources.value !== null && sources.value.length === 0);
+const sourceChoices = computed(() => sources.value ?? []);
+
+// Keep the chosen database across refreshes (per viewer), as long as it is still attached.
+const SOURCE_KEY = 'powersync-diagnostics-source';
+function onSelectSource(event: Event) {
+  const sourceId = (event.target as HTMLSelectElement).value;
+  try {
+    localStorage.setItem(SOURCE_KEY, sourceId);
+  } catch {
+    // best-effort
+  }
+  void selectSource(sourceId);
+}
+watch(sources, (list) => {
+  if (!list?.length) return;
+  try {
+    const stored = localStorage.getItem(SOURCE_KEY);
+    if (stored && stored !== activeSource.value?.id && list.some((source) => source.id === stored))
+      void selectSource(stored);
+  } catch {
+    // localStorage unavailable
+  }
+});
+
 const setupTabs = [
   {
     label: 'JavaScript',
     lang: 'javascript',
     code: `// vite.config.ts — the plugin attaches diagnostics in dev only; nothing ships to production.
-import powersyncDevtools from '@powersync/diagnostics';
+import powersyncDevtools from '@powersync/diagnostics/vite';
 
 export default defineConfig({
+  devtools: true,
   plugins: [powersyncDevtools()]
 });
 
@@ -95,6 +122,19 @@ watch(activeTab, (value) => {
         <span class="text-xs text-muted-foreground">Diagnostics</span>
       </span>
       <div class="flex items-center gap-0.5">
+        <!-- Several databases attached: pick the one to show -->
+        <select
+          v-if="sourceChoices.length > 1"
+          class="mr-1 rounded border bg-background px-1.5 py-0.5 text-xs text-foreground"
+          title="Attached database"
+          aria-label="Attached database"
+          :value="activeSource?.id"
+          @change="onSelectSource"
+        >
+          <option v-for="source in sourceChoices" :key="source.id" :value="source.id">
+            {{ source.id }}{{ source.sdk ? ` · ${source.sdk}` : '' }}
+          </option>
+        </select>
         <!-- Global sync actions, available from every tab -->
         <template v-if="connected">
           <button
@@ -138,11 +178,18 @@ watch(activeTab, (value) => {
     <!-- No client attached: guide the developer to wire diagnostics up. -->
     <div v-if="!connected" class="min-h-0 flex-1 overflow-auto">
       <EmptyState
-        v-if="waiting"
+        v-if="waiting && !noSource"
         :icon="IconConnecting"
         spin
         title="Connecting to client…"
         description="Looking for a PowerSync client with the diagnostics agent attached."
+      />
+      <EmptyState
+        v-else-if="noSource"
+        :icon="IconOffline"
+        tone="warning"
+        title="No PowerSync database attached"
+        description="DevTools is connected, but no app is serving a database. Open your app in a browser tab that DevTools trusts, or call enablePowerSyncDiagnostics() in a node app. The view fills in as soon as one attaches."
       />
       <EmptyState
         v-else

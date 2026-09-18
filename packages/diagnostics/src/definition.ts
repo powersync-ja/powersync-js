@@ -24,7 +24,7 @@ import type {
   Unsubscribe,
   UploadQueueState
 } from '@powersync/diagnostics-core';
-import { DEVFRAME_ID, UI_ROUTE } from './constants.js';
+import { DEVFRAME_ID, HEARTBEAT_MS, UI_ROUTE } from './constants.js';
 import type { SourceInfo } from './rpc-types.js';
 
 export type { SourceInfo } from './rpc-types.js';
@@ -36,12 +36,18 @@ interface Source extends SourceInfo {
   integration: SdkIntegration;
   /** False once the page or app that served this database has gone. */
   alive(): boolean;
+  /** When the serving page last reported in; `null` for a database in this process. */
+  lastSeen: number | null;
   /** The latest snapshot per event type, for late subscribers. */
   snapshots: Map<string, DiagnosticsEvent>;
   stop?: Unsubscribe;
 }
 
-/** Calls into a page or app that serves a database over its own devframe connection. */
+/**
+ * Calls into a page or app that serves a database over its own devframe connection. `sourceId` is
+ * the id the page serves it under, which differs from the id the node side lists when several pages
+ * announce the same one.
+ */
 class RemoteIntegration implements SdkIntegration {
   constructor(
     private session: DevframeNodeRpcSession,
@@ -80,6 +86,36 @@ class RemoteIntegration implements SdkIntegration {
 const sources = new Map<string, Source>();
 /** UI sessions that asked for events, keyed by session id. */
 const observers = new Map<number, DevframeNodeRpcSession>();
+/** The id a page serves a database under, per session, to the id it is listed under here. */
+const pageSources = new Map<string, string>();
+/** Runs while UIs observe, so a page that went away is dropped and announced without waiting for a call. */
+let sweep: ReturnType<typeof setInterval> | undefined;
+const SWEEP_INTERVAL_MS = 2000;
+const STALE_AFTER_MS = HEARTBEAT_MS * 3;
+
+function pageKey(session: DevframeNodeRpcSession, pageSourceId: string): string {
+  return `${session.meta.id}:${pageSourceId}`;
+}
+
+function pageAlive(remote: RemoteIntegration, source: () => Source | undefined): boolean {
+  if (remote.closed) return false;
+  const lastSeen = source()?.lastSeen;
+  return lastSeen == null || Date.now() - lastSeen < STALE_AFTER_MS;
+}
+
+/** Every page numbers its databases from 1, so a second page announcing `web-1` is listed as `web-2`. */
+function allocateSourceId(pageSourceId: string): string {
+  const stem = pageSourceId.replace(/-\d+$/, '');
+  for (let number = 1; ; number++) {
+    const candidate = `${stem}-${number}`;
+    const taken = sources.get(candidate);
+    if (!taken || !taken.alive()) return candidate;
+  }
+}
+
+function sourceInfos(): SourceInfo[] {
+  return [...sources.values()].filter((source) => source.alive()).map((source) => ({ id: source.id, sdk: source.sdk }));
+}
 
 function liveSources(): Source[] {
   for (const [id, source] of sources) {
@@ -88,6 +124,29 @@ function liveSources(): Source[] {
     }
   }
   return [...sources.values()];
+}
+
+function notifySources(): void {
+  const list = sourceInfos();
+  for (const [sessionId, session] of observers) {
+    if (session.rpc.$closed) {
+      observers.delete(sessionId);
+      continue;
+    }
+    void session.rpc.$callEvent('powersync:sources-changed', list);
+  }
+}
+
+function ensureSweep(): void {
+  if (sweep) return;
+  sweep = setInterval(() => {
+    liveSources();
+    if (observers.size === 0 && sweep) {
+      clearInterval(sweep);
+      sweep = undefined;
+    }
+  }, SWEEP_INTERVAL_MS);
+  sweep.unref?.();
 }
 
 function pickSource(sourceId?: string | null): Source {
@@ -126,6 +185,7 @@ function addSource(source: Source): void {
   sources.get(source.id)?.stop?.();
   sources.set(source.id, source);
   console.info(`[powersync-diagnostics] source attached: ${source.id} (${source.sdk ?? 'unknown sdk'})`);
+  notifySources();
 }
 
 function removeSource(sourceId: string): void {
@@ -133,7 +193,11 @@ function removeSource(sourceId: string): void {
   if (!source) return;
   source.stop?.();
   sources.delete(sourceId);
+  for (const [key, id] of pageSources) {
+    if (id === sourceId) pageSources.delete(key);
+  }
   console.info(`[powersync-diagnostics] source detached: ${sourceId}`);
+  notifySources();
 }
 
 /**
@@ -145,7 +209,7 @@ export async function registerIntegration(
   integration: SdkIntegration,
   sdk: string | null = null
 ): Promise<Unsubscribe> {
-  const source: Source = { id, sdk, integration, alive: () => true, snapshots: new Map() };
+  const source: Source = { id, sdk, integration, alive: () => true, lastSeen: null, snapshots: new Map() };
   addSource(source);
   source.stop = await integration.observeEvents((event) => fanOut(id, event));
   return () => removeSource(id);
@@ -242,9 +306,31 @@ export const definition = defineDevframe({
         name: 'page-register',
         type: 'action',
         jsonSerializable: true,
-        handler: (sourceId: string, sdk: string | null) => {
-          const remote = new RemoteIntegration(currentSession(), sourceId);
-          addSource({ id: sourceId, sdk, integration: remote, alive: () => !remote.closed, snapshots: new Map() });
+        handler: (pageSourceId: string, sdk: string | null) => {
+          const session = currentSession();
+          const id = allocateSourceId(pageSourceId);
+          pageSources.set(pageKey(session, pageSourceId), id);
+          const remote = new RemoteIntegration(session, pageSourceId);
+          addSource({
+            id,
+            sdk,
+            integration: remote,
+            alive: () => pageAlive(remote, () => sources.get(id)),
+            lastSeen: Date.now(),
+            snapshots: new Map()
+          });
+        }
+      })
+    );
+    ps.rpc.register(
+      defineRpcFunction({
+        name: 'page-heartbeat',
+        type: 'event',
+        jsonSerializable: true,
+        handler: (pageSourceId: string) => {
+          const id = pageSources.get(pageKey(currentSession(), pageSourceId));
+          const source = id ? sources.get(id) : undefined;
+          if (source) source.lastSeen = Date.now();
         }
       })
     );
@@ -253,7 +339,10 @@ export const definition = defineDevframe({
         name: 'page-unregister',
         type: 'action',
         jsonSerializable: true,
-        handler: (sourceId: string) => removeSource(sourceId)
+        handler: (pageSourceId: string) => {
+          const id = pageSources.get(pageKey(currentSession(), pageSourceId));
+          if (id) removeSource(id);
+        }
       })
     );
     ps.rpc.register(
@@ -261,7 +350,10 @@ export const definition = defineDevframe({
         name: 'page-event',
         type: 'event',
         jsonSerializable: true,
-        handler: (sourceId: string, event: DiagnosticsEvent) => fanOut(sourceId, event)
+        handler: (pageSourceId: string, event: DiagnosticsEvent) => {
+          const id = pageSources.get(pageKey(currentSession(), pageSourceId));
+          if (id) fanOut(id, event);
+        }
       })
     );
 
@@ -272,7 +364,10 @@ export const definition = defineDevframe({
         type: 'query',
         jsonSerializable: true,
         agent: { description: 'List the PowerSync databases attached to this dev server, with their ids and SDKs.' },
-        handler: (): SourceInfo[] => liveSources().map((source) => ({ id: source.id, sdk: source.sdk }))
+        handler: (): SourceInfo[] => {
+          liveSources();
+          return sourceInfos();
+        }
       })
     );
     ps.rpc.register(
@@ -371,7 +466,10 @@ export const definition = defineDevframe({
         handler: (sourceId?: string | null) => {
           const session = currentSession();
           observers.set(session.meta.id, session);
+          ensureSweep();
           const live = liveSources();
+          // The list first, so the UI knows which database the snapshots that follow belong to.
+          void session.rpc.$callEvent('powersync:sources-changed', sourceInfos());
           const source = sourceId ? live.find((candidate) => candidate.id === sourceId) : live[0];
           if (!source) return;
           for (const event of source.snapshots.values()) {
