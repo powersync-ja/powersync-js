@@ -137,7 +137,7 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
         await this.waitForReady();
 
         const sync = this.generateStreamingImplementation();
-        const onDispose = sync.registerListener({
+        const removeStatusListener = sync.registerListener({
           statusChanged: (snapshot) => {
             this.syncStatus = snapshot;
             const json = snapshot.toJSON();
@@ -147,7 +147,13 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
 
         return {
           sync,
-          onDispose
+          onDispose: () => {
+            removeStatusListener();
+
+            // Clear transient state so new tabs don't inherit stale errors.
+            // Preserve core status, including hasSynced and lastSyncedAt.
+            this.syncStatus &&= new SyncStatusSnapshot(this.syncStatus.core, {});
+          }
         };
       },
       logger: this.logger,
@@ -386,26 +392,33 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
               this.logger.log({ level: LogLevels.error, message: 'error invalidating credentials', error });
             }
           },
-          fetchCredentials: () => {
-            return this.#useConnector((port) => {
-              this.logger.log({
-                level: LogLevels.info,
-                message: 'calling the last port client provider for credentials'
-              });
+          fetchCredentials: (
+              signal?: AbortSignal
+          ) => {
+            return this.#useConnector(
+              (port) => {
+                this.logger.log({
+                  level: LogLevels.info,
+                  message: 'calling the last port client provider for credentials'
+                });
 
-              return port.clientProvider.fetchCredentials();
-            }, 'fetchCredentials');
+                return port.clientProvider.fetchCredentials();
+              },
+              'fetchCredentials',
+                signal
+            );
           }
         },
         this.logger
       ),
-      uploadCrud: () => {
-        return this.#useConnector((port) => port.clientProvider.uploadCrud(), 'uploadCrud');
+      uploadCrud: (signal) => {
+        return this.#useConnector((port) => port.clientProvider.uploadCrud(), 'uploadCrud', signal);
       },
-      postCheckpointRequest: (clientId, requestId) => {
+      postCheckpointRequest: (clientId, requestId, signal) => {
         return this.#useConnector(
           (port) => port.clientProvider.postCheckpointRequest(clientId, requestId),
-          'postCheckpointRequest'
+          'postCheckpointRequest',
+          signal
         );
       },
       ...syncParams.streamOptions,
@@ -415,25 +428,40 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
     });
   }
 
-  async #useConnector<T>(inner: (port: WrappedSyncPort) => Promise<T>, debugContext: string): Promise<T> {
-    const lastPort = await this.getLastWrappedPort();
-    if (!lastPort) {
-      throw new Error(`No client port found for ${debugContext}`);
-    }
-
-    return new Promise((resolve, reject) => {
-      function portClosed() {
-        reject(new Error(`Tab closed while handling ${debugContext}`));
+  /**
+   * Calls into a client tab, stopping the wait on disconnect when a signal is supplied.
+   */
+  async #useConnector<T>(
+    inner: (port: WrappedSyncPort) => Promise<T>,
+    debugContext: string,
+    signal?: AbortSignal
+  ): Promise<T> {
+    const action = async () => {
+      const lastPort = await this.getLastWrappedPort();
+      if (!lastPort) {
+        throw new Error(`No client port found for ${debugContext}`);
       }
 
-      lastPort.closeListeners.push(portClosed);
+      return await new Promise<T>((resolve, reject) => {
+        const portClosed = () => {
+          reject(new Error(`Tab closed while handling ${debugContext}`));
+        };
 
-      inner(lastPort)
-        .then(resolve, reject)
-        .finally(() => {
-          lastPort.closeListeners.splice(lastPort.closeListeners.indexOf(portClosed), 1);
-        });
-    });
+        lastPort.closeListeners.push(portClosed);
+
+        inner(lastPort)
+          .then(resolve, reject)
+          .finally(() => {
+            const index = lastPort.closeListeners.indexOf(portClosed);
+            if (index >= 0) {
+              lastPort.closeListeners.splice(index, 1);
+            }
+          });
+      });
+    };
+
+    // Include port lookup in the guard: port removal can hold portMutex.
+    return signal ? withAbort({ signal, action }) : action();
   }
 
   /**
@@ -619,15 +647,18 @@ function withAbort<T>(options: {
   cleanupOnAbort?: (result: T) => void;
 }): Promise<T> {
   const { action, signal, cleanupOnAbort } = options;
+  const abortError = () =>
+    signal.reason instanceof Error ? signal.reason : new AbortOperation('Operation aborted by abort controller');
+
   return new Promise((resolve, reject) => {
     if (signal.aborted) {
-      reject(new AbortOperation('Operation aborted by abort controller'));
+      reject(abortError());
       return;
     }
 
     function handleAbort() {
       signal.removeEventListener('abort', handleAbort);
-      reject(new AbortOperation('Operation aborted by abort controller'));
+      reject(abortError());
     }
 
     signal.addEventListener('abort', handleAbort, { once: true });

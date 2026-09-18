@@ -18,11 +18,16 @@ import {
   mockSyncServiceTest,
   stream,
   TestConnector,
-  waitForSyncStatus
+  waitForSyncStatus, databaseTest
 } from './utils.js';
 import { BucketChecksum, OplogEntryJSON } from '@powersync/shared-internals/internal/sync_protocol';
-import { BasePowerSyncDatabase } from '@powersync/shared-internals';
+import {
+  AbstractStreamingSyncImplementation,
+  BasePowerSyncDatabase,
+  resolveSyncOptions, SqliteBucketStorage
+} from '@powersync/shared-internals';
 import { asyncNotifier } from '../../shared-internals/src/utils/async.js';
+import {NodeRemote} from "../src/sync/stream/NodeRemote.js";
 
 const defaultConnectOptions: SyncOptions = {
   // This might help with test stability/timeouts if a retry is needed.
@@ -214,6 +219,77 @@ describe('Sync', () => {
       await db.waitForStatus((s) => s.downloading);
       completeInitialRequest.resolve();
     });
+
+    databaseTest(
+        'checkpoint retry cancellation',
+        async ({ database }) => {
+          await database.init();
+
+          class TestSync extends AbstractStreamingSyncImplementation {
+            obtainLock<T>({ callback }: any): Promise<T> {
+              return callback();
+            }
+
+            async startCheckpointRetry() {
+              const controller = new AbortController();
+              this.abortController = controller;
+              await this['checkpoints'].markCheckpointsReady(Promise.resolve());
+              this.streamingSyncPromise = Promise.all([
+                Promise.resolve(),
+                Promise.resolve(),
+                this['repostUnacknowledgedCheckpointRequests'](
+                    controller.signal,
+                    resolveSyncOptions({ checkpointMode: 'requests' }, SyncStreamConnectionMethod.HTTP)
+                )
+              ]);
+            }
+
+            endDownloadIteration() {
+              this['checkpoints'].downloadIterationEnded();
+            }
+          }
+
+          const firstRead = Promise.withResolvers<void>();
+          const logger: PowerSyncLogger = { log: vi.fn() };
+          const adapter = new SqliteBucketStorage(database.database, logger);
+
+          const readCheckpointRequestId = vi.spyOn(adapter, 'readCheckpointRequestId');
+          readCheckpointRequestId.mockImplementation(async (_) => {
+            firstRead.resolve();
+            return '1';
+          });
+
+          const sync = new TestSync({
+            subscriptions: [],
+            serializedSchema: new Schema([]).toJSON(),
+            logger,
+            adapter,
+            uploadCrud: vi.fn(),
+            postCheckpointRequest: vi.fn(),
+            remote: new NodeRemote(
+                {
+                  fetchCredentials: vi.fn()
+                },
+                logger,
+                {
+                  customFetch: () => {
+                    throw new Error(`Unexpected HTTP request`);
+                  }
+                }
+            )
+          });
+
+          await sync.startCheckpointRetry();
+          await firstRead.promise;
+          // The download loop resets checkpoint readiness as it exits. Disconnect wakes the
+          // retry delay, which used to wait again on the already-aborted signal forever.
+          sync.endDownloadIteration();
+          await sync.disconnect();
+
+          expect(sync.isConnected).toBe(false);
+        },
+        500
+    );
 
     describe('requestCheckpoint', () => {
       mockSyncServiceTest('fails when disconnected', async ({ syncService }) => {
@@ -420,6 +496,17 @@ function defineSyncTests(bson: boolean) {
   };
 
   const mockSyncServiceTest = createMockSyncServiceTest(bson);
+
+  mockSyncServiceTest('a requested disconnect is not recorded as a download error', async ({ syncService }) => {
+    const database = await syncService.createDatabase();
+    await database.connect(new TestConnector(), options);
+    await database.waitForStatus((status) => status.connected);
+
+    await database.disconnect();
+
+    expect(database.currentStatus.connected).toBe(false);
+    expect(database.currentStatus.downloadError).toBeUndefined();
+  });
 
   mockSyncServiceTest('sets last sync time', async ({ syncService }) => {
     const db = await syncService.createDatabase();
