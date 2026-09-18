@@ -38,11 +38,6 @@ export default defineNuxtConfig({
 
   compatibilityDate: '2024-07-05',
 
-  // Opt into Nuxt 5 behaviour ahead of the release; DevTools 4 runs on Vite DevTools.
-  future: {
-    compatibilityVersion: 5
-  },
-
   vite: {
     optimizeDeps: {
       exclude: ['@powersync/web'],

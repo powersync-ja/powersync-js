@@ -128,9 +128,13 @@ export class DevframeIntegration implements SourceAwareIntegration {
   }
 }
 
+/** How long the person gets to type the one-time code before the UI gives up on this host. */
+const TRUST_TIMEOUT_MS = 10 * 60 * 1000;
+
 /**
  * Connects to a devframe host if this page is served by one. Resolves `null` when no host answers
- * within `timeoutMs`, so the caller can fall back to another transport.
+ * within `timeoutMs`, so the caller can fall back to another transport. Trust is a separate, much
+ * longer wait: on a standalone window the host asks for a one-time code here, and a person types it.
  */
 export async function connectDevframeIntegration(timeoutMs = 4000): Promise<SdkIntegration | null> {
   try {
@@ -139,7 +143,7 @@ export async function connectDevframeIntegration(timeoutMs = 4000): Promise<SdkI
       new Promise<null>((resolve) => setTimeout(() => resolve(null), timeoutMs))
     ]);
     if (!rpc) return null;
-    const trusted = await rpc.ensureTrusted(timeoutMs);
+    const trusted = await rpc.ensureTrusted(TRUST_TIMEOUT_MS);
     if (!trusted) {
       console.info('[powersync-diagnostics] ui: devframe host found but not trusted');
       return null;

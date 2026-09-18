@@ -29,7 +29,7 @@ import { defineConfig } from 'vite';
 import powersyncDevtools from '@powersync/diagnostics/vite';
 
 export default defineConfig({
-  // Vite >= 8.3. On Vite 7, add the `DevTools()` plugin from `@vitejs/devtools` instead.
+  // Vite >= 8.3. On Vite 7, spread `...(await DevTools())` from `@vitejs/devtools` into `plugins` instead.
   devtools: true,
   plugins: [powersyncDevtools()]
 });
@@ -44,6 +44,8 @@ await db.connect(connector, { diagnostics: true });
 Start the dev server and open your app. The first time, Vite DevTools asks you to confirm the browser with a one-time code printed in your terminal. Then the dock at the bottom of the page shows a **PowerSync** entry.
 
 How it works: the plugin mounts the definition into Vite DevTools. The dock runs a small script inside your app page that finds the open PowerSync database and serves it to the dev server. The diagnostics UI, in the dock's iframe, and any MCP client talk to the dev server, which forwards to the page. So an MCP call reaches your database only while a trusted browser tab has the app open, and the standalone DevTools window at `/__devtools/` shows "No PowerSync database attached" until one is. Every open tab attaches its own database; the UI shows the first one and offers a picker when there are several.
+
+Nothing of this reaches `vite build`: the output has no plugin, UI, page script or devframe code, only the SDK's own diagnostics event channel. Note that Vite DevTools itself applies to `vite build` too and keeps the process alive afterwards with its analysis server; pass `devtools: { apply: 'serve' }` to keep it to the dev server.
 
 Options:
 
@@ -142,7 +144,7 @@ curl -X POST http://localhost:9999/__mcp \
 ## Requirements
 
 - `@powersync/web >= 2.2` for browser apps, `@powersync/node` for node apps.
-- Vite DevTools for the dock: Vite `>= 8.3` with `devtools: true`, or the `@vitejs/devtools` plugin on Vite 7.
+- Vite DevTools for the dock: Vite `>= 8.3` with `devtools: true`, or the `@vitejs/devtools` plugin on Vite 7 (verified on 7.3).
 - Node `>= 20` for the node entry and the CLI.
 
 ## Related packages
