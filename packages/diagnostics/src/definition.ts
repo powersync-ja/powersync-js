@@ -10,7 +10,7 @@
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { defineDevframe, defineRpcFunction, type DevframeNodeContext, type DevframeNodeRpcSession } from 'devframe';
-import { boolean, describe, optional } from 'devframe/utils/simple-schema';
+import { boolean, describe, optional, string } from 'devframe/utils/simple-schema';
 import { z } from 'zod';
 import type {
   ActionRequest,
@@ -278,6 +278,10 @@ export const definition = defineDevframe({
     port: 9999,
     // The CLI adapter derives the flag kind from this schema; its own helper is the one it unwraps.
     flags: {
+      token: describe(
+        optional(string()),
+        'A pre-shared secret that connecting apps present instead of the one-time code (connectAgent authToken)'
+      ),
       mcpAnyOrigin: describe(
         optional(boolean()),
         'Accept MCP requests without a loopback Origin header, for clients that send none'
