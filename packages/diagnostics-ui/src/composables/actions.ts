@@ -1,22 +1,36 @@
 import { ref } from 'vue';
+import type { ActionRequest } from '@powersync/diagnostics-core';
 import { useIntegration } from './diagnostics';
+
+/** The last control action that failed, shown until the next action runs. */
+export interface ActionError {
+  /** The action as the user sees it, e.g. `Sync now`. */
+  label: string;
+  message: string;
+}
 
 // Module-level so the header toolbar and the Sync Status tab share one in-flight state.
 const syncing = ref(false);
 const clearing = ref(false);
-const syncError = ref<string | null>(null);
+const actionError = ref<ActionError | null>(null);
 
-/** Shared write actions (checkpoint sync / clear-and-resync / reconnect) with in-flight state. */
+/** Shared control actions (checkpoint sync, clear-and-resync, reconnect, disconnect) with in-flight state. */
 export function useSyncActions() {
   const integration = useIntegration();
 
+  async function run(label: string, request: ActionRequest): Promise<void> {
+    actionError.value = null;
+    try {
+      await integration.action(request);
+    } catch (error) {
+      actionError.value = { label, message: error instanceof Error ? error.message : String(error) };
+    }
+  }
+
   async function syncNow() {
     syncing.value = true;
-    syncError.value = null;
     try {
-      await integration.action({ action: 'requestCheckpoint' });
-    } catch (e) {
-      syncError.value = e instanceof Error ? e.message : String(e);
+      await run('Sync now', { action: 'requestCheckpoint' });
     } finally {
       syncing.value = false;
     }
@@ -24,11 +38,8 @@ export function useSyncActions() {
 
   async function clearAndResync() {
     clearing.value = true;
-    syncError.value = null;
     try {
-      await integration.action({ action: 'clearData' });
-    } catch {
-      // surfaced via status/error channels
+      await run('Clear & re-sync', { action: 'clearData' });
     } finally {
       clearing.value = false;
     }
@@ -37,13 +48,10 @@ export function useSyncActions() {
   return {
     syncing,
     clearing,
-    syncError,
+    actionError,
     syncNow,
     clearAndResync,
-    reconnect: () => {
-      syncError.value = null;
-      return integration.action({ action: 'reconnect' });
-    },
-    disconnect: () => integration.action({ action: 'disconnect' })
+    reconnect: () => run('Reconnect', { action: 'reconnect' }),
+    disconnect: () => run('Disconnect', { action: 'disconnect' })
   };
 }

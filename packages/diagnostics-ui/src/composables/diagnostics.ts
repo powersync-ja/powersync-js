@@ -65,7 +65,9 @@ const EMPTY = {
   streams: atom([]),
   buckets: atom([]),
   uploadQueue: atom(null),
-  logs: atom([])
+  logs: atom([]),
+  sources: atom(null),
+  activeSource: atom(null)
 };
 
 /** The integration plus its pushed state adapted to Vue refs. */
@@ -81,6 +83,11 @@ export function useDiagnostics() {
     buckets: useStore(activeStores.buckets),
     uploadQueue: useStore(activeStores.uploadQueue),
     logs: useStore(activeStores.logs),
+    /** Attached databases on a host that fronts several; `null` on a host with one fixed database. */
+    sources: useStore(activeStores.sources),
+    /** The database shown, on such a host. */
+    activeSource: useStore(activeStores.activeSource),
+    selectSource: (sourceId: string) => stores.value?.selectSource(sourceId),
     clearLogs: () => stores.value?.clearLogs()
   };
 }

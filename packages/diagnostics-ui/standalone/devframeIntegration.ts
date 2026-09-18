@@ -9,11 +9,13 @@ import { connectDevframe, type DevframeRpcClient } from 'devframe/client';
 import type {
   ActionRequest,
   DiagnosticsEvent,
+  DiagnosticsSource,
   ProtocolInfo,
   QueryParams,
   QueryResult,
   SchemaPayload,
   SdkIntegration,
+  SourceAwareIntegration,
   SyncState,
   Unsubscribe,
   UploadQueueState
@@ -21,8 +23,14 @@ import type {
 
 type AnyCall = (method: string, ...args: unknown[]) => Promise<unknown>;
 
-export class DevframeIntegration implements SdkIntegration {
+/**
+ * The node side serves every attached database and pushes each one's events tagged with its id.
+ * This client shows one at a time: the selected database, or the first attached one.
+ */
+export class DevframeIntegration implements SourceAwareIntegration {
   private handlers = new Set<(event: DiagnosticsEvent) => void>();
+  private sourceHandlers = new Set<(sources: DiagnosticsSource[]) => void>();
+  private sources: DiagnosticsSource[] = [];
   private registered = false;
 
   constructor(
@@ -32,6 +40,57 @@ export class DevframeIntegration implements SdkIntegration {
 
   private call<T>(name: string, ...args: unknown[]): Promise<T> {
     return (this.rpc.call as AnyCall)(`powersync:${name}`, ...args) as Promise<T>;
+  }
+
+  /** The database whose events are shown. */
+  private get activeId(): string | null {
+    return this.sourceId ?? this.sources[0]?.id ?? null;
+  }
+
+  /** Registers the functions the node side pushes to, once. */
+  private ensureRegistered(): void {
+    if (this.registered) return;
+    this.registered = true;
+    this.rpc.client.register(
+      {
+        name: 'powersync:event',
+        type: 'event',
+        jsonSerializable: true,
+        handler: (sourceId: string, event: DiagnosticsEvent) => {
+          if (sourceId !== this.activeId) return;
+          for (const listener of this.handlers) listener(event);
+        }
+      },
+      true
+    );
+    this.rpc.client.register(
+      {
+        name: 'powersync:sources-changed',
+        type: 'event',
+        jsonSerializable: true,
+        handler: (sources: DiagnosticsSource[]) => {
+          this.sources = sources;
+          for (const listener of this.sourceHandlers) listener(sources);
+        }
+      },
+      true
+    );
+  }
+
+  async observeSources(handler: (sources: DiagnosticsSource[]) => void): Promise<Unsubscribe> {
+    this.ensureRegistered();
+    this.sourceHandlers.add(handler);
+    this.sources = await this.call<DiagnosticsSource[]>('sources');
+    handler(this.sources);
+    return () => {
+      this.sourceHandlers.delete(handler);
+    };
+  }
+
+  async selectSource(sourceId: string | null): Promise<void> {
+    this.sourceId = sourceId;
+    // Re-observing replays the selected database's snapshots.
+    if (this.handlers.size > 0) await this.call('observe', sourceId);
   }
 
   runQuery(params: QueryParams): Promise<QueryResult> {
@@ -54,20 +113,7 @@ export class DevframeIntegration implements SdkIntegration {
   }
 
   async observeEvents(handler: (event: DiagnosticsEvent) => void): Promise<Unsubscribe> {
-    if (!this.registered) {
-      this.registered = true;
-      this.rpc.client.register(
-        {
-          name: 'powersync:event',
-          type: 'event',
-          jsonSerializable: true,
-          handler: (_sourceId: string, event: DiagnosticsEvent) => {
-            for (const listener of this.handlers) listener(event);
-          }
-        },
-        true
-      );
-    }
+    this.ensureRegistered();
     this.handlers.add(handler);
     await this.call('observe', this.sourceId);
     return () => {

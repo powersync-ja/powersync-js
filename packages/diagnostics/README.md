@@ -43,7 +43,7 @@ await db.connect(connector, { diagnostics: true });
 
 Start the dev server and open your app. The first time, Vite DevTools asks you to confirm the browser with a one-time code printed in your terminal. Then the dock at the bottom of the page shows a **PowerSync** entry.
 
-How it works: the plugin mounts the definition into Vite DevTools. The dock runs a small script inside your app page that finds the open PowerSync database and serves it to the dev server. The diagnostics UI, in the dock's iframe, and any MCP client talk to the dev server, which forwards to the page. So an MCP call reaches your database only while a trusted browser tab has the app open.
+How it works: the plugin mounts the definition into Vite DevTools. The dock runs a small script inside your app page that finds the open PowerSync database and serves it to the dev server. The diagnostics UI, in the dock's iframe, and any MCP client talk to the dev server, which forwards to the page. So an MCP call reaches your database only while a trusted browser tab has the app open, and the standalone DevTools window at `/__devtools/` shows "No PowerSync database attached" until one is. Every open tab attaches its own database; the UI shows the first one and offers a picker when there are several.
 
 Options:
 
