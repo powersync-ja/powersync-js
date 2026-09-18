@@ -21,16 +21,18 @@ import IconSync from '~icons/carbon/update-now';
 import IconLayers from '~icons/carbon/layers';
 
 const { client, connected, status, uploadQueue } = useDiagnostics();
-const { syncing, syncError, syncNow, clearAndResync, reconnect, disconnect } = useSyncActions();
+const { syncing, actionError, syncNow, clearAndResync, reconnect, disconnect } = useSyncActions();
 
 const info = ref<ProtocolInfo | null>(null);
 const pendingOps = ref<CrudOp[]>([]);
+const loadError = ref<string | null>(null);
 
 async function loadInfo() {
   try {
     info.value = await client.getInfo();
-  } catch {
-    /* ignore */
+    loadError.value = null;
+  } catch (error) {
+    loadError.value = error instanceof Error ? error.message : String(error);
   }
 }
 async function loadPending() {
@@ -81,7 +83,13 @@ const priorityRows = computed(() =>
 </script>
 
 <template>
-  <div v-if="!status" class="text-xs text-muted-foreground">Waiting for status…</div>
+  <div v-if="!status" class="space-y-2 text-xs text-muted-foreground">
+    <div>Waiting for status…</div>
+    <div v-if="loadError" class="flex items-start gap-1.5 text-destructive">
+      <IconWarning class="mt-0.5 size-3.5 shrink-0" />
+      <span class="break-words">{{ loadError }}</span>
+    </div>
+  </div>
 
   <div v-else class="space-y-3">
     <!-- Sync progress (always visible) + Sync now + errors -->
@@ -112,11 +120,13 @@ const priorityRows = computed(() =>
           <IconWarning class="mt-0.5 size-3.5 shrink-0" />
           <span class="break-words">{{ downloadError }}</span>
         </div>
-        <div v-if="syncError" class="flex items-start gap-1.5 text-xs text-warning">
+        <div v-if="actionError" class="flex items-start gap-1.5 text-xs text-warning">
           <IconWarning class="mt-0.5 size-3.5 shrink-0" />
           <span class="break-words">
-            Sync now failed: {{ syncError }} — requires connecting with
-            <span class="font-mono">checkpointMode: 'requests'</span>.
+            {{ actionError.label }} failed: {{ actionError.message }}
+            <template v-if="actionError.label === 'Sync now'">
+              — requires connecting with <span class="font-mono">checkpointMode: 'requests'</span>.
+            </template>
           </span>
         </div>
       </div>
@@ -127,6 +137,10 @@ const priorityRows = computed(() =>
       <header class="flex items-center gap-1.5 border-b px-3 py-1.5 text-xs font-medium text-muted-foreground">
         <IconId class="size-3.5" /> Connection
       </header>
+      <div v-if="loadError" class="flex items-start gap-1.5 border-b px-3 py-2 text-xs text-destructive">
+        <IconWarning class="mt-0.5 size-3.5 shrink-0" />
+        <span class="break-words">{{ loadError }}</span>
+      </div>
       <div class="divide-y">
         <InfoRow :icon="IconId" label="Client ID" :value="info?.clientId" mono copyable />
         <InfoRow :icon="IconUser" label="User ID" :value="info?.userId" mono copyable />

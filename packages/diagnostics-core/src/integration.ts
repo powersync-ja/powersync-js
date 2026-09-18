@@ -85,3 +85,33 @@ export interface SdkIntegration {
   /** Releases everything the integration holds: listeners, debug stream subscriptions, connections. */
   close(): Promise<void>;
 }
+
+/** One database a multi-source host serves. */
+export interface DiagnosticsSource {
+  id: string;
+  /** A label for the SDK behind it, e.g. `@powersync/web`. */
+  sdk: string | null;
+}
+
+/**
+ * An {@link SdkIntegration} that fronts several databases and can switch between them.
+ *
+ * A host that multiplexes databases (a dev server that several app tabs and node processes attach to)
+ * implements this on top of the base interface. Its methods act on the selected source, or on the
+ * first one while none is selected. Hosts with one fixed database implement the base interface only;
+ * the UI checks with {@link hasSources} and shows a picker and an empty state only when they apply.
+ */
+export interface SourceAwareIntegration extends SdkIntegration {
+  /**
+   * Subscribes to the list of attached databases. Emits the current list promptly after
+   * subscribing and again whenever a database attaches or detaches.
+   */
+  observeSources(handler: (sources: DiagnosticsSource[]) => void): Promise<Unsubscribe>;
+  /** Selects the database the other methods act on; `null` means the first attached one. */
+  selectSource(sourceId: string | null): Promise<void>;
+}
+
+/** Whether `integration` fronts several databases (see {@link SourceAwareIntegration}). */
+export function hasSources(integration: SdkIntegration): integration is SourceAwareIntegration {
+  return typeof (integration as Partial<SourceAwareIntegration>).observeSources === 'function';
+}

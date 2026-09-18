@@ -19,25 +19,24 @@ import IconChip from '~icons/carbon/chip';
 import IconChevron from '~icons/carbon/chevron-right';
 import IconTable from '~icons/carbon/table';
 import IconRefresh from '~icons/carbon/renew';
+import IconWarning from '~icons/carbon/warning-alt';
 
 const { client, connected } = useDiagnostics();
 const info = ref<ProtocolInfo | null>(null);
 const schema = ref<SchemaPayload | null>(null);
+const loadError = ref<string | null>(null);
 
 const connView = ref<'structured' | 'json'>('structured');
 const schemaView = ref<'tree' | 'json'>('json');
 const expanded = ref(new Set<string>());
 
 async function load() {
+  loadError.value = null;
   try {
     info.value = await client.getInfo();
-  } catch {
-    /* ignore */
-  }
-  try {
     schema.value = await client.getSchema();
-  } catch {
-    /* ignore */
+  } catch (error) {
+    loadError.value = error instanceof Error ? error.message : String(error);
   }
 }
 watch(connected, (isConnected) => isConnected && load(), { immediate: true });
@@ -79,6 +78,10 @@ function indexColumns(columns: { name: string; ascending: boolean }[]): string {
 
 <template>
   <div class="space-y-3">
+    <div v-if="loadError" class="flex items-start gap-1.5 rounded-lg border border-destructive/40 px-3 py-2 text-xs text-destructive">
+      <IconWarning class="mt-0.5 size-3.5 shrink-0" />
+      <span class="break-words">{{ loadError }}</span>
+    </div>
     <!-- Connection -->
     <section class="rounded-lg border bg-card">
       <header class="flex items-center justify-between border-b px-3 py-1.5">

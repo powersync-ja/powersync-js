@@ -4,8 +4,22 @@
  * remote app such as React Native, or a node process).
  */
 import { connectDevframe, type DevframeRpcClient } from 'devframe/client';
-import type { ActionRequest, CoreDiagnosticsEvent, DiagnosticsEvent, QueryParams, SdkIntegration, Unsubscribe } from '@powersync/diagnostics-core';
-import { JsAgent, type CoreEventSource, type LiveConnectionOptions, type LiveConnector, type LiveDatabase } from '@powersync/diagnostics-core/js';
+import type {
+  ActionRequest,
+  CoreDiagnosticsEvent,
+  DiagnosticsEvent,
+  QueryParams,
+  SdkIntegration,
+  Unsubscribe
+} from '@powersync/diagnostics-core';
+import {
+  JsAgent,
+  type CoreEventSource,
+  type LiveConnectionOptions,
+  type LiveConnector,
+  type LiveDatabase
+} from '@powersync/diagnostics-core/js';
+import { HEARTBEAT_MS } from './constants.js';
 import './rpc-types.js';
 
 /** The sync client broadcasts core diagnostics events on this channel (see `emitDiagnostics`). */
@@ -63,6 +77,11 @@ export interface AgentServer {
  */
 export function createAgentServer(rpc: DevframeRpcClient): AgentServer {
   const served = new Map<string, { integration: SdkIntegration; stop: Unsubscribe }>();
+  // The node side only knows this client is alive while it hears from it.
+  const heartbeat = setInterval(() => {
+    for (const sourceId of served.keys()) void rpc.callEvent('powersync:page-heartbeat', sourceId);
+  }, HEARTBEAT_MS);
+  (heartbeat as { unref?: () => void }).unref?.();
 
   const integrationFor = (sourceId: string): SdkIntegration => {
     const entry = served.get(sourceId);
@@ -96,6 +115,7 @@ export function createAgentServer(rpc: DevframeRpcClient): AgentServer {
       await rpc.call('powersync:page-unregister', sourceId).catch(() => {});
     },
     async close() {
+      clearInterval(heartbeat);
       for (const sourceId of [...served.keys()]) {
         await this.release(sourceId);
       }
@@ -119,12 +139,22 @@ export interface ConnectAgentOptions {
  * `WebSocket`: a plain web page, a React Native app, a node process. Development only.
  * Returns a function that stops serving.
  */
-export async function connectAgent(db: DiagnosableDatabase, options: ConnectAgentOptions): Promise<() => Promise<void>> {
+export async function connectAgent(
+  db: DiagnosableDatabase,
+  options: ConnectAgentOptions
+): Promise<() => Promise<void>> {
   const sdk = options.sdk ?? 'javascript';
-  const rpc = await connectDevframe({ baseURL: options.baseURL, authToken: options.authToken, simpleAuth: false, otpParam: false });
+  const rpc = await connectDevframe({
+    baseURL: options.baseURL,
+    authToken: options.authToken,
+    simpleAuth: false,
+    otpParam: false
+  });
   const trusted = await rpc.ensureTrusted();
   if (!trusted) {
-    throw new Error('[powersync-diagnostics] the DevTools server did not trust this client; pass an authToken it accepts.');
+    throw new Error(
+      '[powersync-diagnostics] the DevTools server did not trust this client; pass an authToken it accepts.'
+    );
   }
   const server = createAgentServer(rpc);
   await server.serve(options.id ?? `${sdk}-1`, createIntegration(db, sdk), sdk);
