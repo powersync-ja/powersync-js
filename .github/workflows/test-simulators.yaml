@@ -37,7 +37,7 @@ jobs:
     name: Test Android
     needs: check-changes
     if: ${{ needs.check-changes.outputs.react_native_simulator_should_run == 'true' }}
-    runs-on: ubuntu-xl
+    runs-on: ubuntu-latest # TODO: Replace with ubuntu-xl once we have access to larger runners again
     timeout-minutes: 30
     env:
       AVD_NAME: ubuntu-avd-x86_64-31
@@ -91,7 +91,7 @@ jobs:
     name: Test Capacitor Android
     needs: check-changes
     if: ${{ needs.check-changes.outputs.capacitor_should_run == 'true' }}
-    runs-on: ubuntu-xl
+    runs-on: ubuntu-latest # TODO: Replace with ubuntu-xl once we have access to larger runners again
     timeout-minutes: 30
     env:
       AVD_NAME: capacitor-avd-x86_64-35
