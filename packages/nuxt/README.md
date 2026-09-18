@@ -274,7 +274,7 @@ export default defineNuxtConfig({
 With `useDiagnostics: true`, the module picks the integration for your Nuxt DevTools version:
 
 - **Nuxt DevTools 3** (what Nuxt 4 ships): the module loads the diagnostics agent into your app during `nuxt dev`, serves the diagnostics UI, and registers a **PowerSync** tab. The UI is served outside your app's router, so route middleware such as an auth guard does not apply to it.
-- **Nuxt DevTools 4** (built on Vite DevTools): the module mounts the PowerSync devframe definition. You get a **PowerSync** dock and the MCP tools at `/__devtools/__mcp`, the same as a plain Vite app. The first time, DevTools asks you to confirm the browser with a one-time code printed in your terminal.
+- **Nuxt DevTools 4** (built on Vite DevTools): the module mounts the PowerSync devframe definition. You get a **PowerSync** dock and the MCP tools at `/__devtools/__mcp`, the same as a plain Vite app. The first time, DevTools asks you to confirm the browser with a one-time code printed in your terminal. The MCP endpoint only accepts requests with a loopback `Origin` header; for a client that sends none, set `vite: { devtools: { mcp: { allowedOrigins: false } } }` in `nuxt.config.ts`.
 
 2. **Enable the core diagnostics stream** when you connect. This gives the Buckets tab per-bucket totals:
 
