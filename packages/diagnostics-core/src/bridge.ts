@@ -103,7 +103,6 @@ export function awaitIntegration(options: { requestIntervalMs?: number } = {}): 
       if (event.data?.type === PORT_MESSAGE && port) {
         window.removeEventListener('message', listener);
         if (timer) clearInterval(timer);
-        console.info('[powersync-diagnostics] ui: received an integration port from', event.origin);
         resolve(connectIntegration(port));
       }
     };
@@ -112,7 +111,6 @@ export function awaitIntegration(options: { requestIntervalMs?: number } = {}): 
     // The page that serves ports may be any ancestor, not only the direct parent: a DevTools host
     // often nests the UI inside its own iframe, so the app page is `top` and `parent` is the host.
     const targets = ancestors();
-    console.info(`[powersync-diagnostics] ui: requesting an integration port from ${targets.length} ancestor frame(s)`);
     const request = () => {
       for (const ancestor of targets) {
         ancestor.postMessage({ type: REQUEST_PORT_MESSAGE }, '*');

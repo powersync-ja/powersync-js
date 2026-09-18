@@ -10,7 +10,6 @@ import { createAgentServer, createIntegration } from './agent.js';
 const SDK = '@powersync/web';
 
 export default function setup(context: DockClientScriptContext): void {
-  console.info('[powersync-diagnostics] page script: connected to the dev server');
   const server = createAgentServer(context.rpc);
   let counter = 0;
   let currentId: string | null = null;

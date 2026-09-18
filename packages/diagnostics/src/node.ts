@@ -65,7 +65,6 @@ export async function enablePowerSyncDiagnostics(
     openBrowser: options.open ?? false,
     mcp: options.mcp ?? 'auto'
   });
-  console.info(`[powersync-diagnostics] PowerSync DevTools at ${server.origin}`);
   return {
     url: server.origin,
     async close() {
