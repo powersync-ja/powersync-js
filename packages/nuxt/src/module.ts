@@ -5,6 +5,7 @@ import { defineNuxtModule, createResolver, addPlugin, addImports, addVitePlugin,
 import type { Nuxt } from 'nuxt/schema';
 import { defu } from 'defu';
 import { setupDevToolsUI } from './devtools';
+import type { PowerSyncRuntimeOptions } from './runtime/options';
 import { addImportsFrom } from './runtime/utils/addImportsFrom';
 
 /**
@@ -59,10 +60,10 @@ export default defineNuxtModule<PowerSyncNuxtModuleOptions>({
     const resolver = createResolver(import.meta.url);
     // Nuxt installs its own modules (DevTools among them) after the app's, so the version is read once
     // every module has run. Both consumers below fire later than that.
+    const runtimeOptions = (nuxt.options.runtimeConfig.public.powerSyncModuleOptions ??= {}) as PowerSyncRuntimeOptions;
     nuxt.hook('modules:done', async () => {
       const devtoolsMajor = nuxtDevtoolsMajor(nuxt);
-      (nuxt.options.runtimeConfig.public.powerSyncModuleOptions as any).diagnosticsTransport =
-        devtoolsMajor >= 4 ? 'devframe' : 'page';
+      runtimeOptions.diagnosticsTransport = devtoolsMajor >= 4 ? 'devframe' : 'page';
       if (!options.useDiagnostics || !nuxt.options.dev) return;
       // Diagnostics during development, by Nuxt DevTools generation. Added as Vite plugins through the
       // kit so the same code works on Nuxt 4 (separate client and server Vite configs) and Nuxt 5 (one
@@ -83,15 +84,15 @@ export default defineNuxtModule<PowerSyncNuxtModuleOptions>({
       }
     });
 
-    nuxt.options.runtimeConfig.public.powerSyncModuleOptions = defu(
-      nuxt.options.runtimeConfig.public.powerSyncModuleOptions as any,
-      {
+    // Filled in place, so the `modules:done` hook above writes into the same object.
+    Object.assign(
+      runtimeOptions,
+      defu(runtimeOptions, {
         useDiagnostics: options.useDiagnostics,
-        // Which page-side agent the runtime plugin loads: none under Nuxt DevTools 4 (the devframe dock
-        // script serves the page), the postMessage agent under Nuxt DevTools 3. Set in `modules:done`.
+        // Set in `modules:done`, once the Nuxt DevTools generation is known.
         diagnosticsTransport: 'page',
         kysely: options.kysely
-      }
+      } satisfies PowerSyncRuntimeOptions)
     );
 
     if (options.kysely) {
