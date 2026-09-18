@@ -1,3 +1,22 @@
+import type { Plugin } from 'vite';
+
+/**
+ * Nuxt's `nuxt:replace` plugin rewrites `import.meta.*` defines with a text search, including inside
+ * string literals. Vite prepends its env module, which lists those defines as object keys, to workers
+ * spawned with `@vite-ignore` options such as the PowerSync worker. The replaced keys are not valid
+ * JavaScript and the worker fails to transform. This plugin runs before `nuxt:replace` and turns the
+ * keys into computed keys the text search cannot match.
+ */
+function workerEnvDefinesWorkaround(): Plugin {
+  return {
+    name: 'powersync-demo:worker-env-defines',
+    transform(code, id) {
+      if (!id.includes('worker_file&type=ignore')) return;
+      return { code: code.replace(/"import\.meta\.(\w+)":/g, '["import.meta" + ".$1"]:'), map: null };
+    }
+  };
+}
+
 export default defineNuxtConfig({
   modules: ['@powersync/nuxt', '@nuxt/eslint', '@nuxt/ui', '@nuxtjs/supabase'],
   ssr: false,
@@ -19,6 +38,11 @@ export default defineNuxtConfig({
 
   compatibilityDate: '2024-07-05',
 
+  // Opt into Nuxt 5 behaviour ahead of the release; DevTools 4 runs on Vite DevTools.
+  future: {
+    compatibilityVersion: 5
+  },
+
   vite: {
     optimizeDeps: {
       exclude: ['@powersync/web'],
@@ -27,7 +51,9 @@ export default defineNuxtConfig({
 
     worker: {
       format: 'es'
-    }
+    },
+
+    plugins: [workerEnvDefinesWorkaround()]
   },
 
   unocss: {
