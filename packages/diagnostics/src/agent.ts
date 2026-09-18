@@ -143,16 +143,27 @@ export async function connectAgent(
   options: ConnectAgentOptions
 ): Promise<() => Promise<void>> {
   const sdk = options.sdk ?? 'javascript';
+  // The devframe client resolves its socket URL against `location` and reports `location.origin` in
+  // the trust handshake. Hermes and node have no `location`; the server address stands in for it.
+  if (typeof globalThis.location === 'undefined') {
+    Object.defineProperty(globalThis, 'location', {
+      value: new URL(options.baseURL),
+      configurable: true,
+      writable: true
+    });
+  }
   const rpc = await connectDevframe({
     baseURL: options.baseURL,
     authToken: options.authToken,
     simpleAuth: false,
     otpParam: false
   });
-  const trusted = await rpc.ensureTrusted();
+  // One handshake decides: the token is accepted, or the server refused it and waiting would not help.
+  const trusted = rpc.isTrusted || (await rpc.requestTrust());
   if (!trusted) {
+    rpc.close?.();
     throw new Error(
-      '[powersync-diagnostics] the DevTools server did not trust this client; pass an authToken it accepts.'
+      '[powersync-diagnostics] the DevTools server did not trust this client; pass the authToken it was started with, or start it with --no-auth.'
     );
   }
   const server = createAgentServer(rpc);

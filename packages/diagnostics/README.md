@@ -76,9 +76,10 @@ Options: `port` (default 9999), `host`, `auth` (default `true`), `open` (open th
 
 ```bash
 npx powersync-devtools                 # a DevTools window on http://localhost:9999
-npx powersync-devtools --no-auth       # trust every local browser
+npx powersync-devtools --token <secret> # apps attach with this secret instead of the one-time code
+npx powersync-devtools --no-auth       # trust every local browser and app
 npx powersync-devtools --mcp-any-origin # accept MCP requests that carry no Origin header
-npx powersync-devtools mcp             # the same tools as a stdio MCP server
+npx powersync-devtools --host 0.0.0.0  # reachable from a phone on the same network
 ```
 
 The window waits for a database to attach. An app attaches with `connectAgent`, from any JavaScript runtime that has `fetch` and `WebSocket`:
@@ -88,12 +89,12 @@ import { connectAgent } from '@powersync/diagnostics/agent';
 
 const stop = await connectAgent(db, {
   baseURL: 'http://localhost:9999/',
-  authToken: process.env.POWERSYNC_DEVTOOLS_TOKEN, // a token the server trusts, or start it with --no-auth
+  authToken: process.env.POWERSYNC_DEVTOOLS_TOKEN, // the window's --token, or start it with --no-auth
   sdk: '@powersync/react-native'
 });
 ```
 
-This is the path for React Native and for any host without a DevTools dock. It is untested outside the browser and node so far.
+This is the path for React Native and for any host without a DevTools dock. Verified from a node process; the phone is the next test. For a device on the same network, start the window with `--host 0.0.0.0 --token <secret>`, point `baseURL` at your computer's address, and pass the same secret as `authToken`. The client fills in a `location` global when the runtime has none (Hermes, node) and skips the core event channel when `BroadcastChannel` is missing, so bucket totals stay empty there.
 
 ## MCP
 
@@ -139,7 +140,7 @@ curl -X POST http://localhost:9999/__mcp \
 | `./client`                 | the app page       | the dock client script for `@powersync/web` apps (loaded by the dock, not by you)                               |
 | `./page`                   | the app page       | the `postMessage` agent for hosts without a devframe hub (used by `@powersync/nuxt` on Nuxt DevTools 3)         |
 | `./vite-static`            | node (Vite config) | serves the UI at `/__powersync/` from a plain Vite dev server, for hosts that embed it in their own iframe      |
-| `powersync-devtools` (bin) | shell              | the standalone window and the stdio MCP server                                                                  |
+| `powersync-devtools` (bin) | shell              | the standalone window, with MCP at `/__mcp`                                                                     |
 
 ## Requirements
 
