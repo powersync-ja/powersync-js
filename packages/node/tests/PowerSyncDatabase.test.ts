@@ -248,6 +248,20 @@ databaseTest('clear raw tables', async ({ database }) => {
   expect(await database.getAll('SELECT * FROM lists')).toHaveLength(0);
 });
 
+databaseTest('soft clear', async ({ database }) => {
+  await database.init();
+  await database.execute('INSERT INTO lists (id, name) VALUES (uuid(), ?)', ['list']);
+  await database.execute('INSERT INTO ps_buckets (name, last_applied_op) VALUES (?, ?)', ['bkt', 10]);
+
+  // Doing a soft-clear should delete data but keep the bucket around.
+  await database.disconnectAndClear({ soft: true });
+  expect(await database.get('SELECT name FROM ps_buckets')).toStrictEqual({ name: 'bkt' });
+
+  // Doing a default clear also deletes buckets.
+  await database.disconnectAndClear();
+  expect(await database.getAll('SELECT name FROM ps_buckets')).toStrictEqual([]);
+});
+
 describe('onChangeWithAsyncGenerator', () => {
   databaseTest('receives change events', async ({ database }) => {
     const changes: WatchOnChangeEvent[] = [];
