@@ -2,6 +2,7 @@
  * PowerSync DevTools for a node app: the database lives in this process, so this process hosts the
  * dev server itself. Opens the diagnostics UI on a local port and exposes the MCP tools at `/__mcp`.
  */
+import type { McpSetting } from 'devframe';
 import { createDevServer } from 'devframe/adapters/dev';
 import { createIntegration, type DiagnosableDatabase } from './agent.js';
 import { definition, registerIntegration } from './definition.js';
@@ -22,6 +23,13 @@ export interface EnableDiagnosticsOptions {
   sdk?: string;
   /** The source id shown in the UI. @default 'node-1' */
   id?: string;
+  /**
+   * The MCP endpoint at `<url>/__mcp`. By default it mounts once the tools exist and accepts only
+   * requests with a loopback `Origin` header; a request without one gets `403`. Pass
+   * `{ allowedOrigins: false }` for an MCP client that sends no `Origin` header, `false` to leave
+   * the endpoint off, or `{ authorization }` to require a bearer token. @default 'auto'
+   */
+  mcp?: McpSetting;
 }
 
 export interface DiagnosticsServer {
@@ -44,7 +52,10 @@ export interface DiagnosticsServer {
  * }
  * ```
  */
-export async function enablePowerSyncDiagnostics(db: DiagnosableDatabase, options: EnableDiagnosticsOptions = {}): Promise<DiagnosticsServer> {
+export async function enablePowerSyncDiagnostics(
+  db: DiagnosableDatabase,
+  options: EnableDiagnosticsOptions = {}
+): Promise<DiagnosticsServer> {
   const sdk = options.sdk ?? '@powersync/node';
   const detach = await registerIntegration(options.id ?? 'node-1', createIntegration(db, sdk), sdk);
   const server = await createDevServer(definition, {
@@ -52,7 +63,7 @@ export async function enablePowerSyncDiagnostics(db: DiagnosableDatabase, option
     host: options.host,
     auth: options.auth ?? true,
     openBrowser: options.open ?? false,
-    mcp: 'auto'
+    mcp: options.mcp ?? 'auto'
   });
   console.info(`[powersync-diagnostics] PowerSync DevTools at ${server.origin}`);
   return {
