@@ -1,6 +1,7 @@
+import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
-import { defineNuxtModule, createResolver, addPlugin, addImports, findPath } from '@nuxt/kit';
+import { defineNuxtModule, createResolver, addPlugin, addImports, addVitePlugin, findPath } from '@nuxt/kit';
 import type { Nuxt } from 'nuxt/schema';
 import { defu } from 'defu';
 import { setupDevToolsUI } from './devtools';
@@ -58,12 +59,26 @@ export default defineNuxtModule<PowerSyncNuxtModuleOptions>({
     const resolver = createResolver(import.meta.url);
     // Nuxt installs its own modules (DevTools among them) after the app's, so the version is read once
     // every module has run. Both consumers below fire later than that.
-    let devtoolsMajor = 3;
-    nuxt.hook('modules:done', () => {
-      devtoolsMajor = nuxtDevtoolsMajor(nuxt);
-      (nuxt.options.runtimeConfig.public.powerSyncModuleOptions as any).diagnosticsTransport = devtoolsMajor >= 4 ? 'devframe' : 'page';
-      // Nuxt DevTools 4 shows the devframe dock itself; only v3 needs the custom tab.
-      if (options.useDiagnostics && devtoolsMajor < 4) {
+    nuxt.hook('modules:done', async () => {
+      const devtoolsMajor = nuxtDevtoolsMajor(nuxt);
+      (nuxt.options.runtimeConfig.public.powerSyncModuleOptions as any).diagnosticsTransport =
+        devtoolsMajor >= 4 ? 'devframe' : 'page';
+      if (!options.useDiagnostics || !nuxt.options.dev) return;
+      // Diagnostics during development, by Nuxt DevTools generation. Added as Vite plugins through the
+      // kit so the same code works on Nuxt 4 (separate client and server Vite configs) and Nuxt 5 (one
+      // Vite server with environments). Registered for every environment: a client-only plugin is
+      // wrapped by the kit under the environment API, which hides its `devtools` hook from Vite
+      // DevTools and drops `configureServer`. Both plugins are serve-only and skip the server side.
+      if (devtoolsMajor >= 4) {
+        // Nuxt DevTools 4 runs on Vite DevTools: mount the devframe definition. The dock, the page
+        // script and the MCP tools come with it.
+        const { default: powersyncDevtools } = await import('@powersync/diagnostics/vite');
+        addVitePlugin(powersyncDevtools());
+      } else {
+        // Nuxt DevTools 3 has no devframe hub: serve the UI as a static page for the custom tab. The
+        // runtime plugin loads the page agent that answers the tab over postMessage.
+        const { default: powersyncStatic } = await import('@powersync/diagnostics/vite-static');
+        addVitePlugin(powersyncStatic());
         setupDevToolsUI(nuxt);
       }
     });
@@ -165,52 +180,22 @@ export default defineNuxtModule<PowerSyncNuxtModuleOptions>({
 
     nuxt.options.vite.resolve.alias = aliasArray;
 
-    // making the asset available via HTTP for devtools
-    // this Add a Vite plugin to serve the asset at /assets/powersync-icon.svg
-    nuxt.hook('vite:extendConfig', async (config, { isClient }) => {
-      if (!isClient) return;
-
-      const { readFileSync } = await import('node:fs');
-      const assetPath = resolver.resolve('./runtime/assets/powersync-icon.svg');
-      const vitePlugin = {
-        name: 'powersync-assets',
-        configureServer(server: any) {
-          // Serve the asset at /assets/powersync-icon.svg
-          server.middlewares.use('/assets/powersync-icon.svg', (req: any, res: any, next: any) => {
-            try {
-              const content = readFileSync(assetPath);
-              res.setHeader('Content-Type', 'image/svg+xml');
-              res.end(content);
-            } catch {
-              next();
-            }
-          });
-        }
-      };
-
-      // Add plugin to existing plugins array
-      const plugins = config.plugins || [];
-      plugins.push(vitePlugin);
-
-      // Diagnostics during development, by Nuxt DevTools generation.
-      if (options.useDiagnostics && nuxt.options.dev) {
-        if (devtoolsMajor >= 4) {
-          // Nuxt DevTools 4 runs on Vite DevTools: mount the devframe definition. The dock, the page
-          // script and the MCP tools come with it.
-          const { default: powersyncDevtools } = await import('@powersync/diagnostics/vite');
-          plugins.push(powersyncDevtools());
-        } else {
-          // Nuxt DevTools 3 has no devframe hub: serve the UI as a static page for the custom tab. The
-          // runtime plugin loads the page agent that answers the tab over postMessage.
-          const { default: powersyncStatic } = await import('@powersync/diagnostics/vite-static');
-          plugins.push(powersyncStatic());
-        }
+    // Serve the tab icon for Nuxt DevTools at /assets/powersync-icon.svg (dev-server middleware only).
+    const assetPath = resolver.resolve('./runtime/assets/powersync-icon.svg');
+    addVitePlugin({
+      name: 'powersync-assets',
+      apply: 'serve',
+      configureServer(server: any) {
+        server.middlewares.use('/assets/powersync-icon.svg', (_request: any, response: any, next: any) => {
+          try {
+            response.setHeader('Content-Type', 'image/svg+xml');
+            response.end(readFileSync(assetPath));
+          } catch {
+            next();
+          }
+        });
       }
-
-      // @ts-ignore - plugins is read-only but we need to modify it
-      config.plugins = plugins;
     });
-
   }
 });
 
@@ -227,7 +212,9 @@ function nuxtDevtoolsMajor(nuxt: Nuxt): number {
   if (fromMeta) return Number(fromMeta.split('.')[0]) || 3;
   try {
     // Resolve from where the module was loaded, else from the app root.
-    const from = installed?.entryPath ? join(dirname(installed.entryPath), 'package.json') : join(nuxt.options.rootDir, 'package.json');
+    const from = installed?.entryPath
+      ? join(dirname(installed.entryPath), 'package.json')
+      : join(nuxt.options.rootDir, 'package.json');
     const pkg = createRequire(from)('@nuxt/devtools/package.json') as { version: string };
     return Number(pkg.version.split('.')[0]) || 3;
   } catch {

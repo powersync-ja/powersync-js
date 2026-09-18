@@ -2,6 +2,8 @@ import { createPluginFromDevframe } from '@vitejs/devtools-kit/node';
 import type { Plugin } from 'vite';
 import { definition } from './definition.js';
 
+const PLUGIN_NAME = 'powersync-diagnostics';
+
 export interface PowerSyncDevToolsOptions {
   /** Title of the dock entry. */
   title?: string;
@@ -23,8 +25,30 @@ export interface PowerSyncDevToolsOptions {
  * ```
  */
 export default function powersyncDevtools(options: PowerSyncDevToolsOptions = {}): Plugin {
-  return createPluginFromDevframe(definition, {
-    name: 'powersync-diagnostics',
-    dock: options.title ? { title: options.title } : undefined
-  });
+  const plugin = createPluginFromDevframe(definition, { name: PLUGIN_NAME });
+  plugin.devtools!.setup = async (context) => {
+    // Frameworks that run a second Vite server for server-side rendering set it up too; the browser
+    // never talks to that server, so the definition mounts on the client-facing one only.
+    if (context.viteConfig?.build?.ssr) return;
+    const base = context.viteConfig?.base ?? '/';
+    const mount = createPluginFromDevframe(definition, {
+      name: PLUGIN_NAME,
+      dock: {
+        ...(options.title ? { title: options.title } : {}),
+        // Vite DevTools resolves bare client-script specifiers to `/@id/<specifier>` without the
+        // server's `base`, so under a non-root base (Nuxt serves Vite at `/_nuxt/`) the script
+        // request falls through to the app. Point at the module URL under the base instead.
+        ...(base !== '/'
+          ? {
+              clientScript: {
+                importFrom: `${base.replace(/\/?$/, '/')}@id/${definition.packageName}/client`,
+                eager: true
+              }
+            }
+          : {})
+      }
+    });
+    await mount.devtools?.setup(context);
+  };
+  return plugin;
 }

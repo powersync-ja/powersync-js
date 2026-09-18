@@ -9,3 +9,7 @@ allowBuilds:
 minimumReleaseAgeExclude:
   - '@journeyapps/*'
   - '@powersync/*'
+
+# Nuxt DevTools 4 (built on Vite DevTools) on Nuxt 4.5: one copy, also for the one Nuxt itself depends on.
+overrides:
+  '@nuxt/devtools': '^4.0.0-beta.1'
