@@ -497,6 +497,17 @@ function defineSyncTests(bson: boolean) {
 
   const mockSyncServiceTest = createMockSyncServiceTest(bson);
 
+  mockSyncServiceTest('a requested disconnect is not recorded as a download error', async ({ syncService }) => {
+    const database = await syncService.createDatabase();
+    await database.connect(new TestConnector(), options);
+    await database.waitForStatus((status) => status.connected);
+
+    await database.disconnect();
+
+    expect(database.currentStatus.connected).toBe(false);
+    expect(database.currentStatus.downloadError).toBeUndefined();
+  });
+
   mockSyncServiceTest('sets last sync time', async ({ syncService }) => {
     const db = await syncService.createDatabase();
     db.connect(new TestConnector(), options);
