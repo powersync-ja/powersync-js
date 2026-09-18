@@ -392,7 +392,9 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
               this.logger.log({ level: LogLevels.error, message: 'error invalidating credentials', error });
             }
           },
-          fetchCredentials: () => {
+          fetchCredentials: (
+              signal?: AbortSignal
+          ) => {
             return this.#useConnector(
               (port) => {
                 this.logger.log({
@@ -402,7 +404,8 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
 
                 return port.clientProvider.fetchCredentials();
               },
-              'fetchCredentials'
+              'fetchCredentials',
+                signal
             );
           }
         },
