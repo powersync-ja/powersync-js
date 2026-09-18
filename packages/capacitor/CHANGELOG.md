@@ -1,5 +1,15 @@
 # @powersync/capacitor
 
+## 0.9.2
+
+### Patch Changes
+
+- 30ca5b6: Fix "database is locked (code 5)" on Android after the webview reloads (for example a live reload) while a write transaction was open.
+- 9c8f1e3: Add `DisconnectAndClearOptions.soft` to clear data from public tables while keeping an internal sync for a faster next sync.
+- Updated dependencies [9c8f1e3]
+  - @powersync/shared-internals@1.3.0
+  - @powersync/web@2.4.0
+
 ## 0.9.1
 
 ### Patch Changes
