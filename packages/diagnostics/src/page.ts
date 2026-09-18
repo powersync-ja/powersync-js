@@ -4,7 +4,12 @@
  * Nuxt DevTools v3 uses it together with `./vite-static`. Nothing here reaches a production build:
  * the host loads the module only in dev.
  */
-import { PORT_MESSAGE, REQUEST_PORT_MESSAGE, exposeIntegration, type SdkIntegration } from '@powersync/diagnostics-core';
+import {
+  PORT_MESSAGE,
+  REQUEST_PORT_MESSAGE,
+  exposeIntegration,
+  type SdkIntegration
+} from '@powersync/diagnostics-core';
 import { observeRegisteredDatabases } from '@powersync/web/devtools';
 import { createIntegration } from './agent.js';
 
@@ -32,14 +37,15 @@ export function serveDiagnostics(): () => void {
       return;
     }
     if (!integration) {
-      console.info('[powersync-diagnostics] page: a UI asked for a port but no database is registered yet');
       return;
     }
-    console.info('[powersync-diagnostics] page: serving an integration port to', event.origin);
     // One dedicated channel per asking iframe, so several docks can attach at once.
     const channel = new MessageChannel();
     stops.add(exposeIntegration(integration, channel.port1));
-    (event.source as Window | null)?.postMessage({ type: PORT_MESSAGE }, { targetOrigin: event.origin, transfer: [channel.port2] });
+    (event.source as Window | null)?.postMessage(
+      { type: PORT_MESSAGE },
+      { targetOrigin: event.origin, transfer: [channel.port2] }
+    );
   };
   window.addEventListener('message', onMessage);
 
@@ -53,4 +59,3 @@ export function serveDiagnostics(): () => void {
 
 // Loaded as a side-effect module: start serving as soon as the page loads it.
 serveDiagnostics();
-console.info('[powersync-diagnostics] page ready; serving live databases to the diagnostics UI');

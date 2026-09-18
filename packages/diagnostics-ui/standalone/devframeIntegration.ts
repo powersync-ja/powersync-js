@@ -148,7 +148,6 @@ export async function connectDevframeIntegration(timeoutMs = 4000): Promise<SdkI
       console.info('[powersync-diagnostics] ui: devframe host found but not trusted');
       return null;
     }
-    console.info('[powersync-diagnostics] ui: connected to a devframe host over', rpc.transport);
     return new DevframeIntegration(rpc);
   } catch (error) {
     console.info('[powersync-diagnostics] ui: no devframe host', error instanceof Error ? error.message : error);

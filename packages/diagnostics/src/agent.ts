@@ -104,7 +104,6 @@ export function createAgentServer(rpc: DevframeRpcClient): AgentServer {
         void rpc.callEvent('powersync:page-event', sourceId, event);
       });
       served.set(sourceId, { integration, stop });
-      console.info(`[powersync-diagnostics] agent: serving ${sourceId} to the dev server`);
     },
     async release(sourceId) {
       const entry = served.get(sourceId);
