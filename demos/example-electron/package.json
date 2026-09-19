@@ -9,6 +9,7 @@
   "scripts": {
     "start": "electron-forge start --inspect-electron",
     "package": "electron-forge package",
+    "test:build": "electron-forge package",
     "make": "electron-forge make",
     "publish": "electron-forge publish",
     "lint": "eslint --ext .ts,.tsx ."
@@ -50,7 +51,7 @@
     "@vitejs/plugin-react": "^4.2.1",
     "autoprefixer": "^10.4.19",
     "babel-loader": "^9.1.3",
-    "electron": "30.0.2",
+    "electron": "44.4.3",
     "ts-node": "^10.9.2",
     "typescript": "~4.5.5",
     "vite": "^5.2.11",

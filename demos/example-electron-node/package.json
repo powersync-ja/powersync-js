@@ -13,24 +13,23 @@
   "scripts": {
     "start": "electron-forge start",
     "package": "electron-forge package",
+    "test:build": "electron-forge package",
     "make": "electron-forge make",
     "publish": "electron-forge publish"
   },
   "devDependencies": {
     "@electron-forge/cli": "^7.7.0",
     "@electron-forge/maker-deb": "^7.7.0",
+    "@electron-forge/maker-rpm": "^7.7.0",
     "@electron-forge/maker-squirrel": "^7.7.0",
     "@electron-forge/maker-zip": "^7.7.0",
-    "@electron-forge/maker-rpm": "^7.7.0",
     "@electron-forge/plugin-auto-unpack-natives": "^7.7.0",
     "@electron-forge/plugin-webpack": "^7.7.0",
-    "@types/better-sqlite3": "^7.6.13",
     "@vercel/webpack-asset-relocator-loader": "1.7.3",
     "copy-webpack-plugin": "^13.0.0",
     "css-loader": "^6.11.0",
     "dotenv": "^16.4.7",
-    "electron": "37.0.0",
-    "electron-rebuild": "^3.2.9",
+    "electron": "44.4.3",
     "fork-ts-checker-webpack-plugin": "^9.0.2",
     "node-loader": "^2.1.0",
     "style-loader": "^3.3.4",
@@ -42,7 +41,6 @@
   },
   "dependencies": {
     "@powersync/node": "^1.0.1",
-    "better-sqlite3": "^12.2.0",
     "electron-squirrel-startup": "^1.0.1"
   }
 }
