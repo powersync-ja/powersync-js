@@ -33,6 +33,14 @@ export interface ArrayQueryDefinition<RowType = unknown> {
    * ```
    */
   mapper?: (row: Record<string, unknown>) => RowType;
+
+  /**
+   * Default plugin options for watched queries built from this definition. Options
+   * passed to `watch()` / `differentialWatch()` override these per plugin id.
+   *
+   * @alpha
+   */
+  extensions?: Record<string, unknown>;
 }
 
 /**

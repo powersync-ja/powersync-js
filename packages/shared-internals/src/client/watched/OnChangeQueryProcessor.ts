@@ -78,8 +78,13 @@ export class OnChangeQueryProcessor<Data> extends AbstractQueryProcessor<Data, W
               partialStateUpdate.isLoading = false;
             }
 
-            // Check if the result has changed
-            if (!this.checkEquality(result, this.state.data)) {
+            // Check if the result has changed, OR if the state is still showing
+            // something that is not live (the placeholder, or plugin-seeded rows).
+            // Without the second half a user comparator that reports the live result
+            // equal to the seeded one would strand the query on `source: 'cache'`
+            // forever: no data assignment means no `hasLiveResult`, no `onResult`, and
+            // no transition off the seed. Mirrors DifferentialQueryProcessor.
+            if (!this.checkEquality(result, this.state.data) || this.state.source !== 'live') {
               Object.assign(partialStateUpdate, {
                 data: result
               });

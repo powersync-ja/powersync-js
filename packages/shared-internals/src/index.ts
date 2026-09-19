@@ -22,3 +22,6 @@ export * from './utils/ControlledExecutor.js';
 export * from './utils/mutex.js';
 export * from './utils/parseQuery.js';
 export type { SimpleAsyncIterator } from './utils/stream_transform.js';
+
+export * from './client/plugins/signature.js';
+export * from './client/plugins/WatchedQueryPluginRegistry.js';

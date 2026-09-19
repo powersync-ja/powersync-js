@@ -12,12 +12,22 @@ export const useSingleQuery = <RowType = any>(options: InternalHookOptions<RowTy
     isLoading: true,
     isFetching: true,
     data: [],
-    error: undefined
+    error: undefined,
+    // Nothing has been read from the database yet — `data` is the empty placeholder,
+    // not a result. It becomes 'live' when the one-shot query resolves.
+    source: 'placeholder',
+    sourceMeta: null
   });
 
   const runQuery = React.useCallback(
     async (signal?: AbortSignal) => {
-      setOutputState((prev) => ({ ...prev, isLoading: true, isFetching: true, error: undefined }));
+      setOutputState((prev) => ({
+        ...prev,
+        isLoading: true,
+        isFetching: true,
+        error: undefined,
+        sourceMeta: null
+      }));
       try {
         const compiledQuery = query.compile();
         const result = await query.execute({
@@ -33,7 +43,9 @@ export const useSingleQuery = <RowType = any>(options: InternalHookOptions<RowTy
           isLoading: false,
           isFetching: false,
           data: result,
-          error: undefined
+          error: undefined,
+          source: 'live',
+          sourceMeta: null
         }));
       } catch (error) {
         setOutputState((prev) => ({
@@ -41,7 +53,10 @@ export const useSingleQuery = <RowType = any>(options: InternalHookOptions<RowTy
           isLoading: false,
           isFetching: false,
           data: [],
-          error
+          error,
+          // `source` is deliberately left as-is: a failed refresh does not change
+          // where the data currently on screen came from.
+          sourceMeta: null
         }));
       }
     },

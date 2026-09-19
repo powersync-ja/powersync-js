@@ -31,6 +31,23 @@ export interface WatchedQueryState<Data> {
    * The last data returned by the query.
    */
   readonly data: Data;
+
+  /**
+   * Where {@link WatchedQueryState.data} came from: `'placeholder'` before anything
+   * resolved, `'live'` for query results, or a plugin-defined tag (e.g. `'cache'`)
+   * while plugin-seeded data is showing.
+   *
+   * @alpha
+   */
+  readonly source: string;
+
+  /**
+   * Plugin-defined detail about a seeded result, or `null` when
+   * {@link WatchedQueryState.source} is `'placeholder'` or `'live'`.
+   *
+   * @alpha
+   */
+  readonly sourceMeta: unknown;
 }
 
 /**
@@ -72,6 +89,14 @@ export interface WatchedQueryOptions {
    * Supplying an override here can be used to limit the tables which trigger querying the database.
    */
   triggerOnTables?: string[];
+
+  /**
+   * Per-query options addressed to watched-query plugins by id,
+   * e.g. `{ cache: false }`.
+   *
+   * @alpha
+   */
+  extensions?: Record<string, unknown>;
 }
 
 /**
