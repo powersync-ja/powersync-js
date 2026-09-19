@@ -7,12 +7,8 @@
     "noImplicitAny": true,
     "sourceMap": true,
     "outDir": "dist",
-    "moduleResolution": "bundler",
-    "paths": {
-      "*": [
-        "node_modules/*"
-      ]
-    }
+    "rootDir": ".",
+    "moduleResolution": "bundler"
   },
   "include": [
     "src/**/*"

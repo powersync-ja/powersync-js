@@ -66,7 +66,13 @@ const mainConfig: Configuration = {
   entry: './src/main/index.ts',
   // Put your normal webpack config below here
   module: {
-    rules: defaultWebpackRules()
+    rules: defaultWebpackRules(),
+    parser: {
+      javascript: {
+        // Webpack's default worker matcher only recognizes the unprefixed worker_threads import.
+        worker: ['...', 'Worker from node:worker_threads']
+      }
+    }
   },
   plugins: [
     ...webpackPlugins,

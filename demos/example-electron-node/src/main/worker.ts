@@ -1,4 +1,3 @@
-import Database from 'better-sqlite3';
 import * as path from 'node:path';
 
 import { getPowerSyncExtensionFilename, startPowerSyncWorker } from '@powersync/node/worker.js';
@@ -18,8 +17,4 @@ function resolvePowerSyncCoreExtension() {
   return libraryPath;
 }
 
-async function resolveBetterSqlite3() {
-  return Database;
-}
-
-startPowerSyncWorker({ extensionPath: resolvePowerSyncCoreExtension, loadBetterSqlite3: resolveBetterSqlite3 });
+startPowerSyncWorker({ extensionPath: resolvePowerSyncCoreExtension });

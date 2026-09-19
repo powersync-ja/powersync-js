@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-import { Worker } from 'node:worker_threads';
+import { Worker as NodeWorker } from 'node:worker_threads';
 
 import { createConsoleLogger, LogLevels, PowerSyncDatabase, SyncStreamConnectionMethod } from '@powersync/node';
 import { app, BrowserWindow, ipcMain, MessagePortMain } from 'electron';
@@ -32,8 +32,9 @@ const database = new PowerSyncDatabase({
   database: {
     dbFilename: 'test.db',
     dbLocation: userDataDirectory,
+    implementation: { type: 'node:sqlite' },
     openWorker(_, options) {
-      return new Worker(new URL('./worker.ts', import.meta.url), options);
+      return new NodeWorker(new URL('./worker.ts', import.meta.url), options);
     }
   },
   logger: createConsoleLogger({ minLevel: LogLevels.debug })
@@ -59,14 +60,29 @@ const createWindow = (): void => {
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.whenReady().then(() => {
-  database.connect(new BackendConnector(), { connectionMethod: SyncStreamConnectionMethod.HTTP });
+app.whenReady().then(async () => {
+  await database.init();
+  const connector = new BackendConnector();
+  if (await connector.fetchCredentials()) {
+    await database.connect(connector, { connectionMethod: SyncStreamConnectionMethod.HTTP });
+  }
 
   const forwardSyncStatus = (port: MessagePortMain) => {
-    port.postMessage(database.currentStatus.toJSON());
+    const postStatus = (status: typeof database.currentStatus) =>
+      port.postMessage({
+        connected: status.connected,
+        connecting: status.connecting,
+        downloading: status.downloading,
+        uploading: status.uploading,
+        downloadError: status.downloadError,
+        uploadError: status.uploadError,
+        lastSyncedAt: status.lastSyncedAt,
+        hasSynced: status.hasSynced
+      });
+    postStatus(database.currentStatus);
     const unregister = database.registerListener({
       statusChanged(status) {
-        port.postMessage(status.toJSON());
+        postStatus(status);
       }
     });
     port.once('close', unregister);
@@ -81,7 +97,7 @@ app.whenReady().then(() => {
       args,
       {
         onResult(results) {
-          port.postMessage(results.rows._array);
+          port.postMessage(results.array);
         },
         onError(error) {
           console.error(`Watch ${sql} with ${args} failed`, error);
