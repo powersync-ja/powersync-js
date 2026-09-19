@@ -62,10 +62,6 @@ const createWindow = (): void => {
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(async () => {
   await database.init();
-  const connector = new BackendConnector();
-  if (await connector.fetchCredentials()) {
-    await database.connect(connector, { connectionMethod: SyncStreamConnectionMethod.HTTP });
-  }
 
   const forwardSyncStatus = (port: MessagePortMain) => {
     const postStatus = (status: typeof database.currentStatus) =>
@@ -132,6 +128,16 @@ app.whenReady().then(async () => {
     return await database.getAll(sql, args);
   });
   createWindow();
+
+  // Open the window before fetching credentials or connecting so sync cannot delay the UI.
+  try {
+    const connector = new BackendConnector();
+    if (await connector.fetchCredentials()) {
+      await database.connect(connector, { connectionMethod: SyncStreamConnectionMethod.HTTP });
+    }
+  } catch (error) {
+    console.error('Could not connect to PowerSync', error);
+  }
 });
 
 // Quit when all windows are closed, except on macOS. There, it's common
