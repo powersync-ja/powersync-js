@@ -77,11 +77,19 @@ describe('plugin hook dispatch', () => {
     });
 
     let resolveLive: (rows: unknown[]) => void = () => {};
+    let liveStarted = false;
     const processor = new OnChangeQueryProcessor<unknown[]>({
       db: db as any,
       placeholderData: [],
       watchOptions: {
-        query: { compile: () => ({ sql: 'S', parameters: [] }), execute: () => new Promise((r) => (resolveLive = r)) }
+        query: {
+          compile: () => ({ sql: 'S', parameters: [] }),
+          execute: () =>
+            new Promise((r) => {
+              liveStarted = true;
+              resolveLive = r;
+            })
+        }
       }
     });
 
@@ -90,8 +98,65 @@ describe('plugin hook dispatch', () => {
     expect(processor.state.data).toEqual([{ id: 'hydrated' }]);
     expect(processor.state.source).toBe('cache');
 
+    // Plugins are linked before `waitForReady()` resolves, so the seed can land before
+    // the live query has even been executed — which is the point of seeding, and means
+    // this test has to wait for `execute` to hand over its resolver before using it.
+    await vi.waitFor(() => expect(liveStarted).toBe(true));
     resolveLive([{ id: 'live' }]);
     await vi.waitFor(() => expect(processor.state.source).toBe('live'));
+    await processor.close();
+  });
+
+  it('links plugins and adopts a seed before the database is ready', async () => {
+    // The point of seeding: a plugin reading its own storage must not be made to wait
+    // for the database. Linking after `waitForReady()` bounded every seeded paint by
+    // file open, version load, schema application and sync-status resolution — the
+    // slow steps, and the ones re-paid whenever streams change. The seed must land
+    // while the database is still starting.
+    const { db } = createTestProcessorHost();
+
+    let releaseReady: () => void = () => {};
+    db.waitForReady = vi.fn(() => new Promise<void>((r) => (releaseReady = r)));
+
+    let seedFn: ((r: SeededResult) => boolean) | undefined;
+    db.pluginRegistry = openRegistry({
+      id: 'cache',
+      onWatchedQueryCreate: () => ({ onLink: (seed) => (seedFn = seed) })
+    });
+
+    let liveStarted = false;
+    let resolveLive: (rows: unknown[]) => void = () => {};
+    const processor = new OnChangeQueryProcessor<unknown[]>({
+      db: db as any,
+      placeholderData: [],
+      watchOptions: {
+        query: {
+          compile: () => ({ sql: 'S', parameters: [] }),
+          execute: () =>
+            new Promise((r) => {
+              liveStarted = true;
+              resolveLive = r;
+            })
+        }
+      }
+    });
+
+    // Still suspended inside waitForReady, yet the plugin is already linked and its
+    // seeded rows are on screen.
+    await vi.waitFor(() => expect(seedFn).toBeDefined());
+    expect(db.waitForReady).toHaveBeenCalled();
+    expect(liveStarted).toBe(false);
+    expect(seedFn!(seeded([{ id: 'from-cache' }]))).toBe(true);
+    expect(processor.state.data).toEqual([{ id: 'from-cache' }]);
+    expect(processor.state.source).toBe('cache');
+
+    // The live result still supersedes it once the database finishes starting.
+    releaseReady();
+    await vi.waitFor(() => expect(liveStarted).toBe(true));
+    resolveLive([{ id: 'live' }]);
+    await vi.waitFor(() => expect(processor.state.source).toBe('live'));
+    expect(processor.state.data).toEqual([{ id: 'live' }]);
+
     await processor.close();
   });
 
@@ -645,14 +710,19 @@ describe('plugin hook dispatch', () => {
     // The queued generation owns linking: it must have linked once, with a live signal.
     await vi.waitFor(() => expect(processor.state.data).toEqual([{ id: 'live', n: 1 }]));
     expect(processor.state.source).toBe('live');
-    expect(onLinkCount).toBe(1);
+    // Two generations are linked now, not one: plugins are linked before
+    // `waitForReady()`, so the original generation was already live when
+    // updateSettings superseded it. That first generation is disposed by
+    // `updateSettingsInternal`'s `disposePluginHooks()` and its signal aborts, so the
+    // plugin can tell which registration is current — nothing leaks.
+    expect(onLinkCount).toBe(2);
     expect(latestSignal!.aborted).toBe(false);
 
     // The schemaChanged listener must exist and still re-link the query.
     const schemaListeners = [...activeListeners].filter((l) => l.schemaChanged);
     expect(schemaListeners).toHaveLength(1);
     await schemaListeners[0].schemaChanged();
-    await vi.waitFor(() => expect(onLinkCount).toBe(2));
+    await vi.waitFor(() => expect(onLinkCount).toBe(3));
     await vi.waitFor(() => expect(processor.state.data).toEqual([{ id: 'live', n: 2 }]));
 
     // The closing listener must exist and still cascade db.close() into the query.

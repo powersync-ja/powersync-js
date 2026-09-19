@@ -424,6 +424,17 @@ export abstract class AbstractQueryProcessor<
       }
     });
 
+    // Link the plugins BEFORE waiting for the database. A seed that comes from the
+    // plugin's own storage does not need SQLite, and the whole value of seeding is
+    // skipping the wait: file open, version load, schema application and sync-status
+    // resolution are the slow steps, and they are slowest precisely when the dataset
+    // is large enough for a seeded paint to matter. Linking after `waitForReady()`
+    // would bound every seeded result by the cost it exists to avoid.
+    const linkedBeforeReady = this.pluginHooks != null;
+    if (linkedBeforeReady && !signal.aborted) {
+      this.startPluginLinks(signal);
+    }
+
     // Wait for the schema to be set before listening to changes
     await db.waitForReady();
 
@@ -454,9 +465,13 @@ export abstract class AbstractQueryProcessor<
         if (deferredSeed) {
           this.trySeed(deferredSeed, signal);
         }
+        // This generation was created after the pre-ready link above ran, so it still
+        // needs linking; anything linked there must not be linked twice.
+        if (!superseded) {
+          this.startPluginLinks(signal);
+        }
       }
-    }
-    if (!superseded) {
+    } else if (!superseded && !linkedBeforeReady) {
       this.startPluginLinks(signal);
     }
 

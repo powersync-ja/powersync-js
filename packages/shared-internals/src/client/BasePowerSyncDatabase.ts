@@ -360,17 +360,23 @@ export abstract class BasePowerSyncDatabase<Options extends BasePowerSyncDatabas
    * This is to be automatically executed in the constructor.
    */
   protected async initialize() {
+    // The registry opens BEFORE the database does. A plugin that seeds from its own
+    // storage — a cache reading IndexedDB, hydration data already in memory — has no
+    // reason to wait for SQLite, and waiting is precisely the cost it exists to avoid:
+    // opening the file, loading the version, applying the schema and resolving sync
+    // status are the slow steps, and they are slowest exactly when the dataset is
+    // large enough for the seed to matter. Opening here lets a watched query
+    // constructed during startup paint its seeded rows while the work below is still
+    // running. Plugins therefore cannot assume the database is usable inside
+    // `onDatabaseOpen`; it is a registration point, not a ready signal.
+    this.pluginRegistry.open({ db: this, logger: this.logger });
+
     await this._initialize();
     await this.loadVersion();
     await this.updateSchema(this.options.schema);
     await this.resolveOfflineSyncStatus();
     await this.database.execute('PRAGMA RECURSIVE_TRIGGERS=TRUE');
     await this.triggersImpl.cleanupResources();
-    // Deviation from the brief: open the plugin registry BEFORE flipping `ready` to
-    // true. `waitForReady()` returns synchronously once `ready` is true, so opening
-    // the registry first guarantees no query construction can ever observe
-    // ready=true with a closed registry.
-    this.pluginRegistry.open({ db: this, logger: this.logger });
     this.ready = true;
     this.iterateListeners((cb) => cb.initialized?.());
   }
