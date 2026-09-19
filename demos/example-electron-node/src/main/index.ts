@@ -1,7 +1,13 @@
 import fs from 'node:fs';
 import { Worker as NodeWorker } from 'node:worker_threads';
 
-import { createConsoleLogger, LogLevels, PowerSyncDatabase, SyncStreamConnectionMethod } from '@powersync/node';
+import {
+  createConsoleLogger,
+  LogLevels,
+  PowerSyncDatabase,
+  SyncStatus,
+  SyncStreamConnectionMethod
+} from '@powersync/node';
 import { app, BrowserWindow, ipcMain, MessagePortMain } from 'electron';
 import { AppSchema, BackendConnector } from './powersync';
 import { serializeError } from './serializeError';
@@ -65,7 +71,7 @@ app.whenReady().then(async () => {
   await database.init();
 
   const forwardSyncStatus = (port: MessagePortMain) => {
-    const postStatus = (status: typeof database.currentStatus) =>
+    const postStatus = (status: SyncStatus) =>
       port.postMessage({
         connected: status.connected,
         connecting: status.connecting,
