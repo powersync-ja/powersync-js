@@ -89,6 +89,10 @@ const mainConfig: Configuration = {
       POWERSYNC_TOKEN: JSON.stringify(process.env.POWERSYNC_TOKEN)
     })
   ],
+  // Leave the optional driver to Node's runtime resolution; this example uses node:sqlite.
+  externals: {
+    'better-sqlite3': 'commonjs better-sqlite3'
+  },
   resolve: {
     extensions: ['.js', '.ts', '.jsx', '.tsx', '.css', '.json']
   },
