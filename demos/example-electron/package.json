@@ -9,6 +9,7 @@
   "scripts": {
     "start": "electron-forge start --inspect-electron",
     "package": "electron-forge package",
+    "test:build": "electron-forge package",
     "make": "electron-forge make",
     "publish": "electron-forge publish",
     "lint": "eslint --ext .ts,.tsx ."
