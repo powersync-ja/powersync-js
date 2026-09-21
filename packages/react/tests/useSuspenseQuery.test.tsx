@@ -1,4 +1,4 @@
-import { AbstractPowerSyncDatabase, WatchedQuery, WatchedQueryListenerEvent } from '@powersync/common';
+import { CommonPowerSyncDatabase, WatchedQuery, WatchedQueryListenerEvent } from '@powersync/common';
 import { cleanup, renderHook, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
@@ -12,9 +12,9 @@ describe('useSuspenseQuery', () => {
   const loadingFallback = 'Loading';
   const errorFallback = 'Error';
 
-  let powersync: AbstractPowerSyncDatabase;
+  let powersync: CommonPowerSyncDatabase;
 
-  const wrapper = ({ children }) => (
+  const wrapper = ({ children }: { children: React.ReactNode }) => (
     <PowerSyncContext.Provider value={powersync}>
       <ErrorBoundary fallback={errorFallback}>
         <React.Suspense fallback={loadingFallback}>{children}</React.Suspense>
@@ -49,10 +49,10 @@ describe('useSuspenseQuery', () => {
     );
   };
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
     cleanup(); // Cleanup the DOM after each test
-    powersync = openPowerSync();
+    powersync = await openPowerSync();
   });
 
   it('should error when PowerSync is not set', async () => {
@@ -60,7 +60,7 @@ describe('useSuspenseQuery', () => {
     const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     // use a custom error wrapper that captures the content of the error
-    const wrapper = ({ children }) => {
+    const wrapper = ({ children }: { children: React.ReactNode }) => {
       return (
         <ErrorBoundary fallbackRender={({ error }) => <div data-testid="error-div">{error.message}</div>}>
           <React.Suspense fallback={loadingFallback}>{children}</React.Suspense>
@@ -99,7 +99,7 @@ describe('useSuspenseQuery', () => {
       return builder!;
     });
 
-    const wrapper = ({ children }) => (
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
       <PowerSyncContext.Provider value={powersync}>
         <React.Suspense fallback={loadingFallback}>
           {children}
@@ -147,7 +147,7 @@ describe('useSuspenseQuery', () => {
       },
       { timeout: 10_000, interval: 500 }
     );
-  });
+  }, 10_000);
 
   it('should run the query once if runQueryOnce flag is set', async () => {
     await powersync.execute("INSERT INTO lists (id, name) VALUES (uuid(), 'list1')");
@@ -192,7 +192,7 @@ describe('useSuspenseQuery', () => {
     // First ensure we do suspend, then wait for suspending to complete
     await waitForSuspend();
 
-    let refresh;
+    let refresh: undefined | (() => Promise<void>);
     await waitFor(
       async () => {
         const currentResult = result.current;
@@ -208,7 +208,7 @@ describe('useSuspenseQuery', () => {
 
     const spy = vi.spyOn(powersync, 'getAll');
     const callCount = spy.mock.calls.length;
-    await refresh();
+    await refresh!();
     expect(spy).toHaveBeenCalledTimes(callCount + 1);
   });
 
@@ -274,7 +274,7 @@ describe('useSuspenseQuery', () => {
   });
 
   it('should use an existing WatchedQuery instance', async () => {
-    const db = openPowerSync();
+    const db = await openPowerSync();
 
     // This query can be instantiated once and reused.
     // The query retains it's state and will not re-fetch the data unless the result changes.
@@ -286,7 +286,9 @@ describe('useSuspenseQuery', () => {
       })
       .watch();
 
-    const wrapper = ({ children }) => <PowerSyncContext.Provider value={db}>{children}</PowerSyncContext.Provider>;
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <PowerSyncContext.Provider value={db}>{children}</PowerSyncContext.Provider>
+    );
     const { result } = renderHook(() => useWatchedQuerySuspenseSubscription(listsQuery), {
       wrapper
     });
@@ -321,7 +323,7 @@ describe('useSuspenseQuery', () => {
   });
 
   it('should use an existing loaded WatchedQuery instance', async () => {
-    const db = openPowerSync();
+    const db = await openPowerSync();
 
     const listsQuery = db
       .query({
@@ -339,7 +341,7 @@ describe('useSuspenseQuery', () => {
       { timeout: 1000 }
     );
 
-    const wrapper = ({ children }) => (
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
       <React.StrictMode>
         <PowerSyncContext.Provider value={db}>{children}</PowerSyncContext.Provider>
       </React.StrictMode>

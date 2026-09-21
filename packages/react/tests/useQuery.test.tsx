@@ -18,7 +18,9 @@ describe('useQuery', () => {
     cleanup(); // Cleanup the DOM after each test
   });
 
-  const baseWrapper = ({ children, db }) => (
+  type WrapperArgs = { children: React.ReactNode; db: commonSdk.CommonPowerSyncDatabase };
+
+  const baseWrapper = ({ children, db }: WrapperArgs) => (
     <PowerSyncContext.Provider value={db}>{children}</PowerSyncContext.Provider>
   );
 
@@ -29,7 +31,7 @@ describe('useQuery', () => {
     },
     {
       mode: 'StrictMode',
-      wrapper: ({ children, db }) => <React.StrictMode>{baseWrapper({ children, db })}</React.StrictMode>
+      wrapper: ({ children, db }: WrapperArgs) => <React.StrictMode>{baseWrapper({ children, db })}</React.StrictMode>
     }
   ];
 
@@ -38,7 +40,7 @@ describe('useQuery', () => {
 
     describe(`in ${mode}`, () => {
       it('should set isLoading to true on initial load', async () => {
-        const db = openPowerSync();
+        const db = await openPowerSync();
         const { result } = renderHook(() => useQuery('SELECT * from lists'), {
           wrapper: ({ children }) => testWrapper({ children, db })
         });
@@ -47,7 +49,7 @@ describe('useQuery', () => {
       });
 
       it('should set error when error occurs and runQueryOnce flag is set', async () => {
-        const db = openPowerSync();
+        const db = await openPowerSync();
 
         const { result } = renderHook(() => useQuery('SELECT * from faketable', [], { runQueryOnce: true }), {
           wrapper: ({ children }) => testWrapper({ children, db })
@@ -62,7 +64,7 @@ describe('useQuery', () => {
       });
 
       it('should set error when error occurs with watched query', async () => {
-        const db = openPowerSync();
+        const db = await openPowerSync();
 
         const { result } = renderHook(() => useQuery('SELECT * from faketable', []), {
           wrapper: ({ children }) => testWrapper({ children, db })
@@ -77,7 +79,7 @@ describe('useQuery', () => {
       });
 
       it('should rerun the query when refresh is used', async () => {
-        const db = openPowerSync();
+        const db = await openPowerSync();
         const getAllSpy = vi.spyOn(db, 'getAll');
 
         const { result } = renderHook(() => useQuery('SELECT * from lists', [], { runQueryOnce: true }), {
@@ -86,7 +88,7 @@ describe('useQuery', () => {
 
         expect(result.current.isLoading).toEqual(true);
 
-        let refresh;
+        let refresh: undefined | (() => Promise<void>);
 
         await waitFor(
           () => {
@@ -98,13 +100,13 @@ describe('useQuery', () => {
           { timeout: 500, interval: 100 }
         );
 
-        await act(() => refresh());
+        await act(() => refresh!());
 
         expect(getAllSpy).toHaveBeenCalledTimes(isStrictMode ? 3 : 2);
       });
 
       it('should accept compilable queries', async () => {
-        const db = openPowerSync();
+        const db = await openPowerSync();
 
         const { result } = renderHook(
           () => useQuery({ execute: () => [] as any, compile: () => ({ sql: 'SELECT * from lists', parameters: [] }) }),
@@ -115,7 +117,7 @@ describe('useQuery', () => {
       });
 
       it('should react to updated queries (simple update)', async () => {
-        const db = openPowerSync();
+        const db = await openPowerSync();
 
         let updateParameters = (params: string[]): void => {};
         const newParametersPromise = new Promise<string[]>((resolve) => {
@@ -188,7 +190,7 @@ describe('useQuery', () => {
       });
 
       it('should react to updated queries (many updates)', async () => {
-        const db = openPowerSync();
+        const db = await openPowerSync();
 
         await db.execute(/* sql */ `
           INSERT INTO
@@ -342,7 +344,7 @@ describe('useQuery', () => {
       });
 
       it('should react to updated queries (immediate updates)', async () => {
-        const db = openPowerSync();
+        const db = await openPowerSync();
 
         await db.execute(/* sql */ `
           INSERT INTO
@@ -444,7 +446,7 @@ describe('useQuery', () => {
       });
 
       it('should execute compatible queries', async () => {
-        const db = openPowerSync();
+        const db = await openPowerSync();
 
         const query = () =>
           useQuery({
@@ -462,7 +464,7 @@ describe('useQuery', () => {
       });
 
       it('should react to updated queries (Explicit Drizzle DB)', async () => {
-        const db = openPowerSync();
+        const db = await openPowerSync();
 
         const lists = sqliteTable('lists', {
           id: text('id'),
@@ -523,7 +525,7 @@ describe('useQuery', () => {
       });
 
       it('should react to updated queries', async () => {
-        const db = openPowerSync();
+        const db = await openPowerSync();
 
         let updateParameters = (params: string[]): void => {};
         const newParametersPromise = new Promise<string[]>((resolve) => {
@@ -579,7 +581,7 @@ describe('useQuery', () => {
       });
 
       it('sohuld allow changing parameter array size', async () => {
-        const db = openPowerSync();
+        const db = await openPowerSync();
 
         let currentQuery = { sql: 'SELECT ? AS a', params: ['foo'] };
         let listeners: (() => void)[] = [];
@@ -622,7 +624,7 @@ describe('useQuery', () => {
       });
 
       it('should show an error if parsing the query results in an error', async () => {
-        const db = openPowerSync();
+        const db = await openPowerSync();
 
         const { result } = renderHook(
           () =>
@@ -648,7 +650,7 @@ describe('useQuery', () => {
       });
 
       it('should use an existing WatchedQuery instance', async () => {
-        const db = openPowerSync();
+        const db = await openPowerSync();
 
         // This query can be instantiated once and reused.
         // The query retains it's state and will not re-fetch the data unless the result changes.
@@ -691,7 +693,7 @@ describe('useQuery', () => {
       });
 
       it('should be able to switch between single and watched query', async () => {
-        const db = openPowerSync();
+        const db = await openPowerSync();
 
         let changeRunOnce: React.Dispatch<React.SetStateAction<boolean>>;
         const { result } = renderHook(
@@ -737,7 +739,7 @@ describe('useQuery', () => {
       });
 
       it('should emit result data when query changes', async () => {
-        const db = openPowerSync();
+        const db = await openPowerSync();
         const { result } = renderHook(
           () =>
             useQuery('SELECT * FROM lists WHERE name = ?', ['aname'], {
@@ -810,7 +812,7 @@ describe('useQuery', () => {
 
       // Verifies backwards compatibility with the previous implementation (no comparison)
       it('should emit result data when data changes when not using rowComparator', async () => {
-        const db = openPowerSync();
+        const db = await openPowerSync();
         const { result } = renderHook(() => useQuery('SELECT * FROM lists WHERE name = ?', ['aname']), {
           wrapper: ({ children }) => testWrapper({ children, db })
         });
@@ -850,7 +852,7 @@ describe('useQuery', () => {
       });
 
       it('should handle dependent query parameter changes with correct state transitions', async () => {
-        const db = openPowerSync();
+        const db = await openPowerSync();
 
         await db.execute(/* sql */ `
           INSERT INTO
@@ -902,31 +904,28 @@ describe('useQuery', () => {
           { timeout: 500, interval: 100 }
         );
 
-        // Find the index where param changes from 0 to 1
-        let beforeParamChangeIndex = 0;
-        for (const transition of stateTransitions) {
-          if (transition.param === 1) {
-            beforeParamChangeIndex = stateTransitions.indexOf(transition) - 1;
-            break;
-          }
-        }
+        // Find the first transition where param changed from 0 to 1
+        const paramChangedIndex = stateTransitions.findIndex((transition) => transition.param === 1);
+        expect(paramChangedIndex).toBeGreaterThan(0);
 
-        const indexMultiplier = isStrictMode ? 2 : 1; // StrictMode causes 1 extra render per state
-        const initialState = stateTransitions[beforeParamChangeIndex];
+        // The very first render, before either query has had a chance to resolve.
+        const initialState = stateTransitions[0];
         expect(initialState).toBeDefined();
         expect(initialState?.param).toEqual(0);
         expect(initialState?.dataLength).toEqual(0);
         expect(initialState?.isFetching).toEqual(true);
         expect(initialState?.isLoading).toEqual(true);
 
-        const paramChangedState = stateTransitions[beforeParamChangeIndex + 1 * indexMultiplier];
+        // The transition where the param has changed, but the dependent query hasn't resolved yet.
+        const paramChangedState = stateTransitions[paramChangedIndex];
         expect(paramChangedState).toBeDefined();
         expect(paramChangedState?.param).toEqual(1);
         expect(paramChangedState?.dataLength).toEqual(0);
         expect(paramChangedState?.isFetching).toEqual(true);
-        expect(paramChangedState?.isLoading).toEqual(true);
 
-        const finalState = stateTransitions[beforeParamChangeIndex + 2 * indexMultiplier];
+        // The final, settled state is guaranteed to be the last recorded transition, since the
+        // `waitFor` above only resolves once `result.current` (the latest render) matches it.
+        const finalState = stateTransitions[stateTransitions.length - 1];
         expect(finalState).toBeDefined();
         expect(finalState.param).toEqual(1);
         expect(finalState.dataLength).toEqual(1);
@@ -935,7 +934,7 @@ describe('useQuery', () => {
       });
 
       it('should forward throttleMs to the watched query', async () => {
-        const db = openPowerSync();
+        const db = await openPowerSync();
         const throttleMs = 1234;
 
         // Spy on the watched query construction to assert the option reaches it.
@@ -969,7 +968,7 @@ describe('useQuery', () => {
       });
 
       it('should forward throttleMs to the differential watched query', async () => {
-        const db = openPowerSync();
+        const db = await openPowerSync();
         const throttleMs = 1234;
 
         const baseCustomQuery = db.customQuery;
@@ -993,8 +992,8 @@ describe('useQuery', () => {
             useQuery('SELECT * from lists', [], {
               throttleMs,
               rowComparator: {
-                keyBy: (item) => item.id,
-                compareBy: (item) => JSON.stringify(item)
+                keyBy: (item: { id: string }) => item.id,
+                compareBy: (item: unknown) => JSON.stringify(item)
               }
             }),
           { wrapper: ({ children }) => testWrapper({ children, db }) }

@@ -48,6 +48,9 @@ catalogs:
     '@rollup/plugin-terser':
       specifier: ^1.0.0
       version: 1.0.0
+    '@types/better-sqlite3':
+      specifier: ^9.6.0
+      version: 9.6.0
     '@types/node':
       specifier: ^24.0.0
       version: 24.10.13
@@ -60,6 +63,9 @@ catalogs:
     '@vitest/browser-preview':
       specifier: ^4.1.10
       version: 4.1.10
+    better-sqlite3:
+      specifier: ^13.0.3
+      version: 13.0.3
     bson:
       specifier: ^6.10.4
       version: 6.10.4
@@ -420,7 +426,7 @@ importers:
         version: 24.10.13
       drizzle-orm:
         specifier: 'catalog:'
-        version: 0.44.7(@op-engineering/op-sqlite@18.2.0(react-native@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native-community/cli@20.2.0(supports-color@10.2.2)(typescript@6.0.3))(@react-native/metro-config@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.14)(react@19.2.8)(supports-color@10.2.2))(react@19.2.8))(@types/better-sqlite3@7.6.13)(@types/sql.js@1.4.9)(better-sqlite3@12.10.0)(kysely@0.29.4)(sql.js@1.14.0)
+        version: 0.44.7(@op-engineering/op-sqlite@18.2.0(react-native@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native-community/cli@20.2.0(supports-color@10.2.2)(typescript@6.0.3))(@react-native/metro-config@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.14)(react@19.2.8)(supports-color@10.2.2))(react@19.2.8))(@types/better-sqlite3@9.6.0)(@types/sql.js@1.4.9)(better-sqlite3@13.0.3)(kysely@0.29.4)(sql.js@1.14.0)
       vite:
         specifier: 'catalog:'
         version: 7.3.1(@types/node@24.10.13)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.48.0)(tsx@4.21.0)(yaml@2.9.0)
@@ -469,20 +475,20 @@ importers:
         specifier: workspace:*
         version: link:../drizzle-driver
       '@types/better-sqlite3':
-        specifier: ^7.6.13
-        version: 7.6.13
+        specifier: 'catalog:'
+        version: 9.6.0
       '@types/node':
         specifier: 'catalog:'
         version: 24.10.13
       better-sqlite3:
-        specifier: ^12.10.0
-        version: 12.10.0
+        specifier: 'catalog:'
+        version: 13.0.3
       bson:
         specifier: 'catalog:'
         version: 6.10.4
       drizzle-orm:
         specifier: 'catalog:'
-        version: 0.44.7(@op-engineering/op-sqlite@18.2.0(react-native@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native-community/cli@20.2.0(supports-color@10.2.2)(typescript@6.0.3))(@react-native/metro-config@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.14)(react@19.2.8)(supports-color@10.2.2))(react@19.2.8))(@types/better-sqlite3@7.6.13)(@types/sql.js@1.4.9)(better-sqlite3@12.10.0)(kysely@0.29.4)(sql.js@1.14.0)
+        version: 0.44.7(@op-engineering/op-sqlite@18.2.0(react-native@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native-community/cli@20.2.0(supports-color@10.2.2)(typescript@6.0.3))(@react-native/metro-config@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.14)(react@19.2.8)(supports-color@10.2.2))(react@19.2.8))(@types/better-sqlite3@9.6.0)(@types/sql.js@1.4.9)(better-sqlite3@13.0.3)(kysely@0.29.4)(sql.js@1.14.0)
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
@@ -500,7 +506,7 @@ importers:
         version: 3.2.3(magicast@0.5.2)(vite@7.3.1(@types/node@24.10.13)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.48.0)(tsx@4.21.0)(yaml@2.9.0))
       '@nuxt/devtools-ui-kit':
         specifier: 'catalog:'
-        version: 3.2.3(aee3a0b1cf84803189944f303ffa86fb)
+        version: 3.2.3(b25dc470ebfda8b5c868397f4204fa0a)
       '@nuxt/kit':
         specifier: ^4.3.1
         version: 4.3.1(magicast@0.5.2)
@@ -515,7 +521,7 @@ importers:
         version: 14.2.1(vue@3.5.30(typescript@6.0.3))
       '@vueuse/nuxt':
         specifier: ^14.2.1
-        version: 14.2.1(magicast@0.5.2)(nuxt@4.3.1(0ad0819711db47eceedec34da8cdea43))(vue@3.5.30(typescript@6.0.3))
+        version: 14.2.1(magicast@0.5.2)(nuxt@4.3.1(15f57897136dace432ea9482d1025847))(vue@3.5.30(typescript@6.0.3))
       bson:
         specifier: 'catalog:'
         version: 6.10.4
@@ -539,7 +545,7 @@ importers:
         version: 66.6.6(@unocss/webpack@66.6.6(webpack@5.105.2(@swc/core@1.15.46(@swc/helpers@0.5.19))(esbuild@0.27.3)(uglify-js@3.19.3)))(vite@7.3.1(@types/node@24.10.13)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.48.0)(tsx@4.21.0)(yaml@2.9.0))
       unstorage:
         specifier: ^1.17.4
-        version: 1.17.4(db0@0.3.4(better-sqlite3@12.10.0)(drizzle-orm@0.44.7(@op-engineering/op-sqlite@18.2.0(react-native@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native-community/cli@20.2.0(supports-color@10.2.2)(typescript@6.0.3))(@react-native/metro-config@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.14)(react@19.2.8)(supports-color@10.2.2))(react@19.2.8))(@types/better-sqlite3@7.6.13)(@types/sql.js@1.4.9)(better-sqlite3@12.10.0)(kysely@0.29.4)(sql.js@1.14.0)))(ioredis@5.10.0(supports-color@10.2.2))
+        version: 1.17.4(db0@0.3.4(better-sqlite3@13.0.3)(drizzle-orm@0.44.7(@op-engineering/op-sqlite@18.2.0(react-native@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native-community/cli@20.2.0(supports-color@10.2.2)(typescript@6.0.3))(@react-native/metro-config@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.14)(react@19.2.8)(supports-color@10.2.2))(react@19.2.8))(@types/better-sqlite3@9.6.0)(@types/sql.js@1.4.9)(better-sqlite3@13.0.3)(kysely@0.29.4)(sql.js@1.14.0)))(ioredis@5.10.0(supports-color@10.2.2))
     devDependencies:
       '@journeyapps/wa-sqlite':
         specifier: 'catalog:'
@@ -570,7 +576,7 @@ importers:
         version: 4.4.2
       nuxt:
         specifier: ^4.3.1
-        version: 4.3.1(0ad0819711db47eceedec34da8cdea43)
+        version: 4.3.1(15f57897136dace432ea9482d1025847)
       vitest:
         specifier: 'catalog:'
         version: 4.1.10(@types/node@25.9.1)(@vitest/browser-playwright@4.1.10)(@vitest/browser-preview@4.1.10)(jsdom@24.1.3(supports-color@10.2.2))(vite@7.3.1(@types/node@24.10.13)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.48.0)(tsx@4.21.0)(yaml@2.9.0))
@@ -589,27 +595,33 @@ importers:
       '@powersync/drizzle-driver':
         specifier: workspace:*
         version: link:../drizzle-driver
+      '@powersync/node':
+        specifier: workspace:*
+        version: link:../node
       '@powersync/shared-internals':
         specifier: 'workspace:'
         version: link:../shared-internals
-      '@powersync/web':
-        specifier: workspace:*
-        version: link:../web
       '@testing-library/react':
         specifier: ^16.0.0
         version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@18.3.7(@types/react@18.3.1))(@types/react@18.3.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@types/node':
+        specifier: 'catalog:'
+        version: 24.10.13
       '@types/react':
         specifier: ^18.3.1
         version: 18.3.1
       '@types/react-dom':
         specifier: ^18.3.0
         version: 18.3.7(@types/react@18.3.1)
+      better-sqlite3:
+        specifier: 'catalog:'
+        version: 13.0.3
       chart.js:
         specifier: ^4.5.0
         version: 4.5.1
       drizzle-orm:
         specifier: 'catalog:'
-        version: 0.44.7(@op-engineering/op-sqlite@18.2.0(react-native@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native-community/cli@20.2.0(supports-color@10.2.2)(typescript@6.0.3))(@react-native/metro-config@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@18.3.1)(react@18.3.1)(supports-color@10.2.2))(react@18.3.1))(@types/better-sqlite3@7.6.13)(@types/sql.js@1.4.9)(better-sqlite3@12.10.0)(kysely@0.29.4)(sql.js@1.14.0)
+        version: 0.44.7(@op-engineering/op-sqlite@18.2.0(react-native@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native-community/cli@20.2.0(supports-color@10.2.2)(typescript@6.0.3))(@react-native/metro-config@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@18.3.1)(react@18.3.1)(supports-color@10.2.2))(react@18.3.1))(@types/better-sqlite3@9.6.0)(@types/sql.js@1.4.9)(better-sqlite3@13.0.3)(kysely@0.29.4)(sql.js@1.14.0)
       jsdom:
         specifier: 'catalog:'
         version: 24.1.3(supports-color@10.2.2)
@@ -7443,8 +7455,8 @@ packages:
   '@types/babel__traverse@7.28.0':
     resolution: {integrity: sha512-8PvcXf70gTDZBgt9ptxJ8elBeBjcLOAcOtoO/mPJjtji1+CdGbHgm77om1GrsPxsiE+uXIpNSK64UYaIwQXd4Q==}
 
-  '@types/better-sqlite3@7.6.13':
-    resolution: {integrity: sha512-NMv9ASNARoKksWtsq/SHakpYAYnhBrQgGD8zkLYk/jaK8jUGn08CfEdTRgYhMypUQAfzSP8W6gNLe0q19/t4VA==}
+  '@types/better-sqlite3@9.6.0':
+    resolution: {integrity: sha512-ZEEwBSgMu7GYJOynoagg5X9JbxfL6dTJDsgViJIqh67jV44kyOr9RXfmFjLK5rzC4MWssP06t9hu/JwGDnUbCg==}
 
   '@types/body-parser@1.19.6':
     resolution: {integrity: sha512-HLFeCYgz89uk22N5Qg3dvGvsv46B8GLvKKo1zKG4NybA8U2DiEO3w9lqGg29t/tfLRJpJ6iQxnVw4OnB7MoM9g==}
@@ -8837,9 +8849,9 @@ packages:
     resolution: {integrity: sha512-pbnl5XzGBdrFU/wT4jqmJVPn2B6UHPBOhzMQkY/SPUPB6QtUXtmBHBIwCbXJol93mOpGMnQyP/+BB19q04xj7g==}
     engines: {node: '>=4'}
 
-  better-sqlite3@12.10.0:
-    resolution: {integrity: sha512-CyzaZRQKyHkB2ZInfTTl2nvT33EbDpjkLEbE8/Zck3Ll6O0qqvuGdrJ45HgtH+HykRg88ITY3AdreBGN70aBSQ==}
-    engines: {node: 20.x || 22.x || 23.x || 24.x || 25.x || 26.x}
+  better-sqlite3@13.0.3:
+    resolution: {integrity: sha512-RbOBxmLBG8uvFUc15X9+9SFemKcQ0WBuISBVkpuiaUB2qblC8UWlHEjdWVoZ8AdhSwmoEgsiXKfopX0CQxaACQ==}
+    engines: {node: '>=22'}
 
   big-integer@1.6.52:
     resolution: {integrity: sha512-QxD8cf2eVqJOOz63z6JIN9BzvVs/dlySa5HGSBH5xtR8dPteIRQnBxxKqkNTiT6jbDTF6jAfrd4oMcND9RGbQg==}
@@ -9202,9 +9214,6 @@ packages:
   chokidar@5.0.0:
     resolution: {integrity: sha512-TQMmc3w+5AxjpL8iIiwebF73dRDF4fBIieAqGn9RGCWaEVwQ6Fb2cGe31Yns0RRIzii5goJ1Y7xbMwo1TxMplw==}
     engines: {node: '>= 20.19.0'}
-
-  chownr@1.1.4:
-    resolution: {integrity: sha512-jJ0bqzaylmJtVnNgzTeSOs8DPavpbYgEr/b0YL8/2GO3xJEhInFmhKMUnEJQjZumK7KXGFhUy89PrsJWlakBVg==}
 
   chownr@3.0.0:
     resolution: {integrity: sha512-+IxzY9BZOQd/XuYPRmrvEVjF/nqj5kgT4kEq7VofrDoM1MxoRjEWkrCC3EtLi59TVawxTAn+orJwFQcrqEN1+g==}
@@ -10296,9 +10305,6 @@ packages:
   encoding@0.1.13:
     resolution: {integrity: sha512-ETBauow1T35Y/WZMkio9jiM0Z5xjHHmJ4XmjZOq1l/dXz3lr2sRn87nJy20RupqSh1F2m3HHPSp8ShIPQJrJ3A==}
 
-  end-of-stream@1.4.5:
-    resolution: {integrity: sha512-ooEGc6HP26xXq/N+GCGOT0JKCLDGrq2bQUZrQ7gyrJiZANJ/8YDTxTpQBXGMn+WbIQXNVpyWymm7KYVICQnyOg==}
-
   enhanced-resolve@5.19.0:
     resolution: {integrity: sha512-phv3E1Xl4tQOShqSte26C7Fl84EwUdZsyOuSSk9qtAGyyQs2s3jJzComh+Abf4g187lUUAvH+H26omrqia2aGg==}
     engines: {node: '>=10.13.0'}
@@ -10663,10 +10669,6 @@ packages:
     resolution: {integrity: sha512-Zk/eNKV2zbjpKzrsQ+n1G6poVbErQxJ0LBOJXaKZ1EViLzH+hrLu9cdXI4zw9dBQJslwBEpbQ2P1oS7nDxs6jQ==}
     engines: {node: '>= 0.8.0'}
 
-  expand-template@2.0.3:
-    resolution: {integrity: sha512-XYfuKMvj4O35f/pOXLObndIRvyQ+/+6AhODh+OKWj9S9498pHHn/IMszH+gt0fBCRWMNfk1ZSp5x3AifmnI2vg==}
-    engines: {node: '>=6'}
-
   expect-type@1.3.0:
     resolution: {integrity: sha512-knvyeauYhqjOYvQ66MznSMs83wmHrCycNEN6Ao+2AeYEfxUIkuiVxdEa1qlGEPK+We3n0THiDciYSsCcgW/DoA==}
     engines: {node: '>=12.0.0'}
@@ -11028,9 +11030,6 @@ packages:
     resolution: {integrity: sha512-Rx/WycZ60HOaqLKAi6cHRKKI7zxWbJ31MhntmtwMoaTeF7XFH9hhBp8vITaMidfljRQ6eYWCKkaTK+ykVJHP2A==}
     engines: {node: '>= 0.8'}
 
-  fs-constants@1.0.0:
-    resolution: {integrity: sha512-y6OAwoSIf7FyjMIv94u+b5rdheZEjzR63GTyZJm5qh4Bi+2YgwLCcI/fPFZkL5PSixOt6ZNKm+w+Hfp/Bciwow==}
-
   fs-extra@11.3.0:
     resolution: {integrity: sha512-Z4XaCL6dUDHfP/jT25jJKMmtxvuwbkrD1vNSMFlo9lNLY2c5FHYSQgHPRZUjAB26TpDEoW9HCOgplrdbaPV/ew==}
     engines: {node: '>=14.14'}
@@ -11160,9 +11159,6 @@ packages:
   giget@3.2.0:
     resolution: {integrity: sha512-GvHTWcykIR/fP8cj8dMpuMMkvaeJfPvYnhq0oW+chSeIr+ldX21ifU2Ms6KBoyKZQZmVaUAAhQ2EZ68KJF8a7A==}
     hasBin: true
-
-  github-from-package@0.0.0:
-    resolution: {integrity: sha512-SyHy3T1v2NUXn29OsWdxmK6RwHD+vkj3v8en8AOBZ1wBQ/hCAQ5bAQTD02kW4W9tUp/3Qh6J8r9EvntiyCmOOw==}
 
   github-slugger@1.5.0:
     resolution: {integrity: sha512-wIh+gKBI9Nshz2o46B0B3f5k/W+WI9ZAv6y5Dn5WJ5SK1t0TnDimB4WE5rmTD05ZAIn8HALCZVmCsvj0w0v0lw==}
@@ -13316,9 +13312,6 @@ packages:
     resolution: {integrity: sha512-5H76ANWinB1H3twpJ6JY8uvAtpmFvHNArpilJAjXRKXSDDLPIMoZArw5SH0q9z+lLs8IrMw7Q2VWpWimFKFT1Q==}
     engines: {node: '>= 8.0.0'}
 
-  mkdirp-classic@0.5.3:
-    resolution: {integrity: sha512-gKLcREMhtuZRwRAfqP3RFW+TK4JqApVBtOIftVgjuABpAtpxhPGaDcfvbhNvD0B8iD1oUr/txX35NjcaY6Ns/A==}
-
   mkdirp@0.5.6:
     resolution: {integrity: sha512-FP+p8RB8OWpF3YZBCrP5gtADmtXApB5AMLn+vdyA+PyxCjrCs00mjyUozssO33cwDeT3wNGdLxJ5M//YqtHAJw==}
     hasBin: true
@@ -13424,9 +13417,6 @@ packages:
   nanotar@0.2.1:
     resolution: {integrity: sha512-MUrzzDUcIOPbv7ubhDV/L4CIfVTATd9XhDE2ixFeCrM5yp9AlzUpn91JrnN0HD6hksdxvz9IW9aKANz0Bta0GA==}
 
-  napi-build-utils@2.0.0:
-    resolution: {integrity: sha512-GEbrYkbfF7MoNaoh2iGG84Mnf/WZfB0GdGEsM8wz7Expx/LlWf5U8t9nvJKXSp3qr5IsEbK04cBGhol/KwOsWA==}
-
   natural-compare-lite@1.4.0:
     resolution: {integrity: sha512-Tj+HTDSJJKaZnfiuw+iaF9skdPpTo2GtEly5JHnWV/hfv2Qj/9RKsGISQtLh2ox3l5EAGw487hnBee0sIJ6v2g==}
 
@@ -13477,12 +13467,12 @@ packages:
     resolution: {integrity: sha512-WDD0bdg9mbq6F4mRxEYcPWwfA1vxd0mrvKOyxI7Xj/atfRHVeutzuWByG//jfm4uPzp0y4Kj051EORCBSQMycw==}
     engines: {node: '>=12.0.0'}
 
-  node-abi@3.87.0:
-    resolution: {integrity: sha512-+CGM1L1CgmtheLcBuleyYOn7NWPVu0s0EJH2C4puxgEZb9h8QpR9G2dBfZJOAUhi7VQxuBPMd0hiISWcTyiYyQ==}
-    engines: {node: '>=10'}
-
   node-addon-api@7.1.1:
     resolution: {integrity: sha512-5m3bsyrjFWE1xf7nz7YXdN4udnVtXK6/Yfgn5qnahL6bCkf2yKt4k3nuTKAtT4r3IG8JNR2ncsIMdZuAzJjHQQ==}
+
+  node-addon-api@8.9.2:
+    resolution: {integrity: sha512-VijLXbi3UACN69I0JVXJsX4tjACjNoQDgv2gTF6sx2wWEi8tkSg2eX8p5gSIFi8z2+DL3oHmY6OyKce38SDolg==}
+    engines: {node: ^18 || ^20 || >= 21}
 
   node-emoji@2.2.0:
     resolution: {integrity: sha512-Z3lTE9pLaJF47NyMhd4ww1yFTAP8YhYI8SleJiHzM46Fgpm5cnNzSl9XfzFNqbaz+VlJrIj3fXQ4DeN1Rjm6cw==}
@@ -14707,12 +14697,6 @@ packages:
     resolution: {integrity: sha512-dM0jVuXJPsDN6DvRpea484tCUaMiXWjuCn++HGTqUWzGDjv5tZkEZldAJ/UMlqRYGFrD/etByo4/xOuC/snX2A==}
     engines: {node: '>=20'}
 
-  prebuild-install@7.1.3:
-    resolution: {integrity: sha512-8Mf2cbV7x1cXPUILADGI3wuhfqWvtiLA1iclTDbFRZkgRQS0NqsPZphna9V+HyTEadheuPmjaJMsbzKQFOzLug==}
-    engines: {node: '>=10'}
-    deprecated: No longer maintained. Please contact the author of the relevant native addon; alternatives are available.
-    hasBin: true
-
   preferred-pm@3.1.4:
     resolution: {integrity: sha512-lEHd+yEm22jXdCphDrkvIJQU66EuLojPPtvZkpKIkiD+l0DMThF/niqZKJSoU8Vl7iuvtmzyMhir9LdVy5WMnA==}
     engines: {node: '>=10'}
@@ -14850,9 +14834,6 @@ packages:
 
   psl@1.15.0:
     resolution: {integrity: sha512-JZd3gMVBAVQkSs6HdNZo9Sdo0LNcQeMNP3CozBJb3JYC/QUYZTnKxP+f8oWRX4rHP5EurWxqAHTSwUCjlNKa1w==}
-
-  pump@3.0.3:
-    resolution: {integrity: sha512-todwxLMY7/heScKmntwQG8CXVkWUOdYxIvY2s0VWAAMh/nd8SoYiRaKjlr7+iCs984f2P8zvrfWcDDYVb73NfA==}
 
   punycode.js@2.3.1:
     resolution: {integrity: sha512-uxFIHU0YlHYhDQtV4R9J6a52SLx28BCjT+4ieh7IGbgwVJWO+km431c4yRlREUAsAmt/uMjQUyQHNEPf0M39CA==}
@@ -15741,12 +15722,6 @@ packages:
     resolution: {integrity: sha512-bzyZ1e88w9O1iNJbKnOlvYTrWPDl46O1bG0D3XInv+9tkPrxrN8jUUTiFlDkkmKWgn1M6CfIA13SuGqOa9Korw==}
     engines: {node: '>=14'}
 
-  simple-concat@1.0.1:
-    resolution: {integrity: sha512-cSFtAPtRhljv69IK0hTVZQ+OfE9nePi/rtJmw5UjHeVyVroEqJXP1sFztKUy1qU+xvz3u/sfYJLa947b7nAN2Q==}
-
-  simple-get@4.0.1:
-    resolution: {integrity: sha512-brv7p5WgH0jmQJr1ZDDfKDOSeWWg+OVypG99A/5vYGPqJ6pxiaHLy8nxtFjBA7oMa01ebA9gfh1uMCFqOuXxvA==}
-
   simple-git@3.36.0:
     resolution: {integrity: sha512-cGQjLjK8bxJw4QuYT7gxHw3/IouVESbhahSsHrX97MzCL1gu2u7oy38W6L2ZIGECEfIBG4BabsWDPjBxJENv9Q==}
 
@@ -16232,13 +16207,6 @@ packages:
     resolution: {integrity: sha512-g9ljZiwki/LfxmQADO3dEY1CbpmXT5Hm2fJ+QaGKwSXUylMybePR7/67YW7jOrrvjEgL1Fmz5kzyAjWVWLlucg==}
     engines: {node: '>=6'}
 
-  tar-fs@2.1.4:
-    resolution: {integrity: sha512-mDAjwmZdh7LTT6pNleZ05Yt65HC3E+NiQzl672vQG38jIrehtJk/J3mNwIg+vShQPcLF/LV7CMnDW6vjj6sfYQ==}
-
-  tar-stream@2.2.0:
-    resolution: {integrity: sha512-ujeqbceABgwMZxEJnk2HDY2DlnUZ+9oEcb1KzTVfYHio0UE6dG71n60d8D2I4qNvleWrrXpmjpt7vZeF1LnMZQ==}
-    engines: {node: '>=6'}
-
   tar-stream@3.1.8:
     resolution: {integrity: sha512-U6QpVRyCGHva435KoNWy9PRoi2IFYCgtEhq9nmrPPpbRacPs9IH4aJ3gbrFC8dPcXvdSZ4XXfXT5Fshbp2MtlQ==}
 
@@ -16514,9 +16482,6 @@ packages:
     resolution: {integrity: sha512-Fs15mu0vGzCrj8fmJNP7Ynxt5J7praPXqFN0leZeZBXJwkMxv9cb2D454k1ltrtUSJbZ4yH4e0CynsHLxmUfFA==}
     engines: {node: '>=8.0.0'}
     hasBin: true
-
-  tunnel-agent@0.6.0:
-    resolution: {integrity: sha512-McnNiV1l8RYeY8tBgEpuodCC1mLUdbSN+CYBL7kJsJNInOP8UjDDEwdk6Mw60vdLLrr5NHKZhMAOSrR2NZuQ+w==}
 
   tunnel@0.0.6:
     resolution: {integrity: sha512-1h/Lnq9yajKY2PEbBadPXj3VxsDDu844OnaAo52UVmIzIvwwtBPIuNvkjuzBlTWpfJyUbG3ez0KSBibQkj4ojg==}
@@ -23000,13 +22965,13 @@ snapshots:
       - rolldown
       - unplugin
 
-  '@nuxt/devtools-ui-kit@3.2.3(aee3a0b1cf84803189944f303ffa86fb)':
+  '@nuxt/devtools-ui-kit@3.2.3(b25dc470ebfda8b5c868397f4204fa0a)':
     dependencies:
       '@iconify-json/carbon': 1.2.19
       '@iconify-json/logos': 1.2.10
       '@iconify-json/ri': 1.2.10
       '@iconify-json/tabler': 1.2.31
-      '@nuxt/devtools': 3.4.1(db0@0.3.4(better-sqlite3@12.10.0)(drizzle-orm@0.44.7(@op-engineering/op-sqlite@18.2.0(react-native@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native-community/cli@20.2.0(supports-color@10.2.2)(typescript@6.0.3))(@react-native/metro-config@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.14)(react@19.2.8)(supports-color@10.2.2))(react@19.2.8))(@types/better-sqlite3@7.6.13)(@types/sql.js@1.4.9)(better-sqlite3@12.10.0)(kysely@0.29.4)(sql.js@1.14.0)))(ioredis@5.10.0(supports-color@10.2.2))(magic-string@0.30.21)(oxc-parser@0.115.0)(supports-color@10.2.2)(unplugin@3.0.0)(vite@7.3.1(@types/node@24.10.13)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.48.0)(tsx@4.21.0)(yaml@2.9.0))(vue@3.5.30(typescript@6.0.3))
+      '@nuxt/devtools': 3.4.1(db0@0.3.4(better-sqlite3@13.0.3)(drizzle-orm@0.44.7(@op-engineering/op-sqlite@18.2.0(react-native@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native-community/cli@20.2.0(supports-color@10.2.2)(typescript@6.0.3))(@react-native/metro-config@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.14)(react@19.2.8)(supports-color@10.2.2))(react@19.2.8))(@types/better-sqlite3@9.6.0)(@types/sql.js@1.4.9)(better-sqlite3@13.0.3)(kysely@0.29.4)(sql.js@1.14.0)))(ioredis@5.10.0(supports-color@10.2.2))(magic-string@0.30.21)(oxc-parser@0.115.0)(supports-color@10.2.2)(unplugin@3.0.0)(vite@7.3.1(@types/node@24.10.13)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.48.0)(tsx@4.21.0)(yaml@2.9.0))(vue@3.5.30(typescript@6.0.3))
       '@nuxt/devtools-kit': 3.2.3(magicast@0.5.2)(vite@7.3.1(@types/node@24.10.13)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.48.0)(tsx@4.21.0)(yaml@2.9.0))
       '@nuxt/kit': 4.3.1(magicast@0.5.2)
       '@unocss/core': 66.6.6
@@ -23017,7 +22982,7 @@ snapshots:
       '@unocss/reset': 66.6.6
       '@vueuse/core': 14.2.1(vue@3.5.30(typescript@6.0.3))
       '@vueuse/integrations': 14.2.1(focus-trap@8.0.0)(fuse.js@7.1.0)(nprogress@0.2.0)(vue@3.5.30(typescript@6.0.3))
-      '@vueuse/nuxt': 14.2.1(magicast@0.5.2)(nuxt@4.3.1(0ad0819711db47eceedec34da8cdea43))(vue@3.5.30(typescript@6.0.3))
+      '@vueuse/nuxt': 14.2.1(magicast@0.5.2)(nuxt@4.3.1(15f57897136dace432ea9482d1025847))(vue@3.5.30(typescript@6.0.3))
       defu: 6.1.7
       focus-trap: 8.0.0
       splitpanes: 4.0.4(vue@3.5.30(typescript@6.0.3))
@@ -23056,7 +23021,7 @@ snapshots:
       pkg-types: 2.3.1
       semver: 7.8.5
 
-  '@nuxt/devtools@3.4.1(db0@0.3.4(better-sqlite3@12.10.0)(drizzle-orm@0.44.7(@op-engineering/op-sqlite@18.2.0(react-native@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native-community/cli@20.2.0(supports-color@10.2.2)(typescript@6.0.3))(@react-native/metro-config@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.14)(react@19.2.8)(supports-color@10.2.2))(react@19.2.8))(@types/better-sqlite3@7.6.13)(@types/sql.js@1.4.9)(better-sqlite3@12.10.0)(kysely@0.29.4)(sql.js@1.14.0)))(ioredis@5.10.0(supports-color@10.2.2))(magic-string@0.30.21)(oxc-parser@0.112.0)(supports-color@10.2.2)(unplugin@3.0.0)(vite@7.3.1(@types/node@24.10.13)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.48.0)(tsx@4.21.0)(yaml@2.9.0))(vue@3.5.30(typescript@6.0.3))':
+  '@nuxt/devtools@3.4.1(db0@0.3.4(better-sqlite3@13.0.3)(drizzle-orm@0.44.7(@op-engineering/op-sqlite@18.2.0(react-native@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native-community/cli@20.2.0(supports-color@10.2.2)(typescript@6.0.3))(@react-native/metro-config@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.14)(react@19.2.8)(supports-color@10.2.2))(react@19.2.8))(@types/better-sqlite3@9.6.0)(@types/sql.js@1.4.9)(better-sqlite3@13.0.3)(kysely@0.29.4)(sql.js@1.14.0)))(ioredis@5.10.0(supports-color@10.2.2))(magic-string@0.30.21)(oxc-parser@0.112.0)(supports-color@10.2.2)(unplugin@3.0.0)(vite@7.3.1(@types/node@24.10.13)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.48.0)(tsx@4.21.0)(yaml@2.9.0))(vue@3.5.30(typescript@6.0.3))':
     dependencies:
       '@nuxt/devtools-kit': 3.4.1(magic-string@0.30.21)(magicast@0.5.4)(oxc-parser@0.112.0)(unplugin@3.0.0)(vite@7.3.1(@types/node@24.10.13)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.48.0)(tsx@4.21.0)(yaml@2.9.0))
       '@nuxt/devtools-wizard': 3.4.1
@@ -23086,7 +23051,7 @@ snapshots:
       sirv: 3.0.2
       structured-clone-es: 2.0.1
       tinyglobby: 0.2.17
-      unstorage: 1.17.5(db0@0.3.4(better-sqlite3@12.10.0)(drizzle-orm@0.44.7(@op-engineering/op-sqlite@18.2.0(react-native@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native-community/cli@20.2.0(supports-color@10.2.2)(typescript@6.0.3))(@react-native/metro-config@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.14)(react@19.2.8)(supports-color@10.2.2))(react@19.2.8))(@types/better-sqlite3@7.6.13)(@types/sql.js@1.4.9)(better-sqlite3@12.10.0)(kysely@0.29.4)(sql.js@1.14.0)))(ioredis@5.10.0(supports-color@10.2.2))
+      unstorage: 1.17.5(db0@0.3.4(better-sqlite3@13.0.3)(drizzle-orm@0.44.7(@op-engineering/op-sqlite@18.2.0(react-native@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native-community/cli@20.2.0(supports-color@10.2.2)(typescript@6.0.3))(@react-native/metro-config@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.14)(react@19.2.8)(supports-color@10.2.2))(react@19.2.8))(@types/better-sqlite3@9.6.0)(@types/sql.js@1.4.9)(better-sqlite3@13.0.3)(kysely@0.29.4)(sql.js@1.14.0)))(ioredis@5.10.0(supports-color@10.2.2))
       vite: 7.3.1(@types/node@24.10.13)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.48.0)(tsx@4.21.0)(yaml@2.9.0)
       vite-plugin-inspect: 11.4.1(@nuxt/kit@4.5.1(magic-string@0.30.21)(magicast@0.5.4)(oxc-parser@0.112.0)(unplugin@3.0.0))(vite@7.3.1(@types/node@24.10.13)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.48.0)(tsx@4.21.0)(yaml@2.9.0))
       vite-plugin-vue-tracer: 1.4.0(vite@7.3.1(@types/node@24.10.13)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.48.0)(tsx@4.21.0)(yaml@2.9.0))(vue@3.5.30(typescript@6.0.3))
@@ -23121,7 +23086,7 @@ snapshots:
       - utf-8-validate
       - vue
 
-  '@nuxt/devtools@3.4.1(db0@0.3.4(better-sqlite3@12.10.0)(drizzle-orm@0.44.7(@op-engineering/op-sqlite@18.2.0(react-native@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native-community/cli@20.2.0(supports-color@10.2.2)(typescript@6.0.3))(@react-native/metro-config@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.14)(react@19.2.8)(supports-color@10.2.2))(react@19.2.8))(@types/better-sqlite3@7.6.13)(@types/sql.js@1.4.9)(better-sqlite3@12.10.0)(kysely@0.29.4)(sql.js@1.14.0)))(ioredis@5.10.0(supports-color@10.2.2))(magic-string@0.30.21)(oxc-parser@0.115.0)(supports-color@10.2.2)(unplugin@3.0.0)(vite@7.3.1(@types/node@24.10.13)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.48.0)(tsx@4.21.0)(yaml@2.9.0))(vue@3.5.30(typescript@6.0.3))':
+  '@nuxt/devtools@3.4.1(db0@0.3.4(better-sqlite3@13.0.3)(drizzle-orm@0.44.7(@op-engineering/op-sqlite@18.2.0(react-native@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native-community/cli@20.2.0(supports-color@10.2.2)(typescript@6.0.3))(@react-native/metro-config@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.14)(react@19.2.8)(supports-color@10.2.2))(react@19.2.8))(@types/better-sqlite3@9.6.0)(@types/sql.js@1.4.9)(better-sqlite3@13.0.3)(kysely@0.29.4)(sql.js@1.14.0)))(ioredis@5.10.0(supports-color@10.2.2))(magic-string@0.30.21)(oxc-parser@0.115.0)(supports-color@10.2.2)(unplugin@3.0.0)(vite@7.3.1(@types/node@24.10.13)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.48.0)(tsx@4.21.0)(yaml@2.9.0))(vue@3.5.30(typescript@6.0.3))':
     dependencies:
       '@nuxt/devtools-kit': 3.4.1(magic-string@0.30.21)(magicast@0.5.4)(oxc-parser@0.115.0)(unplugin@3.0.0)(vite@7.3.1(@types/node@24.10.13)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.48.0)(tsx@4.21.0)(yaml@2.9.0))
       '@nuxt/devtools-wizard': 3.4.1
@@ -23151,7 +23116,7 @@ snapshots:
       sirv: 3.0.2
       structured-clone-es: 2.0.1
       tinyglobby: 0.2.17
-      unstorage: 1.17.5(db0@0.3.4(better-sqlite3@12.10.0)(drizzle-orm@0.44.7(@op-engineering/op-sqlite@18.2.0(react-native@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native-community/cli@20.2.0(supports-color@10.2.2)(typescript@6.0.3))(@react-native/metro-config@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.14)(react@19.2.8)(supports-color@10.2.2))(react@19.2.8))(@types/better-sqlite3@7.6.13)(@types/sql.js@1.4.9)(better-sqlite3@12.10.0)(kysely@0.29.4)(sql.js@1.14.0)))(ioredis@5.10.0(supports-color@10.2.2))
+      unstorage: 1.17.5(db0@0.3.4(better-sqlite3@13.0.3)(drizzle-orm@0.44.7(@op-engineering/op-sqlite@18.2.0(react-native@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native-community/cli@20.2.0(supports-color@10.2.2)(typescript@6.0.3))(@react-native/metro-config@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.14)(react@19.2.8)(supports-color@10.2.2))(react@19.2.8))(@types/better-sqlite3@9.6.0)(@types/sql.js@1.4.9)(better-sqlite3@13.0.3)(kysely@0.29.4)(sql.js@1.14.0)))(ioredis@5.10.0(supports-color@10.2.2))
       vite: 7.3.1(@types/node@24.10.13)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.48.0)(tsx@4.21.0)(yaml@2.9.0)
       vite-plugin-inspect: 11.4.1(@nuxt/kit@4.5.1(magic-string@0.30.21)(magicast@0.5.4)(oxc-parser@0.115.0)(unplugin@3.0.0))(vite@7.3.1(@types/node@24.10.13)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.48.0)(tsx@4.21.0)(yaml@2.9.0))
       vite-plugin-vue-tracer: 1.4.0(vite@7.3.1(@types/node@24.10.13)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.48.0)(tsx@4.21.0)(yaml@2.9.0))(vue@3.5.30(typescript@6.0.3))
@@ -23320,7 +23285,7 @@ snapshots:
       - vue
       - vue-tsc
 
-  '@nuxt/nitro-server@4.3.1(a7ee18b992e30ad56247ad35a091ef86)':
+  '@nuxt/nitro-server@4.3.1(f1390a3a7917f59a380da7d2b914d30d)':
     dependencies:
       '@nuxt/devalue': 2.0.2
       '@nuxt/kit': 4.3.1(magicast@0.5.2)
@@ -23337,8 +23302,8 @@ snapshots:
       impound: 1.1.5
       klona: 2.0.6
       mocked-exports: 0.1.1
-      nitropack: 2.13.1(better-sqlite3@12.10.0)(drizzle-orm@0.44.7(@op-engineering/op-sqlite@18.2.0(react-native@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native-community/cli@20.2.0(supports-color@10.2.2)(typescript@6.0.3))(@react-native/metro-config@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.14)(react@19.2.8)(supports-color@10.2.2))(react@19.2.8))(@types/better-sqlite3@7.6.13)(@types/sql.js@1.4.9)(better-sqlite3@12.10.0)(kysely@0.29.4)(sql.js@1.14.0))(encoding@0.1.13)(supports-color@8.1.1)
-      nuxt: 4.3.1(0ad0819711db47eceedec34da8cdea43)
+      nitropack: 2.13.1(better-sqlite3@13.0.3)(drizzle-orm@0.44.7(@op-engineering/op-sqlite@18.2.0(react-native@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native-community/cli@20.2.0(supports-color@10.2.2)(typescript@6.0.3))(@react-native/metro-config@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.14)(react@19.2.8)(supports-color@10.2.2))(react@19.2.8))(@types/better-sqlite3@9.6.0)(@types/sql.js@1.4.9)(better-sqlite3@13.0.3)(kysely@0.29.4)(sql.js@1.14.0))(encoding@0.1.13)(supports-color@8.1.1)
+      nuxt: 4.3.1(15f57897136dace432ea9482d1025847)
       ohash: 2.0.11
       pathe: 2.0.3
       pkg-types: 2.3.0
@@ -23346,7 +23311,7 @@ snapshots:
       std-env: 3.10.0
       ufo: 1.6.3
       unctx: 2.5.0
-      unstorage: 1.17.4(db0@0.3.4(better-sqlite3@12.10.0)(drizzle-orm@0.44.7(@op-engineering/op-sqlite@18.2.0(react-native@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native-community/cli@20.2.0(supports-color@10.2.2)(typescript@6.0.3))(@react-native/metro-config@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.14)(react@19.2.8)(supports-color@10.2.2))(react@19.2.8))(@types/better-sqlite3@7.6.13)(@types/sql.js@1.4.9)(better-sqlite3@12.10.0)(kysely@0.29.4)(sql.js@1.14.0)))(ioredis@5.10.0(supports-color@10.2.2))
+      unstorage: 1.17.4(db0@0.3.4(better-sqlite3@13.0.3)(drizzle-orm@0.44.7(@op-engineering/op-sqlite@18.2.0(react-native@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native-community/cli@20.2.0(supports-color@10.2.2)(typescript@6.0.3))(@react-native/metro-config@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.14)(react@19.2.8)(supports-color@10.2.2))(react@19.2.8))(@types/better-sqlite3@9.6.0)(@types/sql.js@1.4.9)(better-sqlite3@13.0.3)(kysely@0.29.4)(sql.js@1.14.0)))(ioredis@5.10.0(supports-color@10.2.2))
       vue: 3.5.30(typescript@6.0.3)
       vue-bundle-renderer: 2.2.0
       vue-devtools-stub: 0.1.0
@@ -23444,7 +23409,7 @@ snapshots:
       - typescript
       - vite
 
-  '@nuxt/vite-builder@4.3.1(@types/node@25.9.1)(lightningcss@1.32.0)(magicast@0.5.2)(nuxt@4.3.1(0ad0819711db47eceedec34da8cdea43))(optionator@0.9.4)(rollup@4.59.0)(supports-color@10.2.2)(terser@5.48.0)(tsx@4.21.0)(typescript@6.0.3)(vue-tsc@3.2.5(typescript@6.0.3))(vue@3.5.30(typescript@6.0.3))(yaml@2.9.0)':
+  '@nuxt/vite-builder@4.3.1(@types/node@25.9.1)(lightningcss@1.32.0)(magicast@0.5.2)(nuxt@4.3.1(15f57897136dace432ea9482d1025847))(optionator@0.9.4)(rollup@4.59.0)(supports-color@10.2.2)(terser@5.48.0)(tsx@4.21.0)(typescript@6.0.3)(vue-tsc@3.2.5(typescript@6.0.3))(vue@3.5.30(typescript@6.0.3))(yaml@2.9.0)':
     dependencies:
       '@nuxt/kit': 4.3.1(magicast@0.5.2)
       '@rollup/plugin-replace': 6.0.3(rollup@4.59.0)
@@ -23463,7 +23428,7 @@ snapshots:
       magic-string: 0.30.21
       mlly: 1.8.1
       mocked-exports: 0.1.1
-      nuxt: 4.3.1(0ad0819711db47eceedec34da8cdea43)
+      nuxt: 4.3.1(15f57897136dace432ea9482d1025847)
       pathe: 2.0.3
       pkg-types: 2.3.0
       postcss: 8.5.15
@@ -26980,7 +26945,7 @@ snapshots:
     dependencies:
       '@babel/types': 7.29.7
 
-  '@types/better-sqlite3@7.6.13':
+  '@types/better-sqlite3@9.6.0':
     dependencies:
       '@types/node': 25.9.1
 
@@ -28105,13 +28070,13 @@ snapshots:
 
   '@vueuse/metadata@14.2.1': {}
 
-  '@vueuse/nuxt@14.2.1(magicast@0.5.2)(nuxt@4.3.1(0ad0819711db47eceedec34da8cdea43))(vue@3.5.30(typescript@6.0.3))':
+  '@vueuse/nuxt@14.2.1(magicast@0.5.2)(nuxt@4.3.1(15f57897136dace432ea9482d1025847))(vue@3.5.30(typescript@6.0.3))':
     dependencies:
       '@nuxt/kit': 4.3.1(magicast@0.5.2)
       '@vueuse/core': 14.2.1(vue@3.5.30(typescript@6.0.3))
       '@vueuse/metadata': 14.2.1
       local-pkg: 1.1.2
-      nuxt: 4.3.1(0ad0819711db47eceedec34da8cdea43)
+      nuxt: 4.3.1(15f57897136dace432ea9482d1025847)
       vue: 3.5.30(typescript@6.0.3)
     transitivePeerDependencies:
       - magicast
@@ -28942,10 +28907,9 @@ snapshots:
     dependencies:
       is-windows: 1.0.2
 
-  better-sqlite3@12.10.0:
+  better-sqlite3@13.0.3:
     dependencies:
-      bindings: 1.5.0
-      prebuild-install: 7.1.3
+      node-addon-api: 8.9.2
 
   big-integer@1.6.52: {}
 
@@ -29430,8 +29394,6 @@ snapshots:
   chokidar@5.0.0:
     dependencies:
       readdirp: 5.0.0
-
-  chownr@1.1.4: {}
 
   chownr@3.0.0: {}
 
@@ -30122,10 +30084,10 @@ snapshots:
 
   dayjs@1.11.20: {}
 
-  db0@0.3.4(better-sqlite3@12.10.0)(drizzle-orm@0.44.7(@op-engineering/op-sqlite@18.2.0(react-native@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native-community/cli@20.2.0(supports-color@10.2.2)(typescript@6.0.3))(@react-native/metro-config@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.14)(react@19.2.8)(supports-color@10.2.2))(react@19.2.8))(@types/better-sqlite3@7.6.13)(@types/sql.js@1.4.9)(better-sqlite3@12.10.0)(kysely@0.29.4)(sql.js@1.14.0)):
+  db0@0.3.4(better-sqlite3@13.0.3)(drizzle-orm@0.44.7(@op-engineering/op-sqlite@18.2.0(react-native@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native-community/cli@20.2.0(supports-color@10.2.2)(typescript@6.0.3))(@react-native/metro-config@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.14)(react@19.2.8)(supports-color@10.2.2))(react@19.2.8))(@types/better-sqlite3@9.6.0)(@types/sql.js@1.4.9)(better-sqlite3@13.0.3)(kysely@0.29.4)(sql.js@1.14.0)):
     optionalDependencies:
-      better-sqlite3: 12.10.0
-      drizzle-orm: 0.44.7(@op-engineering/op-sqlite@18.2.0(react-native@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native-community/cli@20.2.0(supports-color@10.2.2)(typescript@6.0.3))(@react-native/metro-config@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.14)(react@19.2.8)(supports-color@10.2.2))(react@19.2.8))(@types/better-sqlite3@7.6.13)(@types/sql.js@1.4.9)(better-sqlite3@12.10.0)(kysely@0.29.4)(sql.js@1.14.0)
+      better-sqlite3: 13.0.3
+      drizzle-orm: 0.44.7(@op-engineering/op-sqlite@18.2.0(react-native@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native-community/cli@20.2.0(supports-color@10.2.2)(typescript@6.0.3))(@react-native/metro-config@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.14)(react@19.2.8)(supports-color@10.2.2))(react@19.2.8))(@types/better-sqlite3@9.6.0)(@types/sql.js@1.4.9)(better-sqlite3@13.0.3)(kysely@0.29.4)(sql.js@1.14.0)
 
   debounce@1.2.1: {}
 
@@ -30423,21 +30385,21 @@ snapshots:
 
   dotenv@17.4.2: {}
 
-  drizzle-orm@0.44.7(@op-engineering/op-sqlite@18.2.0(react-native@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native-community/cli@20.2.0(supports-color@10.2.2)(typescript@6.0.3))(@react-native/metro-config@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@18.3.1)(react@18.3.1)(supports-color@10.2.2))(react@18.3.1))(@types/better-sqlite3@7.6.13)(@types/sql.js@1.4.9)(better-sqlite3@12.10.0)(kysely@0.29.4)(sql.js@1.14.0):
+  drizzle-orm@0.44.7(@op-engineering/op-sqlite@18.2.0(react-native@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native-community/cli@20.2.0(supports-color@10.2.2)(typescript@6.0.3))(@react-native/metro-config@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@18.3.1)(react@18.3.1)(supports-color@10.2.2))(react@18.3.1))(@types/better-sqlite3@9.6.0)(@types/sql.js@1.4.9)(better-sqlite3@13.0.3)(kysely@0.29.4)(sql.js@1.14.0):
     optionalDependencies:
       '@op-engineering/op-sqlite': 18.2.0(react-native@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native-community/cli@20.2.0(supports-color@10.2.2)(typescript@6.0.3))(@react-native/metro-config@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@18.3.1)(react@18.3.1)(supports-color@10.2.2))(react@18.3.1)
-      '@types/better-sqlite3': 7.6.13
+      '@types/better-sqlite3': 9.6.0
       '@types/sql.js': 1.4.9
-      better-sqlite3: 12.10.0
+      better-sqlite3: 13.0.3
       kysely: 0.29.4
       sql.js: 1.14.0
 
-  drizzle-orm@0.44.7(@op-engineering/op-sqlite@18.2.0(react-native@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native-community/cli@20.2.0(supports-color@10.2.2)(typescript@6.0.3))(@react-native/metro-config@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.14)(react@19.2.8)(supports-color@10.2.2))(react@19.2.8))(@types/better-sqlite3@7.6.13)(@types/sql.js@1.4.9)(better-sqlite3@12.10.0)(kysely@0.29.4)(sql.js@1.14.0):
+  drizzle-orm@0.44.7(@op-engineering/op-sqlite@18.2.0(react-native@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native-community/cli@20.2.0(supports-color@10.2.2)(typescript@6.0.3))(@react-native/metro-config@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.14)(react@19.2.8)(supports-color@10.2.2))(react@19.2.8))(@types/better-sqlite3@9.6.0)(@types/sql.js@1.4.9)(better-sqlite3@13.0.3)(kysely@0.29.4)(sql.js@1.14.0):
     optionalDependencies:
       '@op-engineering/op-sqlite': 18.2.0(react-native@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native-community/cli@20.2.0(supports-color@10.2.2)(typescript@6.0.3))(@react-native/metro-config@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.14)(react@19.2.8)(supports-color@10.2.2))(react@19.2.8)
-      '@types/better-sqlite3': 7.6.13
+      '@types/better-sqlite3': 9.6.0
       '@types/sql.js': 1.4.9
-      better-sqlite3: 12.10.0
+      better-sqlite3: 13.0.3
       kysely: 0.29.4
       sql.js: 1.14.0
 
@@ -30498,10 +30460,6 @@ snapshots:
     dependencies:
       iconv-lite: 0.6.3
     optional: true
-
-  end-of-stream@1.4.5:
-    dependencies:
-      once: 1.4.0
 
   enhanced-resolve@5.19.0:
     dependencies:
@@ -31054,8 +31012,6 @@ snapshots:
 
   exit@0.1.2: {}
 
-  expand-template@2.0.3: {}
-
   expect-type@1.3.0: {}
 
   expect@29.7.0:
@@ -31573,8 +31529,6 @@ snapshots:
 
   fresh@2.0.0: {}
 
-  fs-constants@1.0.0: {}
-
   fs-extra@11.3.0:
     dependencies:
       graceful-fs: 4.2.11
@@ -31704,8 +31658,6 @@ snapshots:
       pathe: 2.0.3
 
   giget@3.2.0: {}
-
-  github-from-package@0.0.0: {}
 
   github-slugger@1.5.0: {}
 
@@ -34855,8 +34807,6 @@ snapshots:
 
   mixme@0.5.10: {}
 
-  mkdirp-classic@0.5.3: {}
-
   mkdirp@0.5.6:
     dependencies:
       minimist: 1.2.8
@@ -34980,8 +34930,6 @@ snapshots:
 
   nanotar@0.2.1: {}
 
-  napi-build-utils@2.0.0: {}
-
   natural-compare-lite@1.4.0: {}
 
   natural-compare@1.4.0: {}
@@ -35006,7 +34954,7 @@ snapshots:
 
   next-path@1.0.0: {}
 
-  nitropack@2.13.1(better-sqlite3@12.10.0)(drizzle-orm@0.44.7(@op-engineering/op-sqlite@18.2.0(react-native@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native-community/cli@20.2.0(supports-color@10.2.2)(typescript@6.0.3))(@react-native/metro-config@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.14)(react@19.2.8)(supports-color@10.2.2))(react@19.2.8))(@types/better-sqlite3@7.6.13)(@types/sql.js@1.4.9)(better-sqlite3@12.10.0)(kysely@0.29.4)(sql.js@1.14.0))(encoding@0.1.13)(supports-color@8.1.1):
+  nitropack@2.13.1(better-sqlite3@13.0.3)(drizzle-orm@0.44.7(@op-engineering/op-sqlite@18.2.0(react-native@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native-community/cli@20.2.0(supports-color@10.2.2)(typescript@6.0.3))(@react-native/metro-config@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.14)(react@19.2.8)(supports-color@10.2.2))(react@19.2.8))(@types/better-sqlite3@9.6.0)(@types/sql.js@1.4.9)(better-sqlite3@13.0.3)(kysely@0.29.4)(sql.js@1.14.0))(encoding@0.1.13)(supports-color@8.1.1):
     dependencies:
       '@cloudflare/kv-asset-handler': 0.4.2
       '@rollup/plugin-alias': 6.0.0(rollup@4.59.0)
@@ -35027,7 +34975,7 @@ snapshots:
       cookie-es: 2.0.0
       croner: 9.1.0
       crossws: 0.3.5
-      db0: 0.3.4(better-sqlite3@12.10.0)(drizzle-orm@0.44.7(@op-engineering/op-sqlite@18.2.0(react-native@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native-community/cli@20.2.0(supports-color@10.2.2)(typescript@6.0.3))(@react-native/metro-config@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.14)(react@19.2.8)(supports-color@10.2.2))(react@19.2.8))(@types/better-sqlite3@7.6.13)(@types/sql.js@1.4.9)(better-sqlite3@12.10.0)(kysely@0.29.4)(sql.js@1.14.0))
+      db0: 0.3.4(better-sqlite3@13.0.3)(drizzle-orm@0.44.7(@op-engineering/op-sqlite@18.2.0(react-native@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native-community/cli@20.2.0(supports-color@10.2.2)(typescript@6.0.3))(@react-native/metro-config@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.14)(react@19.2.8)(supports-color@10.2.2))(react@19.2.8))(@types/better-sqlite3@9.6.0)(@types/sql.js@1.4.9)(better-sqlite3@13.0.3)(kysely@0.29.4)(sql.js@1.14.0))
       defu: 6.1.7
       destr: 2.0.5
       dot-prop: 10.1.0
@@ -35073,7 +35021,7 @@ snapshots:
       unenv: 2.0.0-rc.24
       unimport: 5.7.0
       unplugin-utils: 0.3.1
-      unstorage: 1.17.4(db0@0.3.4(better-sqlite3@12.10.0)(drizzle-orm@0.44.7(@op-engineering/op-sqlite@18.2.0(react-native@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native-community/cli@20.2.0(supports-color@10.2.2)(typescript@6.0.3))(@react-native/metro-config@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.14)(react@19.2.8)(supports-color@10.2.2))(react@19.2.8))(@types/better-sqlite3@7.6.13)(@types/sql.js@1.4.9)(better-sqlite3@12.10.0)(kysely@0.29.4)(sql.js@1.14.0)))(ioredis@5.10.0(supports-color@10.2.2))
+      unstorage: 1.17.4(db0@0.3.4(better-sqlite3@13.0.3)(drizzle-orm@0.44.7(@op-engineering/op-sqlite@18.2.0(react-native@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native-community/cli@20.2.0(supports-color@10.2.2)(typescript@6.0.3))(@react-native/metro-config@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.14)(react@19.2.8)(supports-color@10.2.2))(react@19.2.8))(@types/better-sqlite3@9.6.0)(@types/sql.js@1.4.9)(better-sqlite3@13.0.3)(kysely@0.29.4)(sql.js@1.14.0)))(ioredis@5.10.0(supports-color@10.2.2))
       untyped: 2.0.0
       unwasm: 0.5.3
       youch: 4.1.0
@@ -35116,11 +35064,9 @@ snapshots:
 
   nocache@3.0.4: {}
 
-  node-abi@3.87.0:
-    dependencies:
-      semver: 7.8.5
-
   node-addon-api@7.1.1: {}
+
+  node-addon-api@8.9.2: {}
 
   node-emoji@2.2.0:
     dependencies:
@@ -35259,16 +35205,16 @@ snapshots:
 
   nullthrows@1.1.1: {}
 
-  nuxt@4.3.1(0ad0819711db47eceedec34da8cdea43):
+  nuxt@4.3.1(15f57897136dace432ea9482d1025847):
     dependencies:
       '@dxup/nuxt': 0.3.2(magicast@0.5.2)
       '@nuxt/cli': 3.34.0(@nuxt/schema@4.3.1)(cac@6.7.14)(commander@12.1.0)(magicast@0.5.2)(supports-color@10.2.2)
-      '@nuxt/devtools': 3.4.1(db0@0.3.4(better-sqlite3@12.10.0)(drizzle-orm@0.44.7(@op-engineering/op-sqlite@18.2.0(react-native@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native-community/cli@20.2.0(supports-color@10.2.2)(typescript@6.0.3))(@react-native/metro-config@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.14)(react@19.2.8)(supports-color@10.2.2))(react@19.2.8))(@types/better-sqlite3@7.6.13)(@types/sql.js@1.4.9)(better-sqlite3@12.10.0)(kysely@0.29.4)(sql.js@1.14.0)))(ioredis@5.10.0(supports-color@10.2.2))(magic-string@0.30.21)(oxc-parser@0.112.0)(supports-color@10.2.2)(unplugin@3.0.0)(vite@7.3.1(@types/node@24.10.13)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.48.0)(tsx@4.21.0)(yaml@2.9.0))(vue@3.5.30(typescript@6.0.3))
+      '@nuxt/devtools': 3.4.1(db0@0.3.4(better-sqlite3@13.0.3)(drizzle-orm@0.44.7(@op-engineering/op-sqlite@18.2.0(react-native@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native-community/cli@20.2.0(supports-color@10.2.2)(typescript@6.0.3))(@react-native/metro-config@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.14)(react@19.2.8)(supports-color@10.2.2))(react@19.2.8))(@types/better-sqlite3@9.6.0)(@types/sql.js@1.4.9)(better-sqlite3@13.0.3)(kysely@0.29.4)(sql.js@1.14.0)))(ioredis@5.10.0(supports-color@10.2.2))(magic-string@0.30.21)(oxc-parser@0.112.0)(supports-color@10.2.2)(unplugin@3.0.0)(vite@7.3.1(@types/node@24.10.13)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.48.0)(tsx@4.21.0)(yaml@2.9.0))(vue@3.5.30(typescript@6.0.3))
       '@nuxt/kit': 4.3.1(magicast@0.5.2)
-      '@nuxt/nitro-server': 4.3.1(a7ee18b992e30ad56247ad35a091ef86)
+      '@nuxt/nitro-server': 4.3.1(f1390a3a7917f59a380da7d2b914d30d)
       '@nuxt/schema': 4.3.1
       '@nuxt/telemetry': 2.7.0(@nuxt/kit@4.3.1(magicast@0.5.2))
-      '@nuxt/vite-builder': 4.3.1(@types/node@25.9.1)(lightningcss@1.32.0)(magicast@0.5.2)(nuxt@4.3.1(0ad0819711db47eceedec34da8cdea43))(optionator@0.9.4)(rollup@4.59.0)(supports-color@10.2.2)(terser@5.48.0)(tsx@4.21.0)(typescript@6.0.3)(vue-tsc@3.2.5(typescript@6.0.3))(vue@3.5.30(typescript@6.0.3))(yaml@2.9.0)
+      '@nuxt/vite-builder': 4.3.1(@types/node@25.9.1)(lightningcss@1.32.0)(magicast@0.5.2)(nuxt@4.3.1(15f57897136dace432ea9482d1025847))(optionator@0.9.4)(rollup@4.59.0)(supports-color@10.2.2)(terser@5.48.0)(tsx@4.21.0)(typescript@6.0.3)(vue-tsc@3.2.5(typescript@6.0.3))(vue@3.5.30(typescript@6.0.3))(yaml@2.9.0)
       '@unhead/vue': 2.1.12(vue@3.5.30(typescript@6.0.3))
       '@vue/shared': 3.5.30
       c12: 3.3.3(magicast@0.5.2)
@@ -36581,21 +36527,6 @@ snapshots:
 
   powershell-utils@0.1.0: {}
 
-  prebuild-install@7.1.3:
-    dependencies:
-      detect-libc: 2.1.2
-      expand-template: 2.0.3
-      github-from-package: 0.0.0
-      minimist: 1.2.8
-      mkdirp-classic: 0.5.3
-      napi-build-utils: 2.0.0
-      node-abi: 3.87.0
-      pump: 3.0.3
-      rc: 1.2.8
-      simple-get: 4.0.1
-      tar-fs: 2.1.4
-      tunnel-agent: 0.6.0
-
   preferred-pm@3.1.4:
     dependencies:
       find-up: 5.0.0
@@ -36730,11 +36661,6 @@ snapshots:
   psl@1.15.0:
     dependencies:
       punycode: 2.3.1
-
-  pump@3.0.3:
-    dependencies:
-      end-of-stream: 1.4.5
-      once: 1.4.0
 
   punycode.js@2.3.1: {}
 
@@ -37996,14 +37922,6 @@ snapshots:
 
   signal-exit@4.1.0: {}
 
-  simple-concat@1.0.1: {}
-
-  simple-get@4.0.1:
-    dependencies:
-      decompress-response: 6.0.0
-      once: 1.4.0
-      simple-concat: 1.0.1
-
   simple-git@3.36.0(supports-color@10.2.2):
     dependencies:
       '@kwsites/file-exists': 1.1.1(supports-color@10.2.2)
@@ -38542,21 +38460,6 @@ snapshots:
 
   tapable@2.3.0: {}
 
-  tar-fs@2.1.4:
-    dependencies:
-      chownr: 1.1.4
-      mkdirp-classic: 0.5.3
-      pump: 3.0.3
-      tar-stream: 2.2.0
-
-  tar-stream@2.2.0:
-    dependencies:
-      bl: 4.1.0
-      end-of-stream: 1.4.5
-      fs-constants: 1.0.0
-      inherits: 2.0.4
-      readable-stream: 3.6.2
-
   tar-stream@3.1.8:
     dependencies:
       b4a: 1.8.0
@@ -38831,10 +38734,6 @@ snapshots:
       strip-ansi: 6.0.1
       wcwidth: 1.0.1
       yargs: 17.7.2
-
-  tunnel-agent@0.6.0:
-    dependencies:
-      safe-buffer: 5.2.1
 
   tunnel@0.0.6: {}
 
@@ -39217,7 +39116,7 @@ snapshots:
       picomatch: 4.0.4
       webpack-virtual-modules: 0.6.2
 
-  unstorage@1.17.4(db0@0.3.4(better-sqlite3@12.10.0)(drizzle-orm@0.44.7(@op-engineering/op-sqlite@18.2.0(react-native@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native-community/cli@20.2.0(supports-color@10.2.2)(typescript@6.0.3))(@react-native/metro-config@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.14)(react@19.2.8)(supports-color@10.2.2))(react@19.2.8))(@types/better-sqlite3@7.6.13)(@types/sql.js@1.4.9)(better-sqlite3@12.10.0)(kysely@0.29.4)(sql.js@1.14.0)))(ioredis@5.10.0(supports-color@10.2.2)):
+  unstorage@1.17.4(db0@0.3.4(better-sqlite3@13.0.3)(drizzle-orm@0.44.7(@op-engineering/op-sqlite@18.2.0(react-native@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native-community/cli@20.2.0(supports-color@10.2.2)(typescript@6.0.3))(@react-native/metro-config@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.14)(react@19.2.8)(supports-color@10.2.2))(react@19.2.8))(@types/better-sqlite3@9.6.0)(@types/sql.js@1.4.9)(better-sqlite3@13.0.3)(kysely@0.29.4)(sql.js@1.14.0)))(ioredis@5.10.0(supports-color@10.2.2)):
     dependencies:
       anymatch: 3.1.3
       chokidar: 5.0.0
@@ -39228,10 +39127,10 @@ snapshots:
       ofetch: 1.5.1
       ufo: 1.6.3
     optionalDependencies:
-      db0: 0.3.4(better-sqlite3@12.10.0)(drizzle-orm@0.44.7(@op-engineering/op-sqlite@18.2.0(react-native@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native-community/cli@20.2.0(supports-color@10.2.2)(typescript@6.0.3))(@react-native/metro-config@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.14)(react@19.2.8)(supports-color@10.2.2))(react@19.2.8))(@types/better-sqlite3@7.6.13)(@types/sql.js@1.4.9)(better-sqlite3@12.10.0)(kysely@0.29.4)(sql.js@1.14.0))
+      db0: 0.3.4(better-sqlite3@13.0.3)(drizzle-orm@0.44.7(@op-engineering/op-sqlite@18.2.0(react-native@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native-community/cli@20.2.0(supports-color@10.2.2)(typescript@6.0.3))(@react-native/metro-config@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.14)(react@19.2.8)(supports-color@10.2.2))(react@19.2.8))(@types/better-sqlite3@9.6.0)(@types/sql.js@1.4.9)(better-sqlite3@13.0.3)(kysely@0.29.4)(sql.js@1.14.0))
       ioredis: 5.10.0(supports-color@10.2.2)
 
-  unstorage@1.17.5(db0@0.3.4(better-sqlite3@12.10.0)(drizzle-orm@0.44.7(@op-engineering/op-sqlite@18.2.0(react-native@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native-community/cli@20.2.0(supports-color@10.2.2)(typescript@6.0.3))(@react-native/metro-config@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.14)(react@19.2.8)(supports-color@10.2.2))(react@19.2.8))(@types/better-sqlite3@7.6.13)(@types/sql.js@1.4.9)(better-sqlite3@12.10.0)(kysely@0.29.4)(sql.js@1.14.0)))(ioredis@5.10.0(supports-color@10.2.2)):
+  unstorage@1.17.5(db0@0.3.4(better-sqlite3@13.0.3)(drizzle-orm@0.44.7(@op-engineering/op-sqlite@18.2.0(react-native@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native-community/cli@20.2.0(supports-color@10.2.2)(typescript@6.0.3))(@react-native/metro-config@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.14)(react@19.2.8)(supports-color@10.2.2))(react@19.2.8))(@types/better-sqlite3@9.6.0)(@types/sql.js@1.4.9)(better-sqlite3@13.0.3)(kysely@0.29.4)(sql.js@1.14.0)))(ioredis@5.10.0(supports-color@10.2.2)):
     dependencies:
       anymatch: 3.1.3
       chokidar: 5.0.0
@@ -39242,7 +39141,7 @@ snapshots:
       ofetch: 1.5.1
       ufo: 1.6.4
     optionalDependencies:
-      db0: 0.3.4(better-sqlite3@12.10.0)(drizzle-orm@0.44.7(@op-engineering/op-sqlite@18.2.0(react-native@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native-community/cli@20.2.0(supports-color@10.2.2)(typescript@6.0.3))(@react-native/metro-config@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.14)(react@19.2.8)(supports-color@10.2.2))(react@19.2.8))(@types/better-sqlite3@7.6.13)(@types/sql.js@1.4.9)(better-sqlite3@12.10.0)(kysely@0.29.4)(sql.js@1.14.0))
+      db0: 0.3.4(better-sqlite3@13.0.3)(drizzle-orm@0.44.7(@op-engineering/op-sqlite@18.2.0(react-native@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native-community/cli@20.2.0(supports-color@10.2.2)(typescript@6.0.3))(@react-native/metro-config@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.14)(react@19.2.8)(supports-color@10.2.2))(react@19.2.8))(@types/better-sqlite3@9.6.0)(@types/sql.js@1.4.9)(better-sqlite3@13.0.3)(kysely@0.29.4)(sql.js@1.14.0))
       ioredis: 5.10.0(supports-color@10.2.2)
 
   untildify@4.0.0: {}
