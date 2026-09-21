@@ -12,8 +12,8 @@ import { QuerySyncStreamOptions } from '../src/hooks/watched/watch-types';
 describe('stream hooks', () => {
   let db: CommonPowerSyncDatabase;
 
-  beforeEach(() => {
-    db = openPowerSync();
+  beforeEach(async () => {
+    db = await openPowerSync();
     vi.clearAllMocks();
     cleanup(); // Cleanup the DOM after each test
   });
@@ -23,7 +23,9 @@ describe('stream hooks', () => {
     return connections.activeStreams;
   }
 
-  const baseWrapper = ({ children }) => <PowerSyncContext.Provider value={db}>{children}</PowerSyncContext.Provider>;
+  const baseWrapper = ({ children }: { children: React.ReactNode }) => (
+    <PowerSyncContext.Provider value={db}>{children}</PowerSyncContext.Provider>
+  );
 
   const testCases = [
     {
@@ -32,7 +34,9 @@ describe('stream hooks', () => {
     },
     {
       mode: 'StrictMode',
-      wrapper: ({ children }) => <React.StrictMode>{baseWrapper({ children, db })}</React.StrictMode>
+      wrapper: ({ children }: { children: React.ReactNode }) => (
+        <React.StrictMode>{baseWrapper({ children })}</React.StrictMode>
+      )
     }
   ];
 

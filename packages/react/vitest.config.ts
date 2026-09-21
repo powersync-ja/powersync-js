@@ -1,39 +1,9 @@
-import { defineConfig, ViteUserConfig } from 'vitest/config';
-import { playwright } from '@vitest/browser-playwright';
+import { defineConfig } from 'vitest/config';
 
-const config: ViteUserConfig = {
-  // This is only needed for local tests to resolve the package name correctly
-  worker: {
-    format: 'es'
-  },
-  optimizeDeps: {
-    exclude: ['@journeyapps/wa-sqlite']
-  },
-  plugins: [],
+export default defineConfig({
   test: {
     globals: true,
-    include: ['tests/**/*.test.tsx'],
-    maxConcurrency: 1,
-    // This doesn't currently seem to work in browser mode, but setting this for one day when it does
-    sequence: {
-      shuffle: false, // Disable shuffling of test files
-      concurrent: false // Run test files sequentially
-    },
-    /**
-     * Starts each test in a new iFrame
-     */
-    isolate: true,
-    browser: {
-      enabled: true,
-      provider: playwright(),
-      headless: true,
-      instances: [
-        {
-          browser: 'chromium'
-        }
-      ]
-    }
+    environment: 'jsdom',
+    include: ['tests/**/*.test.tsx']
   }
-};
-
-export default defineConfig(config);
+});

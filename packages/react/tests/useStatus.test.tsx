@@ -21,7 +21,7 @@ describe('useStatus', () => {
   });
 
   it('should initialize with the current status', () => {
-    const wrapper = ({ children }) => (
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
       <PowerSyncContext.Provider value={mockPowerSync as any}>{children}</PowerSyncContext.Provider>
     );
 
@@ -36,7 +36,7 @@ describe('useStatus', () => {
       registerListener: vi.fn(() => {})
     };
 
-    const wrapper = ({ children }) => (
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
       <PowerSyncContext.Provider value={mockPowerSyncInTest as any}>{children}</PowerSyncContext.Provider>
     );
 
@@ -48,7 +48,7 @@ describe('useStatus', () => {
   });
 
   it('should run the listener on unmount', () => {
-    const wrapper = ({ children }) => (
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
       <PowerSyncContext.Provider value={mockPowerSync as any}>{children}</PowerSyncContext.Provider>
     );
 

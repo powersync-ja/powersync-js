@@ -62,6 +62,9 @@ catalog:
   '@vitest/browser': ^4.1.10
   '@vitest/browser-playwright': ^4.1.10
   expo: ^56.0.0
+  better-sqlite3: ^13.0.3
+  '@types/better-sqlite3': ^9.6.0
+
 
 allowBuilds:
   '@parcel/watcher': false

@@ -46,8 +46,8 @@ describe('QueryStore', () => {
   let query: any;
   let options: SQLWatchOptions;
 
-  beforeEach(() => {
-    db = openPowerSync();
+  beforeEach(async () => {
+    db = await openPowerSync();
     store = new QueryStore(db);
     query = {};
     options = {};
