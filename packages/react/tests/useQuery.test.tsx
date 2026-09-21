@@ -908,10 +908,8 @@ describe('useQuery', () => {
         const paramChangedIndex = stateTransitions.findIndex((transition) => transition.param === 1);
         expect(paramChangedIndex).toBeGreaterThan(0);
 
-        // The transition right before the param changed - the number of renders leading up to
-        // this point varies (e.g. StrictMode, or backend timing), so we look at content rather
-        // than a fixed offset.
-        const initialState = stateTransitions[paramChangedIndex - 1];
+        // The very first render, before either query has had a chance to resolve.
+        const initialState = stateTransitions[0];
         expect(initialState).toBeDefined();
         expect(initialState?.param).toEqual(0);
         expect(initialState?.dataLength).toEqual(0);
