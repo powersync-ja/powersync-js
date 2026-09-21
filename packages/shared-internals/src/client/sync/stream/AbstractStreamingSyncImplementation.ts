@@ -333,22 +333,38 @@ The next upload iteration will be delayed.`
 
     const controller = new AbortController();
     this.abortController = controller;
+    const signal = controller.signal;
     this.streamingSyncPromise = Promise.all([
-      this.crudUploadLoop(controller.signal, options).catch((error) =>
-        this.logger.log({ level: LogLevels.error, message: 'Error in crud upload loop', error })
-      ),
-      this.streamingSync(controller.signal, options),
-      this.repostUnacknowledgedCheckpointRequests(controller.signal, options)
+      this.crudUploadLoop(signal, options).catch((error) => {
+        // Requesting the crud lock when aborted will file, but that's not something worth logging.
+        if (signal.reason !== error) {
+          this.logger.log({ level: LogLevels.error, message: 'Error in crud upload loop', error });
+        }
+      }),
+      this.streamingSync(signal, options),
+      this.repostUnacknowledgedCheckpointRequests(signal, options)
     ]).finally(() => {
       // These promises only complete when we want to disconnect. No further sync iteration can resume checkpoint
       // requests, so fail any that are still pending.
       this.checkpoints.disconnected();
     });
 
-    // Return a promise that resolves when the connection status is updated to indicate that we're connected. We do this
+    // Return a promise that resolves when the connection status is updated to indicate that we're connected, or when
+    // this connection attempt is aborted (e.g. superseded by another connect() call) before that happens. We do this
     // by waiting for connecting to be true and then false again.
     return new Promise<void>((resolve) => {
       let sawStartOfConnection = false;
+      let settled = false;
+
+      const finish = () => {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        disposer();
+        signal.removeEventListener('abort', finish);
+        resolve();
+      };
 
       const disposer = this.registerListener({
         statusChanged: (snapshot) => {
@@ -366,10 +382,13 @@ The next upload iteration will be delayed.`
             return;
           }
 
-          disposer();
-          resolve();
+          finish();
         }
       });
+
+      // If this attempt is aborted (disconnected) before a `statusChanged` event ever fires - which can happen when
+      // the instance never got as far as reporting a connecting status - there's nothing left to wait for.
+      signal.addEventListener('abort', finish, { once: true });
     });
   }
 
