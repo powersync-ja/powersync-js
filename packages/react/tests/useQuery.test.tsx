@@ -919,9 +919,6 @@ describe('useQuery', () => {
         expect(initialState?.isLoading).toEqual(true);
 
         // The transition where the param has changed, but the dependent query hasn't resolved yet.
-        // Note: `isLoading` isn't asserted here - it's a one-time "first load ever completed" flag
-        // on the underlying WatchedQuery, and isn't reset on subsequent param changes; `isFetching`
-        // is the correct signal for "this query is currently being refetched".
         const paramChangedState = stateTransitions[paramChangedIndex];
         expect(paramChangedState).toBeDefined();
         expect(paramChangedState?.param).toEqual(1);
