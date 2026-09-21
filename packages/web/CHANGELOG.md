@@ -1,5 +1,26 @@
 # @powersync/web
 
+## 2.4.0
+
+### Minor Changes
+
+- 9c8f1e3: Add `DisconnectAndClearOptions.soft` to clear data from public tables while keeping an internal sync for a faster next sync.
+
+### Patch Changes
+
+- 59212f1: Fix race conditions in `WASQLiteVFS.OPFSWriteAheadVFS`.
+- 7c80576: Fix `disconnect()` and subsequent `connect()` calls hanging on pending shared-worker upload or checkpoint connector calls.
+
+  The worker now stops waiting for `uploadCrud` and `postCheckpointRequest` when their sync abort signal fires.
+
+- 7c80576: Fix a stale `downloadError` of "Disconnect has been requested" being reported after a normal disconnect.
+- Updated dependencies [9c8f1e3]
+- Updated dependencies [7c80576]
+- Updated dependencies [7c80576]
+- Updated dependencies [7c80576]
+  - @powersync/shared-internals@1.3.0
+  - @powersync/common@2.3.0
+
 ## 2.3.1
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @powersync/common
 
+## 2.3.0
+
+### Minor Changes
+
+- 9c8f1e3: Add `DisconnectAndClearOptions.soft` to clear data from public tables while keeping an internal sync for a faster next sync.
+
 ## 2.2.1
 
 ### Patch Changes

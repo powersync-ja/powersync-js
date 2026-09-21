@@ -1,5 +1,21 @@
 # @powersync/nuxt
 
+## 1.0.0
+
+### Patch Changes
+
+- 9c8f1e3: Add `DisconnectAndClearOptions.soft` to clear data from public tables while keeping an internal sync for a faster next sync.
+- Updated dependencies [9c8f1e3]
+- Updated dependencies [7c80576]
+- Updated dependencies [de0879c]
+- Updated dependencies [59212f1]
+- Updated dependencies [7c80576]
+- Updated dependencies [7c80576]
+  - @powersync/shared-internals@1.3.0
+  - @powersync/vue@0.7.0
+  - @powersync/web@2.4.0
+  - @powersync/kysely-driver@2.0.2
+
 ## 0.1.0
 
 ### Minor Changes

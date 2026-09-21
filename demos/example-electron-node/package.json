@@ -40,7 +40,7 @@
     "webpack": "^5.90.1"
   },
   "dependencies": {
-    "@powersync/node": "^1.0.1",
+    "@powersync/node": "^1.1.0",
     "electron-squirrel-startup": "^1.0.1"
   }
 }
