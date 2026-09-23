@@ -13,16 +13,29 @@ async function resolveIntegration(): Promise<SdkIntegration> {
   return (await connectDevframeIntegration()) ?? (await awaitIntegration());
 }
 
+// A host that owns the theme says so in the URL (`?theme=dark|light`); Flutter DevTools passes its
+// theme to extensions this way. The panel then follows the host and shows no toggle.
+function hostTheme(): 'light' | 'dark' | undefined {
+  const theme = new URLSearchParams(location.search).get('theme');
+  return theme === 'dark' || theme === 'light' ? theme : undefined;
+}
+
 createApp({
   setup() {
     const pending = resolveIntegration();
     const ready = ref(false);
-    provideDiagnostics(pending);
+    provideDiagnostics(pending, { theme: hostTheme() });
     void pending.then(() => (ready.value = true));
-    // The panel owns its own theme (self-applies `.dark`); no host-forced class.
+    // The panel applies `.dark` to its own root; no host-forced class.
     return () =>
       h('div', { style: 'height: 100vh' }, [
-        ready.value ? h(DiagnosticsPanel) : h('div', { style: 'padding:1rem;opacity:.6;font:12px system-ui' }, 'Waiting for the diagnostics integration…')
+        ready.value
+          ? h(DiagnosticsPanel)
+          : h(
+              'div',
+              { style: 'padding:1rem;opacity:.6;font:12px system-ui' },
+              'Waiting for the diagnostics integration…'
+            )
       ]);
   }
 }).mount('#app');

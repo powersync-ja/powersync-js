@@ -141,7 +141,6 @@ export abstract class AbstractStreamingSyncImplementation
   private connectionMayHaveChanged = false;
   private crudUploadNotifier = asyncNotifier();
   private checkpoints = new CheckpointStateSignals();
-  private diagnosticsChannel?: BroadcastChannel;
 
   private notifyCompletedUploads?: () => void;
   private handleActiveStreamsChange?: () => void;
@@ -195,21 +194,13 @@ export abstract class AbstractStreamingSyncImplementation
     super.dispose();
     this.crudUpdateListener?.();
     this.crudUpdateListener = undefined;
-    this.diagnosticsChannel?.close();
-    this.diagnosticsChannel = undefined;
   }
 
   /**
-   * Broadcasts a core diagnostics event on a same-origin channel for diagnostics tooling to consume.
-   * Works from a shared worker to the page. No-op where BroadcastChannel is unavailable.
+   * Receives a core diagnostics event (emitted only when diagnostics are enabled on the sync stream).
+   * Does nothing here; an SDK with diagnostics tooling overrides it to hand the event on.
    */
-  emitDiagnostics(event: DiagnosticsEvent): void {
-    if (typeof BroadcastChannel === 'undefined') {
-      return;
-    }
-    this.diagnosticsChannel ??= new BroadcastChannel('powersync-diagnostics-events');
-    this.diagnosticsChannel.postMessage(event);
-  }
+  protected emitDiagnostics(_event: DiagnosticsEvent): void {}
 
   abstract obtainLock<T>(lockOptions: LockOptions<T>): Promise<T>;
 
@@ -837,8 +828,6 @@ The next upload iteration will be delayed.`
       } else if ('DidCompleteSync' in instruction) {
         syncImplementation.updateJsSyncState({ downloadError: undefined });
       } else if ('HandleDiagnostics' in instruction) {
-        // Emitted only when diagnostics are enabled on the sync stream. Broadcast to diagnostics
-        // tooling; the channel reaches the page even when sync runs in a shared worker.
         syncImplementation.emitDiagnostics(instruction.HandleDiagnostics);
       }
     }

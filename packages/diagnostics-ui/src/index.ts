@@ -1,3 +1,8 @@
 export { default as DiagnosticsPanel } from './components/DiagnosticsPanel.vue';
-export { provideDiagnostics, useDiagnostics, useIntegration } from './composables/diagnostics';
-export { useTheme } from './composables/theme';
+export {
+  provideDiagnostics,
+  useDiagnostics,
+  useIntegration,
+  type ProvideDiagnosticsOptions
+} from './composables/diagnostics';
+export { useTheme, type DiagnosticsTheme } from './composables/theme';
