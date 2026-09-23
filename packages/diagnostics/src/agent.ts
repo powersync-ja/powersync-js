@@ -3,6 +3,7 @@
  * agents to a devframe node side over an RPC client (a dock script in a web page, or a node process).
  */
 import type { DevframeRpcClient } from 'devframe/client';
+import type { CommonPowerSyncDatabase, PowerSyncBackendConnector, SyncOptions } from '@powersync/common';
 import type {
   ActionRequest,
   CoreDiagnosticsEvent,
@@ -11,26 +12,20 @@ import type {
   SdkIntegration,
   Unsubscribe
 } from '@powersync/diagnostics-core';
-import {
-  JsAgent,
-  type CoreEventSource,
-  type LiveConnectionOptions,
-  type LiveConnector,
-  type LiveDatabase
-} from '@powersync/diagnostics-core/js';
 import { HEARTBEAT_MS } from './constants.js';
+import { JsAgent, type CoreEventSource } from './js-agent.js';
 import './rpc-types.js';
 
 /** The sync client broadcasts core diagnostics events on this channel (see `emitDiagnostics`). */
 const CORE_EVENTS_CHANNEL = 'powersync-diagnostics-events';
 
 /**
- * A live PowerSync JavaScript database the agent can serve: the structural database plus the
- * connection accessors every SDK's database class exposes.
+ * A live PowerSync JavaScript database the agent can serve: the SDK's database plus the connection
+ * accessors every SDK's database class exposes.
  */
-export interface DiagnosableDatabase extends LiveDatabase {
-  readonly connector: LiveConnector | null | undefined;
-  readonly connectionOptions: LiveConnectionOptions | null | undefined;
+export interface DiagnosableDatabase extends CommonPowerSyncDatabase {
+  readonly connector: PowerSyncBackendConnector | null | undefined;
+  readonly connectionOptions: SyncOptions | null | undefined;
 }
 
 /** Consumes the core diagnostics events the sync client broadcasts (from a worker or in-process). */

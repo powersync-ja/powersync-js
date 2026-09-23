@@ -1,8 +1,8 @@
 # PowerSync Diagnostics — core
 
-This package (`packages/diagnostics-core`) defines the protocol between the [PowerSync](https://powersync.com) diagnostics tool and a PowerSync SDK, and ships the pieces that implement it for JavaScript.
+This package (`packages/diagnostics-core`) defines the protocol between the [PowerSync](https://powersync.com) diagnostics tool and a PowerSync SDKs.
 
-The main entrypoint imports nothing from any PowerSync SDK. The protocol is owned by the tool, and each SDK implements it in its own language.
+It imports nothing from any PowerSync SDK. The protocol is owned by the tool, and each SDK implements it in its own language. The JavaScript implementation lives in [`@powersync/diagnostics`](https://github.com/powersync-ja/powersync-js/tree/main/packages/diagnostics).
 
 ## The protocol in one picture
 
@@ -29,16 +29,10 @@ The reference definition is the TypeScript itself: [`src/integration.ts`](./src/
 - **The data shapes** — `SyncState`, `StreamState`, `BucketState`, `SchemaPayload`, and the rest. Plain JSON, epoch milliseconds, `null` for "does not apply".
 - **The iframe bridge** — `exposeIntegration`, `connectIntegration`, `attachIframe`, and `awaitIntegration` move an integration across a `postMessage` boundary with [comlink](https://github.com/GoogleChromeLabs/comlink). The UI always runs in an iframe; the integration lives on the other side.
 - **`SourceAwareIntegration`** — the optional extension for a host that fronts several databases (a dev server that several app tabs attach to): it reports the attached databases and switches between them. Single-database hosts, and the iframe bridge, implement the base interface only.
-- **`createDiagnosticsStores`** — reactive stores derived from an integration's events, for the UI. On a `SourceAwareIntegration` they follow the selected database and start over when it changes or detaches.
-
-`@powersync/diagnostics-core/js` (JavaScript hosts only):
-
-- **`JsAgent`** — the JavaScript implementation. It runs in the app page next to a live database and reads it through a structural `LiveDatabase` interface, so this package still imports no SDK. The seam is type-checked where a concrete database is passed in, in `@powersync/diagnostics`.
-- **`toSyncState`** and **`toStreamStates`** — the mapping from the SDK's sync status to the protocol shapes.
 
 ## Who uses it
 
-Most apps do not use this package directly. Use [`@powersync/diagnostics`](https://github.com/powersync-ja/powersync-js/tree/main/packages/diagnostics), which runs the agent and serves the UI for you.
+Most apps do not use this package directly. Use [`@powersync/diagnostics`](https://github.com/powersync-ja/powersync-js/tree/main/packages/diagnostics), which implements the protocol for JavaScript and serves the UI for you.
 
 Use this package directly when you build a new host or a new SDK integration.
 
@@ -73,22 +67,3 @@ The UI side calls `awaitIntegration()` and receives the port.
 
 - **JavaScript** — never shipped to production. The integration is loaded only by the development tooling (`@powersync/diagnostics`) when a dev server runs. The SDK carries only what the core needs: the `diagnostics` sync option that switches on the core event stream.
 - **Dart** — on by default in debug builds, off in release builds, as the Dart SDK already does.
-
-## Run the JavaScript agent yourself
-
-```ts
-import { exposeIntegration } from '@powersync/diagnostics-core';
-import { JsAgent } from '@powersync/diagnostics-core/js';
-
-const agent = new JsAgent(db, {
-  sdk: '@powersync/web',
-  connection: {
-    getConnector: () => db.connector,
-    getConnectionOptions: () => db.connectionOptions
-  }
-});
-
-const channel = new MessageChannel();
-exposeIntegration(agent, channel.port1);
-// Post channel.port2 to the UI iframe.
-```

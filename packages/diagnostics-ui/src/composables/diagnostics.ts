@@ -1,7 +1,8 @@
 import { inject, provide, onScopeDispose, shallowRef, type InjectionKey, type ShallowRef } from 'vue';
 import { atom } from 'nanostores';
 import { useStore } from '@nanostores/vue';
-import { createDiagnosticsStores, type DiagnosticsStores, type SdkIntegration } from '@powersync/diagnostics-core';
+import type { SdkIntegration } from '@powersync/diagnostics-core';
+import { createDiagnosticsStores, type DiagnosticsStores } from './stores';
 
 interface DiagnosticsContext {
   /** Set once the integration is available. Null while a promised integration is still pending. */

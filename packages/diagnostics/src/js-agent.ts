@@ -1,32 +1,42 @@
-import type { DiagnosticsEvent, SdkIntegration } from './integration.js';
 import type {
-  LiveConnectionAccess,
-  LiveConnectionOptions,
-  LiveConnector,
-  LiveDatabase,
-  LiveStreamHandle,
-  LiveSyncStatus
-} from './live-database.js';
+  CommonPowerSyncDatabase,
+  LogRecord as SdkLogRecord,
+  PowerSyncBackendConnector,
+  SyncOptions,
+  SyncStatus,
+  SyncStreamSubscription
+} from '@powersync/common';
 import type {
   ActionRequest,
   BucketState,
   CoreDiagnosticsEvent,
+  DiagnosticsEvent,
   LogRecord,
   ProtocolInfo,
   QueryParams,
   QueryResult,
   SchemaPayload,
+  SdkIntegration,
   StreamActionArgs,
   SyncState,
   Unsubscribe,
   UploadQueueState
-} from './shapes.js';
-import { toStreamStates, toSyncState } from './state.js';
+} from '@powersync/diagnostics-core';
+import { toStreamStates, toSyncState } from './sync-state.js';
 
 /** Delivers the SQLite core's diagnostics events to the agent. How they arrive is runtime-specific. */
 export interface CoreEventSource {
   onEvent(handler: (event: CoreDiagnosticsEvent) => void): Unsubscribe;
   dispose(): void;
+}
+
+/**
+ * Read access to the live connection. The connector and options are not on the database's public
+ * interface, so the code that installs the agent (which can see the concrete database) hands them in.
+ */
+export interface ConnectionAccess {
+  getConnector(): PowerSyncBackendConnector | null;
+  getConnectionOptions(): SyncOptions | null;
 }
 
 export interface JsAgentOptions {
@@ -37,31 +47,28 @@ export interface JsAgentOptions {
   /** Core diagnostics events (per-bucket `target_count`). Omit when core diagnostics are off. */
   coreEvents?: CoreEventSource;
   /** Read access to the live connection; omit if the runtime cannot expose it. */
-  connection?: LiveConnectionAccess;
+  connection?: ConnectionAccess;
 }
 
 /**
- * The JavaScript `SdkIntegration`: runs in the app page next to a live database.
- *
- * Reads the database through the structural {@link LiveDatabase} interface, so it never imports an
- * SDK package. Every status change is pushed as mapped state (the push bridge); requests are answered
- * by querying the live client. Hosts reach it through a bridge (see `bridge.ts`), or call it directly
- * when they share the page.
+ * The JavaScript `SdkIntegration`: runs next to a live PowerSync database and answers the protocol
+ * from it. Every status change is pushed as mapped state; requests are answered by querying the
+ * live client. Hosts reach it through a bridge or call it directly when they share the page.
  */
 export class JsAgent implements SdkIntegration {
   private handlers = new Set<(event: DiagnosticsEvent) => void>();
   private disposers: Array<() => void> = [];
   private started = false;
   /** Debug subscriptions created through `action`, keyed by name + params, so they can be released. */
-  private streamHandles = new Map<string, LiveStreamHandle>();
+  private streamHandles = new Map<string, SyncStreamSubscription>();
   // Retained so reconnect / clear work after a disconnect, when the connection no longer exposes them.
-  private lastConnector: LiveConnector | null = null;
-  private lastConnectionOptions: LiveConnectionOptions | null = null;
+  private lastConnector: PowerSyncBackendConnector | null = null;
+  private lastConnectionOptions: SyncOptions | null = null;
   // Per-bucket total operation counts from the core diagnostics stream (not stored in ps_buckets).
   private bucketTargets = new Map<string, number>();
 
   constructor(
-    private db: LiveDatabase,
+    private db: CommonPowerSyncDatabase,
     private options: JsAgentOptions = {}
   ) {}
 
@@ -153,9 +160,6 @@ export class JsAgent implements SdkIntegration {
         break;
       case 'requestCheckpoint': {
         // Confirms the client is caught up right now. Needs `checkpointMode: 'requests'` on connect.
-        if (typeof this.db.requestCheckpoint !== 'function') {
-          throw new Error('requestCheckpoint is not available in this SDK version.');
-        }
         const checkpoint = await this.db.requestCheckpoint();
         await checkpoint.waitForSync({ signal: AbortSignal.timeout(120_000) });
         break;
@@ -200,7 +204,7 @@ export class JsAgent implements SdkIntegration {
 
     this.disposers.push(
       this.db.registerListener({
-        statusChanged: (status: LiveSyncStatus) => {
+        statusChanged: (status: SyncStatus) => {
           this.captureConnection();
           this.pushStatus(status);
           void this.pushUploadQueue();
@@ -249,7 +253,7 @@ export class JsAgent implements SdkIntegration {
     }
   }
 
-  private pushStatus(status: LiveSyncStatus): void {
+  private pushStatus(status: SyncStatus): void {
     this.emit({ type: 'status', payload: toSyncState(status) });
     this.emit({ type: 'streams', payload: toStreamStates(status) });
   }
@@ -317,7 +321,7 @@ export class JsAgent implements SdkIntegration {
     });
   }
 
-  private pushLog(record: { level: number; message: string; error?: unknown }): void {
+  private pushLog(record: SdkLogRecord): void {
     const entry: LogRecord = {
       timestamp: Date.now(),
       level: logLevelName(record.level),

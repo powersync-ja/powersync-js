@@ -430,6 +430,9 @@ importers:
       '@devframes/hub':
         specifier: 1.0.0
         version: 1.0.0(@devframes/agentic@1.0.0)(crossws@0.4.12(srvx@1.0.5))(devframe@1.0.0)
+      '@powersync/common':
+        specifier: workspace:*
+        version: link:../common
       '@powersync/web':
         specifier: workspace:*
         version: link:../web
@@ -451,9 +454,6 @@ importers:
       comlink:
         specifier: 'catalog:'
         version: 4.4.2
-      nanostores:
-        specifier: ^1.5.2
-        version: 1.5.3
     devDependencies:
       '@types/node':
         specifier: 'catalog:'

@@ -53,11 +53,15 @@
     "watch": "tsc --build -w"
   },
   "peerDependencies": {
+    "@powersync/common": "workspace:^2.3.0",
     "@powersync/web": "workspace:^2.2.0",
     "@vitejs/devtools-kit": ">=0.7.5",
     "vite": ">=7.0.0"
   },
   "peerDependenciesMeta": {
+    "@powersync/common": {
+      "optional": true
+    },
     "@powersync/web": {
       "optional": true
     },
@@ -77,6 +81,7 @@
   },
   "devDependencies": {
     "@devframes/hub": "1.0.0",
+    "@powersync/common": "workspace:*",
     "@powersync/web": "workspace:*",
     "@types/node": "catalog:",
     "@vitejs/devtools-kit": "^0.7.5",

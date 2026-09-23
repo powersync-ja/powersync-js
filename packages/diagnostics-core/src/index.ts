@@ -3,8 +3,5 @@
 export * from './shapes.js';
 export * from './integration.js';
 
-// Moving an integration across an iframe boundary, and deriving UI state from its events.
+// Moving an integration across an iframe boundary.
 export * from './bridge.js';
-export * from './store.js';
-
-// The JavaScript agent lives behind the `./js` entrypoint (`@powersync/diagnostics-core/js`).

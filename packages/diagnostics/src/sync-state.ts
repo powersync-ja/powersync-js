@@ -1,9 +1,9 @@
-import type { LiveProgress, LivePriorityStatus, LiveStreamStatus, LiveSyncStatus } from './live-database.js';
-import type { PriorityState, ProgressState, StreamState, SyncState } from './shapes.js';
+import type { ProgressWithOperations, SyncPriorityStatus, SyncStatus, SyncStreamStatus } from '@powersync/common';
+import type { PriorityState, ProgressState, StreamState, SyncState } from '@powersync/diagnostics-core';
 
-/** Maps the live SDK sync status into plain, serializable protocol state. */
+/** Maps the SDK's live sync status onto the plain, serializable protocol shapes. */
 
-function toProgress(progress: LiveProgress | null | undefined): ProgressState | null {
+function toProgress(progress: ProgressWithOperations | null | undefined): ProgressState | null {
   if (!progress) {
     return null;
   }
@@ -22,8 +22,8 @@ function errorText(error: { message?: string } | null | undefined): string | nul
   return error ? String(error.message ?? error) : null;
 }
 
-export function toSyncState(status: LiveSyncStatus): SyncState {
-  const priorities: PriorityState[] = (status.priorityStatusEntries ?? []).map((entry: LivePriorityStatus) => ({
+export function toSyncState(status: SyncStatus): SyncState {
+  const priorities: PriorityState[] = (status.priorityStatusEntries ?? []).map((entry: SyncPriorityStatus) => ({
     priority: entry.priority,
     lastSyncedAt: toEpoch(entry.lastSyncedAt),
     hasSynced: entry.hasSynced ?? null
@@ -44,8 +44,8 @@ export function toSyncState(status: LiveSyncStatus): SyncState {
   };
 }
 
-export function toStreamStates(status: LiveSyncStatus): StreamState[] {
-  return (status.syncStreams ?? []).map((stream: LiveStreamStatus) => {
+export function toStreamStates(status: SyncStatus): StreamState[] {
+  return (status.syncStreams ?? []).map((stream: SyncStreamStatus) => {
     const subscription = stream.subscription;
     return {
       name: subscription.name,

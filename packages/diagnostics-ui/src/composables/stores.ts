@@ -1,14 +1,23 @@
 import { atom, type ReadableAtom, type WritableAtom } from 'nanostores';
-import { hasSources, type DiagnosticsSource, type SdkIntegration } from './integration.js';
-import type { BucketState, LogRecord, StreamState, SyncState, Unsubscribe, UploadQueueState } from './shapes.js';
+import {
+  hasSources,
+  type BucketState,
+  type DiagnosticsSource,
+  type LogRecord,
+  type SdkIntegration,
+  type StreamState,
+  type SyncState,
+  type Unsubscribe,
+  type UploadQueueState
+} from '@powersync/diagnostics-core';
 
 const MAX_LOGS = 2000;
 
 /**
  * Reactive stores derived from an {@link SdkIntegration}'s pushed events.
  *
- * The UI reads these atoms; they update from `observeEvents`. This is the UI's copy of the push
- * bridge — state is rebuilt here from the event stream rather than assumed to cross the boundary.
+ * The UI reads these atoms; they update from `observeEvents`. State is rebuilt here from the event
+ * stream rather than assumed to cross the boundary.
  */
 export interface DiagnosticsStores {
   /**
