@@ -1,6 +1,6 @@
 {
   "name": "@powersync/web",
-  "version": "2.4.0",
+  "version": "2.4.1",
   "description": "PowerSync Web SDK",
   "main": "lib/index.js",
   "module": "lib/index.js",
