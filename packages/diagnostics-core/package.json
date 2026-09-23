@@ -2,7 +2,7 @@
   "name": "@powersync/diagnostics-core",
   "version": "0.1.0",
   "type": "module",
-  "description": "The PowerSync diagnostics protocol (SdkIntegration and its data shapes), the iframe bridge, and the JavaScript agent.",
+  "description": "The PowerSync diagnostics protocol (SdkIntegration and its data shapes) and the iframe bridge.",
   "author": "PowerSync",
   "license": "Apache-2.0",
   "homepage": "https://docs.powersync.com",
@@ -23,10 +23,6 @@
     ".": {
       "types": "./lib/src/index.d.ts",
       "default": "./lib/src/index.js"
-    },
-    "./js": {
-      "types": "./lib/src/js.d.ts",
-      "default": "./lib/src/js.js"
     }
   },
   "scripts": {
@@ -44,7 +40,6 @@
     "typescript": "catalog:"
   },
   "dependencies": {
-    "comlink": "catalog:",
-    "nanostores": "^1.5.2"
+    "comlink": "catalog:"
   }
 }
