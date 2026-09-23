@@ -51,6 +51,7 @@ import {
 import { CoreSyncStatus } from './sync/stream/core-instruction.js';
 import { CrudEntryImpl, CrudEntryJSON } from './sync/bucket/CrudEntry.js';
 import { OnChangeQueryProcessor } from './watched/OnChangeQueryProcessor.js';
+import { WatchedQueryPluginRegistry } from './plugins/WatchedQueryPluginRegistry.js';
 import { EventQueue, throttleTrailing } from '../utils/async.js';
 import { ControlledExecutor } from '../utils/ControlledExecutor.js';
 import { DEFAULT_WATCH_THROTTLE_MS } from './watched/WatchedQuery.js';
@@ -142,6 +143,9 @@ export abstract class BasePowerSyncDatabase<Options extends BasePowerSyncDatabas
 
   logger: PowerSyncLogger;
 
+  /** @internal */
+  readonly pluginRegistry: WatchedQueryPluginRegistry;
+
   constructor(protected options: Options) {
     super();
     this.logger = options.logger ?? createConsoleLogger();
@@ -161,6 +165,7 @@ export abstract class BasePowerSyncDatabase<Options extends BasePowerSyncDatabas
     this.ready = false;
     this.sdkVersion = '';
     this.runExclusiveMutex = new Mutex();
+    this.pluginRegistry = new WatchedQueryPluginRegistry(options.plugins ?? [], this.logger);
 
     // Start async init
     this.subscriptions = {
@@ -357,6 +362,17 @@ export abstract class BasePowerSyncDatabase<Options extends BasePowerSyncDatabas
    * This is to be automatically executed in the constructor.
    */
   protected async initialize() {
+    // The registry opens BEFORE the database does. A plugin that seeds from its own
+    // storage — a cache reading IndexedDB, hydration data already in memory — has no
+    // reason to wait for SQLite, and waiting is precisely the cost it exists to avoid:
+    // opening the file, loading the version, applying the schema and resolving sync
+    // status are the slow steps, and they are slowest exactly when the dataset is
+    // large enough for the seed to matter. Opening here lets a watched query
+    // constructed during startup paint its seeded rows while the work below is still
+    // running. Plugins therefore cannot assume the database is usable inside
+    // `onDatabaseOpen`; it is a registration point, not a ready signal.
+    this.pluginRegistry.open({ db: this, logger: this.logger });
+
     await this._initialize();
     await this.loadVersion();
     await this.updateSchema(this.options.schema);
@@ -465,6 +481,8 @@ export abstract class BasePowerSyncDatabase<Options extends BasePowerSyncDatabas
 
     // The data has been deleted - reset the sync status
     await this.resolveOfflineSyncStatus();
+
+    this.iterateListeners((cb) => cb.cleared?.());
   }
 
   syncStream(name: string, params?: Record<string, any>): SyncStream {
@@ -503,6 +521,7 @@ export abstract class BasePowerSyncDatabase<Options extends BasePowerSyncDatabas
     }
 
     await this.connectionManager.close();
+    await this.pluginRegistry.dispose();
     await this.database.close();
     this.closed = true;
     await this.iterateAsyncListeners(async (cb) => cb.closed?.());
@@ -689,7 +708,7 @@ SELECT * FROM crud_entries;
   }
 
   query<RowType>(query: ArrayQueryDefinition<RowType>): Query<RowType> {
-    const { sql, parameters = [], mapper } = query;
+    const { sql, parameters = [], mapper, extensions } = query;
     const compatibleQuery: WatchCompatibleQuery<RowType[]> = {
       compile: () => ({
         sql,
@@ -700,13 +719,20 @@ SELECT * FROM crud_entries;
         return mapper ? result.map(mapper) : (result as RowType[]);
       }
     };
-    return this.customQuery(compatibleQuery);
+    // Routed through `customQuery` so a subclass overriding that one extension point
+    // also governs queries built from an `ArrayQueryDefinition`.
+    return this.customQuery(compatibleQuery, extensions);
   }
 
-  customQuery<RowType>(query: WatchCompatibleQuery<RowType[]>): Query<RowType> {
+  customQuery<RowType>(
+    query: WatchCompatibleQuery<RowType[]>,
+    /** Plugin options declared on the definition this query came from, if any. */
+    defaultExtensions?: Record<string, unknown>
+  ): Query<RowType> {
     return new CustomQuery({
       db: this,
-      query
+      query,
+      defaultExtensions
     });
   }
 
@@ -725,6 +751,8 @@ SELECT * FROM crud_entries;
     const watchedQuery = new OnChangeQueryProcessor({
       db: this,
       comparator,
+      // placeholderData is intentionally not an array: plugins receive
+      // dataIsArray: false for this legacy path and are expected to ignore it.
       placeholderData: null as unknown as QueryResult, // FIXME
       watchOptions: {
         query: {

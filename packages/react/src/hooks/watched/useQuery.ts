@@ -84,7 +84,8 @@ export function useQuery<RowType = any>(
       // Maintains backwards compatibility with previous versions
       // Differentiation is opt-in by default
       // We emit new data for each table change by default.
-      rowComparator: options.rowComparator
+      rowComparator: options.rowComparator,
+      extensions: options.extensions
     },
     active: !runOnce && streamsHaveSynced
   });
@@ -96,4 +97,11 @@ export function useQuery<RowType = any>(
   return (runOnce ? single : watched) ?? _loadingState;
 }
 
-const _loadingState = { isLoading: true, isFetching: false, data: [], error: undefined };
+const _loadingState: QueryResult<any> = {
+  isLoading: true,
+  isFetching: false,
+  data: [],
+  error: undefined,
+  source: 'placeholder',
+  sourceMeta: null
+};

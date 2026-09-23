@@ -20,6 +20,10 @@ export type WatchedQueryResult<T> = {
    * Function used to run the query again.
    */
   refresh?: () => Promise<void>;
+  /** Where `data` came from: 'placeholder', 'live', or a plugin tag. @alpha */
+  readonly source: Ref<string>;
+  /** Plugin-defined detail about seeded data, else null. @alpha */
+  readonly sourceMeta: Ref<unknown>;
 };
 
 const createLoadingState = <T>(): WatchedQueryResult<T> => ({
@@ -27,7 +31,9 @@ const createLoadingState = <T>(): WatchedQueryResult<T> => ({
   isLoading: ref(true),
   isFetching: ref(true),
   error: ref(undefined),
-  refresh: undefined
+  refresh: undefined,
+  source: ref('placeholder'),
+  sourceMeta: ref(null)
 });
 
 /**
@@ -104,6 +110,16 @@ export const useQuery = <T = any>(
     error: computed(() => {
       if (!streamsHaveSynced.value) return undefined;
       return runOnce.value ? single.error.value : watched.error.value;
+    }),
+
+    source: computed(() => {
+      if (!streamsHaveSynced.value) return loadingState.source.value;
+      return runOnce.value ? single.source.value : watched.source.value;
+    }),
+
+    sourceMeta: computed(() => {
+      if (!streamsHaveSynced.value) return loadingState.sourceMeta.value;
+      return runOnce.value ? single.sourceMeta.value : watched.sourceMeta.value;
     }),
 
     refresh: () => {

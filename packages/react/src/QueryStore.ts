@@ -28,11 +28,13 @@ export class QueryStore {
       ? this.db.customQuery(query).differentialWatch({
           rowComparator: options.rowComparator,
           reportFetching: options.reportFetching,
-          throttleMs: options.throttleMs
+          throttleMs: options.throttleMs,
+          extensions: options.extensions
         })
       : this.db.customQuery(query).watch({
           reportFetching: options.reportFetching,
-          throttleMs: options.throttleMs
+          throttleMs: options.throttleMs,
+          extensions: options.extensions
         });
 
     this.cache.set(key, watch);

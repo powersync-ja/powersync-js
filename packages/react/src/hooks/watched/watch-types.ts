@@ -15,6 +15,13 @@ export interface HookWatchOptions extends Omit<SQLOnChangeOptions, 'signal'> {
    */
   streams?: QuerySyncStreamOptions[];
   reportFetching?: boolean;
+  /**
+   * Per-query options addressed to watched-query plugins by id,
+   * e.g. `{ cache: false }`.
+   *
+   * @alpha
+   */
+  extensions?: Record<string, unknown>;
 }
 
 /**
@@ -71,6 +78,10 @@ export type ReadonlyQueryResult<RowType> = {
    * Function used to run the query again.
    */
   refresh?: (signal?: AbortSignal) => Promise<void>;
+  /** Where `data` came from: 'placeholder', 'live', or a plugin tag. @alpha */
+  readonly source: string;
+  /** Plugin-defined detail about seeded data, else null. @alpha */
+  readonly sourceMeta: unknown;
 };
 
 export type QueryResult<RowType> = {
@@ -88,4 +99,8 @@ export type QueryResult<RowType> = {
    * Function used to run the query again.
    */
   refresh?: (signal?: AbortSignal) => Promise<void>;
+  /** Where `data` came from: 'placeholder', 'live', or a plugin tag. @alpha */
+  source: string;
+  /** Plugin-defined detail about seeded data, else null. @alpha */
+  sourceMeta: unknown;
 };

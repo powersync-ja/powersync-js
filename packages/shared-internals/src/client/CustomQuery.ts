@@ -11,6 +11,7 @@ import { BasePowerSyncDatabase } from './BasePowerSyncDatabase.js';
 import { DifferentialQueryProcessor } from './watched/DifferentialQueryProcessor.js';
 import { OnChangeQueryProcessor } from './watched/OnChangeQueryProcessor.js';
 import { DEFAULT_WATCH_QUERY_OPTIONS } from './watched/WatchedQuery.js';
+import { mergeExtensions } from './plugins/WatchedQueryPluginRegistry.js';
 
 /**
  * @internal
@@ -18,6 +19,8 @@ import { DEFAULT_WATCH_QUERY_OPTIONS } from './watched/WatchedQuery.js';
 export interface CustomQueryOptions<RowType> {
   db: BasePowerSyncDatabase;
   query: WatchCompatibleQuery<RowType[]>;
+  /** Plugin options from the ArrayQueryDefinition this query was built from. */
+  defaultExtensions?: Record<string, unknown>;
 }
 
 /**
@@ -30,7 +33,8 @@ export class CustomQuery<RowType> implements Query<RowType> {
     return {
       reportFetching: options?.reportFetching ?? DEFAULT_WATCH_QUERY_OPTIONS.reportFetching,
       throttleMs: options?.throttleMs ?? DEFAULT_WATCH_QUERY_OPTIONS.throttleMs,
-      triggerOnTables: options?.triggerOnTables
+      triggerOnTables: options?.triggerOnTables,
+      extensions: mergeExtensions(this.options.defaultExtensions, options?.extensions)
     };
   }
 
@@ -39,6 +43,9 @@ export class CustomQuery<RowType> implements Query<RowType> {
       db: this.options.db,
       comparator: watchOptions?.comparator ?? FalsyComparator,
       placeholderData: watchOptions?.placeholderData ?? [],
+      // The processor re-merges these on every settings change; merging only here
+      // would drop them the first time a consumer calls `updateSettings()`.
+      defaultExtensions: this.options.defaultExtensions,
       watchOptions: {
         ...this.resolveOptions(watchOptions),
         query: this.options.query
@@ -51,6 +58,7 @@ export class CustomQuery<RowType> implements Query<RowType> {
       db: this.options.db,
       rowComparator: differentialWatchOptions?.rowComparator,
       placeholderData: differentialWatchOptions?.placeholderData ?? [],
+      defaultExtensions: this.options.defaultExtensions,
       watchOptions: {
         ...this.resolveOptions(differentialWatchOptions),
         query: this.options.query

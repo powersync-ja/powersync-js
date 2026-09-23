@@ -17,6 +17,7 @@ import { WatchCompatibleQuery } from './watched/WatchedQuery.js';
 import { Mutex } from '../utils/mutex.js';
 import { QueryResult } from '../db/QueryResult.js';
 import { CheckpointRequest } from './sync/CheckpointRequest.js';
+import { WatchedQueryPlugin } from './plugins/WatchedQueryPlugin.js';
 
 /**
  * Options passed to {@link CommonPowerSyncDatabase#disconnectAndClear}.
@@ -46,6 +47,13 @@ export interface BasePowerSyncDatabaseOptions {
   /** Schema used for the local database. */
   schema: Schema;
   logger?: PowerSyncLogger;
+
+  /**
+   * Watched-query plugins, applied in registration order.
+   *
+   * @alpha
+   */
+  plugins?: WatchedQueryPlugin[];
 }
 
 /**
@@ -109,6 +117,14 @@ export interface PowerSyncDBListener extends BaseListener {
   statusChanged?: (status: SyncStatus) => void;
   closing: () => Promise<void> | void;
   closed: () => Promise<void> | void;
+
+  /**
+   * Fired after {@link CommonPowerSyncDatabase.disconnectAndClear} has cleared the
+   * local database.
+   *
+   * @alpha
+   */
+  cleared?: () => void;
 }
 
 /**
