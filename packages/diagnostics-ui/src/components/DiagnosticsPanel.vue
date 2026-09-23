@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
-import { TabsRoot, TabsList, TabsTrigger, TabsContent } from 'reka-ui';
+import { TabsRoot, TabsList, TabsTrigger, TabsContent, TooltipProvider } from 'reka-ui';
 import StatusBar from './StatusBar.vue';
 import Logo from './ui/Logo.vue';
 import EmptyState from './ui/EmptyState.vue';
 import CodeTabs from './ui/CodeTabs.vue';
+import Tooltip from './ui/Tooltip.vue';
+import HoldButton from './ui/HoldButton.vue';
 import { useTheme } from '../composables/theme';
 import { useDiagnostics } from '../composables/diagnostics';
 import { useSyncActions } from '../composables/actions';
@@ -19,7 +21,7 @@ import IconMoon from '~icons/carbon/moon';
 import IconConnecting from '~icons/carbon/circle-dash';
 import IconOffline from '~icons/carbon/connection-signal-off';
 import IconSync from '~icons/carbon/update-now';
-import IconReset from '~icons/carbon/reset';
+import IconTrash from '~icons/carbon/trash-can';
 
 const { isDark, toggle } = useTheme();
 const { connected, sources, activeSource, selectSource } = useDiagnostics();
@@ -121,55 +123,59 @@ watch(activeTab, (value) => {
         <span class="font-semibold tracking-tight">PowerSync</span>
         <span class="text-xs text-muted-foreground">Diagnostics</span>
       </span>
-      <div class="flex items-center gap-0.5">
-        <!-- Several databases attached: pick the one to show -->
-        <select
-          v-if="sourceChoices.length > 1"
-          class="mr-1 rounded border bg-background px-1.5 py-0.5 text-xs text-foreground"
-          title="Attached database"
-          aria-label="Attached database"
-          :value="activeSource?.id"
-          @change="onSelectSource"
-        >
-          <option v-for="source in sourceChoices" :key="source.id" :value="source.id">
-            {{ source.id }}{{ source.sdk ? ` · ${source.sdk}` : '' }}
-          </option>
-        </select>
-        <!-- Global sync actions, available from every tab -->
-        <template v-if="connected">
-          <button
-            type="button"
-            class="rounded p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-50"
-            title="Sync now (request a checkpoint and wait until caught up)"
-            aria-label="Sync now"
-            :disabled="syncing"
-            @click="syncNow"
+      <TooltipProvider>
+        <div class="flex items-center gap-0.5">
+          <!-- Several databases attached: pick the one to show -->
+          <select
+            v-if="sourceChoices.length > 1"
+            class="mr-1 rounded border bg-background px-1.5 py-0.5 text-xs text-foreground"
+            title="Attached database"
+            aria-label="Attached database"
+            :value="activeSource?.id"
+            @change="onSelectSource"
           >
-            <IconSync :class="['size-4', syncing && 'animate-spin']" />
-          </button>
-          <button
-            type="button"
-            class="rounded p-1 text-muted-foreground transition-colors hover:bg-destructive/15 hover:text-destructive disabled:opacity-50"
-            title="Clear &amp; re-sync (wipe local data and download again)"
-            aria-label="Clear and re-sync"
-            :disabled="clearing"
-            @click="clearAndResync"
-          >
-            <IconReset :class="['size-4', clearing && 'animate-spin']" />
-          </button>
-          <span class="mx-0.5 h-4 w-px bg-border" aria-hidden="true" />
-        </template>
-        <button
-          type="button"
-          class="rounded p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-          :title="isDark ? 'Switch to light' : 'Switch to dark'"
-          :aria-label="isDark ? 'Switch to light theme' : 'Switch to dark theme'"
-          @click="toggle"
-        >
-          <IconSun v-if="isDark" class="size-4" />
-          <IconMoon v-else class="size-4" />
-        </button>
-      </div>
+            <option v-for="source in sourceChoices" :key="source.id" :value="source.id">
+              {{ source.id }}{{ source.sdk ? ` · ${source.sdk}` : '' }}
+            </option>
+          </select>
+          <!-- Global sync actions, available from every tab -->
+          <template v-if="connected">
+            <Tooltip text="Sync now (request a checkpoint and wait until caught up)">
+              <button
+                type="button"
+                class="rounded p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-50"
+                aria-label="Sync now"
+                :disabled="syncing"
+                @click="syncNow"
+              >
+                <IconSync :class="['size-4', syncing && 'animate-spin']" />
+              </button>
+            </Tooltip>
+            <!-- Destructive: wipes local data. Fires only after a one-second hold. -->
+            <Tooltip text="Clear & re-sync (wipes local data and download again) Hold to wipe">
+              <HoldButton
+                aria-label="Clear and re-sync (hold to confirm)"
+                :disabled="clearing"
+                @confirm="clearAndResync"
+              >
+                <IconTrash :class="['size-4', clearing && 'animate-pulse']" />
+              </HoldButton>
+            </Tooltip>
+            <span class="mx-0.5 h-4 w-px bg-border" aria-hidden="true" />
+          </template>
+          <Tooltip :text="isDark ? 'Switch to the light theme' : 'Switch to the dark theme'">
+            <button
+              type="button"
+              class="rounded p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              :aria-label="isDark ? 'Switch to light theme' : 'Switch to dark theme'"
+              @click="toggle"
+            >
+              <IconSun v-if="isDark" class="size-4" />
+              <IconMoon v-else class="size-4" />
+            </button>
+          </Tooltip>
+        </div>
+      </TooltipProvider>
     </header>
 
     <!-- Persistent, real-time status bar (visible on every tab) -->

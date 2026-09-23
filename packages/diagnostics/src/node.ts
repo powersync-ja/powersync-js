@@ -13,8 +13,8 @@ export interface EnableDiagnosticsOptions {
   /** Bind host. @default '127.0.0.1' */
   host?: string;
   /**
-   * Ask the browser to confirm with a one-time code printed in the terminal before it can reach
-   * the database. `false` trusts every local browser. @default true
+   * Gate the window behind a code printed in the terminal, together with a link that carries it, so
+   * opening the link is enough. `false` trusts every local browser. @default true
    */
   auth?: boolean;
   /** Open the browser once the server is up. @default false */

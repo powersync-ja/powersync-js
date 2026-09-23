@@ -1,6 +1,5 @@
 // The PowerSync devframe definition and the node-side registry of served databases.
-// Hosts mount it: `./vite` (Vite DevTools dock), `./node` (a node app's dev server), the
-// `powersync-devtools` bin (standalone window and stdio MCP).
+// Hosts mount it: `./vite` (Vite DevTools dock) and `./node` (a node app's dev server).
 import './rpc-types.js';
 
 export { definition, registerIntegration, uiDistDir } from './definition.js';

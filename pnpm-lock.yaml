@@ -420,9 +420,6 @@ importers:
       '@powersync/diagnostics-ui':
         specifier: workspace:*
         version: link:../diagnostics-ui
-      cac:
-        specifier: ^7.0.0
-        version: 7.0.0
       devframe:
         specifier: 1.0.0
         version: 1.0.0(@devframes/agentic@1.0.0)(cac@7.0.0)(srvx@1.0.5)

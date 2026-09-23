@@ -9,7 +9,8 @@ It is a [devframe](https://devfra.me) definition, so one implementation mounts i
 | A Vite app (React, Vue, Svelte, …) with Vite DevTools | `@powersync/diagnostics/vite`                                                                                         | A **PowerSync** dock in Vite DevTools, and MCP tools at `/__devtools/__mcp` |
 | A Nuxt app                                            | [`@powersync/nuxt`](https://github.com/powersync-ja/powersync-js/tree/main/packages/nuxt) with `useDiagnostics: true` | A **PowerSync** tab or dock in Nuxt DevTools                                |
 | A node app (`@powersync/node`)                        | `@powersync/diagnostics/node`                                                                                         | A DevTools window served by your process, and MCP tools at `/__mcp`         |
-| Anything else with `fetch` and `WebSocket`            | the `powersync-devtools` CLI + `@powersync/diagnostics/agent`                                                         | A DevTools window on your machine that the app attaches to                  |
+
+In every case the process that already runs your app (the Vite or Nuxt dev server, or your node process) also serves the DevTools window.
 
 Everything runs in development only. Nothing from this package reaches a production build.
 
@@ -68,33 +69,9 @@ if (process.env.NODE_ENV !== 'production') {
 }
 ```
 
-Your process serves the DevTools window at that port. The browser confirms itself with a one-time code printed in your terminal; pass `auth: false` to trust every local browser. MCP tools are at `<url>/__mcp`.
+Your process serves the DevTools window at that port. The terminal prints a link that carries a one-time code; open it and the browser is trusted. Pass `auth: false` to trust every local browser. MCP tools are at `<url>/__mcp`.
 
 Options: `port` (default 9999), `host`, `auth` (default `true`), `open` (open the browser, default `false`), `sdk` and `id` (labels shown in the UI), `mcp` (the MCP endpoint, see [MCP](#mcp)).
-
-## The CLI and remote apps
-
-```bash
-npx powersync-devtools                 # a DevTools window on http://localhost:9999
-npx powersync-devtools --token <secret> # apps attach with this secret instead of the one-time code
-npx powersync-devtools --no-auth       # trust every local browser and app
-npx powersync-devtools --mcp-any-origin # accept MCP requests that carry no Origin header
-npx powersync-devtools --host 0.0.0.0  # reachable from a phone on the same network
-```
-
-The window waits for a database to attach. An app attaches with `connectAgent`, from any JavaScript runtime that has `fetch` and `WebSocket`:
-
-```ts
-import { connectAgent } from '@powersync/diagnostics/agent';
-
-const stop = await connectAgent(db, {
-  baseURL: 'http://localhost:9999/',
-  authToken: process.env.POWERSYNC_DEVTOOLS_TOKEN, // the window's --token, or start it with --no-auth
-  sdk: '@powersync/react-native'
-});
-```
-
-This is the path for React Native and for any host without a DevTools dock. Verified from a node process; the phone is the next test. For a device on the same network, start the window with `--host 0.0.0.0 --token <secret>`, point `baseURL` at your computer's address, and pass the same secret as `authToken`. The client fills in a `location` global when the runtime has none (Hermes, node) and skips the core event channel when `BroadcastChannel` is missing, so bucket totals stay empty there.
 
 ## MCP
 
@@ -118,7 +95,6 @@ The Streamable HTTP endpoint accepts requests with a loopback `Origin` header; a
 | -------------------------- | ----------------------------------------------------------------------------------------------- |
 | Vite (and Nuxt DevTools 4) | `devtools: { mcp: { allowedOrigins: false } }` in `vite.config.ts` (Vite DevTools' own setting) |
 | Node app                   | `enablePowerSyncDiagnostics(db, { mcp: { allowedOrigins: false } })`                            |
-| CLI                        | `powersync-devtools --mcp-any-origin`                                                           |
 
 The same `mcp` setting takes `false` to leave the endpoint off, or `{ authorization: '<bearer token>' }` to require a token instead. Example call:
 
@@ -131,22 +107,20 @@ curl -X POST http://localhost:9999/__mcp \
 
 ## Entrypoints
 
-| Entry                      | Runs in            | Contents                                                                                                        |
-| -------------------------- | ------------------ | --------------------------------------------------------------------------------------------------------------- |
-| `@powersync/diagnostics`   | node               | `definition`, the devframe definition; `registerIntegration` to serve an `SdkIntegration` from the same process |
-| `./vite`                   | node (Vite config) | `powersyncDevtools()`, the Vite DevTools plugin                                                                 |
-| `./node`                   | node app           | `enablePowerSyncDiagnostics(db, options)`                                                                       |
-| `./agent`                  | any JS runtime     | `createIntegration(db, sdk)`, `createAgentServer(rpc)`, `connectAgent(db, options)`                             |
-| `./client`                 | the app page       | the dock client script for `@powersync/web` apps (loaded by the dock, not by you)                               |
-| `./page`                   | the app page       | the `postMessage` agent for hosts without a devframe hub (used by `@powersync/nuxt` on Nuxt DevTools 3)         |
-| `./vite-static`            | node (Vite config) | serves the UI at `/__powersync/` from a plain Vite dev server, for hosts that embed it in their own iframe      |
-| `powersync-devtools` (bin) | shell              | the standalone window, with MCP at `/__mcp`                                                                     |
+| Entry                    | Runs in            | Contents                                                                                                        |
+| ------------------------ | ------------------ | --------------------------------------------------------------------------------------------------------------- |
+| `@powersync/diagnostics` | node               | `definition`, the devframe definition; `registerIntegration` to serve an `SdkIntegration` from the same process |
+| `./vite`                 | node (Vite config) | `powersyncDevtools()`, the Vite DevTools plugin                                                                 |
+| `./node`                 | node app           | `enablePowerSyncDiagnostics(db, options)`                                                                       |
+| `./client`               | the app page       | the dock client script for `@powersync/web` apps (loaded by the dock, not by you)                               |
+| `./page`                 | the app page       | the `postMessage` agent for hosts without a devframe hub (used by `@powersync/nuxt` on Nuxt DevTools 3)         |
+| `./vite-static`          | node (Vite config) | serves the UI at `/__powersync/` from a plain Vite dev server, for hosts that embed it in their own iframe      |
 
 ## Requirements
 
 - `@powersync/web >= 2.2` for browser apps, `@powersync/node` for node apps.
 - Vite DevTools for the dock: Vite `>= 8.3` with `devtools: true`, or the `@vitejs/devtools` plugin on Vite 7 (verified on 7.3).
-- Node `>= 20` for the node entry and the CLI.
+- Node `>= 20` for the node entry.
 
 ## Related packages
 
