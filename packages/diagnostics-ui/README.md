@@ -41,6 +41,8 @@ provideDiagnostics(integration);
 
 `provideDiagnostics` also accepts a `Promise<SdkIntegration>`, for a host that receives its integration after setup.
 
+An embedder that owns the theme passes it as an option, as a value, ref or getter: `provideDiagnostics(integration, { theme: 'dark' })`. The panel then follows it, hides its own toggle and persists nothing. The standalone page reads `?theme=dark|light` from its URL for the same purpose.
+
 ## Development
 
 ```bash

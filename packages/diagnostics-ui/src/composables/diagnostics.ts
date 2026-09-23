@@ -1,8 +1,17 @@
-import { inject, provide, onScopeDispose, shallowRef, type InjectionKey, type ShallowRef } from 'vue';
+import {
+  inject,
+  provide,
+  onScopeDispose,
+  shallowRef,
+  type InjectionKey,
+  type MaybeRefOrGetter,
+  type ShallowRef
+} from 'vue';
 import { atom } from 'nanostores';
 import { useStore } from '@nanostores/vue';
 import type { SdkIntegration } from '@powersync/diagnostics-core';
 import { createDiagnosticsStores, type DiagnosticsStores } from './stores';
+import { setHostTheme, type DiagnosticsTheme } from './theme';
 
 interface DiagnosticsContext {
   /** Set once the integration is available. Null while a promised integration is still pending. */
@@ -12,6 +21,15 @@ interface DiagnosticsContext {
 
 const KEY: InjectionKey<DiagnosticsContext> = Symbol('powersync-diagnostics');
 
+export interface ProvideDiagnosticsOptions {
+  /**
+   * The theme, when the embedder owns it (Flutter DevTools, a DevTools dock that follows the outer
+   * frame). The panel follows this value, hides its own toggle and persists nothing. Leave it out and
+   * the panel manages its theme itself.
+   */
+  theme?: MaybeRefOrGetter<DiagnosticsTheme>;
+}
+
 /**
  * Provide an {@link SdkIntegration} to the diagnostics UI tree. Call once in the host, during setup.
  *
@@ -19,10 +37,14 @@ const KEY: InjectionKey<DiagnosticsContext> = Symbol('powersync-diagnostics');
  * waiting for a `MessagePort`) can still provide synchronously — Vue's `provide` only works during
  * component setup. The UI derives its reactive state from the integration's pushed events.
  */
-export function provideDiagnostics(source: SdkIntegration | Promise<SdkIntegration>): void {
+export function provideDiagnostics(
+  source: SdkIntegration | Promise<SdkIntegration>,
+  options: ProvideDiagnosticsOptions = {}
+): void {
   const integration = shallowRef<SdkIntegration | null>(null);
   const stores = shallowRef<DiagnosticsStores | null>(null);
   let disposed = false;
+  setHostTheme(options.theme ?? null);
 
   const attach = (value: SdkIntegration) => {
     if (disposed) return;
@@ -39,6 +61,7 @@ export function provideDiagnostics(source: SdkIntegration | Promise<SdkIntegrati
   onScopeDispose(() => {
     disposed = true;
     stores.value?.dispose();
+    setHostTheme(null);
   });
 }
 

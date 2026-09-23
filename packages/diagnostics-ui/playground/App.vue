@@ -8,7 +8,11 @@ import { MockIntegration } from './mockIntegration';
 const { isDark } = useTheme();
 
 // Preview the broken/no-client onboarding screen: open http://localhost:5199/?noclient
-const noClient = new URLSearchParams(location.search).has('noclient');
+const params = new URLSearchParams(location.search);
+const noClient = params.has('noclient');
+// Preview host-controlled theming (no toggle, follows the host): open http://localhost:5199/?theme=dark
+const hostTheme = params.get('theme');
+const theme = hostTheme === 'dark' || hostTheme === 'light' ? hostTheme : undefined;
 
 // The harness plays the SDK side: a fake integration that answers the protocol with canned data.
 const mock = new MockIntegration();
@@ -19,7 +23,7 @@ const channel = new MessageChannel();
 const stopServing = noClient ? () => {} : exposeIntegration(mock, channel.port1);
 const integration = connectIntegration(channel.port2);
 
-provideDiagnostics(integration);
+provideDiagnostics(integration, { theme });
 
 onMounted(() => {
   if (!noClient) {

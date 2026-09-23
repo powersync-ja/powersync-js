@@ -1,12 +1,16 @@
-import { ref } from 'vue';
+import { computed, ref, shallowRef, toValue, type MaybeRefOrGetter } from 'vue';
+
+export type DiagnosticsTheme = 'light' | 'dark';
 
 /**
- * Shared, persisted light/dark theme for the diagnostics UI.
+ * Light/dark theme for the diagnostics UI. The panel applies `.dark` to its own root from this state.
  *
- * The panel applies `.dark` to its own root from this state, so it owns its theme rather than
- * inheriting a host-forced class. Defaults to the host/OS preference and can be overridden per
- * viewer (persisted in localStorage). A host that follows its own theme (Nuxt DevTools, the Chrome
- * panel) can push it in via `setTheme(...)`.
+ * Two modes:
+ * - Self-owned (default): starts from the OS preference, the viewer can toggle it, and the choice is
+ *   persisted in localStorage.
+ * - Host-controlled: an embedder that owns the theme (Flutter DevTools, a DevTools dock) hands it in
+ *   through `provideDiagnostics(integration, { theme })`. The panel follows it, hides its toggle, and
+ *   never touches storage.
  */
 const STORAGE_KEY = 'powersync-diagnostics-theme';
 
@@ -25,8 +29,10 @@ function initialIsDark(): boolean {
   }
 }
 
-// Module-level singleton so every component (and the host harness) shares one reactive value.
-const isDark = ref(initialIsDark());
+// Module-level singletons so every component (and the host harness) shares one reactive value.
+const ownIsDark = ref(initialIsDark());
+// The host's theme, normalised to a getter so a ref, a getter or a plain value all read the same way.
+const hostTheme = shallowRef<(() => DiagnosticsTheme) | null>(null);
 
 function persist(dark: boolean): void {
   try {
@@ -36,16 +42,33 @@ function persist(dark: boolean): void {
   }
 }
 
+/** Hands theme ownership to the host, or gives it back with `null`. Called by `provideDiagnostics`. */
+export function setHostTheme(theme: MaybeRefOrGetter<DiagnosticsTheme> | null): void {
+  hostTheme.value = theme === null ? null : () => toValue(theme);
+}
+
+const isDark = computed(() => {
+  const readHostTheme = hostTheme.value;
+  return readHostTheme === null ? ownIsDark.value : readHostTheme() === 'dark';
+});
+
+/** True while an embedder supplies the theme; the panel then shows no toggle. */
+const hostControlled = computed(() => hostTheme.value !== null);
+
 export function useTheme() {
   return {
     isDark,
+    hostControlled,
+    /** Flips the theme. Ignored while the host controls it. */
     toggle() {
-      isDark.value = !isDark.value;
-      persist(isDark.value);
+      if (hostControlled.value) return;
+      ownIsDark.value = !ownIsDark.value;
+      persist(ownIsDark.value);
     },
-    /** Set the theme explicitly, e.g. a host mirroring its own color mode. */
+    /** Sets the self-owned theme explicitly. Ignored while the host controls it. */
     setTheme(dark: boolean) {
-      isDark.value = dark;
+      if (hostControlled.value) return;
+      ownIsDark.value = dark;
       persist(dark);
     }
   };

@@ -23,7 +23,7 @@ import IconOffline from '~icons/carbon/connection-signal-off';
 import IconSync from '~icons/carbon/update-now';
 import IconTrash from '~icons/carbon/trash-can';
 
-const { isDark, toggle } = useTheme();
+const { isDark, hostControlled, toggle } = useTheme();
 const { connected, sources, activeSource, selectSource } = useDiagnostics();
 const { syncing, clearing, syncNow, clearAndResync } = useSyncActions();
 
@@ -163,7 +163,8 @@ watch(activeTab, (value) => {
             </Tooltip>
             <span class="mx-0.5 h-4 w-px bg-border" aria-hidden="true" />
           </template>
-          <Tooltip :text="isDark ? 'Switch to the light theme' : 'Switch to the dark theme'">
+          <!-- Hidden when the embedder owns the theme -->
+          <Tooltip v-if="!hostControlled" :text="isDark ? 'Switch to the light theme' : 'Switch to the dark theme'">
             <button
               type="button"
               class="rounded p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
