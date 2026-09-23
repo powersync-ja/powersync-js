@@ -1,5 +1,11 @@
 # @powersync/web
 
+## 2.4.1
+
+### Patch Changes
+
+- a5c3959: Fix a regression from `@powersync/web` version `2.4.0` where `WASQLiteVFS.OPFSWriteAheadVFS` would use larger write-ahead logs than intended.
+
 ## 2.4.0
 
 ### Minor Changes
