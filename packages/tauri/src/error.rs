@@ -12,6 +12,8 @@ pub enum PowerSyncTauriError {
     IllegalHandleType,
     #[error("Could not obtain connection within timeout")]
     TimeoutExpired,
+    #[error("{0}")]
+    EncryptionUnavailable(String),
 }
 
 impl Serialize for PowerSyncTauriError {
