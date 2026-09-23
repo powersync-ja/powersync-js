@@ -15,13 +15,12 @@ import IconTime from '~icons/carbon/time';
 import IconWarning from '~icons/carbon/warning-alt';
 import IconRenew from '~icons/carbon/renew';
 import IconDisconnect from '~icons/carbon/connection-signal-off';
-import IconReset from '~icons/carbon/reset';
 import IconQueue from '~icons/carbon/cloud-upload';
 import IconSync from '~icons/carbon/update-now';
 import IconLayers from '~icons/carbon/layers';
 
 const { client, connected, status, uploadQueue } = useDiagnostics();
-const { syncing, actionError, syncNow, clearAndResync, reconnect, disconnect } = useSyncActions();
+const { syncing, actionError, syncNow, reconnect, disconnect } = useSyncActions();
 
 const info = ref<ProtocolInfo | null>(null);
 const pendingOps = ref<CrudOp[]>([]);
@@ -95,7 +94,9 @@ const priorityRows = computed(() =>
     <!-- Sync progress (always visible) + Sync now + errors -->
     <section class="rounded-lg border bg-card">
       <header class="flex items-center justify-between border-b px-3 py-1.5 text-xs">
-        <span class="inline-flex items-center gap-1.5 font-medium text-muted-foreground"><IconSync class="size-3.5" /> Sync progress</span>
+        <span class="inline-flex items-center gap-1.5 font-medium text-muted-foreground"
+          ><IconSync class="size-3.5" /> Sync progress</span
+        >
         <span class="inline-flex items-center gap-2">
           <span class="tabular-nums text-foreground">
             <template v-if="progress">
@@ -157,8 +158,12 @@ const priorityRows = computed(() =>
     <!-- Upload health: full queue (virtualized, oldest first) + errors -->
     <section class="rounded-lg border bg-card">
       <header class="flex items-center justify-between border-b px-3 py-1.5 text-xs">
-        <span class="inline-flex items-center gap-1.5 font-medium text-muted-foreground"><IconQueue class="size-3.5" /> Upload queue</span>
-        <span class="tabular-nums text-foreground">{{ formatCompact(queueCount) }} to upload · {{ formatBytes(uploadQueue?.size ?? null) }}</span>
+        <span class="inline-flex items-center gap-1.5 font-medium text-muted-foreground"
+          ><IconQueue class="size-3.5" /> Upload queue</span
+        >
+        <span class="tabular-nums text-foreground"
+          >{{ formatCompact(queueCount) }} to upload · {{ formatBytes(uploadQueue?.size ?? null) }}</span
+        >
       </header>
       <div v-if="uploadError" class="flex items-start gap-1.5 border-b px-3 py-2 text-xs text-destructive">
         <IconWarning class="mt-0.5 size-3.5 shrink-0" />
@@ -175,9 +180,14 @@ const priorityRows = computed(() =>
       </header>
       <ul class="divide-y text-xs">
         <li v-for="row in priorityRows" :key="row.level" class="flex items-center justify-between px-3 py-1.5">
-          <span>Priority {{ row.level }} <span class="text-muted-foreground/60">{{ priorityLabels[row.level] }}</span></span>
+          <span
+            >Priority {{ row.level }}
+            <span class="text-muted-foreground/60">{{ priorityLabels[row.level] }}</span></span
+          >
           <span v-if="row.entry" class="inline-flex items-center gap-2">
-            <span :class="row.entry.hasSynced ? 'text-success' : 'text-muted-foreground'">{{ row.entry.hasSynced ? 'synced' : 'pending' }}</span>
+            <span :class="row.entry.hasSynced ? 'text-success' : 'text-muted-foreground'">{{
+              row.entry.hasSynced ? 'synced' : 'pending'
+            }}</span>
             <span class="tabular-nums text-muted-foreground">{{ formatPrecise(row.entry.lastSyncedAt) }}</span>
           </span>
           <span v-else class="text-muted-foreground/40">N/A</span>
@@ -189,7 +199,6 @@ const priorityRows = computed(() =>
     <div class="flex flex-wrap gap-2">
       <Button size="sm" variant="outline" @click="reconnect()"><IconRenew class="size-3.5" /> Reconnect</Button>
       <Button size="sm" variant="outline" @click="disconnect()"><IconDisconnect class="size-3.5" /> Disconnect</Button>
-      <Button size="sm" variant="destructive" @click="clearAndResync()"><IconReset class="size-3.5" /> Clear &amp; re-sync</Button>
     </div>
   </div>
 </template>

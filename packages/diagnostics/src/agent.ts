@@ -1,9 +1,8 @@
 /**
- * Runtime-neutral pieces shared by every JavaScript host: building the agent over a live database,
- * and serving agents to a devframe node side over an RPC client (a dock script in a web page, a
- * remote app such as React Native, or a node process).
+ * Pieces shared by every JavaScript host: building the agent over a live database, and serving
+ * agents to a devframe node side over an RPC client (a dock script in a web page, or a node process).
  */
-import { connectDevframe, type DevframeRpcClient } from 'devframe/client';
+import type { DevframeRpcClient } from 'devframe/client';
 import type {
   ActionRequest,
   CoreDiagnosticsEvent,
@@ -119,57 +118,5 @@ export function createAgentServer(rpc: DevframeRpcClient): AgentServer {
         await this.release(sourceId);
       }
     }
-  };
-}
-
-export interface ConnectAgentOptions {
-  /** Where the PowerSync DevTools server is, e.g. `http://localhost:9999/`. */
-  baseURL: string;
-  /** A pre-shared token the server trusts (`clientAuthTokens`), so no one-time code is needed. */
-  authToken?: string;
-  /** A label for the SDK, e.g. `@powersync/react-native`. */
-  sdk?: string;
-  /** The source id shown in the UI. */
-  id?: string;
-}
-
-/**
- * Serves a database to a running PowerSync DevTools server from anywhere with `fetch` and
- * `WebSocket`: a plain web page, a React Native app, a node process. Development only.
- * Returns a function that stops serving.
- */
-export async function connectAgent(
-  db: DiagnosableDatabase,
-  options: ConnectAgentOptions
-): Promise<() => Promise<void>> {
-  const sdk = options.sdk ?? 'javascript';
-  // The devframe client resolves its socket URL against `location` and reports `location.origin` in
-  // the trust handshake. Hermes and node have no `location`; the server address stands in for it.
-  if (typeof globalThis.location === 'undefined') {
-    Object.defineProperty(globalThis, 'location', {
-      value: new URL(options.baseURL),
-      configurable: true,
-      writable: true
-    });
-  }
-  const rpc = await connectDevframe({
-    baseURL: options.baseURL,
-    authToken: options.authToken,
-    simpleAuth: false,
-    otpParam: false
-  });
-  // One handshake decides: the token is accepted, or the server refused it and waiting would not help.
-  const trusted = rpc.isTrusted || (await rpc.requestTrust());
-  if (!trusted) {
-    rpc.close?.();
-    throw new Error(
-      '[powersync-diagnostics] the DevTools server did not trust this client; pass the authToken it was started with, or start it with --no-auth.'
-    );
-  }
-  const server = createAgentServer(rpc);
-  await server.serve(options.id ?? `${sdk}-1`, createIntegration(db, sdk), sdk);
-  return async () => {
-    await server.close();
-    rpc.close?.();
   };
 }

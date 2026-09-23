@@ -299,7 +299,7 @@ The diagnostics UI helps you inspect and diagnose the state of your PowerSync cl
 
 ### How it works
 
-The module uses [`@powersync/diagnostics`](https://github.com/powersync-ja/powersync-js/tree/main/packages/diagnostics). The same UI and the same MCP tools work in a plain Vite app, in a node app, and from the `powersync-devtools` CLI. See that package for details, including the MCP tool list.
+The module uses [`@powersync/diagnostics`](https://github.com/powersync-ja/powersync-js/tree/main/packages/diagnostics). The universal solution used by PowerSync to provide a unified diagnostics experience.
 
 ### Migrating from `NuxtPowerSyncDatabase`
 
