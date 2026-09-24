@@ -32,7 +32,8 @@ function initialIsDark(): boolean {
 // Module-level singletons so every component (and the host harness) shares one reactive value.
 const ownIsDark = ref(initialIsDark());
 // The host's theme, normalised to a getter so a ref, a getter or a plain value all read the same way.
-const hostTheme = shallowRef<(() => DiagnosticsTheme) | null>(null);
+// The getter may yield nothing while the host has not decided yet; the panel then acts as self-owned.
+const hostTheme = shallowRef<(() => DiagnosticsTheme | null | undefined) | null>(null);
 
 function persist(dark: boolean): void {
   try {
@@ -43,17 +44,17 @@ function persist(dark: boolean): void {
 }
 
 /** Hands theme ownership to the host, or gives it back with `null`. Called by `provideDiagnostics`. */
-export function setHostTheme(theme: MaybeRefOrGetter<DiagnosticsTheme> | null): void {
+export function setHostTheme(theme: MaybeRefOrGetter<DiagnosticsTheme | null | undefined> | null): void {
   hostTheme.value = theme === null ? null : () => toValue(theme);
 }
 
-const isDark = computed(() => {
-  const readHostTheme = hostTheme.value;
-  return readHostTheme === null ? ownIsDark.value : readHostTheme() === 'dark';
-});
+/** The host's current theme, or `null` when no host owns it (yet). */
+const hostValue = computed(() => hostTheme.value?.() ?? null);
+
+const isDark = computed(() => (hostValue.value === null ? ownIsDark.value : hostValue.value === 'dark'));
 
 /** True while an embedder supplies the theme; the panel then shows no toggle. */
-const hostControlled = computed(() => hostTheme.value !== null);
+const hostControlled = computed(() => hostValue.value !== null);
 
 export function useTheme() {
   return {

@@ -41,7 +41,7 @@ provideDiagnostics(integration);
 
 `provideDiagnostics` also accepts a `Promise<SdkIntegration>`, for a host that receives its integration after setup.
 
-An embedder that owns the theme passes it as an option, as a value, ref or getter: `provideDiagnostics(integration, { theme: 'dark' })`. The panel then follows it, hides its own toggle and persists nothing. The standalone page reads `?theme=dark|light` from its URL for the same purpose.
+An embedder that owns the theme passes it as an option, as a value, ref or getter: `provideDiagnostics(integration, { theme: 'dark' })`. The panel then follows it, hides its own toggle and persists nothing. The standalone page has two host-agnostic channels for the same purpose: `?theme=dark|light` on its URL, and a `message` event `{ type: 'powersync-diagnostics:theme', theme: 'dark' | 'light' }` posted to its window, for a host that learns the theme later or changes it at runtime.
 
 ## Development
 

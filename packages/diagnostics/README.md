@@ -107,14 +107,14 @@ curl -X POST http://localhost:9999/__mcp \
 
 ## Entrypoints
 
-| Entry                    | Runs in            | Contents                                                                                                        |
-| ------------------------ | ------------------ | --------------------------------------------------------------------------------------------------------------- |
-| `@powersync/diagnostics` | node               | `definition`, the devframe definition; `registerIntegration` to serve an `SdkIntegration` from the same process |
-| `./vite`                 | node (Vite config) | `powersyncDevtools()`, the Vite DevTools plugin                                                                 |
-| `./node`                 | node app           | `enablePowerSyncDiagnostics(db, options)`                                                                       |
-| `./client`               | the app page       | the dock client script for `@powersync/web` apps (loaded by the dock, not by you)                               |
-| `./page`                 | the app page       | the `postMessage` agent for hosts without a devframe hub (used by `@powersync/nuxt` on Nuxt DevTools 3)         |
-| `./vite-static`          | node (Vite config) | serves the UI at `/__powersync/` from a plain Vite dev server, for hosts that embed it in their own iframe      |
+| Entry                    | Runs in            | Contents                                                                                                                                                |
+| ------------------------ | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@powersync/diagnostics` | node               | `definition`, the devframe definition; `registerIntegration` to serve an `SdkIntegration` from the same process                                         |
+| `./vite`                 | node (Vite config) | `powersyncDevtools()`, the Vite DevTools plugin                                                                                                         |
+| `./node`                 | node app           | `enablePowerSyncDiagnostics(db, options)`                                                                                                               |
+| `./client`               | the app page       | the dock client script for `@powersync/web` apps (loaded by the dock, not by you)                                                                       |
+| `./page`                 | the app page       | the `postMessage` agent for hosts without a devframe hub (used by `@powersync/nuxt` on Nuxt DevTools 3)                                                 |
+| `./vite-static`          | node (Vite config) | serves the UI at `/__powersync/` from a plain Vite dev server, for hosts that embed it in their own iframe; `{ scripts }` runs host scripts in the page |
 
 ## Requirements
 

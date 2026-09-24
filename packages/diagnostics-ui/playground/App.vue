@@ -3,6 +3,7 @@ import { onMounted, onUnmounted } from 'vue';
 import { connectIntegration, exposeIntegration } from '@powersync/diagnostics-core';
 import { DiagnosticsPanel, provideDiagnostics, useTheme } from '../src';
 import { MockIntegration } from './mockIntegration';
+import { useHostTheme } from '../standalone/hostTheme';
 
 // The panel owns the theme (toggle lives in its header); the harness follows the same shared state.
 const { isDark } = useTheme();
@@ -10,9 +11,9 @@ const { isDark } = useTheme();
 // Preview the broken/no-client onboarding screen: open http://localhost:5199/?noclient
 const params = new URLSearchParams(location.search);
 const noClient = params.has('noclient');
-// Preview host-controlled theming (no toggle, follows the host): open http://localhost:5199/?theme=dark
-const hostTheme = params.get('theme');
-const theme = hostTheme === 'dark' || hostTheme === 'light' ? hostTheme : undefined;
+// Preview host-controlled theming (no toggle, follows the host): open http://localhost:5199/?theme=dark, or
+// post `{ type: 'powersync-diagnostics:theme', theme: 'dark' }` to the window, as an embedder would.
+const theme = useHostTheme();
 
 // The harness plays the SDK side: a fake integration that answers the protocol with canned data.
 const mock = new MockIntegration();

@@ -36,9 +36,10 @@ export function formatTimestamp(ms: number | null | undefined): string {
   return new Date(ms).toLocaleString();
 }
 
-export function formatRelative(ms: number | null | undefined): string {
+/** Relative to `now`, which a caller passes as a ticking value so the text keeps up. */
+export function formatRelative(ms: number | null | undefined, now: number = Date.now()): string {
   if (!isValidTime(ms)) return 'never';
-  const seconds = Math.round((Date.now() - ms) / 1000);
+  const seconds = Math.round((now - ms) / 1000);
   if (seconds < 5) return 'just now';
   if (seconds < 60) return `${seconds}s ago`;
   const minutes = Math.round(seconds / 60);
