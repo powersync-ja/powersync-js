@@ -17,7 +17,8 @@ import {
   type StreamingSyncImplementationListener,
   Mutex,
   ResolvedSyncOptions,
-  SyncStatusSnapshot
+  SyncStatusSnapshot,
+  InternalConnector
 } from '@powersync/shared-internals';
 import * as Comlink from 'comlink';
 import { WebRemote } from '../../db/sync/WebRemote.js';
@@ -60,11 +61,18 @@ export type ManualSharedSyncPayload = {
 export type SharedSyncInitOptions = {
   streamOptions: Omit<
     WebStreamingSyncImplementationOptions,
-    'adapter' | 'uploadCrud' | 'postCheckpointRequest' | 'remote' | 'subscriptions' | 'logger'
+    'connector' | 'adapter' | 'remote' | 'subscriptions' | 'logger'
   >;
   dbParams: ResolvedWebSQLOpenOptions;
   enableBroadcastLogs: boolean;
 };
+
+export interface ClientConnectorCapabilities {
+  hasFetchCredentials: boolean;
+  hasInvalidateCredentials: boolean;
+  hasPostCheckpointRequest: boolean;
+  hasUploadCrud: boolean;
+}
 
 /**
  * @internal
@@ -82,6 +90,7 @@ export type WrappedSyncPort = {
   db?: DBAdapter;
   currentSubscriptions: SubscribedStream[];
   closeListeners: (() => void | Promise<void>)[];
+  clientCapabilities: ClientConnectorCapabilities;
   isClosing: boolean;
 };
 
@@ -136,7 +145,7 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
       createSyncImplementation: async () => {
         await this.waitForReady();
 
-        const sync = this.generateStreamingImplementation();
+        const sync = await this.generateStreamingImplementation();
         const removeStatusListener = sync.registerListener({
           statusChanged: (snapshot) => {
             this.syncStatus = snapshot;
@@ -283,14 +292,15 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
   /**
    * Adds a new client tab's message port to the list of connected ports
    */
-  async addPort(port: MessagePort) {
+  async addPort(port: MessagePort, capabilities: ClientConnectorCapabilities) {
     return await this.portMutex.runExclusive(() => {
       const portProvider = {
         port,
         clientProvider: Comlink.wrap<AbstractSharedSyncClientProvider>(port),
         currentSubscriptions: [],
         closeListeners: [],
-        isClosing: false
+        isClosing: false,
+        clientCapabilities: capabilities
       } satisfies WrappedSyncPort;
       this.ports.push(portProvider);
 
@@ -369,58 +379,68 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
     return callback(sync);
   }
 
-  protected generateStreamingImplementation() {
+  protected async generateStreamingImplementation() {
     // This should only be called after initialization has completed
     const syncParams = this.syncParams!;
-    // Create a new StreamingSyncImplementation for each connect call. This is usually done is all SDKs.
-    return new WebStreamingSyncImplementation({
-      adapter: new SqliteBucketStorage(this.database, this.logger),
-      remote: new WebRemote(
-        {
-          invalidateCredentials: async () => {
-            const lastPort = await this.getLastWrappedPort();
-            if (!lastPort) {
-              throw new Error('No client port found to invalidate credentials');
-            }
+    const port = await this.getLastWrappedPort();
+    if (port == null) throw new Error('No connected client');
+
+    const connector: InternalConnector = {};
+    const capabilities = port.clientCapabilities;
+
+    if (capabilities.hasFetchCredentials) {
+      connector.fetchCredentials = (signal) =>
+        this.#useConnector(
+          port,
+          () => {
+            this.logger.log({
+              level: LogLevels.info,
+              message: 'calling the last port client provider for credentials'
+            });
+
+            return port.clientProvider.fetchCredentials();
+          },
+          'fetchCredentials',
+          signal
+        );
+    }
+    if (capabilities.hasInvalidateCredentials) {
+      connector.invalidateCredentials = () =>
+        this.#useConnector(
+          port,
+          async () => {
             try {
               this.logger.log({
                 level: LogLevels.info,
                 message: 'calling the last port client provider to invalidate credentials'
               });
-              lastPort.clientProvider.invalidateCredentials();
+              port.clientProvider.invalidateCredentials();
             } catch (error) {
               this.logger.log({ level: LogLevels.error, message: 'error invalidating credentials', error });
             }
           },
-          fetchCredentials: (
-              signal?: AbortSignal
-          ) => {
-            return this.#useConnector(
-              (port) => {
-                this.logger.log({
-                  level: LogLevels.info,
-                  message: 'calling the last port client provider for credentials'
-                });
-
-                return port.clientProvider.fetchCredentials();
-              },
-              'fetchCredentials',
-                signal
-            );
-          }
-        },
-        this.logger
-      ),
-      uploadCrud: (signal) => {
-        return this.#useConnector((port) => port.clientProvider.uploadCrud(), 'uploadCrud', signal);
-      },
-      postCheckpointRequest: (clientId, requestId, signal) => {
-        return this.#useConnector(
-          (port) => port.clientProvider.postCheckpointRequest(clientId, requestId),
+          'invalidateCredentials'
+        );
+    }
+    if (capabilities.hasUploadCrud) {
+      connector.uploadCrud = (signal) =>
+        this.#useConnector(port, () => port.clientProvider.uploadCrud(), 'uploadCrud', signal);
+    }
+    if (capabilities.hasPostCheckpointRequest) {
+      connector.postCheckpointRequest = (clientId, requestId, signal) =>
+        this.#useConnector(
+          port,
+          () => port.clientProvider.postCheckpointRequest(clientId, requestId),
           'postCheckpointRequest',
           signal
         );
-      },
+    }
+
+    // Create a new StreamingSyncImplementation for each connect call. This is usually done is all SDKs.
+    return new WebStreamingSyncImplementation({
+      adapter: new SqliteBucketStorage(this.database, this.logger),
+      remote: new WebRemote(connector, this.logger),
+      connector,
       ...syncParams.streamOptions,
       subscriptions: this.subscriptions,
       // Logger cannot be transferred just yet
@@ -431,30 +451,30 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
   /**
    * Calls into a client tab, stopping the wait on disconnect when a signal is supplied.
    */
-  async #useConnector<T>(
-    inner: (port: WrappedSyncPort) => Promise<T>,
+  #useConnector<T>(
+    port: WrappedSyncPort,
+    inner: () => Promise<T>,
     debugContext: string,
     signal?: AbortSignal
   ): Promise<T> {
     const action = async () => {
-      const lastPort = await this.getLastWrappedPort();
-      if (!lastPort) {
-        throw new Error(`No client port found for ${debugContext}`);
-      }
-
       return await new Promise<T>((resolve, reject) => {
         const portClosed = () => {
           reject(new Error(`Tab closed while handling ${debugContext}`));
         };
 
-        lastPort.closeListeners.push(portClosed);
+        if (port.isClosing) {
+          return portClosed();
+        }
 
-        inner(lastPort)
+        port.closeListeners.push(portClosed);
+
+        inner()
           .then(resolve, reject)
           .finally(() => {
-            const index = lastPort.closeListeners.indexOf(portClosed);
+            const index = port.closeListeners.indexOf(portClosed);
             if (index >= 0) {
-              lastPort.closeListeners.splice(index, 1);
+              port.closeListeners.splice(index, 1);
             }
           });
       });

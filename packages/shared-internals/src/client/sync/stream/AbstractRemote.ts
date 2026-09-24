@@ -11,14 +11,7 @@ import {
 import { WebSocketSupport, WebSocketSyncStreamPlatform } from './WebSocketSupport.js';
 import { EventQueue, runWithTimeout } from '../../../utils/async.js';
 import { POWERSYNC_JS_VERSION } from '../../../version.js';
-
-/**
- * @internal
- */
-export type RemoteConnector = {
-  fetchCredentials: (signal?: AbortSignal) => Promise<PowerSyncCredentials | null>;
-  invalidateCredentials?: () => void;
-};
+import { InternalConnector } from '../../InternalConnector.js';
 
 const POWERSYNC_TRAILING_SLASH_MATCH = /\/+$/;
 
@@ -85,7 +78,7 @@ export abstract class AbstractRemote {
   protected credentials: PowerSyncCredentials | null = null;
 
   constructor(
-    protected connector: RemoteConnector,
+    protected connector: InternalConnector,
     readonly logger: PowerSyncLogger
   ) {}
 
@@ -129,7 +122,12 @@ export abstract class AbstractRemote {
    * values.
    */
   async fetchCredentials(signal?: AbortSignal) {
-    const credentials = await this.connector.fetchCredentials(signal);
+    const fetchCredentials = this.connector.fetchCredentials;
+    if (!fetchCredentials) {
+      throw new Error('No connector configured for downloads');
+    }
+
+    const credentials = await fetchCredentials(signal);
     if (credentials?.endpoint.match(POWERSYNC_TRAILING_SLASH_MATCH)) {
       throw new Error(
         `A trailing forward slash "/" was found in the fetchCredentials endpoint: "${credentials.endpoint}". Remove the trailing forward slash "/" to fix this error.`
