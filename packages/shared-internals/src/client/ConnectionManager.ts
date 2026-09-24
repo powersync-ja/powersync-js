@@ -4,7 +4,6 @@ import {
   PowerSyncLogger,
   SyncStatus,
   BaseListener,
-  PowerSyncBackendConnector,
   SyncStream,
   SyncStreamDescription,
   SyncStreamSubscribeOptions,
@@ -15,6 +14,7 @@ import {
 
 import { StreamingSyncImplementation, SubscribedStream } from './sync/stream/AbstractStreamingSyncImplementation.js';
 import { ResolvedSyncOptions, resolveSyncOptions } from './sync/options.js';
+import { InternalConnector } from './InternalConnector.js';
 
 /**
  * @internal
@@ -52,7 +52,7 @@ export interface InternalSubscriptionAdapter {
  */
 export interface ConnectionManagerOptions {
   createSyncImplementation(
-    connector: PowerSyncBackendConnector,
+    connector: InternalConnector,
     options: CreateSyncImplementationOptions
   ): Promise<ConnectionManagerSyncImplementationResult>;
   readonly defaultConnectionMethod: SyncStreamConnectionMethod;
@@ -61,7 +61,7 @@ export interface ConnectionManagerOptions {
 }
 
 type StoredConnectionOptions = {
-  connector: PowerSyncBackendConnector;
+  connector: InternalConnector;
   options: ResolvedSyncOptions;
   schema: any;
 };
@@ -104,7 +104,7 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
 
   // The connector of the active connection. Retained alongside currentOptions so `connector` reflects
   // the live connection, not just the brief pending-options window before connecting starts.
-  private currentConnector: PowerSyncBackendConnector | null;
+  private currentConnector: InternalConnector | null;
 
   syncStreamImplementation: StreamingSyncImplementation | null;
 
@@ -150,7 +150,7 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
     await this.syncDisposer?.();
   }
 
-  async connect(connector: PowerSyncBackendConnector, options: SyncOptions, serializedSchema: any) {
+  async connect(connector: InternalConnector, options: SyncOptions, serializedSchema: any) {
     // Keep track if there were pending operations before this call
     const hadPendingOptions = !!this.pendingConnectionOptions;
 

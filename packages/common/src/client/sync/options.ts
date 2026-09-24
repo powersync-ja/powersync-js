@@ -1,3 +1,4 @@
+import { Authenticator, MutationUploader } from '../connection/PowerSyncBackendConnector.js';
 import { StreamingSyncRequestParameterType } from './stream/JsonValue.js';
 
 /**
@@ -63,6 +64,34 @@ export interface SyncOptions {
    * per-bucket totals. See https://docs.powersync.com/tools/devtools-overview.
    */
   diagnostics?: boolean;
+}
+
+/**
+ * Options required when connecting a PowerSync database for downloads.
+ *
+ * @public
+ */
+export interface DownloadOptions {
+  /**
+   * The hostname of the PowerSync service to connect to.
+   */
+  powerSyncEndpoint: string;
+  /**
+   * The authenticator responsible for providing authentication tokens to the PowerSync service.
+   */
+  authenticator: Authenticator;
+}
+
+/**
+ * Options required when connecting a PowerSync database for uploads.
+ *
+ * @public
+ */
+export interface UploadOptions {
+  /**
+   * The function responsible for uploading local mutations.
+   */
+  upload: MutationUploader;
 }
 
 /**
