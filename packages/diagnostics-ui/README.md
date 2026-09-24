@@ -1,8 +1,10 @@
 # PowerSync Diagnostics — UI
 
-This package (`packages/diagnostics-ui`) is the [PowerSync](https://powersync.com) diagnostics UI: a Vue 3 panel that shows the live state of a PowerSync client.
+`@powersync/diagnostics-ui` is the [PowerSync](https://powersync.com) DevTools UI: a Vue 3 panel that shows the live state of a PowerSync client.
 
-It is built once and reused by every host. It reads data only through an `SdkIntegration` from [`@powersync/diagnostics-core`](https://github.com/powersync-ja/powersync-js/tree/main/packages/diagnostics-core), and imports nothing from any PowerSync SDK.
+**Internal package.** PowerSync SDKs and tools depend on it. Do not add it to your app. Use [`@powersync/diagnostics`](https://github.com/powersync-ja/powersync-js/tree/main/packages/diagnostics) instead.
+
+Every host shows the same build. The panel reads data only through an `SdkIntegration` from [`@powersync/diagnostics-core`](https://github.com/powersync-ja/powersync-js/tree/main/packages/diagnostics-core). It imports nothing from any PowerSync SDK and knows no host.
 
 ## Tabs
 
@@ -13,13 +15,9 @@ It is built once and reused by every host. It reads data only through an `SdkInt
 - **Config** — connection details and the schema as a tree or JSON.
 - **Logs** — client logs with a level filter and search.
 
-## Who uses it
-
-Most apps do not install this package directly. [`@powersync/diagnostics`](https://github.com/powersync-ja/powersync-js/tree/main/packages/diagnostics) serves the built UI for you, and [`@powersync/nuxt`](https://github.com/powersync-ja/powersync-js/tree/main/packages/nuxt) shows it as a Nuxt DevTools tab.
-
 ## Embed the built page
 
-`dist/standalone/` is a self-contained page. It finds its `SdkIntegration` in one of two ways, tried in this order: a [devframe](https://devfra.me) host that serves it (the `@powersync/diagnostics` definition), or a parent page that hands it a `MessagePort` with `attachIframe` from `@powersync/diagnostics-core`. Only this bootstrap (`standalone/`) knows about devframe; the components in `src/` take an `SdkIntegration` and nothing else.
+`dist/standalone/` is a self-contained page. It gets its `SdkIntegration` in one of two ways, in this order: from a [devframe](https://devfra.me) host that serves it (the `@powersync/diagnostics` definition), or from a parent page that hands it a `MessagePort` with `attachIframe` from `@powersync/diagnostics-core`. Only this bootstrap (`standalone/`) knows about devframe. The components in `src/` take an `SdkIntegration` and nothing else.
 
 ## Use the component
 
@@ -39,9 +37,9 @@ provideDiagnostics(integration);
 </template>
 ```
 
-`provideDiagnostics` also accepts a `Promise<SdkIntegration>`, for a host that receives its integration after setup.
+`provideDiagnostics` also accepts a `Promise<SdkIntegration>`, for a host that gets its integration after setup.
 
-An embedder that owns the theme passes it as an option, as a value, ref or getter: `provideDiagnostics(integration, { theme: 'dark' })`. The panel then follows it, hides its own toggle and persists nothing. The standalone page has two host-agnostic channels for the same purpose: `?theme=dark|light` on its URL, and a `message` event `{ type: 'powersync-diagnostics:theme', theme: 'dark' | 'light' }` posted to its window, for a host that learns the theme later or changes it at runtime.
+A host that owns the theme passes it as an option: `provideDiagnostics(integration, { theme: 'dark' })`. The value can be a string, a ref or a getter. The panel then follows it, hides its own toggle and stores nothing. The standalone page takes the theme in two ways: `?theme=dark|light` on its URL, or a `message` event `{ type: 'powersync-diagnostics:theme', theme: 'dark' | 'light' }` posted to its window. Use the message when the host learns the theme later or changes it at runtime.
 
 ## Development
 
@@ -49,4 +47,4 @@ An embedder that owns the theme passes it as an option, as a value, ref or gette
 pnpm --filter @powersync/diagnostics-ui dev
 ```
 
-This opens a playground at `http://localhost:5199` that runs the panel over a mock database, with no backend. Add `?noclient` to preview the state shown when no client is found.
+This opens a playground at `http://localhost:5199`. It runs the panel over a mock integration, with no backend. Add `?noclient` to see the screen shown when no client is found, or `?theme=dark` to see a host-controlled theme.

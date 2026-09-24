@@ -286,7 +286,7 @@ await db.connect(connector, { diagnostics: true });
 
 ## PowerSync Diagnostics
 
-The diagnostics UI helps you inspect and diagnose the state of your PowerSync client from inside your app, in real time.
+PowerSync DevTools show the live state of your PowerSync client inside Nuxt DevTools. Full guide: [PowerSync DevTools](https://docs.powersync.com/tools/devtools-overview).
 
 ### Tabs
 
@@ -299,11 +299,11 @@ The diagnostics UI helps you inspect and diagnose the state of your PowerSync cl
 
 ### How it works
 
-The module uses [`@powersync/diagnostics`](https://github.com/powersync-ja/powersync-js/tree/main/packages/diagnostics). The universal solution used by PowerSync to provide a unified diagnostics experience.
+The module uses [`@powersync/diagnostics`](https://github.com/powersync-ja/powersync-js/tree/main/packages/diagnostics), implementing PowerSync universal diagnostics protocol. See that package for the MCP tools.
 
 ### Migrating from `NuxtPowerSyncDatabase`
 
-Earlier versions shipped a `NuxtPowerSyncDatabase` subclass that enabled diagnostics on connect. It is removed. Use a plain `PowerSyncDatabase` from `@powersync/web` and pass the option yourself:
+Earlier versions had a `NuxtPowerSyncDatabase` class that enabled diagnostics on connect. It is now removed. Use `PowerSyncDatabase` from `@powersync/web` and pass the option yourself:
 
 ```diff
 - import { NuxtPowerSyncDatabase } from '@powersync/nuxt';
@@ -316,7 +316,7 @@ Earlier versions shipped a `NuxtPowerSyncDatabase` subclass that enabled diagnos
 + await db.connect(connector, { diagnostics: true });
 ```
 
-The `useDiagnostics: true` module option still controls the DevTools tab and the in-app agent; it is the one switch for the development tooling.
+The `useDiagnostics: true` module option is the one switch for the DevTools tab and the in-app agent.
 
 ## Development
 
