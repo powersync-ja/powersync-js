@@ -25,9 +25,10 @@ export interface ProvideDiagnosticsOptions {
   /**
    * The theme, when the embedder owns it (Flutter DevTools, a DevTools dock that follows the outer
    * frame). The panel follows this value, hides its own toggle and persists nothing. Leave it out and
-   * the panel manages its theme itself.
+   * the panel manages its theme itself. A ref or getter may yield `null` while the host has not
+   * connected yet; the panel manages itself until a value arrives.
    */
-  theme?: MaybeRefOrGetter<DiagnosticsTheme>;
+  theme?: MaybeRefOrGetter<DiagnosticsTheme | null | undefined>;
 }
 
 /**

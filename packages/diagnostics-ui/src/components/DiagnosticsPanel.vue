@@ -4,7 +4,7 @@ import { TabsRoot, TabsList, TabsTrigger, TabsContent, TooltipProvider } from 'r
 import StatusBar from './StatusBar.vue';
 import Logo from './ui/Logo.vue';
 import EmptyState from './ui/EmptyState.vue';
-import CodeTabs from './ui/CodeTabs.vue';
+import CodeTabs, { type CodeTab } from './ui/CodeTabs.vue';
 import Tooltip from './ui/Tooltip.vue';
 import HoldButton from './ui/HoldButton.vue';
 import { useTheme } from '../composables/theme';
@@ -35,12 +35,12 @@ onMounted(() => setTimeout(() => (waiting.value = false), 1500));
 const noSource = computed(() => sources.value !== null && sources.value.length === 0);
 const sourceChoices = computed(() => sources.value ?? []);
 
-// Keep the chosen database across refreshes (per viewer), as long as it is still attached.
+// Keep the chosen database across reloads of this tab, as long as it is still attached.
 const SOURCE_KEY = 'powersync-diagnostics-source';
 function onSelectSource(event: Event) {
   const sourceId = (event.target as HTMLSelectElement).value;
   try {
-    localStorage.setItem(SOURCE_KEY, sourceId);
+    sessionStorage.setItem(SOURCE_KEY, sourceId);
   } catch {
     // best-effort
   }
@@ -49,19 +49,21 @@ function onSelectSource(event: Event) {
 watch(sources, (list) => {
   if (!list?.length) return;
   try {
-    const stored = localStorage.getItem(SOURCE_KEY);
+    const stored = sessionStorage.getItem(SOURCE_KEY);
     if (stored && stored !== activeSource.value?.id && list.some((source) => source.id === stored))
       void selectSource(stored);
   } catch {
-    // localStorage unavailable
+    // sessionStorage unavailable
   }
 });
 
-const setupTabs = [
+// How diagnostics get switched on, per SDK; the guide below covers every SDK in one place.
+const SETUP_GUIDE = 'https://docs.powersync.com/tools/devtools-overview';
+const setupTabs: CodeTab[] = [
   {
-    label: 'JavaScript',
+    label: 'Web',
     lang: 'javascript',
-    code: `// vite.config.ts — the plugin attaches diagnostics in dev only; nothing ships to production.
+    code: `// vite.config.ts: dev only, nothing reaches the production build.
 import powersyncDevtools from '@powersync/diagnostics/vite';
 
 export default defineConfig({
@@ -69,18 +71,31 @@ export default defineConfig({
   plugins: [powersyncDevtools()]
 });
 
-// Enable the core diagnostics stream for per-bucket progress.
-db.connect(connector, { diagnostics: true });`
+// Optional: per-bucket totals from the SQLite core.
+await db.connect(connector, { diagnostics: true });`
+  },
+  {
+    label: 'Nuxt',
+    lang: 'javascript',
+    code: `// nuxt.config.ts
+export default defineNuxtConfig({
+  modules: ['@powersync/nuxt'],
+  powersync: { useDiagnostics: true }
+});`
+  },
+  {
+    label: 'Node',
+    lang: 'javascript',
+    code: `import { enablePowerSyncDiagnostics } from '@powersync/diagnostics/node';
+
+if (process.env.NODE_ENV !== 'production') {
+  const devtools = await enablePowerSyncDiagnostics(db);
+  console.log(\`PowerSync DevTools: \${devtools.url}\`);
+}`
   },
   {
     label: 'Dart',
-    lang: 'dart',
-    code: `// Diagnostics are on in debug builds and off in release builds. Open the
-// PowerSync tab in Flutter DevTools while the app runs.
-final db = PowerSyncDatabase(schema: schema, path: path);
-
-// Enable the core diagnostics stream for per-bucket progress.
-await db.connect(connector: connector, diagnostics: true);`
+    note: 'Diagnostics are on in debug builds and off in release builds. Run the app and open the PowerSync tab in Flutter DevTools.'
   }
 ];
 
@@ -93,21 +108,21 @@ const tabs = [
   { value: 'logs', label: 'Logs' }
 ];
 
-// Keep the selected tab across refreshes (per viewer).
+// Keep the selected tab across reloads of this tab.
 const TAB_KEY = 'powersync-diagnostics-tab';
 function initialTab(): string {
   try {
-    const stored = localStorage.getItem(TAB_KEY);
+    const stored = sessionStorage.getItem(TAB_KEY);
     if (stored && tabs.some((t) => t.value === stored)) return stored;
   } catch {
-    // localStorage unavailable
+    // sessionStorage unavailable
   }
   return 'status';
 }
 const activeTab = ref(initialTab());
 watch(activeTab, (value) => {
   try {
-    localStorage.setItem(TAB_KEY, value);
+    sessionStorage.setItem(TAB_KEY, value);
   } catch {
     // best-effort
   }
@@ -155,6 +170,7 @@ watch(activeTab, (value) => {
             <Tooltip text="Clear & re-sync (wipes local data and download again) Hold to wipe">
               <HoldButton
                 aria-label="Clear and re-sync (hold to confirm)"
+                hint="Hold to wipe"
                 :disabled="clearing"
                 @confirm="clearAndResync"
               >
@@ -201,11 +217,18 @@ watch(activeTab, (value) => {
       <EmptyState
         v-else
         :icon="IconOffline"
-        tone="warning"
-        title="No PowerSync client detected"
-        description="The diagnostics agent isn't attached to a running client. Enable it in your app during development:"
+        title="No PowerSync database yet"
+        description="If your app opens a PowerSync database, its state can be inspected here. Diagnostics run in development only; how they are switched on depends on the SDK:"
       >
         <CodeTabs :tabs="setupTabs" />
+        <a
+          :href="SETUP_GUIDE"
+          target="_blank"
+          rel="noreferrer"
+          class="mt-3 inline-block text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+        >
+          Setup guide ↗
+        </a>
       </EmptyState>
     </div>
 

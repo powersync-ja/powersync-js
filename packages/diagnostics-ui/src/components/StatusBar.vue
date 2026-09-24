@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useDiagnostics } from '../composables/diagnostics';
+import { useNow } from '../composables/now';
 import { formatCompact, formatRelative } from '../lib/format';
 import IconWifi from '~icons/carbon/wifi';
 import IconWifiOff from '~icons/carbon/wifi-off';
@@ -16,6 +17,7 @@ import IconQueue from '~icons/carbon/cloud-upload';
 import IconTime from '~icons/carbon/time';
 
 const { connected, status, buckets, uploadQueue } = useDiagnostics();
+const now = useNow();
 
 /** Primary connection state — one indicator, most-severe first. */
 const primary = computed(() => {
@@ -57,7 +59,9 @@ const errorText = computed(() => status.value?.downloadError ?? status.value?.up
 const pending = computed(() => uploadQueue.value?.count ?? 0);
 const bucketCount = computed(() => buckets.value.length);
 const totalOps = computed(() => buckets.value.reduce((sum, b) => sum + (b.downloadedOperations || 0), 0));
-const lastSynced = computed(() => (status.value?.lastSyncedAt ? formatRelative(status.value.lastSyncedAt) : null));
+const lastSynced = computed(() =>
+  status.value?.lastSyncedAt ? formatRelative(status.value.lastSyncedAt, now.value) : null
+);
 </script>
 
 <template>
@@ -69,13 +73,11 @@ const lastSynced = computed(() => (status.value?.lastSyncedAt ? formatRelative(s
     </span>
 
     <!-- Sync activity (always visible) -->
-    <span
-      :class="[
-        'inline-flex items-center gap-1',
-        activity.active ? 'text-foreground' : 'text-muted-foreground/70'
-      ]"
-    >
-      <component :is="activity.icon" :class="['size-3.5', activity.spin && 'animate-spin', activity.active && !activity.spin && 'animate-pulse']" />
+    <span :class="['inline-flex items-center gap-1', activity.active ? 'text-foreground' : 'text-muted-foreground/70']">
+      <component
+        :is="activity.icon"
+        :class="['size-3.5', activity.spin && 'animate-spin', activity.active && !activity.spin && 'animate-pulse']"
+      />
       {{ activity.label }}
     </span>
 

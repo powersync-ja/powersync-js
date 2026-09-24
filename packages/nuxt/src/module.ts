@@ -4,7 +4,7 @@ import { dirname, join } from 'node:path';
 import { defineNuxtModule, createResolver, addPlugin, addImports, addVitePlugin, findPath } from '@nuxt/kit';
 import type { Nuxt } from 'nuxt/schema';
 import { defu } from 'defu';
-import { setupDevToolsUI } from './devtools';
+import { DEVTOOLS_THEME_SCRIPT, setupDevToolsUI } from './devtools';
 import type { PowerSyncRuntimeOptions } from './runtime/options';
 import { addImportsFrom } from './runtime/utils/addImportsFrom';
 
@@ -79,7 +79,7 @@ export default defineNuxtModule<PowerSyncNuxtModuleOptions>({
         // Nuxt DevTools 3 has no devframe hub: serve the UI as a static page for the custom tab. The
         // runtime plugin loads the page agent that answers the tab over postMessage.
         const { default: powersyncStatic } = await import('@powersync/diagnostics/vite-static');
-        addVitePlugin(powersyncStatic());
+        addVitePlugin(powersyncStatic({ scripts: [DEVTOOLS_THEME_SCRIPT] }));
         setupDevToolsUI(nuxt);
       }
     });
