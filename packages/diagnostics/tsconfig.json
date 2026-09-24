@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.base",
+  "compilerOptions": {
+    "declaration": true,
+    "forceConsistentCasingInFileNames": true,
+    "lib": ["DOM", "ES2022"],
+    "module": "node16",
+    "moduleResolution": "node16",
+    "target": "es2022",
+    "outDir": "./lib",
+    "strict": true,
+    "types": ["node"]
+  },
+  "include": ["src/**/*"],
+  "references": [{ "path": "../common" }, { "path": "../diagnostics-core" }, { "path": "../web" }]
+}

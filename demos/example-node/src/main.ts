@@ -12,6 +12,7 @@ import {
 import { exit } from 'node:process';
 import { AppSchema, DemoConnector } from './powersync.js';
 import { enableUncidiDiagnostics } from './UndiciDiagnostics.js';
+import { enablePowerSyncDiagnostics } from '@powersync/diagnostics/node';
 
 const main = async () => {
   const debug = process.env.POWERSYNC_DEBUG == '1';
@@ -58,10 +59,17 @@ const main = async () => {
   console.log(await db.get('SELECT powersync_rs_version();'));
   await db.connect(new DemoConnector(), {
     connectionMethod: SyncStreamConnectionMethod.WEB_SOCKET,
+    // Per-bucket download totals for PowerSync DevTools.
+    diagnostics: true,
     appMetadata: {
       app_version: process.env.npm_package_version || 'unknown'
     }
   });
+  // PowerSync DevTools: a live view of this client in the browser. Development only.
+  if (process.env.NODE_ENV !== 'production') {
+    const devtools = await enablePowerSyncDiagnostics(db);
+    console.log(`PowerSync DevTools: ${devtools.url}`);
+  }
   // Example using a proxy agent for more control over the connection:
   // const proxyAgent = new (await import('undici')).ProxyAgent({
   //   uri: 'http://localhost:8080',

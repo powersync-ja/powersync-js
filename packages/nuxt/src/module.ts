@@ -1,15 +1,11 @@
-import {
-  defineNuxtModule,
-  createResolver,
-  addPlugin,
-  addImports,
-  extendPages,
-  addLayout,
-  addComponentsDir,
-  findPath
-} from '@nuxt/kit';
+import { readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
+import { dirname, join } from 'node:path';
+import { defineNuxtModule, createResolver, addPlugin, addImports, addVitePlugin, findPath } from '@nuxt/kit';
+import type { Nuxt } from 'nuxt/schema';
 import { defu } from 'defu';
-import { setupDevToolsUI } from './devtools';
+import { DEVTOOLS_THEME_SCRIPT, setupDevToolsUI } from './devtools';
+import type { PowerSyncRuntimeOptions } from './runtime/options';
 import { addImportsFrom } from './runtime/utils/addImportsFrom';
 
 /**
@@ -27,10 +23,11 @@ import { addImportsFrom } from './runtime/utils/addImportsFrom';
  */
 export interface PowerSyncNuxtModuleOptions {
   /**
-   * Enable diagnostics and the PowerSync Inspector.
+   * Enable the PowerSync diagnostics tab in Nuxt DevTools.
    *
-   * When set to `true`, enables diagnostics recording and makes the PowerSync Inspector available.
-   * The inspector provides real-time monitoring, data inspection, and debugging tools.
+   * When `true`, the module loads the diagnostics agent into the app during `nuxt dev`, serves the
+   * diagnostics UI, and registers the DevTools tab. Nothing is added to a production build. Pass
+   * `{ diagnostics: true }` to `connect()` as well to get per-bucket totals from the SQLite core.
    *
    * @default false
    */
@@ -57,18 +54,45 @@ export default defineNuxtModule<PowerSyncNuxtModuleOptions>({
     kysely: false
   },
   moduleDependencies: {
-    '@nuxt/devtools-ui-kit': {},
     '@vueuse/nuxt': {}
   },
   async setup(options, nuxt) {
     const resolver = createResolver(import.meta.url);
-
-    nuxt.options.runtimeConfig.public.powerSyncModuleOptions = defu(
-      nuxt.options.runtimeConfig.public.powerSyncModuleOptions as any,
-      {
-        useDiagnostics: options.useDiagnostics,
-        kysely: options.kysely
+    // Nuxt installs its own modules (DevTools among them) after the app's, so the version is read once
+    // every module has run. Both consumers below fire later than that.
+    const runtimeOptions = (nuxt.options.runtimeConfig.public.powerSyncModuleOptions ??= {}) as PowerSyncRuntimeOptions;
+    nuxt.hook('modules:done', async () => {
+      const devtoolsMajor = nuxtDevtoolsMajor(nuxt);
+      runtimeOptions.diagnosticsTransport = devtoolsMajor >= 4 ? 'devframe' : 'page';
+      if (!options.useDiagnostics || !nuxt.options.dev) return;
+      // Diagnostics during development, by Nuxt DevTools generation. Added as Vite plugins through the
+      // kit so the same code works on Nuxt 4 (separate client and server Vite configs) and Nuxt 5 (one
+      // Vite server with environments). Registered for every environment: a client-only plugin is
+      // wrapped by the kit under the environment API, which hides its `devtools` hook from Vite
+      // DevTools and drops `configureServer`. Both plugins are serve-only and skip the server side.
+      if (devtoolsMajor >= 4) {
+        // Nuxt DevTools 4 runs on Vite DevTools: mount the devframe definition. The dock, the page
+        // script and the MCP tools come with it.
+        const { default: powersyncDevtools } = await import('@powersync/diagnostics/vite');
+        addVitePlugin(powersyncDevtools());
+      } else {
+        // Nuxt DevTools 3 has no devframe hub: serve the UI as a static page for the custom tab. The
+        // runtime plugin loads the page agent that answers the tab over postMessage.
+        const { default: powersyncStatic } = await import('@powersync/diagnostics/vite-static');
+        addVitePlugin(powersyncStatic({ scripts: [DEVTOOLS_THEME_SCRIPT] }));
+        setupDevToolsUI(nuxt);
       }
+    });
+
+    // Filled in place, so the `modules:done` hook above writes into the same object.
+    Object.assign(
+      runtimeOptions,
+      defu(runtimeOptions, {
+        useDiagnostics: options.useDiagnostics,
+        // Set in `modules:done`, once the Nuxt DevTools generation is known.
+        diagnosticsTransport: 'page',
+        kysely: options.kysely
+      } satisfies PowerSyncRuntimeOptions)
     );
 
     if (options.kysely) {
@@ -84,22 +108,6 @@ export default defineNuxtModule<PowerSyncNuxtModuleOptions>({
 
     addPlugin(resolver.resolve('./runtime/plugin.client'));
 
-    // expose the composables
-    addImports({
-      name: 'NuxtPowerSyncDatabase',
-      from: resolver.resolve('./runtime/utils/NuxtPowerSyncDatabase')
-    });
-
-    addImports({
-      name: 'usePowerSyncInspector',
-      from: resolver.resolve('./runtime/composables/usePowerSyncInspector')
-    });
-
-    addImports({
-      name: 'usePowerSyncInspectorDiagnostics',
-      from: resolver.resolve('./runtime/composables/usePowerSyncInspectorDiagnostics')
-    });
-
     // Conditionally add Kysely composable if enabled
     if (options.kysely) {
       addImports({
@@ -113,30 +121,11 @@ export default defineNuxtModule<PowerSyncNuxtModuleOptions>({
       from: resolver.resolve('./runtime/composables/useDiagnosticsLogger')
     });
 
-    // From the runtime directory
-    addComponentsDir({
-      path: resolver.resolve('runtime/components')
-    });
-
-    addLayout(resolver.resolve('./runtime/layouts/powersync-inspector-layout.vue'), 'powersync-inspector-layout');
-
-    extendPages((pages) => {
-      pages.push({
-        path: '/__powersync-inspector',
-        // file: resolver.resolve("#build/pages/__powersync-inspector.vue"),
-        file: resolver.resolve('./runtime/pages/__powersync-inspector.vue'),
-        name: 'Powersync Inspector'
-      });
-    });
-
     addImportsFrom(
       [
         'createPowerSyncPlugin',
         'providePowerSync',
         'usePowerSync',
-        'usePowerSyncQuery',
-        'usePowerSyncStatus',
-        'usePowerSyncWatchedQuery',
         'useQuery',
         'useStatus',
         'useWatchedQuerySubscription',
@@ -151,7 +140,7 @@ export default defineNuxtModule<PowerSyncNuxtModuleOptions>({
 
     // Ensure the packages are transpiled
     nuxt.options.build.transpile = nuxt.options.build.transpile || [];
-    nuxt.options.build.transpile.push('reka-ui', '@tanstack/vue-table', '@powersync/web', '@journeyapps/wa-sqlite');
+    nuxt.options.build.transpile.push('@powersync/web', '@journeyapps/wa-sqlite');
 
     // Conditionally add Kysely driver to transpile list if enabled
     if (options.kysely) {
@@ -192,36 +181,44 @@ export default defineNuxtModule<PowerSyncNuxtModuleOptions>({
 
     nuxt.options.vite.resolve.alias = aliasArray;
 
-    // making the asset available via HTTP for devtools
-    // this Add a Vite plugin to serve the asset at /assets/powersync-icon.svg
-    nuxt.hook('vite:extendConfig', async (config, { isClient }) => {
-      if (!isClient) return;
-
-      const { readFileSync } = await import('node:fs');
-      const assetPath = resolver.resolve('./runtime/assets/powersync-icon.svg');
-      const vitePlugin = {
-        name: 'powersync-assets',
-        configureServer(server: any) {
-          // Serve the asset at /assets/powersync-icon.svg
-          server.middlewares.use('/assets/powersync-icon.svg', (req: any, res: any, next: any) => {
-            try {
-              const content = readFileSync(assetPath);
-              res.setHeader('Content-Type', 'image/svg+xml');
-              res.end(content);
-            } catch {
-              next();
-            }
-          });
-        }
-      };
-
-      // Add plugin to existing plugins array
-      const plugins = config.plugins || [];
-      plugins.push(vitePlugin);
-      // @ts-ignore - plugins is read-only but we need to modify it
-      config.plugins = plugins;
+    // Serve the tab icon for Nuxt DevTools at /assets/powersync-icon.svg (dev-server middleware only).
+    const assetPath = resolver.resolve('./runtime/assets/powersync-icon.svg');
+    addVitePlugin({
+      name: 'powersync-assets',
+      apply: 'serve',
+      configureServer(server: any) {
+        server.middlewares.use('/assets/powersync-icon.svg', (_request: any, response: any, next: any) => {
+          try {
+            response.setHeader('Content-Type', 'image/svg+xml');
+            response.end(readFileSync(assetPath));
+          } catch {
+            next();
+          }
+        });
+      }
     });
-
-    setupDevToolsUI(nuxt);
   }
 });
+
+const DEVTOOLS_MODULES = ['@nuxt/devtools', '@nuxt/devtools-nightly', '@nuxt/devtools-edge'];
+
+/**
+ * The major version of the Nuxt DevTools module installed in the app. Read from Nuxt's record of
+ * installed modules (valid after `modules:done`), else from the package the app resolves; 3 when
+ * neither is available.
+ */
+function nuxtDevtoolsMajor(nuxt: Nuxt): number {
+  const installed = nuxt.options._installedModules.find((entry) => DEVTOOLS_MODULES.includes(entry.meta?.name ?? ''));
+  const fromMeta = installed?.meta?.version;
+  if (fromMeta) return Number(fromMeta.split('.')[0]) || 3;
+  try {
+    // Resolve from where the module was loaded, else from the app root.
+    const from = installed?.entryPath
+      ? join(dirname(installed.entryPath), 'package.json')
+      : join(nuxt.options.rootDir, 'package.json');
+    const pkg = createRequire(from)('@nuxt/devtools/package.json') as { version: string };
+    return Number(pkg.version.split('.')[0]) || 3;
+  } catch {
+    return 3;
+  }
+}
