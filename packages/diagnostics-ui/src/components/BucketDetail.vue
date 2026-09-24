@@ -14,7 +14,7 @@ defineEmits<{ back: [] }>();
 
 const { client } = useDiagnostics();
 const columns = ref<string[]>([]);
-const rows = ref<Record<string, unknown>[]>([]);
+const rows = ref<unknown[][]>([]);
 const error = ref<string | null>(null);
 const loading = ref(false);
 
@@ -51,16 +51,27 @@ watch(() => props.bucket.name, load, { immediate: true });
     </div>
 
     <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-      <span>Operations <span class="tabular-nums text-foreground">{{ formatCompact(bucket.downloadedOperations) }}<template v-if="bucket.totalOperations != null"> / {{ formatCompact(bucket.totalOperations) }}</template></span></span>
-      <span>Size <span class="tabular-nums text-foreground">{{ formatBytes(bucket.downloadedSize) }}</span></span>
-      <span>Last op <span class="font-mono text-foreground">{{ bucket.lastOp ?? '—' }}</span></span>
-      <span>Rows loaded <span class="tabular-nums text-foreground">{{ formatCompact(rows.length) }}</span></span>
+      <span
+        >Operations
+        <span class="tabular-nums text-foreground"
+          >{{ formatCompact(bucket.downloadedOperations)
+          }}<template v-if="bucket.totalOperations != null">
+            / {{ formatCompact(bucket.totalOperations) }}</template
+          ></span
+        ></span
+      >
+      <span
+        >Size <span class="tabular-nums text-foreground">{{ formatBytes(bucket.downloadedSize) }}</span></span
+      >
+      <span
+        >Last op <span class="font-mono text-foreground">{{ bucket.lastOp ?? '—' }}</span></span
+      >
+      <span
+        >Rows loaded <span class="tabular-nums text-foreground">{{ formatCompact(rows.length) }}</span></span
+      >
     </div>
 
-    <div
-      v-if="error"
-      class="rounded-lg border border-destructive/40 bg-destructive/10 p-2.5 text-xs text-destructive"
-    >
+    <div v-if="error" class="rounded-lg border border-destructive/40 bg-destructive/10 p-2.5 text-xs text-destructive">
       {{ error }}
     </div>
     <div v-else-if="!rows.length" class="rounded-lg border bg-card px-3 py-6 text-center text-xs text-muted-foreground">

@@ -2,7 +2,7 @@
 import { computed, ref, watch } from 'vue';
 import { useVirtualizer } from '@tanstack/vue-virtual';
 
-const props = defineProps<{ columns: string[]; rows: Record<string, unknown>[] }>();
+const props = defineProps<{ columns: string[]; rows: unknown[][] }>();
 
 const DEFAULT_COL = 180;
 const MIN_COL = 60;
@@ -75,8 +75,8 @@ function display(value: unknown): string {
         class="absolute left-0 top-0 grid w-full items-center border-b text-xs hover:bg-muted/30"
         :style="{ height: row.size + 'px', transform: `translateY(${row.start}px)`, ...gridStyle }"
       >
-        <div v-for="c in columns" :key="c" class="truncate px-2 font-mono" :title="display(rows[row.index][c])">
-          {{ display(rows[row.index][c]) }}
+        <div v-for="(c, i) in columns" :key="c" class="truncate px-2 font-mono" :title="display(rows[row.index][i])">
+          {{ display(rows[row.index][i]) }}
         </div>
       </div>
     </div>

@@ -69,7 +69,7 @@ export function createDiagnosticsStores(integration: SdkIntegration): Diagnostic
       case 'uploadQueue':
         uploadQueue.set(event.payload);
         break;
-      case 'logs':
+      case 'newLogs':
         logs.set([...logs.get(), ...event.payload].slice(-MAX_LOGS));
         break;
       default:

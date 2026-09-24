@@ -149,6 +149,11 @@ function stream(overrides: Partial<StreamState> & { name: string }): StreamState
   };
 }
 
+/** An unsigned JWT-shaped token: the UI only reads the payload's `sub`. */
+function makeToken(claims: Record<string, unknown>): string {
+  return `header.${btoa(JSON.stringify(claims))}.signature`;
+}
+
 function streamKey(name: string, params?: Record<string, unknown> | null): string {
   return `${name}|${JSON.stringify(params ?? null)}`;
 }
@@ -172,7 +177,7 @@ export class MockIntegration implements SdkIntegration {
       priority: 1,
       params: { project_id: 'p-42' },
       expiresAt: Date.now() + 3_600_000,
-      progress: { downloadedOperations: 45, totalOperations: 120, downloadedFraction: 45 / 120 }
+      progress: { downloadedOperations: 45, totalOperations: 120 }
     }),
     stream({
       name: 'comments',
@@ -192,10 +197,11 @@ export class MockIntegration implements SdkIntegration {
 
   async runQuery({ sql }: QueryParams): Promise<QueryResult> {
     if (/powersync_rs_version/i.test(sql)) {
-      return { columns: ['v'], rows: [{ v: '0.4.2 (mock core)' }], rowCount: 1 };
+      return { columns: ['v'], rows: [['0.4.2 (mock core)']] };
     }
-    const rows = fakeRows(sql);
-    return { columns: rows.length ? Object.keys(rows[0]) : [], rows, rowCount: rows.length };
+    const records = fakeRows(sql);
+    const columns = records.length ? Object.keys(records[0]) : [];
+    return { columns, rows: records.map((record) => columns.map((column) => record[column])) };
   }
 
   async getSchema(): Promise<SchemaPayload> {
@@ -205,7 +211,7 @@ export class MockIntegration implements SdkIntegration {
   async getInfo(): Promise<ProtocolInfo> {
     return {
       endpoint: 'http://localhost:6060',
-      userId: 'mock-user-123',
+      token: makeToken({ sub: 'mock-user-123', exp: Math.floor(Date.now() / 1000) + 3600 }),
       clientId: 'mock-client-7f3a',
       connectionMethod: 'websocket',
       params: { store_id: '42' },
@@ -213,14 +219,6 @@ export class MockIntegration implements SdkIntegration {
       sqliteCoreVersion: '0.4.2 (mock core)',
       sdk: '@powersync/web (mock)'
     };
-  }
-
-  async currentSyncStatus(): Promise<SyncState> {
-    return this.syncState();
-  }
-
-  async getUploadQueueStats(): Promise<UploadQueueState> {
-    return UPLOAD_QUEUE;
   }
 
   async observeEvents(handler: (event: DiagnosticsEvent) => void): Promise<Unsubscribe> {
@@ -233,7 +231,7 @@ export class MockIntegration implements SdkIntegration {
     // Logs are not replayed by the protocol, so the first subscriber gets the seed lines directly.
     if (!this.seededLogs) {
       this.seededLogs = true;
-      handler({ type: 'logs', payload: SEED_LOGS });
+      handler({ type: 'newLogs', payload: SEED_LOGS });
     }
     return () => {
       this.handlers.delete(handler);
@@ -299,7 +297,7 @@ export class MockIntegration implements SdkIntegration {
     const messages = ['Downloaded 32 operations', 'Heartbeat ok', 'Compacted oplog', 'Token refreshed'];
     this.timers.push(
       setInterval(() => {
-        this.emit({ type: 'logs', payload: [log('debug', `${messages[count % messages.length]} (#${++count})`)] });
+        this.emit({ type: 'newLogs', payload: [log('debug', `${messages[count % messages.length]} (#${++count})`)] });
       }, 5000)
     );
 
@@ -318,8 +316,7 @@ export class MockIntegration implements SdkIntegration {
       fraction += 0.2;
       this.downloadProgress = {
         downloadedOperations: Math.round(fraction * 142),
-        totalOperations: 142,
-        downloadedFraction: Math.min(fraction, 1)
+        totalOperations: 142
       };
       if (fraction >= 1) {
         clearInterval(download);
@@ -356,8 +353,7 @@ export class MockIntegration implements SdkIntegration {
         { priority: 3, hasSynced: this.hasSynced, lastSyncedAt: this.hasSynced ? now - 215 : null }
       ],
       downloadError: null,
-      uploadError: null,
-      message: 'mock status'
+      uploadError: null
     };
   }
 

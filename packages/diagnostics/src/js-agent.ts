@@ -75,9 +75,9 @@ export class JsAgent implements SdkIntegration {
   // --- SdkIntegration ---
 
   async runQuery({ sql, params }: QueryParams): Promise<QueryResult> {
-    const rows = await this.db.getAll<Record<string, unknown>>(sql, params);
-    const columns = rows.length > 0 ? Object.keys(rows[0]) : [];
-    return { columns, rows, rowCount: rows.length };
+    const records = await this.db.getAll<Record<string, unknown>>(sql, params);
+    const columns = records.length > 0 ? Object.keys(records[0]) : [];
+    return { columns, rows: records.map((record) => columns.map((column) => record[column])) };
   }
 
   async getSchema(): Promise<SchemaPayload> {
@@ -89,11 +89,11 @@ export class JsAgent implements SdkIntegration {
     const connection = this.options.connection;
 
     let endpoint: string | null = null;
-    let userId: string | null = null;
+    let token: string | null = null;
     try {
       const credentials = await connection?.getConnector()?.fetchCredentials();
       endpoint = credentials?.endpoint ?? null;
-      userId = credentials?.token ? decodeJwtSubject(credentials.token) : null;
+      token = credentials?.token ?? null;
     } catch {
       // Credentials are unavailable before connect().
     }
@@ -116,7 +116,7 @@ export class JsAgent implements SdkIntegration {
     const connectionOptions = connection?.getConnectionOptions() ?? null;
     return {
       endpoint,
-      userId,
+      token,
       clientId,
       connectionMethod: connectionOptions?.connectionMethod ?? null,
       params: connectionOptions?.params ?? null,
@@ -124,15 +124,6 @@ export class JsAgent implements SdkIntegration {
       sqliteCoreVersion,
       sdk: this.options.sdk ?? null
     };
-  }
-
-  async currentSyncStatus(): Promise<SyncState> {
-    return toSyncState(this.db.currentStatus);
-  }
-
-  async getUploadQueueStats(): Promise<UploadQueueState> {
-    const stats = await this.db.getUploadQueueStats(true);
-    return { count: stats.count, size: stats.size ?? null };
   }
 
   async observeEvents(handler: (event: DiagnosticsEvent) => void): Promise<Unsubscribe> {
@@ -222,10 +213,16 @@ export class JsAgent implements SdkIntegration {
 
     this.captureLogs();
 
-    // Re-read bucket stats when internal tables change.
+    // Re-read bucket stats and the upload queue when internal tables change, so a local write shows up
+    // before the sync status moves.
     this.disposers.push(
       this.db.onChangeWithCallback(
-        { onChange: () => void this.pushBuckets() },
+        {
+          onChange: () => {
+            void this.pushBuckets();
+            void this.pushUploadQueue();
+          }
+        },
         { tables: ['ps_buckets', 'ps_oplog', 'ps_crud'], throttleMs: this.options.bucketThrottleMs ?? 300 }
       )
     );
@@ -235,7 +232,7 @@ export class JsAgent implements SdkIntegration {
     const status = this.db.currentStatus;
     handler({ type: 'status', payload: toSyncState(status) });
     handler({ type: 'streams', payload: toStreamStates(status) });
-    void this.getUploadQueueStats()
+    void this.readUploadQueue()
       .then((payload) => handler({ type: 'uploadQueue', payload }))
       .catch(() => {});
     void this.readBuckets()
@@ -258,9 +255,14 @@ export class JsAgent implements SdkIntegration {
     this.emit({ type: 'streams', payload: toStreamStates(status) });
   }
 
+  private async readUploadQueue(): Promise<UploadQueueState> {
+    const stats = await this.db.getUploadQueueStats(true);
+    return { count: stats.count, size: stats.size ?? null };
+  }
+
   private async pushUploadQueue(): Promise<void> {
     try {
-      this.emit({ type: 'uploadQueue', payload: await this.getUploadQueueStats() });
+      this.emit({ type: 'uploadQueue', payload: await this.readUploadQueue() });
     } catch {
       // Non-fatal: queue stats are best-effort.
     }
@@ -328,7 +330,7 @@ export class JsAgent implements SdkIntegration {
       message: record.message,
       args: record.error == null ? undefined : [record.error instanceof Error ? record.error.message : record.error]
     };
-    this.emit({ type: 'logs', payload: [entry] });
+    this.emit({ type: 'newLogs', payload: [entry] });
   }
 
   private handleCoreEvent(event: CoreDiagnosticsEvent): void {
@@ -368,14 +370,4 @@ function logLevelName(level: number): string {
   if (level >= 30) return 'info';
   if (level >= 20) return 'debug';
   return 'trace';
-}
-
-function decodeJwtSubject(token: string): string | null {
-  try {
-    const payload = token.split('.')[1];
-    const decoded = JSON.parse(atob(payload)) as { sub?: unknown };
-    return typeof decoded.sub === 'string' ? decoded.sub : null;
-  } catch {
-    return null;
-  }
 }

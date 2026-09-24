@@ -9,8 +9,7 @@ function toProgress(progress: ProgressWithOperations | null | undefined): Progre
   }
   return {
     downloadedOperations: progress.downloadedOperations,
-    totalOperations: progress.totalOperations,
-    downloadedFraction: progress.downloadedFraction
+    totalOperations: progress.totalOperations
   };
 }
 
@@ -39,8 +38,7 @@ export function toSyncState(status: SyncStatus): SyncState {
     downloadProgress: toProgress(status.downloadProgress),
     priorities,
     downloadError: errorText(status.downloadError),
-    uploadError: errorText(status.uploadError),
-    message: status.getMessage()
+    uploadError: errorText(status.uploadError)
   };
 }
 

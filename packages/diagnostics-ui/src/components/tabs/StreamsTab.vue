@@ -3,7 +3,7 @@ import { computed, onMounted, onUnmounted, ref } from 'vue';
 import type { StreamState } from '@powersync/diagnostics-core';
 import { useDiagnostics } from '../../composables/diagnostics';
 import { useFuzzySearch } from '../../composables/fuzzy';
-import { formatCompact, formatParams, formatPrecise } from '../../lib/format';
+import { formatCompact, formatParams, formatPrecise, progressFraction } from '../../lib/format';
 import Badge from '../ui/Badge.vue';
 import Button from '../ui/Button.vue';
 import SearchInput from '../ui/SearchInput.vue';
@@ -67,7 +67,10 @@ async function subscribe() {
   }
   const priority = priorityValue as 0 | 1 | 2 | 3 | undefined;
   try {
-    await client.action({ action: 'subscribeStream', args: { name: name.value, params, ttl: ttlInput.value, priority } });
+    await client.action({
+      action: 'subscribeStream',
+      args: { name: name.value, params, ttl: ttlInput.value, priority }
+    });
     name.value = '';
     paramsText.value = '';
     ttlInput.value = 0;
@@ -96,9 +99,14 @@ async function unsubscribe(s: StreamState) {
 
 <template>
   <div class="space-y-3">
-    <div class="flex items-start gap-2 rounded-lg border border-warning/40 bg-warning/10 px-2.5 py-2 text-xs text-warning">
+    <div
+      class="flex items-start gap-2 rounded-lg border border-warning/40 bg-warning/10 px-2.5 py-2 text-xs text-warning"
+    >
       <IconWarning class="mt-0.5 size-3.5 shrink-0" />
-      <span>Subscriptions are shared across all tabs and affect the app's real sync. Debug subscriptions default to TTL 0 (evicted on unsubscribe).</span>
+      <span
+        >Subscriptions are shared across all tabs and affect the app's real sync. Debug subscriptions default to TTL 0
+        (evicted on unsubscribe).</span
+      >
     </div>
 
     <SearchInput v-model="query" placeholder="Search streams…" />
@@ -112,12 +120,22 @@ async function unsubscribe(s: StreamState) {
         <!-- Top row: name · params · kind · active/inactive · TTL · unsubscribe -->
         <div class="flex items-center gap-2 text-xs">
           <IconStream class="size-3.5 shrink-0 text-muted-foreground" />
-          <span class="max-w-[11rem] shrink-0 truncate font-mono font-medium" :title="s.name ?? undefined">{{ s.name }}</span>
-          <span class="min-w-0 flex-1 truncate font-mono text-muted-foreground" :title="s.params ? formatParams(s.params) : undefined">{{ s.params ? formatParams(s.params) : '' }}</span>
-          <span class="inline-flex shrink-0 items-center gap-1 tabular-nums text-muted-foreground"><IconTime class="size-3" />{{ ttl(s.expiresAt) }}</span>
+          <span class="max-w-[11rem] shrink-0 truncate font-mono font-medium" :title="s.name ?? undefined">{{
+            s.name
+          }}</span>
+          <span
+            class="min-w-0 flex-1 truncate font-mono text-muted-foreground"
+            :title="s.params ? formatParams(s.params) : undefined"
+            >{{ s.params ? formatParams(s.params) : '' }}</span
+          >
+          <span class="inline-flex shrink-0 items-center gap-1 tabular-nums text-muted-foreground"
+            ><IconTime class="size-3" />{{ ttl(s.expiresAt) }}</span
+          >
           <Badge v-if="s.autoSubscribed" variant="muted" class="shrink-0">Auto Subscribed</Badge>
           <Badge v-if="s.explicitlySubscribed" variant="default" class="shrink-0">Invoked</Badge>
-          <Badge :variant="s.active ? 'success' : 'muted'" class="shrink-0">{{ s.active ? 'active' : 'inactive' }}</Badge>
+          <Badge :variant="s.active ? 'success' : 'muted'" class="shrink-0">{{
+            s.active ? 'active' : 'inactive'
+          }}</Badge>
           <Button
             v-if="s.explicitlySubscribed"
             size="sm"
@@ -134,12 +152,23 @@ async function unsubscribe(s: StreamState) {
         <!-- Second level: priority · synced · progress -->
         <div class="mt-1 flex items-center gap-3 text-[11px] text-muted-foreground">
           <span class="shrink-0 rounded bg-muted px-1.5 py-0.5 font-medium tabular-nums">P{{ s.priority ?? '—' }}</span>
-          <span class="shrink-0">Synced <span class="tabular-nums text-foreground">{{ s.hasSynced ? formatPrecise(s.lastSyncedAt) : 'pending' }}</span></span>
+          <span class="shrink-0"
+            >Synced
+            <span class="tabular-nums text-foreground">{{
+              s.hasSynced ? formatPrecise(s.lastSyncedAt) : 'pending'
+            }}</span></span
+          >
           <div v-if="s.progress" class="flex min-w-0 flex-1 items-center gap-2">
             <div class="h-1 min-w-0 flex-1 overflow-hidden rounded-full bg-muted">
-              <div class="h-full rounded-full bg-primary" :style="{ width: s.progress.downloadedFraction * 100 + '%' }" />
+              <div
+                class="h-full rounded-full bg-primary"
+                :style="{ width: progressFraction(s.progress) * 100 + '%' }"
+              />
             </div>
-            <span class="shrink-0 tabular-nums">{{ formatCompact(s.progress.downloadedOperations) }}/{{ formatCompact(s.progress.totalOperations) }} · {{ Math.round(s.progress.downloadedFraction * 100) }}%</span>
+            <span class="shrink-0 tabular-nums"
+              >{{ formatCompact(s.progress.downloadedOperations) }}/{{ formatCompact(s.progress.totalOperations) }} ·
+              {{ Math.round(progressFraction(s.progress) * 100) }}%</span
+            >
           </div>
         </div>
       </div>

@@ -87,8 +87,6 @@ export function createAgentServer(rpc: DevframeRpcClient): AgentServer {
   register('powersync:page-query', (id: string, params: QueryParams) => integrationFor(id).runQuery(params));
   register('powersync:page-schema', (id: string) => integrationFor(id).getSchema());
   register('powersync:page-info', (id: string) => integrationFor(id).getInfo());
-  register('powersync:page-status', (id: string) => integrationFor(id).currentSyncStatus());
-  register('powersync:page-upload-queue', (id: string) => integrationFor(id).getUploadQueueStats());
   register('powersync:page-action', (id: string, request: ActionRequest) => integrationFor(id).action(request));
 
   return {

@@ -28,7 +28,7 @@ import type {
  * | `streams`     | {@link StreamState}[]  | The sync status changes.                                    |
  * | `buckets`     | {@link BucketState}[]  | An internal table changes, or a core event updates a total. |
  * | `uploadQueue` | {@link UploadQueueState} | The sync status or `ps_crud` changes.                     |
- * | `logs`        | {@link LogRecord}[]    | The SDK logs. Not replayed to late subscribers.             |
+ * | `newLogs`     | {@link LogRecord}[]    | The SDK logs. Not replayed to late subscribers.             |
  * | `core`        | {@link CoreDiagnosticsEvent} | The SQLite core emits a diagnostics event.            |
  */
 export type DiagnosticsEvent =
@@ -36,7 +36,7 @@ export type DiagnosticsEvent =
   | { type: 'streams'; payload: StreamState[] }
   | { type: 'buckets'; payload: BucketState[] }
   | { type: 'uploadQueue'; payload: UploadQueueState }
-  | { type: 'logs'; payload: LogRecord[] }
+  | { type: 'newLogs'; payload: LogRecord[] }
   | { type: 'core'; payload: CoreDiagnosticsEvent };
 
 /**
@@ -63,19 +63,13 @@ export interface SdkIntegration {
   /** Endpoint, user, client id, connection method and params, core version. */
   getInfo(): Promise<ProtocolInfo>;
 
-  /** The current sync status, mapped to the protocol shape. */
-  currentSyncStatus(): Promise<SyncState>;
-
-  /** Pending upload (CRUD) operations. */
-  getUploadQueueStats(): Promise<UploadQueueState>;
-
   /**
    * Subscribes to pushed state (see {@link DiagnosticsEvent}). Resolves once the subscription is
    * in place, with a function that removes it.
    *
    * The implementation must emit the current `status`, `streams`, `buckets` and `uploadQueue`
-   * snapshots promptly after subscribing, so a UI that attaches late receives the present state
-   * without a separate request.
+   * snapshots promptly after subscribing. That is how a subscriber reads the present state; there
+   * is no request for it.
    */
   observeEvents(handler: (event: DiagnosticsEvent) => void): Promise<Unsubscribe>;
 

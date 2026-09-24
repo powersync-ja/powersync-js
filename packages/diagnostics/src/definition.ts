@@ -66,12 +66,6 @@ class RemoteIntegration implements SdkIntegration {
   getInfo(): Promise<ProtocolInfo> {
     return this.session.rpc.$call('powersync:page-info', this.sourceId);
   }
-  currentSyncStatus(): Promise<SyncState> {
-    return this.session.rpc.$call('powersync:page-status', this.sourceId);
-  }
-  getUploadQueueStats(): Promise<UploadQueueState> {
-    return this.session.rpc.$call('powersync:page-upload-queue', this.sourceId);
-  }
   action(request: ActionRequest): Promise<void> {
     return this.session.rpc.$call('powersync:page-action', this.sourceId, request);
   }
@@ -159,6 +153,18 @@ function pickSource(sourceId?: string | null): Source {
     );
   }
   return source;
+}
+
+/**
+ * The latest pushed snapshot of one event type, for the request-style tools (MCP). The protocol has
+ * no request for these; the source pushes them on subscribe and on every change, and they are kept
+ * here. `null` until the source has reported.
+ */
+function latestSnapshot(
+  sourceId: string | null | undefined,
+  type: DiagnosticsEvent['type']
+): DiagnosticsEvent['payload'] | null {
+  return pickSource(sourceId).snapshots.get(type)?.payload ?? null;
 }
 
 function pushEvent(session: DevframeNodeRpcSession, sourceId: string, event: DiagnosticsEvent): void {
@@ -410,9 +416,9 @@ export const definition = defineDevframe({
         returns: anyResult,
         agent: {
           description:
-            'The current sync status of the PowerSync client: connected, downloading, progress, last sync, errors. Argument: arg0 = database id or null for the first one.'
+            'The latest sync status the PowerSync client reported: connected, downloading, progress, last sync, errors. Null until it has reported. Argument: arg0 = database id or null for the first one.'
         },
-        handler: (sourceId) => pickSource(sourceId).integration.currentSyncStatus()
+        handler: async (sourceId) => latestSnapshot(sourceId, 'status')
       })
     );
     ps.rpc.register(
@@ -424,9 +430,9 @@ export const definition = defineDevframe({
         returns: anyResult,
         agent: {
           description:
-            'Pending local changes waiting to upload: count and size. Argument: arg0 = database id or null for the first one.'
+            'Pending local changes waiting to upload, as last reported: count and size. Null until reported. Argument: arg0 = database id or null for the first one.'
         },
-        handler: (sourceId) => pickSource(sourceId).integration.getUploadQueueStats()
+        handler: async (sourceId) => latestSnapshot(sourceId, 'uploadQueue')
       })
     );
     ps.rpc.register(

@@ -4,6 +4,7 @@ import type { ProtocolInfo, SchemaPayload, SchemaTable } from '@powersync/diagno
 import { useDiagnostics } from '../../composables/diagnostics';
 import { useFuzzySearch } from '../../composables/fuzzy';
 import { formatParams } from '../../lib/format';
+import { jwtSubject } from '../../lib/jwt';
 import Badge from '../ui/Badge.vue';
 import Button from '../ui/Button.vue';
 import InfoRow from '../ui/InfoRow.vue';
@@ -23,6 +24,7 @@ import IconWarning from '~icons/carbon/warning-alt';
 
 const { client, connected } = useDiagnostics();
 const info = ref<ProtocolInfo | null>(null);
+const userId = computed(() => jwtSubject(info.value?.token));
 const schema = ref<SchemaPayload | null>(null);
 const loadError = ref<string | null>(null);
 
@@ -78,7 +80,10 @@ function indexColumns(columns: { name: string; ascending: boolean }[]): string {
 
 <template>
   <div class="space-y-3">
-    <div v-if="loadError" class="flex items-start gap-1.5 rounded-lg border border-destructive/40 px-3 py-2 text-xs text-destructive">
+    <div
+      v-if="loadError"
+      class="flex items-start gap-1.5 rounded-lg border border-destructive/40 px-3 py-2 text-xs text-destructive"
+    >
       <IconWarning class="mt-0.5 size-3.5 shrink-0" />
       <span class="break-words">{{ loadError }}</span>
     </div>
@@ -88,15 +93,37 @@ function indexColumns(columns: { name: string; ascending: boolean }[]): string {
         <span class="text-xs font-medium text-muted-foreground">Connection</span>
         <div class="flex items-center gap-2">
           <div class="inline-flex rounded-md border p-0.5 text-[11px]">
-            <button :class="['rounded px-1.5 py-0.5', connView === 'structured' ? 'bg-accent text-foreground' : 'text-muted-foreground']" @click="connView = 'structured'">Fields</button>
-            <button :class="['rounded px-1.5 py-0.5', connView === 'json' ? 'bg-accent text-foreground' : 'text-muted-foreground']" @click="connView = 'json'">JSON</button>
+            <button
+              :class="[
+                'rounded px-1.5 py-0.5',
+                connView === 'structured' ? 'bg-accent text-foreground' : 'text-muted-foreground'
+              ]"
+              @click="connView = 'structured'"
+            >
+              Fields
+            </button>
+            <button
+              :class="[
+                'rounded px-1.5 py-0.5',
+                connView === 'json' ? 'bg-accent text-foreground' : 'text-muted-foreground'
+              ]"
+              @click="connView = 'json'"
+            >
+              JSON
+            </button>
           </div>
-          <button class="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground" title="Refresh" @click="load"><IconRefresh class="size-3.5" /></button>
+          <button
+            class="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+            title="Refresh"
+            @click="load"
+          >
+            <IconRefresh class="size-3.5" />
+          </button>
         </div>
       </header>
       <div v-if="connView === 'structured'" class="divide-y">
         <InfoRow :icon="IconLink" label="Endpoint" :value="info?.endpoint" mono copyable />
-        <InfoRow :icon="IconUser" label="User ID" :value="info?.userId" mono copyable />
+        <InfoRow :icon="IconUser" label="User ID" :value="userId" mono copyable />
         <InfoRow :icon="IconId" label="Client ID" :value="info?.clientId" mono copyable />
         <InfoRow :icon="IconConnect" label="Method" :value="info?.connectionMethod" />
         <InfoRow :icon="IconParams" label="Params" :value="formatParams(info?.params)" mono />
@@ -111,8 +138,24 @@ function indexColumns(columns: { name: string; ascending: boolean }[]): string {
       <div class="flex items-center justify-between">
         <span class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Schema</span>
         <div class="inline-flex rounded-md border p-0.5 text-[11px]">
-          <button :class="['rounded px-1.5 py-0.5', schemaView === 'tree' ? 'bg-accent text-foreground' : 'text-muted-foreground']" @click="schemaView = 'tree'">Tree</button>
-          <button :class="['rounded px-1.5 py-0.5', schemaView === 'json' ? 'bg-accent text-foreground' : 'text-muted-foreground']" @click="schemaView = 'json'">JSON</button>
+          <button
+            :class="[
+              'rounded px-1.5 py-0.5',
+              schemaView === 'tree' ? 'bg-accent text-foreground' : 'text-muted-foreground'
+            ]"
+            @click="schemaView = 'tree'"
+          >
+            Tree
+          </button>
+          <button
+            :class="[
+              'rounded px-1.5 py-0.5',
+              schemaView === 'json' ? 'bg-accent text-foreground' : 'text-muted-foreground'
+            ]"
+            @click="schemaView = 'json'"
+          >
+            JSON
+          </button>
         </div>
       </div>
 
@@ -120,13 +163,24 @@ function indexColumns(columns: { name: string; ascending: boolean }[]): string {
 
       <template v-else-if="schemaView === 'tree'">
         <SearchInput v-model="query" placeholder="Search tables & columns…" />
-        <div v-if="!filteredTables.length" class="rounded-lg border bg-card px-3 py-6 text-center text-xs text-muted-foreground">
+        <div
+          v-if="!filteredTables.length"
+          class="rounded-lg border bg-card px-3 py-6 text-center text-xs text-muted-foreground"
+        >
           {{ tables.length ? 'No tables match your search.' : 'No tables.' }}
         </div>
         <div v-else class="space-y-1.5">
           <div v-for="table in filteredTables" :key="table.name" class="overflow-hidden rounded-lg border bg-card">
-            <button class="flex w-full items-center gap-2 px-2.5 py-1.5 text-left text-xs hover:bg-muted/30" @click="toggle(table.name)">
-              <IconChevron :class="['size-3.5 shrink-0 text-muted-foreground transition-transform', isOpen(table.name) && 'rotate-90']" />
+            <button
+              class="flex w-full items-center gap-2 px-2.5 py-1.5 text-left text-xs hover:bg-muted/30"
+              @click="toggle(table.name)"
+            >
+              <IconChevron
+                :class="[
+                  'size-3.5 shrink-0 text-muted-foreground transition-transform',
+                  isOpen(table.name) && 'rotate-90'
+                ]"
+              />
               <IconTable class="size-3.5 shrink-0 text-muted-foreground" />
               <span class="font-mono font-medium">{{ table.name }}</span>
               <span class="text-muted-foreground">{{ table.columns.length }} cols</span>

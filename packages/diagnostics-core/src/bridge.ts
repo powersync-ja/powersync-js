@@ -26,8 +26,6 @@ export function exposeIntegration(integration: SdkIntegration, port: MessagePort
     runQuery: (params) => integration.runQuery(params),
     getSchema: () => integration.getSchema(),
     getInfo: () => integration.getInfo(),
-    currentSyncStatus: () => integration.currentSyncStatus(),
-    getUploadQueueStats: () => integration.getUploadQueueStats(),
     action: (request) => integration.action(request),
     close: () => integration.close(),
     async observeEvents(handler) {
@@ -53,8 +51,6 @@ export function connectIntegration(port: MessagePort): SdkIntegration {
     runQuery: (params) => remote.runQuery(params),
     getSchema: () => remote.getSchema(),
     getInfo: () => remote.getInfo(),
-    currentSyncStatus: () => remote.currentSyncStatus(),
-    getUploadQueueStats: () => remote.getUploadQueueStats(),
     action: (request) => remote.action(request),
     async close() {
       await remote.close();
