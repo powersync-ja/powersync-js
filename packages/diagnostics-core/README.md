@@ -1,8 +1,10 @@
 # PowerSync Diagnostics — core
 
-This package (`packages/diagnostics-core`) defines the protocol between the [PowerSync](https://powersync.com) diagnostics tool and a PowerSync SDKs.
+`@powersync/diagnostics-core` defines the protocol between the [PowerSync](https://powersync.com) DevTools and a PowerSync SDK.
 
-It imports nothing from any PowerSync SDK. The protocol is owned by the tool, and each SDK implements it in its own language. The JavaScript implementation lives in [`@powersync/diagnostics`](https://github.com/powersync-ja/powersync-js/tree/main/packages/diagnostics).
+**Internal package.** PowerSync SDKs and tools depend on it. Do not add it to your app. Use [`@powersync/diagnostics`](https://github.com/powersync-ja/powersync-js/tree/main/packages/diagnostics) instead.
+
+It imports nothing from any PowerSync SDK. The tool owns the protocol. Each SDK implements it in its own language. The JavaScript implementation is in `@powersync/diagnostics`.
 
 ## The protocol in one picture
 
@@ -32,9 +34,7 @@ The reference definition is the TypeScript itself: [`src/integration.ts`](./src/
 
 ## Who uses it
 
-Most apps do not use this package directly. Use [`@powersync/diagnostics`](https://github.com/powersync-ja/powersync-js/tree/main/packages/diagnostics), which implements the protocol for JavaScript and serves the UI for you.
-
-Use this package directly when you build a new host or a new SDK integration.
+Use this package only when you build a new host or a new SDK integration.
 
 ## Implement the protocol for a new SDK
 
