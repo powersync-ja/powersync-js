@@ -13,6 +13,7 @@
   "unpkg": "dist/plugin.js",
   "files": [
     "android/src/main/",
+    "android/core/",
     "android/build.gradle",
     "android/proguard-rules.pro",
     "dist/",
@@ -51,7 +52,7 @@
   "scripts": {
     "verify": "pnpm verify:ios && pnpm verify:android && pnpm verify:web",
     "verify:ios": "cd example-app && pnpm install && cd ios/App && xcodebuild -project App.xcodeproj -scheme App -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest'",
-    "verify:android": "cd android && ./gradlew clean build test && cd ..",
+    "verify:android": "pnpm prepare:core && cd android && ./gradlew clean build test && cd ..",
     "verify:web": "pnpm build",
     "lint": "pnpm eslint && pnpm prettier -- --check && pnpm swiftlint -- lint",
     "fmt": "pnpm eslint -- --fix && pnpm prettier -- --write && pnpm swiftlint -- --fix --format",
@@ -59,7 +60,8 @@
     "prettier": "prettier \"**/*.{css,html,ts,js,java}\" --plugin=prettier-plugin-java",
     "swiftlint": "node-swiftlint",
     "docgen": "docgen --api PowerSyncPlugin --output-readme README.md --output-json dist/docs.json",
-    "build": "pnpm clean && pnpm docgen && tsc && rollup -c rollup.config.mjs",
+    "prepare:core": "node ../../tools/download-core.js capacitor",
+    "build": "pnpm clean && pnpm prepare:core && pnpm docgen && tsc && rollup -c rollup.config.mjs",
     "build:prod": "pnpm build",
     "clean": "rimraf ./dist",
     "watch": "tsc --watch",
