@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, vi } from 'vitest';
 
 import {
   CommonPowerSyncDatabase,
+  DownloadOptions,
   LogRecord,
   PowerSyncLogger,
   ProgressWithOperations,
@@ -18,16 +19,19 @@ import {
   mockSyncServiceTest,
   stream,
   TestConnector,
-  waitForSyncStatus, databaseTest
+  waitForSyncStatus,
+  databaseTest
 } from './utils.js';
 import { BucketChecksum, OplogEntryJSON } from '@powersync/shared-internals/internal/sync_protocol';
 import {
   AbstractStreamingSyncImplementation,
   BasePowerSyncDatabase,
-  resolveSyncOptions, SqliteBucketStorage
+  InternalConnector,
+  resolveSyncOptions,
+  SqliteBucketStorage
 } from '@powersync/shared-internals';
 import { asyncNotifier } from '../../shared-internals/src/utils/async.js';
-import {NodeRemote} from "../src/sync/stream/NodeRemote.js";
+import { NodeRemote } from '../src/sync/stream/NodeRemote.js';
 
 const defaultConnectOptions: SyncOptions = {
   // This might help with test stability/timeouts if a retry is needed.
@@ -221,74 +225,72 @@ describe('Sync', () => {
     });
 
     databaseTest(
-        'checkpoint retry cancellation',
-        async ({ database }) => {
-          await database.init();
+      'checkpoint retry cancellation',
+      async ({ database }) => {
+        await database.init();
 
-          class TestSync extends AbstractStreamingSyncImplementation {
-            obtainLock<T>({ callback }: any): Promise<T> {
-              return callback();
-            }
-
-            async startCheckpointRetry() {
-              const controller = new AbortController();
-              this.abortController = controller;
-              await this['checkpoints'].markCheckpointsReady(Promise.resolve());
-              this.streamingSyncPromise = Promise.all([
-                Promise.resolve(),
-                Promise.resolve(),
-                this['repostUnacknowledgedCheckpointRequests'](
-                    controller.signal,
-                    resolveSyncOptions({ checkpointMode: 'requests' }, SyncStreamConnectionMethod.HTTP)
-                )
-              ]);
-            }
-
-            endDownloadIteration() {
-              this['checkpoints'].downloadIterationEnded();
-            }
+        class TestSync extends AbstractStreamingSyncImplementation {
+          obtainLock<T>({ callback }: any): Promise<T> {
+            return callback();
           }
 
-          const firstRead = Promise.withResolvers<void>();
-          const logger: PowerSyncLogger = { log: vi.fn() };
-          const adapter = new SqliteBucketStorage(database.database, logger);
+          async startCheckpointRetry() {
+            const controller = new AbortController();
+            this.abortController = controller;
+            await this['checkpoints'].markCheckpointsReady(Promise.resolve());
+            this.streamingSyncPromise = Promise.all([
+              Promise.resolve(),
+              Promise.resolve(),
+              this['repostUnacknowledgedCheckpointRequests'](
+                controller.signal,
+                resolveSyncOptions({ checkpointMode: 'requests' }, SyncStreamConnectionMethod.HTTP)
+              )
+            ]);
+          }
 
-          const readCheckpointRequestId = vi.spyOn(adapter, 'readCheckpointRequestId');
-          readCheckpointRequestId.mockImplementation(async (_) => {
-            firstRead.resolve();
-            return '1';
-          });
+          endDownloadIteration() {
+            this['checkpoints'].downloadIterationEnded();
+          }
+        }
 
-          const sync = new TestSync({
-            subscriptions: [],
-            serializedSchema: new Schema([]).toJSON(),
-            logger,
-            adapter,
-            uploadCrud: vi.fn(),
-            postCheckpointRequest: vi.fn(),
-            remote: new NodeRemote(
-                {
-                  fetchCredentials: vi.fn()
-                },
-                logger,
-                {
-                  customFetch: () => {
-                    throw new Error(`Unexpected HTTP request`);
-                  }
-                }
-            )
-          });
+        const firstRead = Promise.withResolvers<void>();
+        const logger: PowerSyncLogger = { log: vi.fn() };
+        const adapter = new SqliteBucketStorage(database.database, logger);
 
-          await sync.startCheckpointRetry();
-          await firstRead.promise;
-          // The download loop resets checkpoint readiness as it exits. Disconnect wakes the
-          // retry delay, which used to wait again on the already-aborted signal forever.
-          sync.endDownloadIteration();
-          await sync.disconnect();
+        const readCheckpointRequestId = vi.spyOn(adapter, 'readCheckpointRequestId');
+        readCheckpointRequestId.mockImplementation(async (_) => {
+          firstRead.resolve();
+          return '1';
+        });
 
-          expect(sync.isConnected).toBe(false);
-        },
-        500
+        const connector: InternalConnector = {
+          fetchCredentials: vi.fn(),
+          postCheckpointRequest: vi.fn()
+        };
+
+        const sync = new TestSync({
+          subscriptions: [],
+          serializedSchema: new Schema([]).toJSON(),
+          logger,
+          adapter,
+          connector,
+          remote: new NodeRemote(connector, logger, {
+            customFetch: () => {
+              throw new Error(`Unexpected HTTP request`);
+            }
+          })
+        });
+
+        await sync.startCheckpointRetry();
+        await firstRead.promise;
+        // The download loop resets checkpoint readiness as it exits. Disconnect wakes the
+        // retry delay, which used to wait again on the already-aborted signal forever.
+        sync.endDownloadIteration();
+        await sync.disconnect();
+
+        expect(sync.isConnected).toBe(false);
+      },
+      500
     );
 
     describe('requestCheckpoint', () => {
@@ -486,6 +488,75 @@ describe('Sync', () => {
     (database as BasePowerSyncDatabase).syncStreamImplementation!.markConnectionMayHaveChanged();
     await database.waitForStatus((s) => !s.connected);
     await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
+  });
+
+  describe('split connectors', () => {
+    const downloadOptions: DownloadOptions = {
+      powerSyncEndpoint: 'https://powersync.example.org',
+      authenticator: {
+        async resolveCredentials() {
+          return 'test';
+        }
+      }
+    };
+
+    mockSyncServiceTest('can connect download-only', async ({ syncService }) => {
+      const database = await syncService.createDatabase();
+      await database.connect({ ...defaultConnectOptions, ...downloadOptions });
+      await database.waitForStatus((s) => s.connected);
+
+      // Create a local mutation, which is never uploaded.
+      await database.execute('INSERT INTO lists (id, name) VALUES (uuid(), ?)', ['local mutation']);
+
+      // Upgrade to a full connection, which should upload.
+      const didUpload = Promise.withResolvers<void>();
+      await database.connect({
+        ...defaultConnectOptions,
+        ...downloadOptions,
+        async upload({ database }) {
+          const tx = await database.getNextCrudTransaction();
+          if (tx) {
+            didUpload.resolve();
+            await tx.complete();
+          }
+        }
+      });
+      await didUpload.promise;
+    });
+
+    mockSyncServiceTest('can connect upload-only', async ({ syncService }) => {
+      // Connecting in upload-only mode should make no SDK-initiated HTTP requests.
+      syncService.installRequestInterceptor(async (request) => {
+        throw new Error(`Unexpected HTTP request: ${request.url}`);
+      });
+
+      const database = await syncService.createDatabase();
+      const didUpload = Promise.withResolvers<void>();
+      await database.connect({
+        ...defaultConnectOptions,
+        async upload({ database }) {
+          const tx = await database.getNextCrudTransaction();
+          if (tx) {
+            didUpload.resolve();
+            await tx.complete();
+          }
+        }
+      });
+
+      await database.execute('INSERT INTO lists (id, name) VALUES (uuid(), ?)', ['local mutation']);
+      await didUpload.promise;
+
+      // Reconnect in download-only mode. This should request a write checkpoint because the upload-only mode can't.
+      const didRequestCheckpoint = Promise.withResolvers<void>();
+      syncService.installRequestInterceptor(async (request) => {
+        if (request.url.includes('/write-checkpoint2.json')) {
+          didRequestCheckpoint.resolve();
+        }
+      });
+
+      await database.connect({ ...defaultConnectOptions, ...downloadOptions });
+      await didRequestCheckpoint.promise;
+    });
   });
 });
 

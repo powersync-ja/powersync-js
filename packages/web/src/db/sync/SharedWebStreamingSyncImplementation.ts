@@ -56,11 +56,11 @@ class SharedSyncClientProvider extends AbstractSharedSyncClientProvider {
      * Don't return anything here, just incase something which is not
      * serializable is returned from the `uploadCrud` function.
      */
-    await this.options.uploadCrud();
+    await this.options.connector.uploadCrud!();
   }
 
   override async postCheckpointRequest(clientId: string, requestId: string): Promise<string | null> {
-    return await this.options.postCheckpointRequest(clientId, requestId);
+    return await this.options.connector.postCheckpointRequest!(clientId, requestId);
   }
 
   get logger() {
@@ -159,10 +159,15 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
      * - The client sends the params to the shared worker after locks have been registered.
      */
     const closeSignal = await generateTabCloseSignal(this.abortOnClose.signal);
-    // Awaiting here ensures the worker is waiting for the lock
-    await this.syncManager.addLockBasedCloseSignal(closeSignal);
+    const { identifier, connector } = this.options;
 
-    const { identifier } = this.options;
+    // Awaiting here ensures the worker is waiting for the lock
+    await this.syncManager.initialize(closeSignal, {
+      hasFetchCredentials: !!connector.fetchCredentials,
+      hasInvalidateCredentials: !!connector.invalidateCredentials,
+      hasPostCheckpointRequest: !!connector.postCheckpointRequest,
+      hasUploadCrud: !!connector.uploadCrud
+    });
 
     await this.syncManager.setParams(
       {

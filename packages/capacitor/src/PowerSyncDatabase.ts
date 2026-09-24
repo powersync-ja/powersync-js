@@ -2,11 +2,13 @@ import { Capacitor } from '@capacitor/core';
 import {
   CommonPowerSyncDatabase,
   DBAdapter,
+  DownloadOptions,
   LogLevels,
   PowerSyncBackendConnector,
   PowerSyncDatabaseConstructor,
   SyncOptions,
   SyncStreamConnectionMethod,
+  UploadOptions,
   WebPowerSyncDatabase,
   WebPowerSyncDatabaseOptions
 } from '@powersync/web';
@@ -15,6 +17,7 @@ import { CapacitorRemote } from './sync/CapacitorRemote.js';
 import { CapacitorStreamingSyncImplementation } from './sync/CapacitorSyncImplementation.js';
 import {
   CreateSyncImplementationOptions,
+  InternalConnector,
   MEMORY_TRIGGER_CLAIM_MANAGER,
   StreamingSyncImplementation,
   TriggerManagerConfig,
@@ -28,7 +31,10 @@ class CapacitorPowerSyncDatabase extends WebPowerSyncDatabase {
    * or HTTP connections if using {@link CapacitorSQLiteAdapter} - this is due to poor performance with
    * the Capacitor Community SQLite library and binary payloads.
    */
-  connect(connector: PowerSyncBackendConnector, options?: SyncOptions): Promise<void> {
+  connect(
+    connector: PowerSyncBackendConnector | (SyncOptions & (DownloadOptions | UploadOptions)),
+    options?: SyncOptions
+  ): Promise<void> {
     const isUsingCapacitorDriver = this.database instanceof CapacitorSQLiteAdapter;
     const defaultConnectionMethod = isUsingCapacitorDriver ? SyncStreamConnectionMethod.HTTP : undefined;
     if (options?.connectionMethod == SyncStreamConnectionMethod.WEB_SOCKET && isUsingCapacitorDriver) {
@@ -38,10 +44,19 @@ class CapacitorPowerSyncDatabase extends WebPowerSyncDatabase {
       });
     }
 
-    return super.connect(connector, {
-      ...(options ?? {}),
-      connectionMethod: options?.connectionMethod ?? defaultConnectionMethod
-    });
+    if ('fetchCredentials' in connector) {
+      // (PowerSyncBackendConnector, SyncOptions) signature
+      return super.connect(connector, {
+        ...(options ?? {}),
+        connectionMethod: options?.connectionMethod ?? defaultConnectionMethod
+      });
+    } else {
+      // (SyncOptions & (DownloadOptions | UploadOptions)) signature
+      return super.connect({
+        ...connector,
+        connectionMethod: options?.connectionMethod ?? defaultConnectionMethod
+      });
+    }
   }
 
   protected get isNativeCapacitorPlatform(): boolean {
@@ -98,7 +113,7 @@ class CapacitorPowerSyncDatabase extends WebPowerSyncDatabase {
   }
 
   protected generateSyncStreamImplementation(
-    connector: PowerSyncBackendConnector,
+    connector: InternalConnector,
     options: CreateSyncImplementationOptions
   ): StreamingSyncImplementation {
     if (this.isNativeCapacitorPlatform) {

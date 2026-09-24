@@ -1,6 +1,7 @@
 import * as Comlink from 'comlink';
 import { getNavigatorLocks } from '../../shared/navigator.js';
 import {
+  ClientConnectorCapabilities,
   ManualSharedSyncPayload,
   SharedSyncClientEvent,
   SharedSyncImplementation,
@@ -10,7 +11,7 @@ import {
 import { SubscribedStream, ResolvedSyncOptions } from '@powersync/shared-internals';
 
 /**
- * A client to the shared sync worker.
+ * A connected client from the perspective of the shared sync worker.
  *
  * The shared sync implementation needs a per-client view of subscriptions so that subscriptions of closed tabs can
  * automatically be evicted later.
@@ -56,9 +57,9 @@ export class WorkerClient {
    * When the client tab is closed, its lock will be returned. So when the shared worker attempts to acquire the lock,
    * it can consider the connection to be closed.
    */
-  async addLockBasedCloseSignal(name: string) {
+  async initialize(name: string, capabilities: ClientConnectorCapabilities) {
     // Only add the port once the lock has been obtained on the client.
-    this.resolvedPort = await this.sync.addPort(this.port);
+    this.resolvedPort = await this.sync.addPort(this.port, capabilities);
     // Don't await this lock request
     getNavigatorLocks().request(name, async () => {
       await this.removePort();

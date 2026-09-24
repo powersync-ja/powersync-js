@@ -1,6 +1,6 @@
 import * as os from 'node:os';
 
-import { AbstractRemote, FetchOptions, RemoteConnector } from '@powersync/shared-internals';
+import { AbstractRemote, FetchOptions, InternalConnector } from '@powersync/shared-internals';
 import { Dispatcher, EnvHttpProxyAgent, getGlobalDispatcher, ProxyAgent, WebSocket as UndiciWebSocket } from 'undici';
 import { PowerSyncLogger } from '@powersync/common';
 import type { WebSocketSyncStreamPlatform, WebSocketSupport } from '@powersync/shared-internals/websockets';
@@ -32,7 +32,7 @@ export class NodeRemote extends AbstractRemote {
   private fetchImpl: typeof fetch;
 
   constructor(
-    protected connector: RemoteConnector,
+    protected connector: InternalConnector,
     logger: PowerSyncLogger,
     options?: NodeRemoteOptions
   ) {

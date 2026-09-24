@@ -1,14 +1,11 @@
 import { LogLevels, PowerSyncLogger } from '@powersync/common';
-import { AbstractRemote, FetchOptions, RemoteConnector } from '@powersync/shared-internals';
+import { AbstractRemote, FetchOptions, InternalConnector } from '@powersync/shared-internals';
 
 import { getUserAgentInfo } from './userAgent.js';
 import type { WebSocketSyncStreamPlatform, WebSocketSupport } from '@powersync/shared-internals/websockets';
 
 export class WebRemote extends AbstractRemote {
-  constructor(
-    protected connector: RemoteConnector,
-    logger: PowerSyncLogger
-  ) {
+  constructor(connector: InternalConnector, logger: PowerSyncLogger) {
     super(connector, logger);
   }
 

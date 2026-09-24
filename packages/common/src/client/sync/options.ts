@@ -1,3 +1,4 @@
+import { Authenticator, MutationUploader } from '../connection/PowerSyncBackendConnector.js';
 import { StreamingSyncRequestParameterType } from './stream/JsonValue.js';
 
 /**
@@ -54,6 +55,34 @@ export interface SyncOptions {
    * The mode used to request checkpoints from the service (used after uploading local data).
    */
   checkpointMode?: CheckpointMode;
+}
+
+/**
+ * Options required when connecting a PowerSync database for downloads.
+ *
+ * @public
+ */
+export interface DownloadOptions {
+  /**
+   * The hostname of the PowerSync service to connect to.
+   */
+  powerSyncEndpoint: string;
+  /**
+   * The authenticator responsible for providing authentication tokens to the PowerSync service.
+   */
+  authenticator: Authenticator;
+}
+
+/**
+ * Options required when connecting a PowerSync database for uploads.
+ *
+ * @public
+ */
+export interface UploadOptions {
+  /**
+   * The function responsible for uploading local mutations.
+   */
+  upload: MutationUploader;
 }
 
 /**

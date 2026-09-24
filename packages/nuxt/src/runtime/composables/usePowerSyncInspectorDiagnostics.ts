@@ -304,7 +304,7 @@ export function usePowerSyncInspectorDiagnostics(): UsePowerSyncInspectorDiagnos
     const schemaManager = getCurrentSchemaManager();
     await schemaManager.clear();
     await schemaManager.refreshSchema(db.value.database);
-    await db.value.connect(connector, connectionOptions);
+    await db.value.connect(connector as PowerSyncBackendConnector, connectionOptions);
   };
 
   async function refreshState() {

@@ -31,6 +31,7 @@ import { asyncNotifier } from '../../../utils/async.js';
 import { JavaScriptSyncState, SyncStatusSnapshot } from '../../../db/crud/SyncStatus.js';
 import { ResolvedSyncOptions } from '../options.js';
 import { CheckpointStateSignals, isCheckpointRequestApplied } from './CheckpointState.js';
+import { InternalConnector } from '../../InternalConnector.js';
 
 /**
  * @internal
@@ -57,18 +58,7 @@ export interface LockOptions<T> {
 export interface AbstractStreamingSyncImplementationOptions {
   adapter: BucketStorageAdapter;
   subscriptions: SubscribedStream[];
-  /**
-   * Uploads pending CRUD data.
-   * Cross-context implementations must stop waiting when `signal` aborts
-   * on disconnect, allowing the sync loops to finish.
-   */
-  uploadCrud: (signal?: AbortSignal) => Promise<void>;
-  /**
-   * Posts a checkpoint request with the connector, returning null if the connector doesn't support that.
-   *
-   * See {@link AbstractStreamingSyncImplementationOptions.uploadCrud} for the semantics of `signal`.
-   */
-  postCheckpointRequest: (clientId: string, requestId: string, signal?: AbortSignal) => Promise<string | null> | null;
+  connector: InternalConnector;
   /**
    * An identifier for which PowerSync DB this sync implementation is
    * linked to. Most commonly DB name, but not restricted to DB name.
@@ -134,7 +124,7 @@ export abstract class AbstractStreamingSyncImplementation
   protected options: AbstractStreamingSyncImplementationOptions;
   protected abortController: AbortController | null;
   protected crudUpdateListener?: () => void;
-  protected streamingSyncPromise?: Promise<[void, void, void]>;
+  protected streamingSyncPromise?: Promise<void[]>;
   protected logger: PowerSyncLogger;
   protected activeStreams: SubscribedStream[];
   private connectionMayHaveChanged = false;
@@ -212,12 +202,9 @@ export abstract class AbstractStreamingSyncImplementation
 
   private async requestCheckpointFromService(signal: AbortSignal, request: CheckpointRequestPayload): Promise<string> {
     // First, check if we can use a custom checkpoint request implementation.
-    {
-      const customResponse = await this.options.postCheckpointRequest(
-        request.client_id,
-        request.checkpoint_request_id,
-        signal
-      );
+    const custom = this.options.connector.postCheckpointRequest;
+    if (custom) {
+      const customResponse = await custom(request.client_id, request.checkpoint_request_id, signal);
       if (customResponse != null) {
         return customResponse;
       }
@@ -243,6 +230,15 @@ export abstract class AbstractStreamingSyncImplementation
   }
 
   private async crudUploadLoop(signal: AbortSignal, options: ResolvedSyncOptions): Promise<void> {
+    this.crudUpdateListener = this.options.adapter.registerListener({
+      crudUpdate: () => this.triggerCrudUpload()
+    });
+
+    signal.addEventListener('abort', () => {
+      this.crudUpdateListener?.();
+      this.crudUpdateListener = undefined;
+    });
+
     while (!signal.aborted) {
       await Promise.all([
         // Start the initial CRUD upload on connect. Then, keep polling until we're done.
@@ -286,17 +282,12 @@ The next upload iteration will be delayed.`
               }
 
               checkedCrudItem = nextCrudItem;
-              await this.options.uploadCrud(signal);
+              await this.options.connector.uploadCrud!(signal);
               this.updateJsSyncState({ uploadError: undefined });
             } else {
               // Uploading is completed
-              const neededUpdate = await this.options.adapter.updateLocalTarget(() => {
-                if (options.checkpointMode === 'legacy') {
-                  return this.getLegacyWriteCheckpoint();
-                } else {
-                  return this.requestNextCheckpointFromService(signal);
-                }
-              });
+              const neededUpdate =
+                this.options.connector.fetchCredentials && (await this.updateLocalTarget(signal, options));
               if (neededUpdate) {
                 this.notifyCompletedUploads?.();
               } else if (checkedCrudItem != null) {
@@ -326,6 +317,16 @@ The next upload iteration will be delayed.`
     });
   }
 
+  private updateLocalTarget(signal: AbortSignal, options: ResolvedSyncOptions): Promise<boolean> {
+    return this.options.adapter.updateLocalTarget(() => {
+      if (options.checkpointMode === 'legacy') {
+        return this.getLegacyWriteCheckpoint();
+      } else {
+        return this.requestNextCheckpointFromService(signal);
+      }
+    });
+  }
+
   async connect(options: ResolvedSyncOptions) {
     if (this.abortController) {
       await this.disconnect();
@@ -334,62 +335,88 @@ The next upload iteration will be delayed.`
     const controller = new AbortController();
     this.abortController = controller;
     const signal = controller.signal;
-    this.streamingSyncPromise = Promise.all([
-      this.crudUploadLoop(signal, options).catch((error) => {
-        // Requesting the crud lock when aborted will file, but that's not something worth logging.
-        if (signal.reason !== error) {
-          this.logger.log({ level: LogLevels.error, message: 'Error in crud upload loop', error });
-        }
-      }),
-      this.streamingSync(signal, options),
-      this.repostUnacknowledgedCheckpointRequests(signal, options)
-    ]).finally(() => {
+
+    const syncTasks: Promise<void>[] = [];
+    const connector = this.options.connector;
+    if (connector.uploadCrud) {
+      syncTasks.push(
+        this.crudUploadLoop(signal, options).catch((error) => {
+          // Requesting the crud lock when aborted will file, but that's not something worth logging.
+          if (signal.reason !== error) {
+            this.logger.log({ level: LogLevels.error, message: 'Error in crud upload loop', error });
+          }
+        })
+      );
+    }
+
+    if (connector.fetchCredentials) {
+      if (!connector.uploadCrud) {
+        // We can't upload mutations, but we can request a checkpoint for mutations that have already been uploaded from a
+        // potential prior upload-only connection.
+        syncTasks.push(
+          this.updateLocalTarget(signal, options)
+            .then(() => {})
+            .catch((error) => {
+              if (signal.reason !== error) {
+                this.logger.log({ level: LogLevels.error, message: 'Could not update local target', error });
+              }
+            })
+        );
+      }
+
+      syncTasks.push(this.streamingSync(signal, options));
+      syncTasks.push(this.repostUnacknowledgedCheckpointRequests(signal, options));
+    }
+
+    this.streamingSyncPromise = Promise.all(syncTasks).finally(() => {
       // These promises only complete when we want to disconnect. No further sync iteration can resume checkpoint
       // requests, so fail any that are still pending.
       this.checkpoints.disconnected();
     });
 
-    // Return a promise that resolves when the connection status is updated to indicate that we're connected, or when
-    // this connection attempt is aborted (e.g. superseded by another connect() call) before that happens. We do this
-    // by waiting for connecting to be true and then false again.
-    return new Promise<void>((resolve) => {
-      let sawStartOfConnection = false;
-      let settled = false;
+    if (connector.fetchCredentials) {
+      // Return a promise that resolves when the connection status is updated to indicate that we're connected, or when
+      // this connection attempt is aborted (e.g. superseded by another connect() call) before that happens. We do this
+      // by waiting for connecting to be true and then false again.
+      return new Promise<void>((resolve) => {
+        let sawStartOfConnection = false;
+        let settled = false;
 
-      const finish = () => {
-        if (settled) {
-          return;
-        }
-        settled = true;
-        disposer();
-        signal.removeEventListener('abort', finish);
-        resolve();
-      };
-
-      const disposer = this.registerListener({
-        statusChanged: (snapshot) => {
-          if (snapshot.connecting) {
-            sawStartOfConnection = true;
-          }
-
-          if (snapshot.downloadError != null) {
-            this.logger.log({
-              level: LogLevels.warn,
-              message: 'Initial connect attempt did not successfully connect to server'
-            });
-          } else if (!sawStartOfConnection || snapshot.connecting) {
-            // Still connecting.
+        const finish = () => {
+          if (settled) {
             return;
           }
+          settled = true;
+          disposer();
+          signal.removeEventListener('abort', finish);
+          resolve();
+        };
 
-          finish();
-        }
+        const disposer = this.registerListener({
+          statusChanged: (snapshot) => {
+            if (snapshot.connecting) {
+              sawStartOfConnection = true;
+            }
+
+            if (snapshot.downloadError != null) {
+              this.logger.log({
+                level: LogLevels.warn,
+                message: 'Initial connect attempt did not successfully connect to server'
+              });
+            } else if (!sawStartOfConnection || snapshot.connecting) {
+              // Still connecting.
+              return;
+            }
+
+            finish();
+          }
+        });
+
+        // If this attempt is aborted (disconnected) before a `statusChanged` event ever fires - which can happen when
+        // the instance never got as far as reporting a connecting status - there's nothing left to wait for.
+        signal.addEventListener('abort', finish, { once: true });
       });
-
-      // If this attempt is aborted (disconnected) before a `statusChanged` event ever fires - which can happen when
-      // the instance never got as far as reporting a connecting status - there's nothing left to wait for.
-      signal.addEventListener('abort', finish, { once: true });
-    });
+    }
   }
 
   async requestCheckpoint(): Promise<bigint> {
@@ -437,13 +464,6 @@ The next upload iteration will be delayed.`
 
   private async streamingSync(signal: AbortSignal, options: ResolvedSyncOptions): Promise<void> {
     /**
-     * Listen for CRUD updates and trigger upstream uploads
-     */
-    this.crudUpdateListener = this.options.adapter.registerListener({
-      crudUpdate: () => this.triggerCrudUpload()
-    });
-
-    /**
      * Create a new abort controller which aborts items downstream.
      * This is needed to close any previous connections on exception.
      */
@@ -455,8 +475,6 @@ The next upload iteration will be delayed.`
        * to the nested abort controller.
        */
       nestedAbortController.abort(signal?.reason ?? new AbortOperation('Received command to disconnect from upstream'));
-      this.crudUpdateListener?.();
-      this.crudUpdateListener = undefined;
       this.markAsDisconnected();
     });
 

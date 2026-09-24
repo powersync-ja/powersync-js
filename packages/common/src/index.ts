@@ -23,7 +23,9 @@ export {
   SyncStreamConnectionMethod,
   FetchStrategy,
   CheckpointMode,
-  CheckpointRequestsOptions
+  CheckpointRequestsOptions,
+  DownloadOptions,
+  UploadOptions
 } from './client/sync/options.js';
 
 export { ProgressWithOperations, SyncProgress } from './db/crud/SyncProgress.js';

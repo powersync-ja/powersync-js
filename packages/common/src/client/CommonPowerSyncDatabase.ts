@@ -7,7 +7,7 @@ import { PowerSyncLogger } from '../utils/Logger.js';
 import { DatabaseSource } from './SQLOpenFactory.js';
 import { TriggerManager } from './triggers/TriggerManager.js';
 import { PowerSyncBackendConnector } from './connection/PowerSyncBackendConnector.js';
-import { SyncOptions } from './sync/options.js';
+import { DownloadOptions, SyncOptions, UploadOptions } from './sync/options.js';
 import { SyncStream } from './sync/sync-streams.js';
 import { UploadQueueStats } from '../db/crud/UploadQueueStatus.js';
 import { CrudBatch } from './sync/bucket/CrudBatch.js';
@@ -218,6 +218,20 @@ export interface CommonPowerSyncDatabase extends BaseObserverInterface<PowerSync
    * Connects to stream of events from the PowerSync instance.
    */
   connect(connector: PowerSyncBackendConnector, options?: SyncOptions): Promise<void>;
+
+  /**
+   * Connects this PowerSync database for downloading rows from your source database, uploading local mutations to your
+   * backend, or both.
+   *
+   * For downloads, {@link DownloadOptions} need to be provided. This includes the URL of the PowerSync service to
+   * connect to and a callback responsible for obtaining an authentication token.
+   * For uploads, {@link UploadOptions} provides a callback responsible for uploading local mutations to your backend.
+   *
+   * A single connect call can provide both download and upload options. Each call overrides all previous options. In
+   * particular, first calling connect with download options only and then again with upload options does not keep the
+   * download active. Provide both options in one call to sync both ways.
+   */
+  connect(options: SyncOptions & (DownloadOptions | UploadOptions)): Promise<void>;
 
   /**
    * Close the sync connection.

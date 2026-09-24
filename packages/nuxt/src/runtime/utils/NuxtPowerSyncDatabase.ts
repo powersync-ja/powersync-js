@@ -12,9 +12,15 @@ import {
   type SyncOptions,
   type CommonPowerSyncDatabase,
   type PowerSyncDatabaseConstructor,
-  PowerSyncDatabase
+  PowerSyncDatabase,
+  type DownloadOptions,
+  type UploadOptions
 } from '@powersync/web';
-import { type StreamingSyncImplementation, type CreateSyncImplementationOptions } from '@powersync/shared-internals';
+import {
+  type StreamingSyncImplementation,
+  type CreateSyncImplementationOptions,
+  type InternalConnector
+} from '@powersync/shared-internals';
 import type { DynamicSchemaManager } from './DynamicSchemaManager';
 import { usePowerSyncInspector } from '../composables/usePowerSyncInspector';
 import { useDiagnosticsLogger } from '../composables/useDiagnosticsLogger';
@@ -66,7 +72,7 @@ export class NuxtDatabaseImplementation extends WebPowerSyncDatabase {
   }
 
   protected override generateSyncStreamImplementation(
-    connector: PowerSyncBackendConnector,
+    connector: InternalConnector,
     options: CreateSyncImplementationOptions
   ): StreamingSyncImplementation {
     if (this.useDiagnostics) {
@@ -112,10 +118,17 @@ export class NuxtDatabaseImplementation extends WebPowerSyncDatabase {
     }
   }
 
-  override async connect(connector: PowerSyncBackendConnector, options?: SyncOptions) {
-    // Override client implementation when in diagnostics
-    this._connector = connector;
-    await super.connect(connector, options);
+  override connect(connector: PowerSyncBackendConnector, options?: SyncOptions): Promise<void>;
+  override connect(options: SyncOptions & (DownloadOptions | UploadOptions)): Promise<void>;
+  override connect(
+    connector: PowerSyncBackendConnector | (SyncOptions & (DownloadOptions | UploadOptions)),
+    options?: SyncOptions
+  ): Promise<void> {
+    if ('fetchCredentials' in connector) {
+      this._connector = connector;
+    }
+
+    return super.connect(connector as any, options);
   }
 
   override async disconnect() {
