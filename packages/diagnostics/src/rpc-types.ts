@@ -28,8 +28,8 @@ declare module 'devframe/types' {
     'powersync:query': (params: QueryParams, sourceId?: string | null) => Promise<QueryResult>;
     'powersync:schema': (sourceId?: string | null) => Promise<SchemaPayload>;
     'powersync:info': (sourceId?: string | null) => Promise<ProtocolInfo>;
-    'powersync:status': (sourceId?: string | null) => Promise<SyncState>;
-    'powersync:upload-queue': (sourceId?: string | null) => Promise<UploadQueueState>;
+    'powersync:status': (sourceId?: string | null) => Promise<SyncState | null>;
+    'powersync:upload-queue': (sourceId?: string | null) => Promise<UploadQueueState | null>;
     'powersync:action': (request: ActionRequest, sourceId?: string | null) => Promise<void>;
     'powersync:observe': (sourceId?: string | null) => void;
     'powersync:unobserve': () => void;
@@ -46,8 +46,6 @@ declare module 'devframe/types' {
     'powersync:page-query': (sourceId: string, params: QueryParams) => Promise<QueryResult>;
     'powersync:page-schema': (sourceId: string) => Promise<SchemaPayload>;
     'powersync:page-info': (sourceId: string) => Promise<ProtocolInfo>;
-    'powersync:page-status': (sourceId: string) => Promise<SyncState>;
-    'powersync:page-upload-queue': (sourceId: string) => Promise<UploadQueueState>;
     'powersync:page-action': (sourceId: string, request: ActionRequest) => Promise<void>;
   }
 }

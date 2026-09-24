@@ -24,19 +24,16 @@ export interface QueryParams {
 export interface QueryResult {
   /** Column names, in order. */
   columns: string[];
-  /** One object per row, keyed by column name. */
-  rows: Record<string, unknown>[];
-  rowCount: number;
+  /** One array per row, values in `columns` order. */
+  rows: unknown[][];
 }
 
 // --- sync status ---
 
-/** Download progress expressed in operation counts. */
+/** Download progress expressed in operation counts. The fraction is `downloaded / total`. */
 export interface ProgressState {
   downloadedOperations: number;
   totalOperations: number;
-  /** `0` to `1`. */
-  downloadedFraction: number;
 }
 
 /** Sync state for a single bucket priority level. */
@@ -60,7 +57,6 @@ export interface SyncState {
   priorities: PriorityState[];
   downloadError: string | null;
   uploadError: string | null;
-  message: string;
 }
 
 /** State for a single sync stream. */
@@ -120,8 +116,8 @@ export interface LogRecord {
 export interface ProtocolInfo {
   /** The PowerSync service endpoint. */
   endpoint: string | null;
-  /** Derive from the token subject when the SDK does not expose it. */
-  userId: string | null;
+  /** The raw JWT the connector last supplied, when the SDK exposes it. */
+  token: string | null;
   /** The PowerSync client id. */
   clientId: string | null;
   /** For example `http` or `websocket`. */
@@ -214,12 +210,7 @@ export type CoreDiagnosticsEvent =
  * | `unsubscribeStream` | `{ name, params? }`        | Release a subscription created with `subscribeStream`.                 |
  */
 export type ActionName =
-  | 'reconnect'
-  | 'disconnect'
-  | 'clearData'
-  | 'requestCheckpoint'
-  | 'subscribeStream'
-  | 'unsubscribeStream';
+  'reconnect' | 'disconnect' | 'clearData' | 'requestCheckpoint' | 'subscribeStream' | 'unsubscribeStream';
 
 /** Arguments for `subscribeStream` / `unsubscribeStream`. */
 export interface StreamActionArgs {

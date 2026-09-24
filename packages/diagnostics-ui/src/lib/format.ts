@@ -1,3 +1,5 @@
+import type { ProgressState } from '@powersync/diagnostics-core';
+
 export function formatBytes(bytes: number | null | undefined): string {
   if (bytes == null) return '—';
   if (bytes === 0) return '0 B';
@@ -71,4 +73,10 @@ export function formatPrecise(ms: number | null | undefined): string {
 export function formatParams(params: Record<string, unknown> | null | undefined): string {
   if (params == null || Object.keys(params).length === 0) return '—';
   return JSON.stringify(params);
+}
+
+/** Download progress as a `0` to `1` fraction; `0` when nothing is known. */
+export function progressFraction(progress: ProgressState | null | undefined): number {
+  if (!progress || progress.totalOperations <= 0) return 0;
+  return Math.min(progress.downloadedOperations / progress.totalOperations, 1);
 }

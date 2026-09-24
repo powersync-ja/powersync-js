@@ -102,12 +102,6 @@ export class DevframeIntegration implements SourceAwareIntegration {
   getInfo(): Promise<ProtocolInfo> {
     return this.call('info', this.sourceId);
   }
-  currentSyncStatus(): Promise<SyncState> {
-    return this.call('status', this.sourceId);
-  }
-  getUploadQueueStats(): Promise<UploadQueueState> {
-    return this.call('upload-queue', this.sourceId);
-  }
   action(request: ActionRequest): Promise<void> {
     return this.call('action', request, this.sourceId);
   }

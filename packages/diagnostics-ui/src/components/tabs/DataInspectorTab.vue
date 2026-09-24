@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue';
 import type { QueryResult } from '@powersync/diagnostics-core';
 import { useDiagnostics } from '../../composables/diagnostics';
+import { rowsToObjects } from '../../lib/rows';
 import { useFuzzySearch } from '../../composables/fuzzy';
 import Button from '../ui/Button.vue';
 import SearchInput from '../ui/SearchInput.vue';
@@ -34,7 +35,7 @@ async function loadObjects() {
     const res = await client.runQuery({
       sql: "SELECT name, type FROM sqlite_master WHERE type IN ('table', 'view') AND name NOT LIKE 'sqlite_%' ORDER BY type DESC, name"
     });
-    objects.value = res.rows as unknown as DbObject[];
+    objects.value = rowsToObjects(res) as unknown as DbObject[];
   } catch {
     objects.value = [];
   }
@@ -71,7 +72,9 @@ onMounted(() => {
       <div class="p-2"><SearchInput v-model="query" placeholder="Search tables & views…" /></div>
       <div class="min-h-0 flex-1 overflow-auto px-1 pb-2 text-xs">
         <template v-if="views.length">
-          <div class="px-1 py-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Views ({{ views.length }})</div>
+          <div class="px-1 py-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+            Views ({{ views.length }})
+          </div>
           <button
             v-for="o in views"
             :key="o.name"
@@ -83,7 +86,9 @@ onMounted(() => {
           </button>
         </template>
         <template v-if="tables.length">
-          <div class="mt-1 px-1 py-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Tables ({{ tables.length }})</div>
+          <div class="mt-1 px-1 py-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+            Tables ({{ tables.length }})
+          </div>
           <button
             v-for="o in tables"
             :key="o.name"
@@ -104,10 +109,11 @@ onMounted(() => {
         <SqlEditor v-model="sql" placeholder="Enter SQL — ⌘/Ctrl+Enter to run" @run="run" />
         <div class="flex items-center gap-3 text-xs">
           <Button size="sm" :disabled="running" @click="run">
-            <component :is="running ? IconLoading : IconRun" :class="['size-3.5', running && 'animate-spin']" /> {{ running ? 'Running…' : 'Run' }}
+            <component :is="running ? IconLoading : IconRun" :class="['size-3.5', running && 'animate-spin']" />
+            {{ running ? 'Running…' : 'Run' }}
           </Button>
           <span class="text-muted-foreground">⌘/Ctrl+Enter</span>
-          <span v-if="result && !error" class="tabular-nums text-muted-foreground">{{ result.rowCount }} rows</span>
+          <span v-if="result && !error" class="tabular-nums text-muted-foreground">{{ result.rows.length }} rows</span>
           <span v-if="error" class="truncate text-destructive" :title="error">{{ error }}</span>
         </div>
       </div>

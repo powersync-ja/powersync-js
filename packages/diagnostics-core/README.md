@@ -42,14 +42,14 @@ An implementation needs to:
 
 1. Run read and write SQL and return rows (`runQuery`).
 2. Return the core schema payload the client already sends to the core (`getSchema`).
-3. Read connection metadata (`getInfo`). Derive `userId` from the token when the SDK has no accessor.
-4. Read pending upload stats (`getUploadQueueStats`), through a method or SQL on `ps_crud`.
-5. Map the SDK's sync status to `SyncState` and `StreamState`, and push both on every change (`observeEvents`).
+3. Read connection metadata (`getInfo`), including the raw token when the SDK exposes it; the tool reads the user id from it.
+4. Map the SDK's sync status to `SyncState` and `StreamState`, and push both on every change (`observeEvents`).
+5. Push pending upload stats (`uploadQueue`) when the status or `ps_crud` changes, through a method or SQL on `ps_crud`.
 6. Read `ps_buckets` and push `BucketState[]` when internal tables change; fold in `target_count` from core events.
 7. Run the control actions (`action`).
-8. Optionally forward log records and core diagnostics events.
+8. Optionally forward new log records and core diagnostics events.
 
-Where the implementation runs is up to the environment. On the web it runs **in the app page**, next to the database, and is bridged to the UI iframe over `postMessage`. In Flutter DevTools it runs **in the DevTools extension**, reaching the app over the VM service, and is bridged to the same UI iframe the same way. The Dart SDK's existing VM-service commands map directly: `select`/`execute` → `runQuery`, `schema` → `getSchema`, `status-listen` → `currentSyncStatus` + `observeEvents`, `list` → `getInfo`.
+Where the implementation runs is up to the environment. On the web it runs **in the app page**, next to the database, and is bridged to the UI iframe over `postMessage`. In Flutter DevTools it runs **in the DevTools extension**, reaching the app over the VM service, and is bridged to the same UI iframe the same way. The Dart SDK's existing VM-service commands map directly: `select`/`execute` → `runQuery`, `schema` → `getSchema`, `status-listen` → `observeEvents`, `list` → `getInfo`.
 
 Then hand the implementation to the UI. On the web this means serving it on a `MessagePort` to the UI iframe:
 

@@ -80,11 +80,11 @@ Every host exposes the same tools. Names are `powersync_<function>`; arguments a
 | Tool                     | Arguments                                           | Returns                                                                                      |
 | ------------------------ | --------------------------------------------------- | -------------------------------------------------------------------------------------------- |
 | `powersync_sources`      |                                                     | the attached databases (`id`, `sdk`)                                                         |
-| `powersync_query`        | `arg0: { sql, params? }`, `arg1: sourceId \| null`  | `{ columns, rows, rowCount }`                                                                |
+| `powersync_query`        | `arg0: { sql, params? }`, `arg1: sourceId \| null`  | `{ columns, rows }`, each row an array in column order                                       |
 | `powersync_schema`       | `arg0: sourceId \| null`                            | the schema as the SQLite core receives it                                                    |
-| `powersync_info`         | `arg0: sourceId \| null`                            | endpoint, user id, client id, method, core version                                           |
-| `powersync_status`       | `arg0: sourceId \| null`                            | the current sync status                                                                      |
-| `powersync_upload-queue` | `arg0: sourceId \| null`                            | pending uploads: count and size                                                              |
+| `powersync_info`         | `arg0: sourceId \| null`                            | endpoint, token, client id, method, core version                                             |
+| `powersync_status`       | `arg0: sourceId \| null`                            | the latest reported sync status                                                              |
+| `powersync_upload-queue` | `arg0: sourceId \| null`                            | the latest reported pending uploads: count and size                                          |
 | `powersync_action`       | `arg0: { action, args? }`, `arg1: sourceId \| null` | runs reconnect, disconnect, clearData, requestCheckpoint, subscribeStream, unsubscribeStream |
 
 Pass `null` for `sourceId` to use the first attached database.

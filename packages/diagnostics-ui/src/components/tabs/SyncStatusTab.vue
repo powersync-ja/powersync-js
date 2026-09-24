@@ -3,7 +3,9 @@ import { computed, ref, watch } from 'vue';
 import type { ProtocolInfo } from '@powersync/diagnostics-core';
 import { useDiagnostics } from '../../composables/diagnostics';
 import { useSyncActions } from '../../composables/actions';
-import { formatBytes, formatCompact, formatPrecise } from '../../lib/format';
+import { formatBytes, formatCompact, formatPrecise, progressFraction } from '../../lib/format';
+import { jwtSubject } from '../../lib/jwt';
+import { rowsToObjects } from '../../lib/rows';
 import Button from '../ui/Button.vue';
 import InfoRow from '../ui/InfoRow.vue';
 import UploadQueueList, { type CrudOp } from '../UploadQueueList.vue';
@@ -40,7 +42,7 @@ async function loadPending() {
     const res = await client.runQuery({
       sql: "SELECT id, json_extract(data, '$.op') AS op, json_extract(data, '$.type') AS tbl, data FROM ps_crud ORDER BY id"
     });
-    pendingOps.value = res.rows as unknown as CrudOp[];
+    pendingOps.value = rowsToObjects(res) as unknown as CrudOp[];
   } catch {
     pendingOps.value = [];
   }
@@ -64,7 +66,10 @@ watch(
 
 const progress = computed(() => status.value?.downloadProgress ?? null);
 // Always show a bar (no layout shift): full when caught up, empty before first sync.
-const downloadFraction = computed(() => progress.value?.downloadedFraction ?? (status.value?.hasSynced ? 1 : 0));
+const downloadFraction = computed(() =>
+  progress.value ? progressFraction(progress.value) : status.value?.hasSynced ? 1 : 0
+);
+const userId = computed(() => jwtSubject(info.value?.token));
 const queueCount = computed(() => uploadQueue.value?.count ?? 0);
 const downloadError = computed(() => status.value?.downloadError ?? null);
 const uploadError = computed(() => status.value?.uploadError ?? null);
@@ -144,7 +149,7 @@ const priorityRows = computed(() =>
       </div>
       <div class="divide-y">
         <InfoRow :icon="IconId" label="Client ID" :value="info?.clientId" mono copyable />
-        <InfoRow :icon="IconUser" label="User ID" :value="info?.userId" mono copyable />
+        <InfoRow :icon="IconUser" label="User ID" :value="userId" mono copyable />
         <InfoRow :icon="IconLink" label="Endpoint" :value="info?.endpoint" mono copyable />
         <InfoRow :icon="IconConnect" label="Method" :value="info?.connectionMethod" />
         <InfoRow :icon="IconTime" label="Last synced">
