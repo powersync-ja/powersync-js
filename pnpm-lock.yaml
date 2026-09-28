@@ -657,9 +657,6 @@ importers:
       shiki:
         specifier: ^3.23.0
         version: 3.23.0
-      unocss:
-        specifier: ^66.6.6
-        version: 66.10.5(@devframes/agentic@1.0.0)(@unocss/webpack@66.10.5(@rspack/core@1.7.12(@swc/helpers@0.5.23))(esbuild@0.28.2)(rolldown@1.2.9)(rollup@4.63.4)(vite@8.3.0(@types/node@24.13.6)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))(webpack@5.111.1(@swc/core@1.16.2(@swc/helpers@0.5.23))(@swc/html@1.16.2)(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.28))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.28)(svgo@4.1.0)(uglify-js@3.19.3)))(cac@7.0.0)(rolldown@1.2.9)(rollup@4.63.4)(srvx@0.11.22)(vite@8.3.0(@types/node@24.13.6)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))
       unstorage:
         specifier: ^1.17.4
         version: 1.17.5(db0@0.3.4(better-sqlite3@13.0.3)(drizzle-orm@0.44.7(@op-engineering/op-sqlite@18.2.0(react-native@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native-community/cli@20.2.0(supports-color@10.2.2)(typescript@6.0.3))(@react-native/metro-config@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2))(react@19.3.0))(@types/better-sqlite3@9.6.0)(@types/sql.js@1.4.11)(better-sqlite3@13.0.3)(kysely@0.29.6)(sql.js@1.14.2)))(ioredis@5.11.1(supports-color@10.2.2))

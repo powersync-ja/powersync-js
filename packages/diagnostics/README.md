@@ -116,7 +116,7 @@ curl -X POST http://localhost:<port>/__mcp \
 
 - `@powersync/web >= 2.5` for browser apps, `@powersync/node` for node apps.
 - Vite DevTools for the dock: Vite `>= 8.3` with `devtools: true`, or the `@vitejs/devtools` plugin on Vite 7.
-- Node `>= 20` for the node entry.
+- Node `>= 20.16` for the node entry.
 
 ## Related packages
 
