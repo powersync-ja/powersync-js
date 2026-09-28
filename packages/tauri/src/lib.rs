@@ -46,6 +46,7 @@ impl<R: Runtime> PowerSync<R> {
         app: AppHandle<R>,
         name: &str,
         schema: SchemaOrCustom,
+        encryption_key: Option<&str>,
     ) -> Result<Arc<TauriDatabaseState>> {
         let mut map = self.databases.lock().unwrap();
         let mut entry = map.entry(name.to_owned());
@@ -58,10 +59,14 @@ impl<R: Runtime> PowerSync<R> {
 
         PowerSyncEnvironment::powersync_auto_extension()?;
         let pool = if name == ":memory:" {
+            // In-memory DBs are never encrypted — nothing persisted for a key to protect.
             ConnectionPool::single_connection(
                 Connection::open_in_memory().map_err(PowerSyncError::from)?,
             )
+        } else if let Some(key) = encryption_key {
+            open_encrypted_pool(name, key)?
         } else {
+            // No key supplied: byte-for-byte the pre-existing path.
             ConnectionPool::open(name)?
         };
 
@@ -89,6 +94,55 @@ impl<R: Runtime> PowerSync<R> {
     }
 }
 
+/// Builds a connection pool whose every connection is keyed with SQLCipher
+/// BEFORE any other statement runs. This mirrors `ConnectionPool::open`'s
+/// pragmas, but injects `PRAGMA key` as statement #1 — which
+/// `ConnectionPool::open` cannot do, because it runs `PRAGMA journal_mode=WAL`
+/// first, and that reads the encrypted file header and fails before a key can
+/// be set.
+#[cfg(feature = "encryption")]
+fn open_encrypted_pool(name: &str, key: &str) -> Result<ConnectionPool> {
+    // Writer — key first, then replicate the pragmas `ConnectionPool::open` sets on its writer.
+    let writer = Connection::open(name).map_err(PowerSyncError::from)?;
+    writer
+        .pragma_update(None, "key", key)
+        .map_err(PowerSyncError::from)?;
+    writer
+        .pragma_update(None, "journal_mode", "WAL")
+        .map_err(PowerSyncError::from)?;
+    writer
+        .pragma_update(None, "journal_size_limit", 6 * 1024 * 1024)
+        .map_err(PowerSyncError::from)?;
+    writer
+        .pragma_update(None, "busy_timeout", 30_000)
+        .map_err(PowerSyncError::from)?;
+    writer
+        .pragma_update(None, "cache_size", 50 * 1024)
+        .map_err(PowerSyncError::from)?;
+
+    // 5 readers — key first, then query_only.
+    let mut readers = Vec::with_capacity(5);
+    for _ in 0..5 {
+        let reader = Connection::open(name).map_err(PowerSyncError::from)?;
+        reader
+            .pragma_update(None, "key", key)
+            .map_err(PowerSyncError::from)?;
+        reader
+            .pragma_update(None, "query_only", true)
+            .map_err(PowerSyncError::from)?;
+        readers.push(reader);
+    }
+
+    Ok(ConnectionPool::wrap_connections(writer, readers))
+}
+
+#[cfg(not(feature = "encryption"))]
+fn open_encrypted_pool(_name: &str, _key: &str) -> Result<ConnectionPool> {
+    Err(crate::error::PowerSyncTauriError::EncryptionUnavailable(
+        "encryption_key was supplied but this build lacks the `encryption` feature; rebuild tauri-plugin-powersync with features = [\"encryption\"]".into(),
+    ))
+}
+
 /// Initializes the plugin.
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
     Builder::new("powersync")
@@ -104,4 +158,92 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
             Ok(())
         })
         .build()
+}
+
+#[cfg(all(test, feature = "encryption"))]
+mod tests {
+    use super::*;
+
+    fn temp_db_path(label: &str) -> std::path::PathBuf {
+        std::env::temp_dir().join(format!(
+            "tauri-plugin-powersync-test-{}-{}.sqlite",
+            label,
+            std::process::id()
+        ))
+    }
+
+    #[test]
+    fn encrypted_pool_round_trips_with_correct_key() {
+        PowerSyncEnvironment::powersync_auto_extension().unwrap();
+        let path = temp_db_path("roundtrip");
+        let _ = std::fs::remove_file(&path);
+
+        {
+            let pool = open_encrypted_pool(path.to_str().unwrap(), "correct-horse-battery-staple").unwrap();
+            pool.writer_sync()
+                .execute("CREATE TABLE t (id INTEGER PRIMARY KEY)", [])
+                .unwrap();
+        }
+
+        // Reopening with the SAME key must see the table that was just created.
+        let pool = open_encrypted_pool(path.to_str().unwrap(), "correct-horse-battery-staple").unwrap();
+        let count: i64 = pool
+            .writer_sync()
+            .query_row(
+                "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='t'",
+                [],
+                |row| row.get(0),
+            )
+            .unwrap();
+        assert_eq!(count, 1);
+
+        let _ = std::fs::remove_file(&path);
+    }
+
+    #[test]
+    fn encrypted_pool_rejects_wrong_key() {
+        PowerSyncEnvironment::powersync_auto_extension().unwrap();
+        let path = temp_db_path("wrongkey");
+        let _ = std::fs::remove_file(&path);
+
+        {
+            let pool = open_encrypted_pool(path.to_str().unwrap(), "right-key").unwrap();
+            pool.writer_sync()
+                .execute("CREATE TABLE t (id INTEGER PRIMARY KEY)", [])
+                .unwrap();
+        }
+
+        // Reopening with the WRONG key must fail to read the schema — SQLCipher
+        // returns a "not a database" / decryption error on the first real read.
+        // That read happens inside `open_encrypted_pool` itself (it installs update
+        // hooks via a query against the writer connection right after keying it),
+        // so the error surfaces from `open_encrypted_pool`, not a later query.
+        let result = open_encrypted_pool(path.to_str().unwrap(), "wrong-key");
+        assert!(result.is_err(), "wrong key must not be able to read the schema");
+
+        let _ = std::fs::remove_file(&path);
+    }
+}
+
+#[cfg(all(test, not(feature = "encryption")))]
+mod feature_off_tests {
+    use super::*;
+
+    #[test]
+    fn open_encrypted_pool_hard_errors_without_encryption_feature() {
+        let path = std::env::temp_dir().join(format!(
+            "tauri-plugin-powersync-test-feature-off-{}.sqlite",
+            std::process::id()
+        ));
+        let _ = std::fs::remove_file(&path);
+
+        let result = open_encrypted_pool(path.to_str().unwrap(), "some-key");
+        assert!(
+            matches!(result, Err(crate::error::PowerSyncTauriError::EncryptionUnavailable(_))),
+            "expected a hard EncryptionUnavailable error when the `encryption` feature is off, got {:?}",
+            result.map(|_| ())
+        );
+
+        let _ = std::fs::remove_file(&path);
+    }
 }

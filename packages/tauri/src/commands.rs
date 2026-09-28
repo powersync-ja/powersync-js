@@ -43,6 +43,10 @@ pub enum Command {
 pub struct OpenDatabase {
     pub name: String,
     pub schema: Box<RawValue>,
+    /// Optional SQLCipher key. When present, every pool connection is keyed via
+    /// `PRAGMA key` before first use — see `PowerSync::open_database`.
+    #[serde(default)]
+    pub encryption_key: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -285,6 +289,7 @@ pub(crate) async fn powersync<R: Runtime>(
                 app,
                 &open.name,
                 SchemaOrCustom::from(open.schema.as_ref()),
+                open.encryption_key.as_deref(),
             )?;
 
             let event_key = db.event_key;
