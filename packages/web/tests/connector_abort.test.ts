@@ -34,8 +34,8 @@ describe('Disconnect with an unresponsive connector', () => {
     async ({ context: { database, connector, connect, defaultSyncOptions } }) => {
       defaultSyncOptions.crudUploadThrottleMs = 0;
       connector.uploadData.mockImplementation(() => new Promise<void>(() => {}));
-      await connect();
       await database.execute('INSERT INTO lists (id, name) VALUES (?, ?)', ['id', 'local write']);
+      await connect();
       await vi.waitFor(() => expect(connector.uploadData).toHaveBeenCalled(), { timeout: 5000 });
 
       await expect(database.disconnect()).resolves.toBeUndefined();
