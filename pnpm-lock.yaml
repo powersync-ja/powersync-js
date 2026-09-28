@@ -471,6 +471,9 @@ importers:
       '@microsoft/api-extractor':
         specifier: 'catalog:'
         version: 7.59.0(@types/node@24.10.13)
+      '@powersync/adapter-sql-js':
+        specifier: workspace:*
+        version: link:../adapter-sql-js
       '@powersync/drizzle-driver':
         specifier: workspace:*
         version: link:../drizzle-driver
