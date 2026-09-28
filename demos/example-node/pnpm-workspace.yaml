@@ -4,3 +4,5 @@ packages:
 allowBuilds:
   better-sqlite3: true
   better-sqlite3-multiple-ciphers: true
+  # Pulled in by @powersync/diagnostics; its install script only picks a Vue version and is not needed.
+  vue-demi: false
