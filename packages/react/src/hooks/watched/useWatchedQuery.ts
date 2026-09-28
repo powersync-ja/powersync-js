@@ -2,6 +2,7 @@ import React from 'react';
 import { useNullableWatchedQuerySubscription } from './useWatchedQuerySubscription.js';
 import { DifferentialHookOptions, QueryResult, ReadonlyQueryResult } from './watch-types.js';
 import { InternalHookOptions } from './watch-utils.js';
+import { DifferentialWatchedQuery } from '@powersync/common';
 
 /**
  * @internal This is not exported from the index.ts
@@ -34,7 +35,7 @@ export const useWatchedQuery = <RowType = unknown>(
     return watch;
   }
 
-  const [watchedQuery, setWatchedQuery] = React.useState(createWatchedQuery);
+  const [watchedQuery, setWatchedQuery] = React.useState<DifferentialWatchedQuery<RowType> | null>(null);
   const disposePendingUpdateListener = React.useRef<() => void | null>(null);
 
   React.useEffect(() => {
@@ -83,11 +84,12 @@ export const useWatchedQuery = <RowType = unknown>(
   const shouldReportCurrentlyFetching = (hookOptions.reportFetching ?? true) && !!disposePendingUpdateListener.current;
   const result = useNullableWatchedQuerySubscription(watchedQuery);
 
-  // Result is only undefined when there is no data available yet, defaults are defined accordingly
+  // Result is only undefined until the mount effect above creates the watched query. Until then, we emit what a freshly
+  // constructed query would report too.
   return {
     data: result?.data ?? [],
     isLoading: result?.isLoading ?? true,
     error: result?.error,
-    isFetching: result?.isFetching || shouldReportCurrentlyFetching
+    isFetching: (result?.isFetching ?? hookOptions.reportFetching ?? true) || shouldReportCurrentlyFetching
   };
 };

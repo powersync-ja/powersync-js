@@ -7,6 +7,7 @@ import { describe, expect, test, vi } from 'vitest';
 import { CrudEntry, CrudTransaction, PowerSyncDatabase } from '../lib/index.js';
 import { WorkerOpener } from '../src/db/options.js';
 import { AppSchema, databaseTest, tempDirectoryTest } from './utils.js';
+import { BasePowerSyncDatabase } from '@powersync/shared-internals';
 
 test('validates options', async () => {
   await expect(async () => {
@@ -127,6 +128,56 @@ databaseTest('can watch tables', async ({ database }) => {
   disposeWatch();
   await database.execute('INSERT INTO todos (id, content) VALUES (uuid(), ?)', ['fourth']);
   await expect.poll(() => fn).toHaveBeenCalledTimes(2);
+});
+
+databaseTest('onChangeWithCallback initially aborted', async ({ database }) => {
+  await database.init();
+  function countUpdateListeners() {
+    let found = 0;
+    database.database.iterateListeners((l) => {
+      if (l.tablesUpdated) {
+        found++;
+      }
+    });
+
+    return found;
+  }
+
+  // There is a permanent update listener for the bucket storage.
+  const baseline = countUpdateListeners();
+
+  // Registering onChange with an aborted signal should not register update listeners.
+  const disposeWatch = database.onChangeWithCallback(
+    {
+      onChange: () => {}
+    },
+    { tables: ['todos'], throttleMs: 0, signal: AbortSignal.abort() }
+  );
+
+  expect(countUpdateListeners()).toStrictEqual(baseline);
+  disposeWatch();
+  expect(countUpdateListeners()).toStrictEqual(baseline);
+});
+
+databaseTest('closing a query processor while it is initializing does not leak listeners', async ({ database }) => {
+  await database.init();
+
+  function countLifecycleListeners() {
+    let found = 0;
+    (database as BasePowerSyncDatabase).iterateListeners((l) => {
+      if (l.closing || l.schemaChanged) {
+        found++;
+      }
+    });
+    return found;
+  }
+
+  const baseline = countLifecycleListeners();
+
+  const watchedQuery = database.query({ sql: 'SELECT * FROM todos' }).watch({ throttleMs: 0 });
+  watchedQuery.close();
+
+  await expect.poll(() => countLifecycleListeners()).toStrictEqual(baseline);
 });
 
 tempDirectoryTest('throws error if target directory does not exist', async ({ tmpdir }) => {

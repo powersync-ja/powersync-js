@@ -817,20 +817,20 @@ SELECT * FROM crud_entries;
       throw new Error('onChange is required');
     }
 
-    const resolvedOptions = options ?? {};
+    const { signal, tables, throttleMs = DEFAULT_WATCH_THROTTLE_MS } = options ?? {};
+    if (signal?.aborted) return () => {};
+
     const watchedTables = new Set<string>(
-      (resolvedOptions?.tables ?? []).flatMap((table) => [table, `ps_data__${table}`, `ps_data_local__${table}`])
+      (tables ?? []).flatMap((table) => [table, `ps_data__${table}`, `ps_data_local__${table}`])
     );
 
     const changedTables = new Set<string>();
-    const throttleMs = resolvedOptions.throttleMs ?? DEFAULT_WATCH_THROTTLE_MS;
-
     const executor = new ControlledExecutor(onChange);
 
     const flushTableUpdates = throttleTrailing(
       () =>
         this.handleTableChanges(changedTables, watchedTables, (intersection) => {
-          if (resolvedOptions?.signal?.aborted) return;
+          if (signal?.aborted) return;
           executor.schedule({ changedTables: intersection });
         }),
       throttleMs
@@ -847,12 +847,12 @@ SELECT * FROM crud_entries;
       }
     });
 
-    resolvedOptions.signal?.addEventListener('abort', () => {
+    signal?.addEventListener('abort', () => {
       executor.dispose();
       dispose();
     });
 
-    return () => dispose();
+    return dispose;
   }
 
   // Note: do not declare this as `async *onChange` as it will not work in React Native.

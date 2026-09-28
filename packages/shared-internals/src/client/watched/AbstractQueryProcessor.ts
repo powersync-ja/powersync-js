@@ -174,10 +174,16 @@ export abstract class AbstractQueryProcessor<
       }
     });
 
-    this.disposeListeners = () => {
+    const disposeListeners = () => {
       disposeCloseListener();
       disposeSchemaListener();
     };
+
+    if (this._closed) {
+      disposeListeners();
+      return;
+    }
+    this.disposeListeners = disposeListeners;
 
     // Initial setup
     await this.runWithReporting(async () => {
