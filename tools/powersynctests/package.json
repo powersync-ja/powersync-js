@@ -18,7 +18,7 @@
     "chai-as-promised": "^8.0.2",
     "chance": "^1.1.13",
     "mocha": "^10.8.2",
-    "react": "19.2.4",
+    "react": "^19.2.4",
     "react-native": "0.87.0",
     "react-native-paper": "5.15.0",
     "stream-browserify": "^3.0.0"
