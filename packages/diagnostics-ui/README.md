@@ -1,4 +1,4 @@
-# PowerSync Diagnostics — UI
+# PowerSync Diagnostics UI
 
 `@powersync/diagnostics-ui` is the [PowerSync](https://powersync.com) DevTools UI: a Vue 3 panel that shows the live state of a PowerSync client.
 
@@ -8,12 +8,12 @@ Every host shows the same build. The panel reads data only through an `SdkIntegr
 
 ## Tabs
 
-- **Sync Status** — connection state, sync progress, the upload queue, priority sync, and a "Sync now" checkpoint request.
-- **Data Inspector** — a searchable table and view tree, and a SQL console with syntax highlighting.
-- **Buckets** — per-bucket downloaded and total operations, size, and a drill-down into a bucket's operations.
-- **Streams** — sync stream subscriptions with progress, TTL, and priority, and a subscribe/unsubscribe form.
-- **Config** — connection details and the schema as a tree or JSON.
-- **Logs** — client logs with a level filter and search.
+- **Sync Status**: connection state, sync progress, the upload queue, priority sync, and a "Sync now" checkpoint request.
+- **Data Inspector**: a searchable table and view tree, and a SQL console with syntax highlighting.
+- **Buckets**: per-bucket downloaded and total operations, size, and a drill-down into a bucket's operations.
+- **Streams**: sync stream subscriptions with progress, TTL, and priority, and a subscribe/unsubscribe form.
+- **Config**: connection details and the schema as a tree or JSON.
+- **Logs**: client logs with a level filter and search.
 
 ## Embed the built page
 

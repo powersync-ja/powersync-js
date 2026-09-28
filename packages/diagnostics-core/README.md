@@ -1,4 +1,4 @@
-# PowerSync Diagnostics — core
+# PowerSync Diagnostics core
 
 `@powersync/diagnostics-core` defines the protocol between the [PowerSync](https://powersync.com) DevTools and a PowerSync SDK.
 
@@ -19,7 +19,7 @@ The contract is one interface, `SdkIntegration`, plus the data shapes it returns
 - The **UI** calls `SdkIntegration` methods and renders what comes back.
 - Each **SDK** provides one implementation. It reaches the live client with whatever that environment already has.
 
-The tool never carries a wire format of its own. Every method is asynchronous, so the interface can sit directly on an RPC boundary. Request/response correlation, connection and reconnection are the implementation's concern.
+The protocol defines no transport. Every method is asynchronous, so the interface can sit directly on an RPC boundary. Each implementation handles its own request/response matching, connection and reconnection.
 
 The reference definition is the TypeScript itself: [`src/integration.ts`](./src/integration.ts) for the interface and the pushed events, [`src/shapes.ts`](./src/shapes.ts) for every data shape and action. Their doc comments are the specification.
 
@@ -27,14 +27,10 @@ The reference definition is the TypeScript itself: [`src/integration.ts`](./src/
 
 `@powersync/diagnostics-core`:
 
-- **`SdkIntegration`** and **`DiagnosticsEvent`** — the interface an SDK implements so the diagnostics UI can inspect a live client: run SQL, read the schema and connection info, observe sync state, and run control actions.
-- **The data shapes** — `SyncState`, `StreamState`, `BucketState`, `SchemaPayload`, and the rest. Plain JSON, epoch milliseconds, `null` for "does not apply".
-- **The iframe bridge** — `exposeIntegration`, `connectIntegration`, `attachIframe`, and `awaitIntegration` move an integration across a `postMessage` boundary with [comlink](https://github.com/GoogleChromeLabs/comlink). The standalone UI page runs in an iframe; the integration lives on the other side.
-- **`SourceAwareIntegration`** — the optional extension for a host that fronts several databases (a dev server that several app tabs attach to): it reports the attached databases and switches between them. Single-database hosts, and the iframe bridge, implement the base interface only.
-
-## Who uses it
-
-Use this package only when you build a new host or a new SDK integration.
+- **`SdkIntegration`** and **`DiagnosticsEvent`**: the interface an SDK implements so the diagnostics UI can inspect a live client: run SQL, read the schema and connection info, observe sync state, and run control actions.
+- **The data shapes**: `SyncState`, `StreamState`, `BucketState`, `SchemaPayload`, and the rest. Plain JSON, epoch milliseconds, `null` for "does not apply".
+- **The iframe bridge**: `exposeIntegration`, `connectIntegration`, `attachIframe`, and `awaitIntegration` move an integration across a `postMessage` boundary with [comlink](https://github.com/GoogleChromeLabs/comlink). The standalone UI page runs in an iframe; the integration lives on the other side.
+- **`SourceAwareIntegration`**: the optional extension for a host that fronts several databases (a dev server that several app tabs attach to): it reports the attached databases and switches between them. Single-database hosts, and the iframe bridge, implement the base interface only.
 
 ## Implement the protocol for a new SDK
 
@@ -49,7 +45,7 @@ An implementation needs to:
 7. Run the control actions (`action`).
 8. Optionally forward new log records and core diagnostics events.
 
-Where the implementation runs is up to the environment. On the web it runs **in the app page**, next to the database, and is bridged to the UI iframe over `postMessage`. In Flutter DevTools it runs **in the DevTools extension**, reaching the app over the VM service, and is bridged to the same UI iframe the same way. The Dart SDK's existing VM-service commands map directly: `select`/`execute` → `runQuery`, `schema` → `getSchema`, `status-listen` → `observeEvents`, `list` → `getInfo`.
+Where the implementation runs is up to the environment. On the web it runs **in the app page**, next to the database, and is bridged to the UI iframe over `postMessage`. In Flutter DevTools it runs **in the DevTools extension**, reaching the app over the VM service, and is bridged to the same UI iframe the same way.
 
 Then hand the implementation to the UI. On the web this means serving it on a `MessagePort` to the UI iframe:
 
@@ -63,7 +59,6 @@ const stop = attachIframe(integration, frame);
 
 The UI side calls `awaitIntegration()` and receives the port.
 
-## Enablement per SDK
+## Enablement in JavaScript
 
-- **JavaScript** — never shipped to production. The integration is loaded only by the development tooling (`@powersync/diagnostics`). The SDK carries only what the core needs: the `diagnostics` sync option that switches on the core event stream.
-- **Dart** — on by default in debug builds, off in release builds, as the Dart SDK already does.
+The integration never ships to production. Only the development tooling (`@powersync/diagnostics`) loads it. The SDK carries only what the core needs: the `diagnostics` sync option that switches on the core event stream.

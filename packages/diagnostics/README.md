@@ -101,17 +101,6 @@ curl -X POST http://localhost:<port>/__mcp \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"powersync_query","arguments":{"arg0":{"sql":"select count(*) as n from ps_oplog"},"arg1":null}}}'
 ```
 
-## Entrypoints
-
-| Entry                    | Runs in            | Contents                                                                                                        |
-| ------------------------ | ------------------ | --------------------------------------------------------------------------------------------------------------- |
-| `@powersync/diagnostics` | node               | `definition`, the devframe definition; `registerIntegration` to serve an `SdkIntegration` from the same process |
-| `./vite`                 | node (Vite config) | `powersyncDevtools()`, the Vite DevTools plugin                                                                 |
-| `./node`                 | node app           | `enablePowerSyncDiagnostics(db, options)`                                                                       |
-| `./client`               | the app page       | the dock client script for `@powersync/web` apps (the dock loads it, you do not)                                |
-| `./page`                 | the app page       | the `postMessage` agent for hosts without a devframe hub (`@powersync/nuxt` on Nuxt DevTools 3)                 |
-| `./vite-static`          | node (Vite config) | serves the UI at `/__powersync/` from a plain Vite dev server; `{ scripts }` runs host scripts in the page      |
-
 ## Requirements
 
 - `@powersync/web >= 2.5` for browser apps, `@powersync/node` for node apps.
@@ -122,5 +111,5 @@ curl -X POST http://localhost:<port>/__mcp \
 
 These are internal packages used by this package. Your app code does not depend on them.
 
-- [`@powersync/diagnostics-core`](https://github.com/powersync-ja/powersync-js/tree/main/packages/diagnostics-core) — the protocol (`SdkIntegration`).
-- [`@powersync/diagnostics-ui`](https://github.com/powersync-ja/powersync-js/tree/main/packages/diagnostics-ui) — the UI.
+- [`@powersync/diagnostics-core`](https://github.com/powersync-ja/powersync-js/tree/main/packages/diagnostics-core): the protocol (`SdkIntegration`).
+- [`@powersync/diagnostics-ui`](https://github.com/powersync-ja/powersync-js/tree/main/packages/diagnostics-ui): the UI.

@@ -22,8 +22,7 @@ PowerSync Nuxt module integrated with the [Nuxt Devtools](https://github.com/nux
 
 - **Real-time offline-first sync** — PowerSync keeps a local SQLite database in sync with your backend (Postgres, MongoDB, MySQL, or SQL Server). Your app reads from local SQLite and works offline; changes sync automatically when the connection is restored.
 - **Auto-imported composables** — `usePowerSync()`, `useQuery()`, and `usePowerSyncKysely()` are available in every component without explicit imports.
-- **Built-in diagnostics** — View connection and sync status, inspect sync buckets, streams, and config, and tail real-time logs in the PowerSync tab of Nuxt DevTools.
-- **Data inspection** — Browse your local SQLite database in the browser without external tools — useful for verifying what data has synced and debugging data issues during development.
+- **Built-in diagnostics** — The PowerSync tab in Nuxt DevTools shows the sync status, buckets, streams, config and logs of your client. You can also browse the local SQLite database and run SQL against it, to check what data has synced.
 - **Kysely support** — Opt-in type-safe queries via `@powersync/kysely-driver`, enabled with `kysely: true` in your PowerSync config.
 
 ## Installation
@@ -274,7 +273,7 @@ export default defineNuxtConfig({
 With `useDiagnostics: true`, the module picks the integration for your Nuxt DevTools version:
 
 - **Nuxt DevTools 3** (what Nuxt 4 ships): the module loads the diagnostics agent into your app during `nuxt dev`, serves the diagnostics UI, and registers a **PowerSync** tab that follows the DevTools colour mode. The UI is served outside your app's router, so route middleware such as an auth guard does not apply to it.
-- **Nuxt DevTools 4** (built on Vite DevTools): the module mounts the PowerSync devframe definition. You get a **PowerSync** dock and the MCP tools at `/__devtools/__mcp`, the same as a plain Vite app. The first time, DevTools asks you to confirm the browser with a one-time code printed in your terminal. The MCP endpoint only accepts requests with a loopback `Origin` header; for a client that sends none, set `vite: { devtools: { mcp: { allowedOrigins: false } } }` in `nuxt.config.ts`.
+- **Nuxt DevTools 4** (built on Vite DevTools): the module mounts the PowerSync devframe definition. You get a **PowerSync** dock, the same as a plain Vite app. The first time, DevTools asks you to confirm the browser with a one-time code printed in your terminal. For the MCP tools, see [MCP](https://github.com/powersync-ja/powersync-js/tree/main/packages/diagnostics#mcp).
 
 2. **Enable the core diagnostics stream** when you connect. This gives the Buckets tab per-bucket totals:
 
@@ -290,16 +289,16 @@ PowerSync DevTools show the live state of your PowerSync client inside Nuxt DevT
 
 ### Tabs
 
-- **Sync Status** — connection state, sync progress, the upload queue, priority sync, and a "Sync now" checkpoint request.
-- **Data Inspector** — a searchable table and view tree, and a SQL console with syntax highlighting.
-- **Buckets** — per-bucket downloaded and total operations, size, and a drill-down into a bucket's operations.
-- **Streams** — sync stream subscriptions with progress, TTL, and priority, and a subscribe/unsubscribe form.
-- **Config** — connection details and the schema as a tree or JSON.
-- **Logs** — client logs with a level filter and search.
+- **Sync Status**: connection state, sync progress, the upload queue, priority sync, and a "Sync now" checkpoint request.
+- **Data Inspector**: a searchable table and view tree, and a SQL console with syntax highlighting.
+- **Buckets**: per-bucket downloaded and total operations, size, and a drill-down into a bucket's operations.
+- **Streams**: sync stream subscriptions with progress, TTL, and priority, and a subscribe/unsubscribe form.
+- **Config**: connection details and the schema as a tree or JSON.
+- **Logs**: client logs with a level filter and search.
 
 ### How it works
 
-The module uses [`@powersync/diagnostics`](https://github.com/powersync-ja/powersync-js/tree/main/packages/diagnostics), implementing PowerSync universal diagnostics protocol. See that package for the MCP tools.
+The module uses [`@powersync/diagnostics`](https://github.com/powersync-ja/powersync-js/tree/main/packages/diagnostics). See that package for the MCP tools.
 
 ### Migrating from `NuxtPowerSyncDatabase`
 
