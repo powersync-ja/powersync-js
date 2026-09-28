@@ -48,6 +48,42 @@ describe('useQuery', () => {
         expect(currentResult.isLoading).toEqual(true);
       });
 
+      it('does not leak a watched query when unmounted', async () => {
+        const db = await openPowerSync();
+
+        function countUpdateListeners() {
+          let found = 0;
+          db.database.iterateListeners((l) => {
+            if (l.tablesUpdated) {
+              found++;
+            }
+          });
+          return found;
+        }
+
+        const baseline = countUpdateListeners();
+
+        const { result, unmount } = renderHook(() => useQuery('SELECT * from lists'), {
+          wrapper: ({ children }) => testWrapper({ children, db })
+        });
+
+        await waitFor(() => {
+          expect(result.current.isLoading).toEqual(false);
+        });
+
+        // Only a single active watched query should be subscribed, even though effects
+        // (and, in older/buggy versions, render-body side effects) may run twice in Strict Mode.
+        await waitFor(() => {
+          expect(countUpdateListeners()).toStrictEqual(baseline + 1);
+        });
+
+        unmount();
+
+        await waitFor(() => {
+          expect(countUpdateListeners()).toStrictEqual(baseline);
+        });
+      });
+
       it('should set error when error occurs and runQueryOnce flag is set', async () => {
         const db = await openPowerSync();
 
