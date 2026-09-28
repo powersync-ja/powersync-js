@@ -90,7 +90,7 @@ export default defineNuxtConfig({
 
 if (process.env.NODE_ENV !== 'production') {
   const devtools = await enablePowerSyncDiagnostics(db);
-  console.log(\`PowerSync DevTools: \${devtools.url}\`);
+  console.log(\`PowerSync DevTools: \${devtools.signInUrl}\`);
 }`
   },
   {

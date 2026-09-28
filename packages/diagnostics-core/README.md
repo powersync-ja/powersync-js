@@ -29,7 +29,7 @@ The reference definition is the TypeScript itself: [`src/integration.ts`](./src/
 
 - **`SdkIntegration`** and **`DiagnosticsEvent`** — the interface an SDK implements so the diagnostics UI can inspect a live client: run SQL, read the schema and connection info, observe sync state, and run control actions.
 - **The data shapes** — `SyncState`, `StreamState`, `BucketState`, `SchemaPayload`, and the rest. Plain JSON, epoch milliseconds, `null` for "does not apply".
-- **The iframe bridge** — `exposeIntegration`, `connectIntegration`, `attachIframe`, and `awaitIntegration` move an integration across a `postMessage` boundary with [comlink](https://github.com/GoogleChromeLabs/comlink). The UI always runs in an iframe; the integration lives on the other side.
+- **The iframe bridge** — `exposeIntegration`, `connectIntegration`, `attachIframe`, and `awaitIntegration` move an integration across a `postMessage` boundary with [comlink](https://github.com/GoogleChromeLabs/comlink). The standalone UI page runs in an iframe; the integration lives on the other side.
 - **`SourceAwareIntegration`** — the optional extension for a host that fronts several databases (a dev server that several app tabs attach to): it reports the attached databases and switches between them. Single-database hosts, and the iframe bridge, implement the base interface only.
 
 ## Who uses it
@@ -65,5 +65,5 @@ The UI side calls `awaitIntegration()` and receives the port.
 
 ## Enablement per SDK
 
-- **JavaScript** — never shipped to production. The integration is loaded only by the development tooling (`@powersync/diagnostics`) when a dev server runs. The SDK carries only what the core needs: the `diagnostics` sync option that switches on the core event stream.
+- **JavaScript** — never shipped to production. The integration is loaded only by the development tooling (`@powersync/diagnostics`). The SDK carries only what the core needs: the `diagnostics` sync option that switches on the core event stream.
 - **Dart** — on by default in debug builds, off in release builds, as the Dart SDK already does.

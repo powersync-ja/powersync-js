@@ -4,6 +4,7 @@
  */
 import type { McpSetting } from 'devframe';
 import { createDevServer } from 'devframe/adapters/dev';
+import { buildOtpAuthUrl } from 'devframe/node/auth';
 import { createIntegration, type DiagnosableDatabase } from './agent.js';
 import { definition, registerIntegration } from './definition.js';
 
@@ -13,7 +14,7 @@ export interface EnableDiagnosticsOptions {
    * probe a known one. @default random
    */
   port?: number;
-  /** Bind host. @default '127.0.0.1' */
+  /** Bind host. @default 'localhost' */
   host?: string;
   /**
    * Gate the window behind a code printed in the terminal, together with a link that carries it, so
@@ -36,8 +37,13 @@ export interface EnableDiagnosticsOptions {
 }
 
 export interface DiagnosticsServer {
-  /** Where the UI is, e.g. `http://localhost:51234`. */
+  /** Where the UI is, e.g. `http://localhost:51234`. The base for `<url>/__mcp`. */
   url: string;
+  /**
+   * The link to open in the browser. With `auth` on, it carries a one-time code (valid for five
+   * minutes, for one browser), so opening it trusts the browser. With `auth: false`, it equals `url`.
+   */
+  signInUrl: string;
   /** Stops serving and detaches the database. */
   close(): Promise<void>;
 }
@@ -51,7 +57,7 @@ export interface DiagnosticsServer {
  * const db = new PowerSyncDatabase({ ... });
  * if (process.env.NODE_ENV !== 'production') {
  *   const devtools = await enablePowerSyncDiagnostics(db);
- *   console.log(`PowerSync DevTools: ${devtools.url}`);
+ *   console.log(`PowerSync DevTools: ${devtools.signInUrl}`);
  * }
  * ```
  */
@@ -61,15 +67,17 @@ export async function enablePowerSyncDiagnostics(
 ): Promise<DiagnosticsServer> {
   const sdk = options.sdk ?? '@powersync/node';
   const detach = await registerIntegration(options.id ?? 'node-1', createIntegration(db, sdk), sdk);
+  const auth = options.auth ?? true;
   const server = await createDevServer(definition, {
     port: options.port ?? 0,
     host: options.host,
-    auth: options.auth ?? true,
+    auth,
     openBrowser: options.open ?? false,
     mcp: options.mcp ?? 'auto'
   });
   return {
     url: server.origin,
+    signInUrl: auth ? buildOtpAuthUrl(server.origin) : server.origin,
     async close() {
       detach();
       await server.close();

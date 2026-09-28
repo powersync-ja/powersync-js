@@ -61,11 +61,11 @@ await db.connect(connector, { diagnostics: true });
 
 if (process.env.NODE_ENV !== 'production') {
   const devtools = await enablePowerSyncDiagnostics(db);
-  console.log(`PowerSync DevTools: ${devtools.url}`);
+  console.log(`PowerSync DevTools: ${devtools.signInUrl}`);
 }
 ```
 
-Your process serves the DevTools window on a random free port. The terminal prints a link with a one-time code. Open the link and the browser is trusted. Set `auth: false` to trust every local browser. MCP tools are at `<url>/__mcp`.
+Your process serves the DevTools window on a random free port. Open the printed link. It carries a one-time code, so the browser is trusted at once. The code is valid for five minutes and for one browser; after that, open `devtools.url` and the terminal prints a new link. Set `auth: false` to trust every local browser. MCP tools are at `<url>/__mcp`.
 
 Options: `port` (default: a random free port), `host`, `auth` (default `true`), `open` (open the browser, default `false`), `sdk` and `id` (labels in the UI), `mcp` (see [MCP](#mcp)).
 
@@ -114,7 +114,7 @@ curl -X POST http://localhost:<port>/__mcp \
 
 ## Requirements
 
-- `@powersync/web >= 2.2` for browser apps, `@powersync/node` for node apps.
+- `@powersync/web >= 2.5` for browser apps, `@powersync/node` for node apps.
 - Vite DevTools for the dock: Vite `>= 8.3` with `devtools: true`, or the `@vitejs/devtools` plugin on Vite 7.
 - Node `>= 20` for the node entry.
 

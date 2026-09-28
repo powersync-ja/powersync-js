@@ -68,7 +68,7 @@ const main = async () => {
   // PowerSync DevTools: a live view of this client in the browser. Development only.
   if (process.env.NODE_ENV !== 'production') {
     const devtools = await enablePowerSyncDiagnostics(db);
-    console.log(`PowerSync DevTools: ${devtools.url}`);
+    console.log(`PowerSync DevTools: ${devtools.signInUrl}`);
   }
   // Example using a proxy agent for more control over the connection:
   // const proxyAgent = new (await import('undici')).ProxyAgent({
