@@ -60,14 +60,14 @@ const db = new PowerSyncDatabase({ schema, database: { dbFilename: 'app.db' } })
 await db.connect(connector, { diagnostics: true });
 
 if (process.env.NODE_ENV !== 'production') {
-  const devtools = await enablePowerSyncDiagnostics(db, { port: 9999 });
+  const devtools = await enablePowerSyncDiagnostics(db);
   console.log(`PowerSync DevTools: ${devtools.url}`);
 }
 ```
 
-Your process serves the DevTools window on that port. The terminal prints a link with a one-time code. Open the link and the browser is trusted. Set `auth: false` to trust every local browser. MCP tools are at `<url>/__mcp`.
+Your process serves the DevTools window on a random free port. The terminal prints a link with a one-time code. Open the link and the browser is trusted. Set `auth: false` to trust every local browser. MCP tools are at `<url>/__mcp`.
 
-Options: `port` (default 9999), `host`, `auth` (default `true`), `open` (open the browser, default `false`), `sdk` and `id` (labels in the UI), `mcp` (see [MCP](#mcp)).
+Options: `port` (default: a random free port), `host`, `auth` (default `true`), `open` (open the browser, default `false`), `sdk` and `id` (labels in the UI), `mcp` (see [MCP](#mcp)).
 
 ## MCP
 
@@ -95,8 +95,8 @@ The endpoint accepts requests with a loopback `Origin` header only. Browsers alw
 The same `mcp` setting takes `false` to turn the endpoint off, or `{ authorization: '<bearer token>' }` to require a token. Example call:
 
 ```bash
-curl -X POST http://localhost:9999/__mcp \
-  -H 'Origin: http://localhost:9999' -H 'Content-Type: application/json' \
+curl -X POST http://localhost:<port>/__mcp \
+  -H 'Origin: http://localhost:<port>' -H 'Content-Type: application/json' \
   -H 'Accept: application/json, text/event-stream' \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"powersync_query","arguments":{"arg0":{"sql":"select count(*) as n from ps_oplog"},"arg1":null}}}'
 ```

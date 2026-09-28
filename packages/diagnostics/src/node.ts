@@ -8,7 +8,10 @@ import { createIntegration, type DiagnosableDatabase } from './agent.js';
 import { definition, registerIntegration } from './definition.js';
 
 export interface EnableDiagnosticsOptions {
-  /** Port for the DevTools window. @default 9999 */
+  /**
+   * Port for the DevTools window. By default the OS picks a free port, so other websites cannot
+   * probe a known one. @default random
+   */
   port?: number;
   /** Bind host. @default '127.0.0.1' */
   host?: string;
@@ -33,7 +36,7 @@ export interface EnableDiagnosticsOptions {
 }
 
 export interface DiagnosticsServer {
-  /** Where the UI is, e.g. `http://localhost:9999`. */
+  /** Where the UI is, e.g. `http://localhost:51234`. */
   url: string;
   /** Stops serving and detaches the database. */
   close(): Promise<void>;
@@ -59,7 +62,7 @@ export async function enablePowerSyncDiagnostics(
   const sdk = options.sdk ?? '@powersync/node';
   const detach = await registerIntegration(options.id ?? 'node-1', createIntegration(db, sdk), sdk);
   const server = await createDevServer(definition, {
-    port: options.port ?? 9999,
+    port: options.port ?? 0,
     host: options.host,
     auth: options.auth ?? true,
     openBrowser: options.open ?? false,
