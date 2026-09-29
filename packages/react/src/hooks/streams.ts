@@ -1,11 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import { usePowerSyncOrNull } from './PowerSyncContext.js';
-import {
-  CommonPowerSyncDatabase,
-  SyncStreamStatus,
-  SyncStreamSubscribeOptions,
-  SyncStreamSubscription
-} from '@powersync/common';
+import { SyncStreamStatus, SyncStreamSubscribeOptions, SyncStreamSubscription } from '@powersync/common';
 import { useStatusOrNull } from './useStatus.js';
 import { QuerySyncStreamOptions } from './watched/watch-types.js';
 
@@ -56,7 +51,7 @@ export function useSyncStreams(streamOptions: UseSyncStreamOptions[]): (SyncStre
           options
         };
       }),
-    [stringifiedOptions]
+    [db, stringifiedOptions]
   );
 
   useEffect(() => {
@@ -80,11 +75,11 @@ export function useSyncStreams(streamOptions: UseSyncStreamOptions[]): (SyncStre
         sub.unsubscribe();
       }
     };
-  }, [stringifiedOptions]);
+  }, [db, stringifiedOptions]);
 
   return useMemo(
     () => syncStreams.map((entry) => (entry.stream && status?.forStream(entry.stream)) ?? null),
-    [status, stringifiedOptions]
+    [status, syncStreams]
   );
 }
 

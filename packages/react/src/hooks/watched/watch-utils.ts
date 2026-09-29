@@ -1,21 +1,14 @@
 import { CompilableQuery, WatchCompatibleQuery } from '@powersync/common';
 import React from 'react';
-import { usePowerSync } from '../PowerSyncContext.js';
-import { AdditionalOptions } from './watch-types.js';
+import { usePowerSyncOrNull } from '../PowerSyncContext.js';
 
 export interface WatchCompatibleQueryWithParams<T> extends WatchCompatibleQuery<T> {
   stringifiedParameters?: string;
-  stringifiedOptions: string;
 }
 
-export const constructCompatibleQuery = <RowType>(
-  query: string | CompilableQuery<RowType>,
-  parameters: any[] = [],
-  options: AdditionalOptions
-) => {
-  const powerSync = usePowerSync();
+export const constructCompatibleQuery = <RowType>(query: string | CompilableQuery<RowType>, parameters: any[] = []) => {
+  const powerSync = usePowerSyncOrNull();
   const stringifiedParameters = React.useMemo(() => JSON.stringify(parameters), [parameters]);
-  const stringifiedOptions = React.useMemo(() => JSON.stringify(options), [options]);
 
   const parsedQuery = React.useMemo<WatchCompatibleQueryWithParams<RowType[]>>(() => {
     if (typeof query == 'string') {
@@ -24,10 +17,9 @@ export const constructCompatibleQuery = <RowType>(
           sql: query,
           parameters
         }),
-        execute: () => powerSync.getAll(query, parameters),
+        execute: () => powerSync!.getAll(query, parameters),
         // Setting this is a small optimization that avoids QueryRunner recomputing the JSON representation.
-        stringifiedParameters,
-        stringifiedOptions
+        stringifiedParameters
       };
     } else {
       return {
@@ -39,15 +31,12 @@ export const constructCompatibleQuery = <RowType>(
             parameters: [...compiled.parameters]
           };
         },
-        execute: () => query.execute(),
-        stringifiedOptions
+        execute: () => query.execute()
         // Note that we can't set stringifiedParameters here because we only know parameters after the query has been
         // compiled.
       };
     }
   }, [query, powerSync, stringifiedParameters]);
 
-  return {
-    parsedQuery
-  };
+  return parsedQuery;
 };
