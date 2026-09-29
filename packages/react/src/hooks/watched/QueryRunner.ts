@@ -1,4 +1,6 @@
 import {
+  BaseListener,
+  BaseObserver,
   CommonPowerSyncDatabase,
   DifferentialWatchedQuery,
   DifferentialWatchedQueryComparator,
@@ -7,8 +9,16 @@ import {
 import { AdditionalOptions, DifferentialHookOptions, QueryResult, ReadonlyQueryResult } from './watch-types.js';
 import { WatchCompatibleQueryWithParams } from './watch-utils.js';
 
+// We want to generate readonly results, but declare mutable results when useQuery is used without differential hooks
+// for backwards compatibility.
 type Result<RowType> = QueryResult<RowType> | ReadonlyQueryResult<RowType>;
 
+/**
+ * The configured state a {@link QueryRunner} is in.
+ *
+ * Creating these instances has no side effects (in particular, doesn't start database queries) and can be done in
+ * renders.
+ */
 export type RunnerConfig<RowType> =
   // No PowerSync database in context, reported as error.
   | { kind: 'missing-db' }
@@ -22,7 +32,7 @@ interface QueryConfig<RowType> {
   db: CommonPowerSyncDatabase;
   query: WatchCompatibleQueryWithParams<RowType[]>;
   sql: string;
-  parameters: any[];
+  parameters: ReadonlyArray<any>;
   stringifiedParams: string; // For efficient comparisons
   runOnce: boolean;
   rowComparator: DifferentialWatchedQueryComparator<RowType> | undefined;
@@ -48,7 +58,7 @@ function configEquals<RowType>(a: RunnerConfig<RowType>, b: RunnerConfig<RowType
         a.stringifiedParams == b.stringifiedParams &&
         a.runOnce == b.runOnce &&
         // We don't compare rowComparator by reference, since it's typically an inline object changed on every rerender.
-        // Only toggling betweetn differential and regular queries is considered a re-run worthy chamge.
+        // Only toggling between differential and regular queries is considered a re-run worthy chamge.
         !!a.rowComparator == !!b.rowComparator &&
         a.throttleMs == b.throttleMs &&
         a.reportFetching == b.reportFetching
@@ -92,11 +102,11 @@ export function resolveConfig<RowType>(
   }
 
   let sql: string;
-  let parameters: any[];
+  let parameters: ReadonlyArray<any>;
   try {
     const compiled = query.compile();
     sql = compiled.sql;
-    parameters = [...compiled.parameters];
+    parameters = compiled.parameters;
   } catch (error) {
     return { kind: 'compile-error', error: error as Error };
   }
@@ -115,6 +125,10 @@ export function resolveConfig<RowType>(
   };
 }
 
+export interface QueryRunnerListener extends BaseListener {
+  onChange(): void;
+}
+
 /**
  * An imperative store backing the `useQuery` hook. There is always one instance of this per `useQuery` hook.
  *
@@ -124,8 +138,7 @@ export function resolveConfig<RowType>(
  *
  * Work is only active while at least one listener is registered.
  */
-export class QueryRunner<RowType> {
-  private readonly listeners = new Set<() => void>();
+export class QueryRunner<RowType> extends BaseObserver<QueryRunnerListener> {
   private config: RunnerConfig<RowType> | null = null;
   private idleResult: Result<RowType> = _loadingState;
   /**
@@ -143,14 +156,16 @@ export class QueryRunner<RowType> {
   } | null = null;
 
   readonly subscribe = (onChange: () => void): (() => void) => {
-    this.listeners.add(onChange);
+    const listener = { onChange } satisfies QueryRunnerListener;
+
+    const unregister = this.registerListener(listener);
     if (this.listeners.size == 1) {
       this.startWork();
       this.notifyListeners();
     }
 
     return () => {
-      this.listeners.delete(onChange);
+      unregister();
       if (this.listeners.size == 0) {
         this.work?.dispose();
         this.work = null;
@@ -221,19 +236,16 @@ export class QueryRunner<RowType> {
   private startWork() {
     const config = this.config;
     if (config == null || config.kind != 'query') {
+      // In waiting or error state, don't run anything.
       return;
     }
 
     const emit = () => this.notifyListeners();
-    this.work = config.runOnce
-      ? new SingleQueryWork(config, this.idleResult, emit)
-      : new WatchedQueryWork(config, this.idleResult, emit);
+    this.work = new (config.runOnce ? SingleQueryWork : WatchedQueryWork)(config, this.idleResult, emit);
   }
 
   private notifyListeners() {
-    for (const listener of this.listeners) {
-      listener();
-    }
+    this.iterateListeners((l) => l.onChange?.());
   }
 }
 
@@ -287,7 +299,7 @@ class SingleQueryWork<RowType> implements QueryWork<RowType> {
 
     const { query, sql, parameters, db } = this.config;
     try {
-      const data = await query.execute({ sql, parameters: parameters, db });
+      const data = await query.execute({ sql, parameters: [...parameters], db });
       if (isAborted()) return;
       this.setResult({ isLoading: false, isFetching: false, data, error: undefined });
     } catch (error) {
@@ -330,9 +342,10 @@ class WatchedQueryWork<RowType> implements QueryWork<RowType> {
     this.reportFetching = config.reportFetching ?? true;
 
     const { db, query, rowComparator, throttleMs, reportFetching } = config;
+    const customQuery = db.customQuery(query);
     this.watch = rowComparator
-      ? db.customQuery(query).differentialWatch({ rowComparator, reportFetching, throttleMs })
-      : db.customQuery(query).watch({ reportFetching, throttleMs });
+      ? customQuery.differentialWatch({ rowComparator, reportFetching, throttleMs })
+      : customQuery.watch({ reportFetching, throttleMs });
 
     this.disposeListener = this.watch.registerListener({
       onStateChange: (state) => {
