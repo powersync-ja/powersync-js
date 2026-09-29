@@ -1,7 +1,7 @@
-import { AbstractPowerSyncDatabase } from '@powersync/common';
+import { CommonPowerSyncDatabase } from '@powersync/common';
 import React from 'react';
 
-export const PowerSyncContext = React.createContext<AbstractPowerSyncDatabase | null>(null);
+export const PowerSyncContext = React.createContext<CommonPowerSyncDatabase | null>(null);
 /**
  * Custom hook that provides access to the PowerSync context.
  * @returns The PowerSync Database instance.
@@ -19,4 +19,6 @@ export const PowerSyncContext = React.createContext<AbstractPowerSyncDatabase | 
  *   </ul>
  * };
  */
-export const usePowerSync = () => React.useContext(PowerSyncContext);
+export const usePowerSync = () => usePowerSyncOrNull()!;
+
+export const usePowerSyncOrNull = () => React.useContext(PowerSyncContext);

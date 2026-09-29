@@ -21,7 +21,7 @@ export const useWatchedQuerySubscription = <
 >(
   query: Query
 ): Query['state'] => {
-  return useNullableWatchedQuerySubscription(query);
+  return useNullableWatchedQuerySubscription(query)!;
 };
 
 /**
@@ -31,7 +31,7 @@ export const useNullableWatchedQuerySubscription = <
   ResultType = unknown,
   Query extends WatchedQuery<ResultType> = WatchedQuery<ResultType>
 >(
-  query: Query | null
+  query: WatchedQuery<ResultType> | null
 ): Query['state'] | undefined => {
   const [output, setOutputState] = React.useState(query?.state);
 
