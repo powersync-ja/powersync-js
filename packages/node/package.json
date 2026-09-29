@@ -63,6 +63,7 @@
     "undici": "^7.11.0"
   },
   "devDependencies": {
+    "@powersync/adapter-sql-js": "workspace:*",
     "@powersync/drizzle-driver": "workspace:*",
     "@types/node": "catalog:",
     "better-sqlite3": "catalog:",
