@@ -1,10 +1,10 @@
 import { type CompilableQuery } from '@powersync/common';
-import { usePowerSync } from '../PowerSyncContext.js';
-import { useSingleQuery } from './useSingleQuery.js';
-import { useWatchedQuery } from './useWatchedQuery.js';
+import { useContext, useEffect, useRef, useSyncExternalStore } from 'react';
+import { PowerSyncContext } from '../PowerSyncContext.js';
+import { useAllSyncStreamsHaveSynced } from '../streams.js';
+import { QueryRunner, resolveConfig } from './QueryRunner.js';
 import { AdditionalOptions, DifferentialHookOptions, QueryResult, ReadonlyQueryResult } from './watch-types.js';
 import { constructCompatibleQuery } from './watch-utils.js';
-import { useAllSyncStreamsHaveSynced } from '../streams.js';
 
 /**
  * A hook to access the results of a watched query.
@@ -57,43 +57,17 @@ export function useQuery<RowType = any>(
   parameters: any[] = [],
   options: AdditionalOptions & DifferentialHookOptions<RowType> = {}
 ) {
-  const powerSync = usePowerSync();
-  if (!powerSync) {
-    return {
-      ..._loadingState,
-      isLoading: false,
-      error: new Error('PowerSync not configured.')
-    };
-  }
-  const { parsedQuery, queryChanged } = constructCompatibleQuery(query, parameters, options);
-  const streamsHaveSynced = useAllSyncStreamsHaveSynced(powerSync, options?.streams);
-  const runOnce = options?.runQueryOnce == true;
-  const single = useSingleQuery<RowType>({
-    query: parsedQuery,
-    powerSync,
-    queryChanged,
-    active: runOnce && streamsHaveSynced
-  });
-  const watched = useWatchedQuery<RowType>({
-    query: parsedQuery,
-    powerSync,
-    queryChanged,
-    options: {
-      reportFetching: options.reportFetching,
-      throttleMs: options.throttleMs,
-      // Maintains backwards compatibility with previous versions
-      // Differentiation is opt-in by default
-      // We emit new data for each table change by default.
-      rowComparator: options.rowComparator
-    },
-    active: !runOnce && streamsHaveSynced
-  });
+  const powerSync = useContext(PowerSyncContext);
+  const { parsedQuery } = constructCompatibleQuery(query, parameters, options);
+  const streamsHaveSynced = useAllSyncStreamsHaveSynced(null, options.streams);
 
-  if (!streamsHaveSynced) {
-    return { ..._loadingState };
-  }
+  const runnerRef = useRef<QueryRunner<RowType> | null>(null);
+  const runner = (runnerRef.current ??= new QueryRunner<RowType>());
+  const config = resolveConfig(powerSync, parsedQuery, options, streamsHaveSynced);
 
-  return (runOnce ? single : watched) ?? _loadingState;
+  const snapshot = useSyncExternalStore(runner.subscribe, runner.getSnapshot, runner.getSnapshot);
+
+  // Apply the inputs once this render has been committed, so that discarded renders don't start running queries.
+  useEffect(() => runner.configure(config));
+  return runner.resultFor(config, snapshot);
 }
-
-const _loadingState = { isLoading: true, isFetching: false, data: [], error: undefined };

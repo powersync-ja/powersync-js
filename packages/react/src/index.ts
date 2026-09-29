@@ -1,4 +1,4 @@
-export * from './hooks/PowerSyncContext.js';
+export { usePowerSync, PowerSyncContext } from './hooks/PowerSyncContext.js';
 export { SuspenseQueryResult } from './hooks/suspense/SuspenseQueryResult.js';
 export { useSuspenseQuery } from './hooks/suspense/useSuspenseQuery.js';
 export { useWatchedQuerySuspenseSubscription } from './hooks/suspense/useWatchedQuerySuspenseSubscription.js';
