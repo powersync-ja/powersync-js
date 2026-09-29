@@ -4,7 +4,7 @@ version = "0.0.6"
 authors = [ "POWERSYNC" ]
 description = "Rust parts of the PowerSync Tauri SDK"
 edition = "2021"
-rust-version = "1.77.2"
+rust = "1.77"
 exclude = ["/examples", "/dist-js", "/guest-js", "/node_modules"]
 links = "tauri-plugin-powersync"
 readme = "README.md"
@@ -18,9 +18,8 @@ tauri = { version = "2.10.3" }
 serde = "1"
 serde_json = { version = "1", features = ["raw_value"] }
 thiserror = "2"
-powersync = { version = "0.0.7", features = ["tokio", "reqwest"] }
+powersync = { version = "0.1.0", features = ["tokio", "reqwest"] }
 reqwest = "0.13.2"
-http-client = { version = "6.5.3", default-features = false }
 rusqlite = { version = "0.39.0", features = ["bundled"] }
 tokio = { version = "1.50.0", features = ["time"] }
 tokio-stream = "0.1"

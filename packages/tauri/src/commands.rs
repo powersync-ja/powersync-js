@@ -2,7 +2,6 @@ use crate::database::SerializableSyncStatus;
 use crate::error::PowerSyncTauriError;
 use crate::handle::{Handle, SharedWithJavaScript};
 use crate::{PowerSync, Result};
-use http_client::http_types::convert::Serialize;
 use powersync::error::PowerSyncError;
 use powersync::schema::SchemaOrCustom;
 use powersync::{StreamPriority, StreamSubscriptionOptions};
@@ -10,7 +9,7 @@ use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSqlOutput, ValueRe
 use rusqlite::{params_from_iter, Connection, ToSql};
 use serde::de::{Error, SeqAccess, Visitor};
 use serde::ser::SerializeSeq;
-use serde::{Deserialize, Deserializer, Serializer};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::value::RawValue;
 use std::fmt::Formatter;
 use std::sync::Arc;
