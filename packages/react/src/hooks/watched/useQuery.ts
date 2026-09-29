@@ -58,7 +58,7 @@ export function useQuery<RowType = any>(
   options: AdditionalOptions & DifferentialHookOptions<RowType> = {}
 ) {
   const powerSync = useContext(PowerSyncContext);
-  const { parsedQuery } = constructCompatibleQuery(query, parameters, options);
+  const parsedQuery = constructCompatibleQuery(query, parameters);
   const streamsHaveSynced = useAllSyncStreamsHaveSynced(null, options.streams);
 
   const runnerRef = useRef<QueryRunner<RowType> | null>(null);

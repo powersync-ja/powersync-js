@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { usePowerSyncOrNull } from './PowerSyncContext.js';
+import { usePowerSync, usePowerSyncOrNull } from './PowerSyncContext.js';
 import { SyncStatus } from '@powersync/common';
 
 /**
@@ -16,15 +16,19 @@ import { SyncStatus } from '@powersync/common';
  *   </div>
  * };
  */
-export function useStatus() {
-  return useStatusOrNull()!;
+export function useStatus(): SyncStatus {
+  return useStatusOrNull(false);
 }
 
 /**
  * @internal
  */
-export function useStatusOrNull(): SyncStatus | null {
-  const powerSync = usePowerSyncOrNull();
+export function useStatusOrNull(allowNull?: boolean): SyncStatus | null;
+export function useStatusOrNull(allowNull: false): SyncStatus;
+
+export function useStatusOrNull(allowNull: boolean = true): SyncStatus | null {
+  // Conditional hook is okay, this is an internal hook and allowNull is a constant on each call site.
+  const powerSync = allowNull ? usePowerSyncOrNull() : usePowerSync();
   const [syncStatus, setSyncStatus] = useState(powerSync?.currentStatus ?? null);
 
   useEffect(() => {

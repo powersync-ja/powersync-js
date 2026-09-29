@@ -37,7 +37,7 @@ interface QueryConfig<RowType> {
   runOnce: boolean;
   rowComparator: DifferentialWatchedQueryComparator<RowType> | undefined;
   throttleMs: number | undefined;
-  reportFetching: boolean | undefined;
+  reportFetching: boolean;
 }
 
 function configEquals<RowType>(a: RunnerConfig<RowType>, b: RunnerConfig<RowType>): boolean {
@@ -78,7 +78,7 @@ function idleResultFor<RowType>(config: RunnerConfig<RowType>): Result<RowType> 
       return { isLoading: false, isFetching: false, data: [], error: config.error };
     case 'query':
       // Single queries always report fetching while they run.
-      const isFetching = config.runOnce || (config.reportFetching ?? true);
+      const isFetching = config.runOnce || config.reportFetching;
       return { isLoading: true, isFetching, data: [], error: undefined };
   }
 }
@@ -121,7 +121,7 @@ export function resolveConfig<RowType>(
     runOnce: options.runQueryOnce == true,
     rowComparator: options.rowComparator,
     throttleMs: options.throttleMs,
-    reportFetching: options.reportFetching
+    reportFetching: options.reportFetching ?? true
   };
 }
 
@@ -268,6 +268,7 @@ interface QueryWork<RowType> {
 class SingleQueryWork<RowType> implements QueryWork<RowType> {
   result: QueryResult<RowType>;
   private abortController: AbortController | null = null;
+  private disposed = false;
 
   constructor(
     private readonly config: QueryConfig<RowType>,
@@ -279,6 +280,7 @@ class SingleQueryWork<RowType> implements QueryWork<RowType> {
   }
 
   readonly refresh = async (signal?: AbortSignal) => {
+    if (this.disposed) return;
     await this.run(signal);
   };
 
@@ -319,6 +321,7 @@ class SingleQueryWork<RowType> implements QueryWork<RowType> {
   dispose(): void {
     this.abortController?.abort();
     this.abortController = null;
+    this.disposed = true;
   }
 }
 
@@ -339,7 +342,7 @@ class WatchedQueryWork<RowType> implements QueryWork<RowType> {
     private readonly emit: () => void
   ) {
     this.result = initial;
-    this.reportFetching = config.reportFetching ?? true;
+    this.reportFetching = config.reportFetching;
 
     const { db, query, rowComparator, throttleMs, reportFetching } = config;
     const customQuery = db.customQuery(query);
@@ -387,7 +390,7 @@ class WatchedQueryWork<RowType> implements QueryWork<RowType> {
     }
 
     // Keep the previous data while the updated query runs.
-    return { ...this.result, isFetching: this.result.isFetching || (config.reportFetching ?? true) };
+    return { ...this.result, isFetching: this.result.isFetching || config.reportFetching };
   }
 
   tryUpdate(config: RunnerConfig<RowType>): boolean {
@@ -396,7 +399,7 @@ class WatchedQueryWork<RowType> implements QueryWork<RowType> {
     }
 
     this.config = config;
-    this.reportFetching = config.reportFetching ?? true;
+    this.reportFetching = config.reportFetching;
     this.pendingUpdate = true;
     this.watch.updateSettings({
       query: config.query,

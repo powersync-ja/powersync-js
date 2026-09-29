@@ -19,6 +19,10 @@ export const PowerSyncContext = React.createContext<CommonPowerSyncDatabase | nu
  *   </ul>
  * };
  */
-export const usePowerSync = () => usePowerSyncOrNull()!;
+export function usePowerSync() {
+  const db = usePowerSyncOrNull();
+  if (db == null) throw new Error('PowerSync not configured.');
+  return db;
+}
 
 export const usePowerSyncOrNull = () => React.useContext(PowerSyncContext);

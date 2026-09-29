@@ -53,12 +53,12 @@ export const useTemporaryHold = (watchedQuery?: WatchedQuery<unknown>) => {
         releaseHold();
       } else {
         // Need to keep the hold, check again after timeout
-        setTimeout(checkHold, timeoutPollMs);
+        timeout = setTimeout(checkHold, timeoutPollMs);
       }
     };
 
     // Set a timeout to conditionally remove the temporary hold
-    setTimeout(checkHold, timeoutPollMs);
+    timeout = setTimeout(checkHold, timeoutPollMs);
   }
 };
 
