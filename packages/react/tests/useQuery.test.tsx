@@ -36,8 +36,6 @@ describe('useQuery', () => {
   ];
 
   testCases.forEach(({ mode, wrapper: testWrapper }) => {
-    const isStrictMode = mode === 'StrictMode';
-
     describe(`in ${mode}`, () => {
       it('should set isLoading to true on initial load', async () => {
         const db = await openPowerSync();
@@ -131,14 +129,14 @@ describe('useQuery', () => {
             const currentResult = result.current;
             refresh = currentResult.refresh;
             expect(currentResult.isLoading).toEqual(false);
-            expect(getAllSpy).toHaveBeenCalledTimes(isStrictMode ? 2 : 1);
+            expect(getAllSpy).toHaveBeenCalledTimes(1);
           },
           { timeout: 500, interval: 100 }
         );
 
         await act(() => refresh!());
 
-        expect(getAllSpy).toHaveBeenCalledTimes(isStrictMode ? 3 : 2);
+        expect(getAllSpy).toHaveBeenCalledTimes(2);
       });
 
       it('should accept compilable queries', async () => {
