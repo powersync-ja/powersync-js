@@ -111,7 +111,7 @@ export default function ViewsLayout({ children }: { children: React.ReactNode })
           <Box sx={{ flexGrow: 1 }}>
             <Typography>{title}</Typography>
           </Box>
-          {status?.connected && useCheckpointRequests === 'true' && (
+          {status?.connected && useCheckpointRequests && (
             <Tooltip title="Request explicit sync">
               <IconButton size="small" color="inherit" aria-label="refresh" onClick={explicitSync}>
                 <S.RefreshIcon spinning={explicitRefresh == 'working'} />

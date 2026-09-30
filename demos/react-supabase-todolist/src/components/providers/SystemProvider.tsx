@@ -47,7 +47,9 @@ export const syncOptions: SyncOptions = {
   appMetadata: {
     app_version: APP_VERSION
   },
-  checkpointMode: useCheckpointRequests ? 'requests' : 'legacy'
+  checkpointMode: useCheckpointRequests ? 'requests' : 'legacy',
+  // Per-bucket totals in the PowerSync DevTools Buckets tab.
+  diagnostics: true
 };
 
 const QueryStore = React.createContext<QueryStore | null>(null);
