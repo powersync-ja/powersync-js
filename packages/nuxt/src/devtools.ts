@@ -50,7 +50,8 @@ export function setupDevToolsUI(nuxt: Nuxt) {
       icon: iconUrl,
       view: {
         type: 'iframe',
-        src: `http://localhost:${port}${UI_ROUTE}`
+        // `sdks` narrows the UI's setup screen to what a Nuxt app uses.
+        src: `http://localhost:${port}${UI_ROUTE}?sdks=nuxt,web`
       }
     });
   });

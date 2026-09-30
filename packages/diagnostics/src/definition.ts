@@ -24,9 +24,9 @@ import type {
   UploadQueueState
 } from '@powersync/diagnostics-core';
 import { DEVFRAME_ID, HEARTBEAT_MS, UI_ROUTE } from './constants.js';
-import type { SourceInfo } from './rpc-types.js';
+import type { SetupSdk, SourceInfo } from './rpc-types.js';
 
-export type { SourceInfo } from './rpc-types.js';
+export type { SetupSdk, SourceInfo } from './rpc-types.js';
 
 /** Event types replayed to a UI that subscribes late. `logs` and `core` are not replayed. */
 const SNAPSHOT_TYPES = new Set<DiagnosticsEvent['type']>(['status', 'streams', 'buckets', 'uploadQueue']);
@@ -77,6 +77,8 @@ class RemoteIntegration implements SdkIntegration {
 }
 
 const sources = new Map<string, Source>();
+/** The SDKs the entry point that mounted this definition can reach; `null` for all. */
+let setupSdks: SetupSdk[] | null = null;
 /** UI sessions that asked for events, keyed by session id. */
 const observers = new Map<number, DevframeNodeRpcSession>();
 /** The id a page serves a database under, per session, to the id it is listed under here. */
@@ -209,6 +211,14 @@ function removeSource(sourceId: string): void {
  * Serves an integration that lives in this process (a node app's database). Events are pulled from
  * it directly. Returns a function that detaches it.
  */
+/**
+ * Names the SDKs this host can reach, so the UI's "no database" screens explain only those. Each entry
+ * point sets it: the Vite plugin, the node server, the Nuxt module.
+ */
+export function setSetupSdks(sdks: SetupSdk[] | null): void {
+  setupSdks = sdks?.length ? [...sdks] : null;
+}
+
 export async function registerIntegration(
   id: string,
   integration: SdkIntegration,
@@ -362,6 +372,14 @@ export const definition = defineDevframe({
           liveSources();
           return sourceInfos();
         }
+      })
+    );
+    ps.rpc.register(
+      defineRpcFunction({
+        name: 'setup-sdks',
+        type: 'query',
+        jsonSerializable: true,
+        handler: (): SetupSdk[] | null => setupSdks
       })
     );
     ps.rpc.register(

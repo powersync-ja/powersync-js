@@ -1,12 +1,18 @@
 import { createPluginFromDevframe } from '@vitejs/devtools-kit/node';
 import type { Plugin } from 'vite';
-import { definition } from './definition.js';
+import { definition, setSetupSdks } from './definition.js';
+import type { SetupSdk } from './rpc-types.js';
 
 const PLUGIN_NAME = 'powersync-diagnostics';
 
 export interface PowerSyncDevToolsOptions {
   /** Title of the dock entry. */
   title?: string;
+  /**
+   * The SDKs the setup screen explains when no database is attached. @default ['web']. A framework
+   * module built on this plugin passes its own, e.g. `['nuxt', 'web']`.
+   */
+  sdks?: SetupSdk[];
 }
 
 /**
@@ -25,6 +31,7 @@ export interface PowerSyncDevToolsOptions {
  * ```
  */
 export default function powersyncDevtools(options: PowerSyncDevToolsOptions = {}): Plugin {
+  setSetupSdks(options.sdks ?? ['web']);
   const plugin = createPluginFromDevframe(definition, { name: PLUGIN_NAME });
   plugin.devtools!.setup = async (context) => {
     // Frameworks that run a second Vite server for server-side rendering set it up too; the browser

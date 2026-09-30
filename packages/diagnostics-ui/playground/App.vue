@@ -4,6 +4,7 @@ import { connectIntegration, exposeIntegration } from '@powersync/diagnostics-co
 import { DiagnosticsPanel, provideDiagnostics, useTheme } from '../src';
 import { MockIntegration } from './mockIntegration';
 import { useHostTheme } from '../standalone/hostTheme';
+import { sdksFromUrl } from '../standalone/hostSdks';
 
 // The panel owns the theme (toggle lives in its header); the harness follows the same shared state.
 const { isDark } = useTheme();
@@ -14,6 +15,8 @@ const noClient = params.has('noclient');
 // Preview host-controlled theming (no toggle, follows the host): open http://localhost:5199/?theme=dark, or
 // post `{ type: 'powersync-diagnostics:theme', theme: 'dark' }` to the window, as an embedder would.
 const theme = useHostTheme();
+// Preview the setup screens for the SDKs one host can reach: open http://localhost:5199/?noclient&sdks=nuxt,web
+const sdks = sdksFromUrl();
 
 // The harness plays the SDK side: a fake integration that answers the protocol with canned data.
 const mock = new MockIntegration();
@@ -24,7 +27,7 @@ const channel = new MessageChannel();
 const stopServing = noClient ? () => {} : exposeIntegration(mock, channel.port1);
 const integration = connectIntegration(channel.port2);
 
-provideDiagnostics(integration, { theme });
+provideDiagnostics(integration, { theme, sdks });
 
 onMounted(() => {
   if (!noClient) {

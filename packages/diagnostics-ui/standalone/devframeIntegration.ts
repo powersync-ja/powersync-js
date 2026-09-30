@@ -20,6 +20,8 @@ import type {
   Unsubscribe,
   UploadQueueState
 } from '@powersync/diagnostics-core';
+import type { SetupSdk } from '../src';
+import { parseSdks } from './hostSdks';
 
 type AnyCall = (method: string, ...args: unknown[]) => Promise<unknown>;
 
@@ -85,6 +87,11 @@ export class DevframeIntegration implements SourceAwareIntegration {
     return () => {
       this.sourceHandlers.delete(handler);
     };
+  }
+
+  /** The SDKs the node side says it can reach, or `null` when it does not say. */
+  async getSetupSdks(): Promise<SetupSdk[] | null> {
+    return parseSdks(await this.call<unknown>('setup-sdks').catch(() => null));
   }
 
   async selectSource(sourceId: string | null): Promise<void> {

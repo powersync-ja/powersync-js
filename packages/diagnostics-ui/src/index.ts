@@ -3,6 +3,8 @@ export {
   provideDiagnostics,
   useDiagnostics,
   useIntegration,
-  type ProvideDiagnosticsOptions
+  SETUP_SDKS,
+  type ProvideDiagnosticsOptions,
+  type SetupSdk
 } from './composables/diagnostics';
 export { useTheme, type DiagnosticsTheme } from './composables/theme';

@@ -8,7 +8,7 @@ import CodeTabs, { type CodeTab } from './ui/CodeTabs.vue';
 import Tooltip from './ui/Tooltip.vue';
 import HoldButton from './ui/HoldButton.vue';
 import { useTheme } from '../composables/theme';
-import { useDiagnostics } from '../composables/diagnostics';
+import { SETUP_SDKS, useDiagnostics, useSetupSdks, type SetupSdk } from '../composables/diagnostics';
 import { useSyncActions } from '../composables/actions';
 import SyncStatusTab from './tabs/SyncStatusTab.vue';
 import DataInspectorTab from './tabs/DataInspectorTab.vue';
@@ -57,10 +57,9 @@ watch(sources, (list) => {
   }
 });
 
-// How diagnostics get switched on, per SDK; the guide below covers every SDK in one place.
-const SETUP_GUIDE = 'https://docs.powersync.com/tools/devtools-overview';
-const setupTabs: CodeTab[] = [
-  {
+// How diagnostics get switched on, per SDK, with that SDK's setup guide.
+const setupTabBySdk: Record<SetupSdk, CodeTab> = {
+  web: {
     label: 'Web',
     lang: 'javascript',
     code: `// vite.config.ts: dev only, nothing reaches the production build.
@@ -72,18 +71,20 @@ export default defineConfig({
 });
 
 // Optional: per-bucket totals from the SQLite core.
-await db.connect(connector, { diagnostics: true });`
+await db.connect(connector, { diagnostics: true });`,
+    link: { href: 'https://docs.powersync.com/tools/devtools/vite', label: 'Vite setup guide' }
   },
-  {
+  nuxt: {
     label: 'Nuxt',
     lang: 'javascript',
     code: `// nuxt.config.ts
 export default defineNuxtConfig({
   modules: ['@powersync/nuxt'],
   powersync: { useDiagnostics: true }
-});`
+});`,
+    link: { href: 'https://docs.powersync.com/tools/devtools/nuxt', label: 'Nuxt setup guide' }
   },
-  {
+  node: {
     label: 'Node',
     lang: 'javascript',
     code: `import { enablePowerSyncDiagnostics } from '@powersync/diagnostics/node';
@@ -91,13 +92,37 @@ export default defineNuxtConfig({
 if (process.env.NODE_ENV !== 'production') {
   const devtools = await enablePowerSyncDiagnostics(db);
   console.log(\`PowerSync DevTools: \${devtools.signInUrl}\`);
-}`
+}`,
+    link: { href: 'https://docs.powersync.com/tools/devtools/node', label: 'Node.js setup guide' }
   },
-  {
+  dart: {
     label: 'Dart',
-    note: 'Diagnostics are on in debug builds and off in release builds. Run the app and open the PowerSync tab in Flutter DevTools.'
+    note: 'Diagnostics are on in debug builds and off in release builds. Run the app and open the PowerSync tab in Flutter DevTools.',
+    link: { href: 'https://docs.powersync.com/tools/dart-devtools-extension', label: 'Dart & Flutter setup guide' }
   }
-];
+};
+
+// Only the SDKs this host can reach, when it says which.
+const setupSdks = useSetupSdks();
+const shownSdks = computed(() => setupSdks.value ?? [...SETUP_SDKS]);
+const setupTabs = computed(() => shownSdks.value.map((sdk) => setupTabBySdk[sdk]));
+const setupDescription = computed(() =>
+  shownSdks.value.length > 1
+    ? 'If your app opens a PowerSync database, its state can be inspected here. Diagnostics run in development only; how they are switched on depends on the SDK:'
+    : 'If your app opens a PowerSync database, its state can be inspected here. Diagnostics run in development only. To switch them on:'
+);
+
+// What gets a database attached, for the SDKs this host can reach.
+const attachHintBySdk: Record<SetupSdk, string> = {
+  web: 'Open your app in a browser tab that DevTools trusts.',
+  nuxt: 'Open your app in a browser tab that DevTools trusts.',
+  node: 'Call enablePowerSyncDiagnostics() in your node app.',
+  dart: 'Run your app in debug mode.'
+};
+const noSourceDescription = computed(() => {
+  const hints = [...new Set(shownSdks.value.map((sdk) => attachHintBySdk[sdk]))];
+  return `DevTools is connected, but no app is serving a database. ${hints.join(' ')} The view fills in as soon as one attaches.`;
+});
 
 const tabs = [
   { value: 'status', label: 'Sync Status' },
@@ -212,23 +237,10 @@ watch(activeTab, (value) => {
         :icon="IconOffline"
         tone="warning"
         title="No PowerSync database attached"
-        description="DevTools is connected, but no app is serving a database. Open your app in a browser tab that DevTools trusts, or call enablePowerSyncDiagnostics() in a node app. The view fills in as soon as one attaches."
+        :description="noSourceDescription"
       />
-      <EmptyState
-        v-else
-        :icon="IconOffline"
-        title="No PowerSync database yet"
-        description="If your app opens a PowerSync database, its state can be inspected here. Diagnostics run in development only; how they are switched on depends on the SDK:"
-      >
+      <EmptyState v-else :icon="IconOffline" title="No PowerSync database yet" :description="setupDescription">
         <CodeTabs :tabs="setupTabs" />
-        <a
-          :href="SETUP_GUIDE"
-          target="_blank"
-          rel="noreferrer"
-          class="mt-3 inline-block text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
-        >
-          Setup guide ↗
-        </a>
       </EmptyState>
     </div>
 

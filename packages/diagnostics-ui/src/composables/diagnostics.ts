@@ -1,8 +1,11 @@
 import {
+  computed,
   inject,
   provide,
   onScopeDispose,
   shallowRef,
+  toValue,
+  type ComputedRef,
   type InjectionKey,
   type MaybeRefOrGetter,
   type ShallowRef
@@ -13,10 +16,18 @@ import type { SdkIntegration } from '@powersync/diagnostics-core';
 import { createDiagnosticsStores, type DiagnosticsStores } from './stores';
 import { setHostTheme, type DiagnosticsTheme } from './theme';
 
+/** An SDK the "no database" screens can explain how to set up. */
+export type SetupSdk = 'web' | 'nuxt' | 'node' | 'dart';
+
+/** Every {@link SetupSdk}, in the order the setup screen lists them. */
+export const SETUP_SDKS: readonly SetupSdk[] = ['web', 'nuxt', 'node', 'dart'];
+
 interface DiagnosticsContext {
   /** Set once the integration is available. Null while a promised integration is still pending. */
   integration: ShallowRef<SdkIntegration | null>;
   stores: ShallowRef<DiagnosticsStores | null>;
+  /** The SDKs the host can reach, or `null` for all of them. */
+  sdks: ComputedRef<SetupSdk[] | null>;
 }
 
 const KEY: InjectionKey<DiagnosticsContext> = Symbol('powersync-diagnostics');
@@ -29,6 +40,12 @@ export interface ProvideDiagnosticsOptions {
    * connected yet; the panel manages itself until a value arrives.
    */
   theme?: MaybeRefOrGetter<DiagnosticsTheme | null | undefined>;
+  /**
+   * The SDKs this host can reach, in the order to show them. The "no database" screens then explain
+   * only those: a Vite dock passes `['web']`, Flutter DevTools `['dart']`. Leave it out, or pass
+   * `null` or an empty list, and the screens cover every SDK.
+   */
+  sdks?: MaybeRefOrGetter<SetupSdk[] | null | undefined>;
 }
 
 /**
@@ -58,7 +75,12 @@ export function provideDiagnostics(
     attach(source);
   }
 
-  provide(KEY, { integration, stores });
+  const sdks = computed(() => {
+    const list = toValue(options.sdks);
+    return list?.length ? list : null;
+  });
+
+  provide(KEY, { integration, stores, sdks });
   onScopeDispose(() => {
     disposed = true;
     stores.value?.dispose();
@@ -81,6 +103,11 @@ export function useIntegration(): SdkIntegration {
     throw new Error('[diagnostics-ui] The SdkIntegration is not available yet.');
   }
   return integration.value;
+}
+
+/** The SDKs the host can reach, or `null` when it did not say. */
+export function useSetupSdks(): ComputedRef<SetupSdk[] | null> {
+  return useContext().sdks;
 }
 
 // Placeholder atoms let the UI render its "connecting" state before the integration arrives.

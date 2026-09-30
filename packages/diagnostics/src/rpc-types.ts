@@ -21,10 +21,14 @@ export interface SourceInfo {
   sdk: string | null;
 }
 
+/** An SDK the UI's "no database" screens can explain, the same names the UI takes as `sdks`. */
+export type SetupSdk = 'web' | 'nuxt' | 'node' | 'dart';
+
 declare module 'devframe/types' {
   /** Functions the node side serves; called by the UI, by agents over MCP, and by pages announcing a database. */
   interface DevframeRpcServerFunctions {
     'powersync:sources': () => SourceInfo[];
+    'powersync:setup-sdks': () => SetupSdk[] | null;
     'powersync:query': (params: QueryParams, sourceId?: string | null) => Promise<QueryResult>;
     'powersync:schema': (sourceId?: string | null) => Promise<SchemaPayload>;
     'powersync:info': (sourceId?: string | null) => Promise<ProtocolInfo>;

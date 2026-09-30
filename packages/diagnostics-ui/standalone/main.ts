@@ -1,8 +1,9 @@
 import { createApp, h, ref } from 'vue';
 import { awaitIntegration, type SdkIntegration } from '@powersync/diagnostics-core';
 import { DiagnosticsPanel, provideDiagnostics } from '../src';
-import { connectDevframeIntegration } from './devframeIntegration';
+import { connectDevframeIntegration, DevframeIntegration } from './devframeIntegration';
 import { useHostTheme } from './hostTheme';
+import { sdksFromUrl } from './hostSdks';
 import '../src/style.css';
 
 // Embed contract: this page runs in an iframe and drives everything through one `SdkIntegration`.
@@ -17,12 +18,19 @@ async function resolveIntegration(): Promise<SdkIntegration> {
 // A host that owns the theme says so through the page URL or a theme message (see `hostTheme.ts`).
 // The panel then follows the host and shows no toggle; with neither, it manages its own theme.
 
+// The SDKs the host can reach narrow the "no database" screens. An embedder names them on the URL
+// (`?sdks=dart`); a devframe host knows which entry point mounted it and answers over RPC.
+
 createApp({
   setup() {
     const pending = resolveIntegration();
     const ready = ref(false);
-    provideDiagnostics(pending, { theme: useHostTheme() });
-    void pending.then(() => (ready.value = true));
+    const sdks = ref(sdksFromUrl());
+    provideDiagnostics(pending, { theme: useHostTheme(), sdks });
+    void pending.then(async (integration) => {
+      ready.value = true;
+      if (!sdks.value && integration instanceof DevframeIntegration) sdks.value = await integration.getSetupSdks();
+    });
     // The panel applies `.dark` to its own root; no host-forced class.
     return () =>
       h('div', { style: 'height: 100vh' }, [

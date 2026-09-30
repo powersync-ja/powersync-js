@@ -6,7 +6,7 @@ import type { McpSetting } from 'devframe';
 import { createDevServer } from 'devframe/adapters/dev';
 import { buildOtpAuthUrl } from 'devframe/node/auth';
 import { createIntegration, type DiagnosableDatabase } from './agent.js';
-import { definition, registerIntegration } from './definition.js';
+import { definition, registerIntegration, setSetupSdks } from './definition.js';
 
 export interface EnableDiagnosticsOptions {
   /**
@@ -67,6 +67,7 @@ export async function enablePowerSyncDiagnostics(
 ): Promise<DiagnosticsServer> {
   const sdk = options.sdk ?? '@powersync/node';
   const detach = await registerIntegration(options.id ?? 'node-1', createIntegration(db, sdk), sdk);
+  setSetupSdks(['node']);
   const auth = options.auth ?? true;
   const server = await createDevServer(definition, {
     port: options.port ?? 0,
