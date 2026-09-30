@@ -4,4 +4,4 @@
 '@powersync/diagnostics': patch
 ---
 
-Switch to trusted publishing.
+Initial automated release.

@@ -1,6 +1,6 @@
 {
   "name": "@powersync/diagnostics",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "description": "PowerSync DevTools: a devframe definition that serves live PowerSync diagnostics as a Vite DevTools dock, a node dev server, and MCP tools.",
   "type": "module",
   "main": "lib/src/index.js",

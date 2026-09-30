@@ -1,6 +1,6 @@
 {
   "name": "@powersync/diagnostics-ui",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "type": "module",
   "description": "Host-neutral Vue UI for PowerSync live-attach diagnostics, driven by the Diagnostics Port.",
   "author": "PowerSync",

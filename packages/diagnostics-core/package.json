@@ -1,6 +1,6 @@
 {
   "name": "@powersync/diagnostics-core",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "type": "module",
   "description": "The PowerSync diagnostics protocol (SdkIntegration and its data shapes) and the iframe bridge.",
   "author": "PowerSync",
