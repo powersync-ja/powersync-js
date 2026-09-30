@@ -1,4 +1,9 @@
+import { BaseObserver, type BaseListener } from '@powersync/common';
 import type { WebPowerSyncDatabase } from '../db/PowerSyncDatabase.js';
+
+interface RegistryListener extends BaseListener {
+  databasesChanged: (databases: readonly WebPowerSyncDatabase[]) => void;
+}
 
 /**
  * Live database instances in this page, for development tooling.
@@ -8,44 +13,41 @@ import type { WebPowerSyncDatabase } from '../db/PowerSyncDatabase.js';
  * the app's databases without the app wiring anything up. The set holds only instances that already
  * exist, so it adds nothing to a production bundle beyond the references themselves.
  */
-const databases = new Set<WebPowerSyncDatabase>();
-const listeners = new Set<(databases: readonly WebPowerSyncDatabase[]) => void>();
+class DatabaseRegistry extends BaseObserver<RegistryListener> {
+  readonly databases = new Set<WebPowerSyncDatabase>();
 
-function notify(): void {
-  const snapshot = [...databases];
-  for (const listener of listeners) {
-    listener(snapshot);
+  notify(): void {
+    const snapshot = [...this.databases];
+    this.iterateListeners((listener) => listener.databasesChanged?.(snapshot));
   }
 }
 
+const registry = new DatabaseRegistry();
+
 /** @internal Called by the database constructor. */
 export function registerDatabase(db: WebPowerSyncDatabase): void {
-  databases.add(db);
-  notify();
+  registry.databases.add(db);
+  registry.notify();
 }
 
 /** @internal Called when the database closes. */
 export function unregisterDatabase(db: WebPowerSyncDatabase): void {
-  if (databases.delete(db)) {
-    notify();
+  if (registry.databases.delete(db)) {
+    registry.notify();
   }
 }
 
 /** The databases currently open in this page. */
 export function getRegisteredDatabases(): readonly WebPowerSyncDatabase[] {
-  return [...databases];
+  return [...registry.databases];
 }
 
 /**
  * Calls `listener` with the current databases now, and again whenever one is opened or closed.
  * Returns a function that stops listening.
  */
-export function observeRegisteredDatabases(
-  listener: (databases: readonly WebPowerSyncDatabase[]) => void
-): () => void {
-  listeners.add(listener);
-  listener([...databases]);
-  return () => {
-    listeners.delete(listener);
-  };
+export function observeRegisteredDatabases(listener: (databases: readonly WebPowerSyncDatabase[]) => void): () => void {
+  const stop = registry.registerListener({ databasesChanged: listener });
+  listener([...registry.databases]);
+  return stop;
 }

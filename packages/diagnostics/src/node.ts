@@ -5,7 +5,8 @@
 import type { McpSetting } from 'devframe';
 import { createDevServer } from 'devframe/adapters/dev';
 import { buildOtpAuthUrl } from 'devframe/node/auth';
-import { createIntegration, type DiagnosableDatabase } from './agent.js';
+import type { CommonPowerSyncDatabase } from '@powersync/common';
+import { createIntegration } from './agent.js';
 import { definition, registerIntegration, setSetupSdks } from './definition.js';
 
 export interface EnableDiagnosticsOptions {
@@ -62,7 +63,7 @@ export interface DiagnosticsServer {
  * ```
  */
 export async function enablePowerSyncDiagnostics(
-  db: DiagnosableDatabase,
+  db: CommonPowerSyncDatabase,
   options: EnableDiagnosticsOptions = {}
 ): Promise<DiagnosticsServer> {
   const sdk = options.sdk ?? '@powersync/node';

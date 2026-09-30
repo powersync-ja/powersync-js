@@ -74,7 +74,7 @@ export default defineNuxtModule<PowerSyncNuxtModuleOptions>({
         // Nuxt DevTools 4 runs on Vite DevTools: mount the devframe definition. The dock, the page
         // script and the MCP tools come with it.
         const { default: powersyncDevtools } = await import('@powersync/diagnostics/vite');
-        addVitePlugin(powersyncDevtools());
+        addVitePlugin(powersyncDevtools({ sdks: ['nuxt', 'web'] }));
       } else {
         // Nuxt DevTools 3 has no devframe hub: serve the UI as a static page for the custom tab. The
         // runtime plugin loads the page agent that answers the tab over postMessage.

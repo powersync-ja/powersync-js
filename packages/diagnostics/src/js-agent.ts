@@ -1,5 +1,6 @@
 import type {
   CommonPowerSyncDatabase,
+  LogLevels,
   LogRecord as SdkLogRecord,
   PowerSyncBackendConnector,
   SyncOptions,
@@ -363,11 +364,15 @@ function streamKey(name: string, params?: Record<string, unknown>): string {
   return `${name}|${JSON.stringify(params ?? null)}`;
 }
 
+// The SDK's log levels. `typeof LogLevels` makes the compiler hold these to the values in
+// `@powersync/common`, which stays a type-only import because it is an optional peer.
+const LOG_LEVELS: typeof LogLevels = { trace: 10, debug: 20, info: 30, warn: 40, error: 50 };
+
 /** Maps a numeric SDK log level to its name. */
 function logLevelName(level: number): string {
-  if (level >= 50) return 'error';
-  if (level >= 40) return 'warn';
-  if (level >= 30) return 'info';
-  if (level >= 20) return 'debug';
+  if (level >= LOG_LEVELS.error) return 'error';
+  if (level >= LOG_LEVELS.warn) return 'warn';
+  if (level >= LOG_LEVELS.info) return 'info';
+  if (level >= LOG_LEVELS.debug) return 'debug';
   return 'trace';
 }
