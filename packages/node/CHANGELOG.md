@@ -1,5 +1,14 @@
 # @powersync/node
 
+## 1.1.1
+
+### Patch Changes
+
+- Updated dependencies [3d0d5c4]
+- Updated dependencies [7bae50c]
+  - @powersync/common@2.3.1
+  - @powersync/shared-internals@1.3.1
+
 ## 1.1.0
 
 ### Minor Changes

@@ -1,5 +1,15 @@
 # @powersync/adapter-sql-js
 
+## 0.0.25
+
+### Patch Changes
+
+- 7deff4c: Deprecate `persister` option, and disable it while a PowerSync database is connected.
+- Updated dependencies [3d0d5c4]
+- Updated dependencies [7bae50c]
+  - @powersync/common@2.3.1
+  - @powersync/shared-internals@1.3.1
+
 ## 0.0.24
 
 ### Patch Changes

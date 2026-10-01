@@ -1,5 +1,17 @@
 # diagnostics-app
 
+## 0.13.23
+
+### Patch Changes
+
+- Updated dependencies [7bae50c]
+- Updated dependencies [3d0d5c4]
+- Updated dependencies [7bae50c]
+  - @powersync/react@2.0.2
+  - @powersync/common@2.3.1
+  - @powersync/shared-internals@1.3.1
+  - @powersync/web@2.4.2
+
 ## 0.13.22
 
 ### Patch Changes
