@@ -14,30 +14,51 @@ interface WatchCompatibleQueryWithParams<T> extends WatchCompatibleQuery<T> {
   stringifiedParameters?: string;
 }
 
+interface ObservedQueryState {
+  sqlStatement: string;
+  stringifiedParams: string;
+  stringifiedOptions: string;
+}
+
 export const checkQueryChanged = <T>(query: WatchCompatibleQueryWithParams<T>, options: AdditionalOptions) => {
-  let _compiled: CompiledQuery;
+  /**
+   * The query state which was observed during the previous render.
+   *  - `undefined` indicates the initial render, no query has been observed yet.
+   *  - `null` indicates that the previous render could not compile the query.
+   *
+   * This ref is declared before compiling the query. Compilation can throw, and a hook may never
+   * be declared after a conditional return - doing so changes the order of hooks between renders,
+   * which crashes the component.
+   */
+  const previousQueryRef = React.useRef<ObservedQueryState | null | undefined>(undefined);
+  const isInitialRender = previousQueryRef.current === undefined;
+
+  let compiled: CompiledQuery;
   try {
-    _compiled = query.compile();
+    compiled = query.compile();
   } catch (error) {
-    return false; // If compilation fails, we assume the query has changed
+    // If compilation fails we can't compare anything. Record the failure so that a subsequent
+    // successful compilation is reported as a change: consumers are still using the query which
+    // could not be compiled.
+    previousQueryRef.current = null;
+    return false;
   }
-  const compiled = _compiled!;
 
   const stringifiedParams = query.stringifiedParameters ?? JSON.stringify(compiled.parameters);
   const stringifiedOptions = JSON.stringify(options);
 
-  const previousQueryRef = React.useRef({ sqlStatement: compiled.sql, stringifiedParams, stringifiedOptions });
+  const previousQuery = previousQueryRef.current;
 
   if (
-    previousQueryRef.current.sqlStatement !== compiled.sql ||
-    previousQueryRef.current.stringifiedParams != stringifiedParams ||
-    previousQueryRef.current.stringifiedOptions != stringifiedOptions
+    previousQuery == null ||
+    previousQuery.sqlStatement !== compiled.sql ||
+    previousQuery.stringifiedParams != stringifiedParams ||
+    previousQuery.stringifiedOptions != stringifiedOptions
   ) {
-    previousQueryRef.current.sqlStatement = compiled.sql;
-    previousQueryRef.current.stringifiedParams = stringifiedParams;
-    previousQueryRef.current.stringifiedOptions = stringifiedOptions;
+    previousQueryRef.current = { sqlStatement: compiled.sql, stringifiedParams, stringifiedOptions };
 
-    return true;
+    // The initial render is never a change: the query has not been used anywhere yet.
+    return !isInitialRender;
   }
 
   return false;
