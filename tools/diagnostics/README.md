@@ -54,16 +54,18 @@ Option: `powersyncDevtools({ title: 'PowerSync' })` sets the dock title.
 
 ```ts
 import { PowerSyncDatabase } from '@powersync/node';
-import { enablePowerSyncDiagnostics } from '@powersync/diagnostics/node';
 
 const db = new PowerSyncDatabase({ schema, database: { dbFilename: 'app.db' } });
 await db.connect(connector, { diagnostics: true });
 
 if (process.env.NODE_ENV !== 'production') {
+  const { enablePowerSyncDiagnostics } = await import('@powersync/diagnostics/node');
   const devtools = await enablePowerSyncDiagnostics(db);
   console.log(`PowerSync DevTools: ${devtools.signInUrl}`);
 }
 ```
+
+Import the package inside the check. Then a production install without dev dependencies (`npm ci --omit=dev`) still starts.
 
 Your process serves the DevTools window on a random free port. Open the printed link. It carries a one-time code, so the browser is trusted at once. The code is valid for five minutes and for one browser; after that, open `devtools.url` and the terminal prints a new link. Set `auth: false` to trust every local browser. MCP tools are at `<url>/__mcp`.
 

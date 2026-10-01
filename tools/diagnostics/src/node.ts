@@ -57,6 +57,7 @@ export interface DiagnosticsServer {
  * ```ts
  * const db = new PowerSyncDatabase({ ... });
  * if (process.env.NODE_ENV !== 'production') {
+ *   const { enablePowerSyncDiagnostics } = await import('@powersync/diagnostics/node');
  *   const devtools = await enablePowerSyncDiagnostics(db);
  *   console.log(`PowerSync DevTools: ${devtools.signInUrl}`);
  * }

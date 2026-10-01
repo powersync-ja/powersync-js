@@ -87,9 +87,8 @@ export default defineNuxtConfig({
   node: {
     label: 'Node',
     lang: 'javascript',
-    code: `import { enablePowerSyncDiagnostics } from '@powersync/diagnostics/node';
-
-if (process.env.NODE_ENV !== 'production') {
+    code: `if (process.env.NODE_ENV !== 'production') {
+  const { enablePowerSyncDiagnostics } = await import('@powersync/diagnostics/node');
   const devtools = await enablePowerSyncDiagnostics(db);
   console.log(\`PowerSync DevTools: \${devtools.signInUrl}\`);
 }`,

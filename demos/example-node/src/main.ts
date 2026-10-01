@@ -12,7 +12,6 @@ import {
 import { exit } from 'node:process';
 import { AppSchema, DemoConnector } from './powersync.js';
 import { enableUncidiDiagnostics } from './UndiciDiagnostics.js';
-import { enablePowerSyncDiagnostics } from '@powersync/diagnostics/node';
 
 const main = async () => {
   const debug = process.env.POWERSYNC_DEBUG == '1';
@@ -65,8 +64,10 @@ const main = async () => {
       app_version: process.env.npm_package_version || 'unknown'
     }
   });
-  // PowerSync DevTools: a live view of this client in the browser. Development only.
+  // PowerSync DevTools: a live view of this client in the browser. Development only. Imported here so
+  // an install without dev dependencies does not need the package.
   if (process.env.NODE_ENV !== 'production') {
+    const { enablePowerSyncDiagnostics } = await import('@powersync/diagnostics/node');
     const devtools = await enablePowerSyncDiagnostics(db);
     console.log(`PowerSync DevTools: ${devtools.signInUrl}`);
   }
