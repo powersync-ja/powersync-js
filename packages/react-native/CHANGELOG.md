@@ -1,5 +1,16 @@
 # @powersync/react-native
 
+## 2.3.1
+
+### Patch Changes
+
+- Updated dependencies [7bae50c]
+- Updated dependencies [3d0d5c4]
+- Updated dependencies [7bae50c]
+  - @powersync/react@2.0.2
+  - @powersync/common@2.3.1
+  - @powersync/shared-internals@1.3.1
+
 ## 2.3.0
 
 ### Minor Changes
