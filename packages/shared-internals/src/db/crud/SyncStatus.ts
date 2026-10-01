@@ -9,6 +9,7 @@ import {
 } from '@powersync/common';
 import { CoreStreamSubscription, CoreSyncStatus } from '../../client/sync/stream/core-instruction.js';
 import { SyncPriorityStatus as CoreSyncPriorityStatus } from '../../client/sync/stream/core-instruction.js';
+import { SerializedRelayError, serializeErrorForRelay } from '../../utils/error-serialization.js';
 import { SyncProgressImpl } from './SyncProgress.js';
 import { FULL_SYNC_PRIORITY } from '../../constants.js';
 
@@ -156,26 +157,13 @@ export class SyncStatusSnapshot implements SyncStatus {
     };
   }
 
-  /**
-   * Not all errors are serializable over a MessagePort. E.g. some `DomExceptions` fail to be passed across workers.
-   * This explicitly serializes errors in the SyncStatus.
-   */
-  serializeError(error?: Error) {
+  // Must stay deterministic: isEqual() serializes both sides of a comparison.
+
+  serializeError(error?: Error): SerializedRelayError | undefined {
     if (typeof error == 'undefined') {
       return undefined;
     }
-    const serialized: Error = {
-      name: error.name,
-      message: error.message,
-      stack: error.stack
-    };
-    // `Error.cause` can be any value (the spec types it as unknown). Preserve it
-    // so consumers reading uploadError/downloadError keep the failure context.
-    // Recurse for Error causes so the whole chain is flattened the same way.
-    if (typeof error.cause != 'undefined') {
-      serialized.cause = error.cause instanceof Error ? this.serializeError(error.cause) : error.cause;
-    }
-    return serialized;
+    return serializeErrorForRelay(error);
   }
 }
 
