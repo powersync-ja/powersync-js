@@ -255,18 +255,23 @@ export class AttachmentQueue<TLocal extends LocalStorageAdapter = LocalStorageAd
    * - Handles state transitions for archived and new attachments
    */
   async startSync(): Promise<void> {
-    await this.stopSync();
-
-    this.syncAbortController = new AbortController();
-
-    this.watchActiveAttachments = this.attachmentService.watchActiveAttachments({
-      throttleMs: this.syncThrottleDuration
-    });
+    this.syncAbortController?.abort();
+    const syncAbortController = (this.syncAbortController = new AbortController());
+    await this.stopSyncAfterAbort();
 
     // immediately invoke the sync storage to initialize local storage
     await this.localStorage.initialize();
 
     await this.verifyAttachments();
+
+    // Skip rest of setup if a stopSync() aborted this call during the async setup steps.
+    if (syncAbortController.signal.aborted) {
+      return;
+    }
+
+    this.watchActiveAttachments = this.attachmentService.watchActiveAttachments({
+      throttleMs: this.syncThrottleDuration
+    });
 
     // Sync storage periodically
     this.periodicSyncTimer = setInterval(async () => {
@@ -423,12 +428,16 @@ export class AttachmentQueue<TLocal extends LocalStorageAdapter = LocalStorageAd
    * attachment's processing time instead of running the batch to completion.
    */
   async stopSync(): Promise<void> {
-    clearInterval(this.periodicSyncTimer);
-    this.periodicSyncTimer = undefined;
     if (this.syncAbortController) {
       this.syncAbortController.abort();
       this.syncAbortController = undefined;
     }
+    return this.stopSyncAfterAbort();
+  }
+
+  private async stopSyncAfterAbort(): Promise<void> {
+    clearInterval(this.periodicSyncTimer);
+    this.periodicSyncTimer = undefined;
     if (this.watchActiveAttachments) await this.watchActiveAttachments.close();
     if (this.watchAttachmentsAbortController) {
       this.watchAttachmentsAbortController.abort();
