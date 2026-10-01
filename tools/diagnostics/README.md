@@ -111,5 +111,5 @@ curl -X POST http://localhost:<port>/__mcp \
 
 These are internal packages used by this package. Your app code does not depend on them.
 
-- [`@powersync/diagnostics-core`](https://github.com/powersync-ja/powersync-js/tree/main/packages/diagnostics-core): the protocol (`SdkIntegration`).
-- [`@powersync/diagnostics-ui`](https://github.com/powersync-ja/powersync-js/tree/main/packages/diagnostics-ui): the UI.
+- [`@powersync/diagnostics-core`](https://github.com/powersync-ja/powersync-js/tree/main/tools/diagnostics-core): the protocol (`SdkIntegration`).
+- [`@powersync/diagnostics-ui`](https://github.com/powersync-ja/powersync-js/tree/main/tools/diagnostics-ui): the UI.

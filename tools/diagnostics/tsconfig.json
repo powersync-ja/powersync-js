@@ -12,5 +12,9 @@
     "types": ["node"]
   },
   "include": ["src/**/*"],
-  "references": [{ "path": "../common" }, { "path": "../diagnostics-core" }, { "path": "../web" }]
+  "references": [
+    { "path": "../../packages/common" },
+    { "path": "../diagnostics-core" },
+    { "path": "../../packages/web" }
+  ]
 }

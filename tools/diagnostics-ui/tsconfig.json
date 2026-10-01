@@ -10,7 +10,9 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "noEmit": true,
-    "paths": { "@/*": ["./src/*"] },
+    // `unplugin-icons` types import `vue` without depending on it; pin it to this package's copy so a
+    // differently hoisted Vue does not split the component types.
+    "paths": { "@/*": ["./src/*"], "vue": ["./node_modules/vue"] },
     "types": ["node"]
   },
   "include": ["src", "playground", "*.d.ts"]

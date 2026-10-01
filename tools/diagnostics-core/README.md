@@ -2,7 +2,7 @@
 
 `@powersync/diagnostics-core` defines the protocol between the [PowerSync](https://powersync.com) DevTools and a PowerSync SDK.
 
-**Internal package.** PowerSync SDKs and tools depend on it. Do not add it to your app. Use [`@powersync/diagnostics`](https://github.com/powersync-ja/powersync-js/tree/main/packages/diagnostics) instead.
+**Internal package.** PowerSync SDKs and tools depend on it. Do not add it to your app. Use [`@powersync/diagnostics`](https://github.com/powersync-ja/powersync-js/tree/main/tools/diagnostics) instead.
 
 It imports nothing from any PowerSync SDK. The tool owns the protocol. Each SDK implements it in its own language. The JavaScript implementation is in `@powersync/diagnostics`.
 

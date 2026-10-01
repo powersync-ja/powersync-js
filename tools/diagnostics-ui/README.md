@@ -2,9 +2,9 @@
 
 `@powersync/diagnostics-ui` is the [PowerSync](https://powersync.com) DevTools UI: a Vue 3 panel that shows the live state of a PowerSync client.
 
-**Internal package.** PowerSync SDKs and tools depend on it. Do not add it to your app. Use [`@powersync/diagnostics`](https://github.com/powersync-ja/powersync-js/tree/main/packages/diagnostics) instead.
+**Internal package.** PowerSync SDKs and tools depend on it. Do not add it to your app. Use [`@powersync/diagnostics`](https://github.com/powersync-ja/powersync-js/tree/main/tools/diagnostics) instead.
 
-Every host shows the same build. The panel reads data only through an `SdkIntegration` from [`@powersync/diagnostics-core`](https://github.com/powersync-ja/powersync-js/tree/main/packages/diagnostics-core). It imports nothing from any PowerSync SDK and knows no host.
+Every host shows the same build. The panel reads data only through an `SdkIntegration` from [`@powersync/diagnostics-core`](https://github.com/powersync-ja/powersync-js/tree/main/tools/diagnostics-core). It imports nothing from any PowerSync SDK and knows no host.
 
 ## Tabs
 
