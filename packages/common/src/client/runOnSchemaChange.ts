@@ -9,6 +9,8 @@ export function runOnSchemaChange(
   options?: SQLWatchOptions
 ): void {
   const triggerWatchedQuery = () => {
+    if (options?.signal?.aborted) return;
+
     const abortController = new AbortController();
     let disposeSchemaListener: (() => void) | null = null;
     const stopWatching = () => {
