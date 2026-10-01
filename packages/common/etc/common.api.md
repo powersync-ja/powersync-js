@@ -777,7 +777,7 @@ export interface PowerSyncCredentials {
     // (undocumented)
     endpoint: string;
     // (undocumented)
-    expiresAt?: Date;
+    expiresAt?: Date | undefined;
     // (undocumented)
     token: string;
 }
