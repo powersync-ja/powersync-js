@@ -30,6 +30,7 @@ import { WebStreamingSyncImplementationOptions } from './sync/WebStreamingSyncIm
 import { AsyncDbAdapter } from './adapters/AsyncWebAdapter.js';
 import { resolveAndValidateOptions } from './adapters/resolveAndValidateOptions.js';
 import { TabLocalStreamingSyncImplementation } from './sync/TabLocalStreamingSyncImplementation.js';
+import { registerDatabase, unregisterDatabase } from '../devtools/registry.js';
 
 export type WebPowerSyncDatabaseOptions = BasePowerSyncDatabaseOptions &
   DatabaseSource<WebSQLOpenOptions> &
@@ -77,6 +78,8 @@ export class WebPowerSyncDatabase extends BasePowerSyncDatabase<WebPowerSyncData
     super(options);
     this.resolvedOpenOptions = resolvedOpenOptions;
     this.enableBroadcastLogs = options.broadcastLogs ?? true;
+    // Lets development tooling in this page find the live databases.
+    registerDatabase(this);
   }
 
   async _initialize(): Promise<void> {
@@ -122,11 +125,12 @@ export class WebPowerSyncDatabase extends BasePowerSyncDatabase<WebPowerSyncData
    * By default the sync stream client is only disconnected if
    * multiple tabs are not enabled.
    */
-  close(options?: PowerSyncCloseOptions): Promise<void> {
-    return super.close({
+  async close(options?: PowerSyncCloseOptions): Promise<void> {
+    await super.close({
       // Don't disconnect by default if multiple tabs are enabled
       disconnect: options?.disconnect ?? !this.resolvedOpenOptions.enableMultiTabs
     });
+    unregisterDatabase(this);
   }
 
   protected async loadVersion(): Promise<void> {

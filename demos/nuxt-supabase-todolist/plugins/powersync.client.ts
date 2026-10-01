@@ -1,10 +1,11 @@
+import { PowerSyncDatabase } from '@powersync/web'
 import {
   AppSchemaWithDiagnostics,
 } from '~/powersync/AppSchema'
 import { SupabaseConnector } from '~/powersync/SuperbaseConnector'
 export default defineNuxtPlugin({
   async setup(nuxtApp) {
-    const db = new NuxtPowerSyncDatabase({
+    const db = new PowerSyncDatabase({
       database: {
         dbFilename: 'a-db-name.sqlite',
       },
@@ -15,7 +16,8 @@ export default defineNuxtPlugin({
 
     await db.init()
 
-    await db.connect(connector)
+    // Enables the core diagnostics stream (per-bucket totals in the diagnostics UI).
+    await db.connect(connector, { diagnostics: true })
 
     const plugin = createPowerSyncPlugin({ database: db })
 

@@ -58,10 +58,19 @@ const main = async () => {
   console.log(await db.get('SELECT powersync_rs_version();'));
   await db.connect(new DemoConnector(), {
     connectionMethod: SyncStreamConnectionMethod.WEB_SOCKET,
+    // Per-bucket download totals for PowerSync DevTools.
+    diagnostics: true,
     appMetadata: {
       app_version: process.env.npm_package_version || 'unknown'
     }
   });
+  // PowerSync DevTools: a live view of this client in the browser. Development only. Imported here so
+  // an install without dev dependencies does not need the package.
+  if (process.env.NODE_ENV !== 'production') {
+    const { enablePowerSyncDiagnostics } = await import('@powersync/diagnostics/node');
+    const devtools = await enablePowerSyncDiagnostics(db);
+    console.log(`PowerSync DevTools: ${devtools.signInUrl}`);
+  }
   // Example using a proxy agent for more control over the connection:
   // const proxyAgent = new (await import('undici')).ProxyAgent({
   //   uri: 'http://localhost:8080',

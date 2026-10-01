@@ -3,6 +3,7 @@ import { fileURLToPath, URL } from 'url';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
+import powersyncDevtools from '@powersync/diagnostics/vite';
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -10,7 +11,7 @@ export default defineConfig({
   build: {
     outDir: '../dist',
     rollupOptions: {
-      input: 'src/index.html'
+      input: fileURLToPath(new URL('./src/index.html', import.meta.url))
     },
     emptyOutDir: true
   },
@@ -27,10 +28,17 @@ export default defineConfig({
     // https://github.com/vitejs/vite/issues/11672#issuecomment-1415820673
     exclude: ['@powersync/web']
   },
+  // Vite DevTools with the PowerSync dock, on the dev server only.
+  devtools: { apply: 'serve' },
   plugins: [
     react(),
+    powersyncDevtools(),
     VitePWA({
       registerType: 'autoUpdate',
+      workbox: {
+        // The SQLite WASM builds are over the 2 MiB default; the app needs them precached to work offline.
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024
+      },
       includeAssets: ['powersync-logo.svg', 'supabase-logo.png', 'favicon.ico'],
       manifest: {
         theme_color: '#c44eff',

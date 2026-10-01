@@ -54,6 +54,15 @@ export interface SyncOptions {
    * The mode used to request checkpoints from the service (used after uploading local data).
    */
   checkpointMode?: CheckpointMode;
+
+  /**
+   * Enables the core extension's diagnostics event stream: detailed per-bucket download stats,
+   * including each bucket's `target_count`, and inferred column types. Off by default.
+   *
+   * The events are internal. No public API exposes them; only PowerSync DevTools reads them, to show
+   * per-bucket totals. See https://docs.powersync.com/tools/devtools-overview.
+   */
+  diagnostics?: boolean;
 }
 
 /**

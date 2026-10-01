@@ -8,38 +8,63 @@ This demo uses [Sync Streams](https://docs.powersync.com/usage/sync-streams). Bo
 
 ## Run Demo
 
-Prerequisites:
-* To run this demo, you need to have properly configured Supabase and PowerSync projects. Follow the instructions in our Supabase<>PowerSync integration guide:
-  * [Configure Supabase](https://docs.powersync.com/integration-guides/supabase-+-powersync#configure-supabase)
-  * [Configure PowerSync](https://docs.powersync.com/integration-guides/supabase-+-powersync#configure-powersync)
-
-Switch into the demo's directory:
+Switch into the demo's directory and install dependencies with [pnpm](https://pnpm.io/installation):
 
 ```bash
 cd demos/react-supabase-todolist
-```
-
-Use [pnpm](https://pnpm.io/installation) to install dependencies:
-
-```bash
 pnpm install
 ```
 
-Set up the Environment variables: Copy the `.env.local.template` file:
+Copy the environment template:
 
 ```bash
 cp .env.local.template .env.local
 ```
 
-And then edit `.env.local` to insert your credentials for Supabase.
+### Local Supabase and PowerSync
 
-Run the development server:
+The demo can run against local Supabase and PowerSync services. You need the [Supabase CLI](https://supabase.com/docs/guides/cli/getting-started) and Docker.
 
-```bash
-pnpm dev
-```
+1. Start Supabase. It creates the `lists` and `todos` tables from `supabase/migrations`:
 
-Open [http://localhost:5173](http://localhost:5173) with your browser to see the result.
+   ```bash
+   supabase start
+   ```
+
+2. Copy the **Publishable** key from the `supabase start` output into `VITE_SUPABASE_ANON_KEY` in `.env.local`.
+
+3. Start PowerSync on the Supabase network:
+
+   ```bash
+   docker run \
+     -p 8080:8080 \
+     -e POWERSYNC_CONFIG_B64=$(base64 -i ./powersync.yaml) \
+     -e POWERSYNC_SYNC_RULES_B64=$(base64 -i ./sync-config.yaml) \
+     --env-file ./.env.local \
+     --network supabase_network_react-supabase-todolist \
+     --name powersync-react-todolist journeyapps/powersync-service:latest
+   ```
+
+4. Run the development server:
+
+   ```bash
+   pnpm dev
+   ```
+
+Open [http://localhost:5173](http://localhost:5173), sign up with any email and password, and create a list.
+
+### Hosted Supabase and PowerSync
+
+To use hosted projects instead, follow the Supabase<>PowerSync integration guide:
+
+* [Configure Supabase](https://docs.powersync.com/integration-guides/supabase-+-powersync#configure-supabase)
+* [Configure PowerSync](https://docs.powersync.com/integration-guides/supabase-+-powersync#configure-powersync)
+
+Then set the `VITE_` values in `.env.local` to your project details and run `pnpm dev`.
+
+## PowerSync DevTools
+
+The development server includes [PowerSync DevTools](https://docs.powersync.com/tools/devtools/vite). Open the Vite DevTools dock at the bottom of the page and select **PowerSync** to see the sync status, buckets, streams, local data and logs. The first time, confirm the browser with the code that the terminal prints.
 
 ## Progressive Web App (PWA)
 
