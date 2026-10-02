@@ -11,7 +11,6 @@ import {
 } from '@powersync/common';
 
 import { AbortOperation } from '../../../utils/AbortOperation.js';
-import { normalizeCaughtValue, PowerSyncMissingRejectionReason } from '../../../utils/error-serialization.js';
 import { BucketStorageAdapter, PowerSyncControlCommand } from '../bucket/BucketStorageAdapter.js';
 import { AbstractRemote, SyncStreamOptions } from './AbstractRemote.js';
 import {
@@ -308,9 +307,7 @@ The next upload iteration will be delayed.`
             }
           } catch (ex) {
             checkedCrudItem = undefined;
-            const caughtError =
-              normalizeCaughtValue(ex) ?? new PowerSyncMissingRejectionReason('uploading CRUD entries');
-            this.updateJsSyncState({ uploading: false, uploadError: caughtError });
+            this.updateJsSyncState({ uploading: false, uploadError: ex as Error });
             await this.delayRetry(signal, options.retryDelayMs);
             if (!this.isConnected) {
               // Exit the upload loop if the sync stream is no longer connected
@@ -319,7 +316,7 @@ The next upload iteration will be delayed.`
             this.logger.log({
               level: LogLevels.debug,
               message: `Caught exception when uploading. Upload will retry after a delay.`,
-              error: caughtError
+              error: ex
             });
           } finally {
             this.updateJsSyncState({ uploading: false });
@@ -493,13 +490,11 @@ The next upload iteration will be delayed.`
         // Check the disconnect signal: other aborts must still be reported and retried.
         const stoppedOnRequest = signal.aborted;
 
-        const caughtError = normalizeCaughtValue(ex) ?? new PowerSyncMissingRejectionReason('running a sync iteration');
-
         if (stoppedOnRequest) {
-          this.logger.log({ level: LogLevels.warn, message: 'Sync aborted', error: caughtError });
+          this.logger.log({ level: LogLevels.warn, message: 'Sync aborted', error: ex });
           shouldDelayRetry = false;
           // A disconnect was requested, we should not delay since there is no explicit retry
-        } else if (this.connectionMayHaveChanged && caughtError.message?.indexOf('No iteration is active') >= 0) {
+        } else if (this.connectionMayHaveChanged && (ex as Error).message?.indexOf('No iteration is active') >= 0) {
           this.connectionMayHaveChanged = false;
           this.logger.log({
             level: LogLevels.info,
@@ -507,12 +502,12 @@ The next upload iteration will be delayed.`
           });
           shouldDelayRetry = false;
         } else {
-          this.logger.log({ level: LogLevels.error, message: 'Sync error', error: caughtError });
+          this.logger.log({ level: LogLevels.error, message: 'Sync error', error: ex });
         }
 
         if (!stoppedOnRequest) {
           // Don't record intentional disconnects as errors: they persist until a successful sync.
-          this.updateJsSyncState({ downloadError: caughtError });
+          this.updateJsSyncState({ downloadError: ex as Error });
         }
       } finally {
         this.checkpoints.downloadIterationEnded();

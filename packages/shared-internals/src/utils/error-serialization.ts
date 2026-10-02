@@ -18,13 +18,6 @@ export interface SerializedRelayError {
   relay?: { origin: string; sequence: number; errorState: ErrorRelayState; relayedAt: string };
 }
 
-export class PowerSyncMissingRejectionReason extends Error {
-  constructor(context?: string) {
-    super(`PowerSync rejected without a rejection reason${context ? ` while ${context}` : ''}.`);
-    this.name = 'PowerSyncMissingRejectionReason';
-  }
-}
-
 const MAX_CAUSE_DEPTH = 5;
 const MAX_STRING_LENGTH = 1000;
 const EXTRA_DIAGNOSTIC_KEYS = ['statusCode', 'errno'] as const;
@@ -78,7 +71,7 @@ function serialize(value: unknown, depth: number, ctx: RelayContext): Serialized
     [RELAY_ERROR_MARKER]: true,
     name: source.name || 'Error',
     message: bound(source.message),
-    state: value instanceof PowerSyncMissingRejectionReason ? 'missing' : 'serialized'
+    state: 'serialized'
   };
 
   const stack = source.stack;
@@ -148,26 +141,4 @@ export function serializeErrorForRelay(value: unknown): SerializedRelayError {
 
 export function isSerializedRelayError(value: unknown): value is SerializedRelayError {
   return typeof value === 'object' && value !== null && (value as SerializedRelayError)[RELAY_ERROR_MARKER] === true;
-}
-
-export function normalizeCaughtValue(value: unknown): Error | undefined {
-  if (value instanceof Error) return value;
-  if (value === undefined || value === null) return undefined;
-  if (isSerializedRelayError(value)) return hydrateRelayedError(value);
-  return hydrateRelayedError(serializeErrorForRelay(value));
-}
-
-export function hydrateRelayedError(value: unknown): Error | undefined {
-  if (value instanceof Error) return value;
-  if (!isSerializedRelayError(value)) return undefined;
-
-  const error = value.state === 'missing' ? new PowerSyncMissingRejectionReason() : new Error(value.message);
-  error.name = value.name;
-  error.message = value.message;
-  if (value.stack) error.stack = value.stack;
-  if (value.code !== undefined) (error as { code?: string | number }).code = value.code;
-  if (value.status !== undefined) (error as { status?: number }).status = value.status;
-  if (value.properties) Object.assign(error, value.properties);
-  if (value.cause !== undefined) error.cause = hydrateRelayedError(value.cause) ?? value.cause;
-  return error;
 }

@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  hydrateRelayedError,
-  normalizeCaughtValue,
-  PowerSyncMissingRejectionReason,
-  serializeErrorForRelay
-} from '../../src/utils/error-serialization.js';
+import { serializeErrorForRelay } from '../../src/utils/error-serialization.js';
 
 function corruptError() {
   const error = new Error('powersync_control: internal SQLite call returned CORRUPT') as Error & {
@@ -110,46 +105,5 @@ describe('serializeErrorForRelay', () => {
 
     const serialized = serializeErrorForRelay(error);
     expect(serialized.state).toBe('partial');
-  });
-});
-
-describe('normalizeCaughtValue', () => {
-  it('treats only undefined and null as missing', () => {
-    expect(normalizeCaughtValue(undefined)).toBeUndefined();
-    expect(normalizeCaughtValue(null)).toBeUndefined();
-  });
-
-  it('turns a non-Error rejection value into a real Error', () => {
-    expect(normalizeCaughtValue('SQLITE_CORRUPT')).toBeInstanceOf(Error);
-    expect(normalizeCaughtValue(123)).toBeInstanceOf(Error);
-    expect(normalizeCaughtValue({ code: 'SQLITE_CORRUPT' })).toBeInstanceOf(Error);
-  });
-
-  it('retains an existing Error instance untouched', () => {
-    const error = new Error('x');
-    expect(normalizeCaughtValue(error)).toBe(error);
-  });
-});
-
-describe('hydrateRelayedError', () => {
-  it('restores a real Error with code, status and cause', () => {
-    const error = corruptError() as Error & { status?: number };
-    error.status = 500;
-
-    const hydrated = hydrateRelayedError(serializeErrorForRelay(error))!;
-    expect(hydrated).toBeInstanceOf(Error);
-    expect(hydrated.message).toBe(error.message);
-    expect((hydrated as { code?: string }).code).toBe('SQLITE_CORRUPT');
-    expect((hydrated as { status?: number }).status).toBe(500);
-    expect((hydrated.cause as Error).message).toBe('disk I/O error');
-  });
-
-  it('preserves the missing state and message across hydration and re-serialization', () => {
-    const serialized = serializeErrorForRelay(undefined);
-    const hydrated = hydrateRelayedError(serialized)!;
-
-    expect(hydrated).toBeInstanceOf(PowerSyncMissingRejectionReason);
-    expect(hydrated.message).toBe(serialized.message);
-    expect(serializeErrorForRelay(hydrated).state).toBe('missing');
   });
 });

@@ -12,8 +12,7 @@ import { generateTabCloseSignal } from '../../shared/tab_close_signal.js';
 import {
   SubscribedStream,
   SyncStatusJson,
-  ResolvedSyncOptions,
-  serializeErrorForRelay
+  ResolvedSyncOptions
 } from '@powersync/shared-internals';
 import { connectToExistingWorker, connectToWorker, WorkerConnection } from '../../worker/client.js';
 
@@ -35,20 +34,12 @@ class SharedSyncClientProvider extends AbstractSharedSyncClientProvider {
     return Comlink.transfer(port, [port]);
   }
 
-  async #relay<T>(action: () => Promise<T>): Promise<T> {
-    try {
-      return await action();
-    } catch (ex) {
-      throw serializeErrorForRelay(ex);
-    }
-  }
-
   invalidateCredentials() {
     this.options.remote.invalidateCredentials();
   }
 
   async fetchCredentials(): Promise<PowerSyncCredentials | null> {
-    const credentials = await this.#relay(() => this.options.remote.getCredentials());
+    const credentials = await this.options.remote.getCredentials();
     if (credentials == null) {
       return null;
     }
@@ -69,11 +60,11 @@ class SharedSyncClientProvider extends AbstractSharedSyncClientProvider {
      * Don't return anything here, just incase something which is not
      * serializable is returned from the `uploadCrud` function.
      */
-    await this.#relay(() => this.options.uploadCrud());
+    await this.options.uploadCrud();
   }
 
   override async postCheckpointRequest(clientId: string, requestId: string): Promise<string | null> {
-    return await this.#relay(async () => (await this.options.postCheckpointRequest!(clientId, requestId)) ?? null);
+    return await this.options.postCheckpointRequest!(clientId, requestId);
   }
 
   get logger() {
