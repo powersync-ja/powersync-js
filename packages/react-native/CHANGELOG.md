@@ -1,5 +1,11 @@
 # @powersync/react-native
 
+## 2.3.2
+
+### Patch Changes
+
+- 4aae81d: Load `@op-engineering/op-sqlite` lazily to avoid importing it on incompatible platforms like Expo Go.
+
 ## 2.3.1
 
 ### Patch Changes

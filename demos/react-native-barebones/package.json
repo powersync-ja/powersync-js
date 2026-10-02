@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@op-engineering/op-sqlite": "^18.1.1",
-    "@powersync/react-native": "^2.3.1",
+    "@powersync/react-native": "^2.3.2",
     "@powersync/common": "^2.3.1",
     "@react-native/new-app-screen": "0.87.0",
     "react": "19.2.3",
