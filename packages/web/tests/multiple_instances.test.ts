@@ -92,9 +92,12 @@ describe('Multiple Instances', { sequential: true }, () => {
         }
       );
 
-      // The connection should fail with an error
+      // The connection should fail with an error, relayed from the worker in serialized form
       await vi.waitFor(
-        () => expect(logLines.map((l) => l.error)).toEqual(expect.arrayContaining([expect.any(Error)])),
+        () =>
+          expect(logLines.map((l) => l.error)).toEqual(
+            expect.arrayContaining([expect.objectContaining({ __powersyncError: true, message: expect.any(String) })])
+          ),
         {
           timeout: 2000
         }
