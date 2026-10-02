@@ -8,22 +8,43 @@ This demo uses [Sync Streams](https://docs.powersync.com/usage/sync-streams). Bo
 
 ## Run Demo
 
-Switch into the demo's directory and install dependencies with [pnpm](https://pnpm.io/installation):
+Prerequisites:
+* To run this demo, you need to have properly configured Supabase and PowerSync projects. Follow the instructions in our Supabase<>PowerSync integration guide:
+  * [Configure Supabase](https://docs.powersync.com/integration-guides/supabase-+-powersync#configure-supabase)
+  * [Configure PowerSync](https://docs.powersync.com/integration-guides/supabase-+-powersync#configure-powersync)
+* Or run Supabase and PowerSync locally instead. See [Run with Local Supabase and PowerSync](#run-with-local-supabase-and-powersync).
+
+Switch into the demo's directory:
 
 ```bash
 cd demos/react-supabase-todolist
+```
+
+Use [pnpm](https://pnpm.io/installation) to install dependencies:
+
+```bash
 pnpm install
 ```
 
-Copy the environment template:
+Set up the Environment variables: Copy the `.env.local.template` file:
 
 ```bash
 cp .env.local.template .env.local
 ```
 
-### Local Supabase and PowerSync
+And then edit `.env.local` to insert your credentials for Supabase.
 
-The demo can run against local Supabase and PowerSync services. You need the [Supabase CLI](https://supabase.com/docs/guides/cli/getting-started) and Docker.
+Run the development server:
+
+```bash
+pnpm dev
+```
+
+Open [http://localhost:5173](http://localhost:5173) with your browser to see the result.
+
+## Run with Local Supabase and PowerSync
+
+The demo can also run against local Supabase and PowerSync services. You need the [Supabase CLI](https://supabase.com/docs/guides/cli/getting-started) and Docker. Install dependencies and copy `.env.local.template` to `.env.local` as above, then:
 
 1. Start Supabase. It creates the `lists` and `todos` tables from `supabase/migrations`:
 
@@ -31,7 +52,7 @@ The demo can run against local Supabase and PowerSync services. You need the [Su
    supabase start
    ```
 
-2. Copy the **Publishable** key from the `supabase start` output into `VITE_SUPABASE_ANON_KEY` in `.env.local`.
+2. In `.env.local`, set the three `VITE_` values to the local services. `.env.local.template` lists them under "Local setup". Copy the **Publishable** key from the `supabase start` output into `VITE_SUPABASE_ANON_KEY`.
 
 3. Start PowerSync on the Supabase network:
 
@@ -52,15 +73,6 @@ The demo can run against local Supabase and PowerSync services. You need the [Su
    ```
 
 Open [http://localhost:5173](http://localhost:5173), sign up with any email and password, and create a list.
-
-### Hosted Supabase and PowerSync
-
-To use hosted projects instead, follow the Supabase<>PowerSync integration guide:
-
-* [Configure Supabase](https://docs.powersync.com/integration-guides/supabase-+-powersync#configure-supabase)
-* [Configure PowerSync](https://docs.powersync.com/integration-guides/supabase-+-powersync#configure-powersync)
-
-Then set the `VITE_` values in `.env.local` to your project details and run `pnpm dev`.
 
 ## PowerSync DevTools
 
