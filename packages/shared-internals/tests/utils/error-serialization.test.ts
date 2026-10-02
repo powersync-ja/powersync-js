@@ -29,6 +29,18 @@ describe('serializeErrorForRelay', () => {
     expect(serializeErrorForRelay(error).code).toBe(11);
   });
 
+  it('does not truncate long messages, stacks or string causes', () => {
+    const longMessage = 'm'.repeat(5000);
+    const error = new Error(longMessage) as Error & { cause?: unknown };
+    error.cause = 'c'.repeat(5000);
+    error.stack = `Error: ${longMessage}\n${'at frame\n'.repeat(5000)}`;
+
+    const serialized = serializeErrorForRelay(error);
+    expect(serialized.message).toBe(longMessage);
+    expect(serialized.stack).toBe(error.stack);
+    expect(serialized.cause).toBe(error.cause);
+  });
+
   it('promotes an HTTP status to a top-level field', () => {
     const error = new Error('unauthorized') as Error & { status?: number };
     error.status = 401;

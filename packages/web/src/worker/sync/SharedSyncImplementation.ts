@@ -17,8 +17,7 @@ import {
   type StreamingSyncImplementationListener,
   Mutex,
   ResolvedSyncOptions,
-  SyncStatusSnapshot,
-  serializeErrorForRelay
+  SyncStatusSnapshot
 } from '@powersync/shared-internals';
 import * as Comlink from 'comlink';
 import { WebRemote } from '../../db/sync/WebRemote.js';
@@ -462,17 +461,7 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
     };
 
     // Include port lookup in the guard: port removal can hold portMutex.
-    try {
-      return signal ? await withAbort({ signal, action }) : await action();
-    } catch (ex) {
-      /**
-       * Connector callbacks run in a client tab. Relay their rejection reason in
-       * the same clone-safe form used for status and broadcast logs, from this
-       * single place every connector call is dispatched through — including
-       * `undefined`/`null`, which would otherwise silently disappear.
-       */
-      throw serializeErrorForRelay(ex);
-    }
+    return signal ? withAbort({ signal, action }) : action();
   }
 
   /**

@@ -45,18 +45,22 @@ describe('Error Serialization through MessagePorts', { sequential: true }, () =>
   );
 
   sharedMockSyncServiceTest(
-    'should relay a connector rejection through the shared worker',
+    'should preserve a connector error code and cause across the shared worker relay',
     { timeout: 10_000 },
     async ({ context: { openDatabase } }) => {
       const records: LogRecord[] = [];
       const database = openDatabase({ logger: { log: (record: LogRecord) => records.push(record) } });
 
-      const message = 'powersync_control: internal SQLite call returned CORRUPT';
+      const connectorError = Object.assign(new Error('powersync_control: internal SQLite call returned CORRUPT'), {
+        code: 'SQLITE_CORRUPT',
+        cause: new Error('disk I/O error')
+      });
+
       await database
         .connect(
           {
             fetchCredentials: async () => {
-              throw Object.assign(new Error(message), { code: 'SQLITE_CORRUPT' });
+              throw connectorError;
             },
             uploadData: async () => {}
           },
@@ -68,17 +72,16 @@ describe('Error Serialization through MessagePorts', { sequential: true }, () =>
         expect(database.currentStatus?.downloadError).toBeDefined();
       });
 
-      // The rejection is serialized in `#useConnector`, so the message and stack
-      // survive; Comlink's error transfer only carries name/message/stack, so a
-      // custom `code` set by the connector callback is not preserved.
-      expect(database.currentStatus?.downloadError?.message).toBe(message);
-      expect(database.currentStatus?.downloadError?.stack).toBeDefined();
+      // The connector rejection is serialized in `SharedSyncClientProvider#relay`
+      // before it crosses the MessagePort, so custom fields survive the worker relay.
+      const downloadError = database.currentStatus!.downloadError as Error & { code?: string | number; cause?: unknown };
+      expect(downloadError.code).toBe('SQLITE_CORRUPT');
+      expect(String((downloadError.cause as Error)?.message ?? downloadError.cause)).toContain('disk I/O error');
 
       await vi.waitFor(() => {
         expect(
           records.some(
-            (record) =>
-              record.message === 'Sync error' && (record.error as { message?: string })?.message === message
+            (record) => record.message === 'Sync error' && (record.error as { code?: string })?.code === 'SQLITE_CORRUPT'
           )
         ).toBe(true);
       });
