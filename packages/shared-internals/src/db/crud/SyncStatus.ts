@@ -158,7 +158,6 @@ export class SyncStatusSnapshot implements SyncStatus {
   }
 
   // Must stay deterministic: isEqual() serializes both sides of a comparison.
-
   serializeError(error?: Error): SerializedRelayError | undefined {
     if (typeof error == 'undefined') {
       return undefined;

@@ -72,6 +72,7 @@ function serialize(value: unknown, depth: number, ctx: RelayContext): Serialized
 
   const stack = source.stack;
   if (typeof stack === 'string') result.stack = stack;
+  // Not standard Error fields, but wa-sqlite errors (code) and HTTP errors (status) carry them and consumers need them as context.
   if (typeof source.code === 'string' || typeof source.code === 'number') result.code = source.code;
   if (typeof source.status === 'number') result.status = source.status;
 
