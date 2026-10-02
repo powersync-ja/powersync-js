@@ -19,9 +19,6 @@ export const useSingleSuspenseQuery = <T = any>(
   options: AdditionalOptions = {}
 ): SuspenseQueryResult<T> => {
   const powerSync = usePowerSync();
-  if (!powerSync) {
-    throw new Error('PowerSync not configured.');
-  }
 
   // Manually track data for single queries
   const [data, setData] = React.useState<T[] | null>(null);
@@ -29,14 +26,14 @@ export const useSingleSuspenseQuery = <T = any>(
 
   // Note, we don't need to check if the query changed since we fetch the WatchedQuery
   // from the store given these query params
-  const { parsedQuery } = constructCompatibleQuery(query, parameters, options);
+  const parsedQuery = constructCompatibleQuery(query, parameters);
   const { sql: parsedSql, parameters: parsedParameters } = parsedQuery.compile();
 
   const key = generateQueryKey(parsedSql, parsedParameters, options);
   const store = getQueryStore(powerSync);
 
   // Only use a temporary watched query if we don't have data yet.
-  const watchedQuery = data ? null : (store.getQuery(key, parsedQuery, options) as WatchedQuery<T[]>);
+  const watchedQuery = data ? undefined : (store.getQuery(key, parsedQuery, options) as WatchedQuery<T[]>);
   useTemporaryHold(watchedQuery);
   React.useEffect(() => {
     // Set the initial yielded data
@@ -64,13 +61,13 @@ export const useSingleSuspenseQuery = <T = any>(
             parameters: [...compiledQuery.parameters],
             db: powerSync
           });
-          if (signal.aborted) {
+          if (signal?.aborted) {
             return; // Abort if the signal is already aborted
           }
           setData(result);
           setError(null);
         } catch (e) {
-          setError(e);
+          setError(e as Error);
         }
       }
     };

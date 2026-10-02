@@ -36,8 +36,6 @@ describe('useQuery', () => {
   ];
 
   testCases.forEach(({ mode, wrapper: testWrapper }) => {
-    const isStrictMode = mode === 'StrictMode';
-
     describe(`in ${mode}`, () => {
       it('should set isLoading to true on initial load', async () => {
         const db = await openPowerSync();
@@ -131,14 +129,14 @@ describe('useQuery', () => {
             const currentResult = result.current;
             refresh = currentResult.refresh;
             expect(currentResult.isLoading).toEqual(false);
-            expect(getAllSpy).toHaveBeenCalledTimes(isStrictMode ? 2 : 1);
+            expect(getAllSpy).toHaveBeenCalledTimes(1);
           },
           { timeout: 500, interval: 100 }
         );
 
         await act(() => refresh!());
 
-        expect(getAllSpy).toHaveBeenCalledTimes(isStrictMode ? 3 : 2);
+        expect(getAllSpy).toHaveBeenCalledTimes(2);
       });
 
       it('should accept compilable queries', async () => {
@@ -357,7 +355,7 @@ describe('useQuery', () => {
         await vi.waitFor(
           () => {
             expect(result.current.data[0]?.name).toEqual('second');
-            expect(result.current.error).null;
+            expect(result.current.error).toBeUndefined();
             expect(result.current.isFetching).false;
             expect(result.current.isLoading).false;
           },
@@ -684,6 +682,54 @@ describe('useQuery', () => {
           { timeout: 500, interval: 100 }
         );
       });
+
+      it.for([[false], [true]])(
+        `should report compile errors and recover (runQueryOnce: %s)`,
+        async ([runQueryOnce]) => {
+          const db = await openPowerSync();
+          await db.execute(`INSERT INTO lists (id, name) VALUES (uuid(), 'list')`);
+
+          const execute = vi.fn(async () => [] as { name: string }[]);
+          const failingQuery: commonSdk.CompilableQuery<{ name: string }> = {
+            execute,
+            compile: () => {
+              throw new Error('compile failed');
+            }
+          };
+          const validQuery: commonSdk.CompilableQuery<{ name: string }> = {
+            execute: () => db.getAll<{ name: string }>('SELECT name FROM lists'),
+            compile: () => ({ sql: 'SELECT name FROM lists', parameters: [] })
+          };
+
+          const { result, rerender } = renderHook(({ query }) => useQuery(query, [], { runQueryOnce }), {
+            wrapper: ({ children }) => testWrapper({ children, db }),
+            initialProps: { query: failingQuery }
+          });
+
+          // The error is reported synchronously, without having to wait for any query to run.
+          const errorResult = result.current;
+          expect(errorResult.isLoading).toEqual(false);
+          expect(errorResult.isFetching).toEqual(false);
+          expect(errorResult.data).toEqual([]);
+          expect(errorResult.error?.message).toEqual('compile failed');
+
+          // Re-rendering with the same failing query should keep a stable result.
+          rerender({ query: failingQuery });
+          expect(result.current).toBe(errorResult);
+          expect(execute).not.toHaveBeenCalled();
+
+          // Switching to a valid query should clear the error and load results.
+          rerender({ query: validQuery });
+          await waitFor(
+            () => {
+              expect(result.current.error).toBeUndefined();
+              expect(result.current.isLoading).toEqual(false);
+              expect(result.current.data).toEqual([{ name: 'list' }]);
+            },
+            { timeout: 500, interval: 100 }
+          );
+        }
+      );
 
       it('should use an existing WatchedQuery instance', async () => {
         const db = await openPowerSync();

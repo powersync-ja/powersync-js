@@ -36,7 +36,9 @@ describe('useSuspenseQuery', () => {
       async () => {
         expect(screen.queryByText(loadingFallback)).toBeFalsy();
       },
-      { timeout: 100 }
+      // Note: This wait time needs to exceed 300ms, as React waits that long for a commit.
+      // https://github.com/react/react/blob/d083ec1da1e5252abd3ddfdde6dfbc09701a2c51/packages/react-reconciler/src/ReactFiberWorkLoop.js#L528
+      { timeout: 500 }
     );
   };
 
@@ -45,7 +47,7 @@ describe('useSuspenseQuery', () => {
       async () => {
         expect(screen.queryByText(errorFallback)).toBeTruthy();
       },
-      { timeout: 100 }
+      { timeout: 500 }
     );
   };
 
