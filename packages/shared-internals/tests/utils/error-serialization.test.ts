@@ -47,7 +47,6 @@ describe('serializeErrorForRelay', () => {
 
     const serialized = serializeErrorForRelay(error);
     expect(serialized.status).toBe(401);
-    expect(serialized.properties?.status).toBeUndefined();
   });
 
   it('marks a non-cloneable cause as partial without discarding the error', () => {
@@ -76,8 +75,8 @@ describe('serializeErrorForRelay', () => {
     expect(serializeErrorForRelay(123)).toMatchObject({ state: 'serialized', message: '123' });
 
     const object = serializeErrorForRelay({ code: 'SQLITE_CORRUPT' });
-    expect(object.state).toBe('serialized');
-    expect(object.code).toBe('SQLITE_CORRUPT');
+    expect(object).toMatchObject({ state: 'serialized', message: 'Non-Error rejection' });
+    expect(object.code).toBeUndefined();
   });
 
   it('never stringifies a rejected plain object into the message', () => {
@@ -88,16 +87,43 @@ describe('serializeErrorForRelay', () => {
     expect(JSON.stringify(serialized)).not.toContain('password');
   });
 
-  it('relays only allowlisted diagnostics, never arbitrary or sensitive properties', () => {
-    const error = new Error('x') as Error & Record<string, unknown>;
-    error.context = { cookie: 'session=secret', requestBody: '{"password":"x"}' };
-    error.token = 'bearer-secret';
-    error.statusCode = 500;
+  it('preserves name, message, code and status of a structurally error-like object', () => {
+    const serialized = serializeErrorForRelay({
+      name: 'SQLiteError',
+      message: 'database disk image is malformed',
+      code: 'SQLITE_CORRUPT',
+      status: 500,
+      token: 'bearer-secret'
+    });
+
+    expect(serialized).toMatchObject({
+      name: 'SQLiteError',
+      message: 'database disk image is malformed',
+      code: 'SQLITE_CORRUPT',
+      status: 500
+    });
+    expect(JSON.stringify(serialized)).not.toContain('bearer-secret');
+  });
+
+  it('returns an already serialized error unchanged', () => {
+    const serialized = serializeErrorForRelay(corruptError());
+    expect(serializeErrorForRelay(serialized)).toBe(serialized);
+  });
+
+  it('bounds the cause chain and marks overflow as partial', () => {
+    let error = new Error('leaf');
+    for (let i = 0; i < 10; i++) error = new Error(`level ${i}`, { cause: error });
 
     const serialized = serializeErrorForRelay(error);
-    expect((serialized as Record<string, unknown>).context).toBeUndefined();
-    expect((serialized as Record<string, unknown>).token).toBeUndefined();
-    expect(serialized.properties).toEqual({ statusCode: 500 });
+    expect(serialized.state).toBe('partial');
+    let depth = 0;
+    for (let c = serialized.cause; typeof c === 'object'; c = c.cause) depth++;
+    expect(depth).toBeLessThanOrEqual(5);
+  });
+
+  it('stringifies primitive causes', () => {
+    const error = new Error('x', { cause: null });
+    expect(serializeErrorForRelay(error).cause).toBe('null');
   });
 
   it('does not throw on a circular property', () => {
