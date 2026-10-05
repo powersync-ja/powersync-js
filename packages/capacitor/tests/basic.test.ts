@@ -1,5 +1,5 @@
 import { column, LockContext, Schema, Table } from '@powersync/web';
-import { describe, expect, it, onTestFinished } from 'vitest';
+import { describe, expect, it, onTestFinished, vi } from 'vitest';
 import { PowerSyncDatabase } from '../src/PowerSyncDatabase.js';
 import { CapacitorSQLiteAdapter } from '../src/adapter/CapacitorSQLiteAdapter.js';
 
@@ -29,11 +29,7 @@ function generateUserInfo() {
 
 function createTestUser(context: Pick<LockContext, 'execute'>) {
   const { name, age, networth } = generateUserInfo();
-  return context.execute('INSERT INTO users (id, name, age, networth) VALUES(uuid(), ?, ?, ?)', [
-    name,
-    age,
-    networth
-  ]);
+  return context.execute('INSERT INTO users (id, name, age, networth) VALUES(uuid(), ?, ?, ?)', [name, age, networth]);
 }
 
 describe('Basic tests', () => {
@@ -88,12 +84,7 @@ describe('Basic tests', () => {
   it('should query with params', async () => {
     const database = openDatabase('query-with-params');
     const { id, name, age, networth } = generateUserInfo();
-    await database.execute('INSERT INTO users (id, name, age, networth) VALUES(?, ?, ?, ?)', [
-      id,
-      name,
-      age,
-      networth
-    ]);
+    await database.execute('INSERT INTO users (id, name, age, networth) VALUES(?, ?, ?, ?)', [id, name, age, networth]);
 
     const res = await database.execute('SELECT name, age, networth FROM users WHERE id = ?', [id]);
 
@@ -157,11 +148,7 @@ describe('Basic tests', () => {
     const { name, age, networth } = generateUserInfo();
 
     await database.writeTransaction(async (tx) => {
-      await tx.execute('INSERT INTO "users" (id, name, age, networth) VALUES(uuid(), ?, ?, ?)', [
-        name,
-        age,
-        networth
-      ]);
+      await tx.execute('INSERT INTO "users" (id, name, age, networth) VALUES(uuid(), ?, ?, ?)', [name, age, networth]);
       await tx.commit();
     });
 
@@ -174,11 +161,7 @@ describe('Basic tests', () => {
     const { name, age, networth } = generateUserInfo();
 
     await database.writeTransaction(async (tx) => {
-      await tx.execute('INSERT INTO "users" (id, name, age, networth) VALUES(uuid(), ?, ?, ?)', [
-        name,
-        age,
-        networth
-      ]);
+      await tx.execute('INSERT INTO "users" (id, name, age, networth) VALUES(uuid(), ?, ?, ?)', [name, age, networth]);
       await tx.rollback();
     });
 
@@ -287,5 +270,32 @@ describe('Basic tests', () => {
 
     expect(result).toBe(42);
     await writeLock;
+  });
+
+  it('should request NDJSON sync streams', async () => {
+    // Regression test for https://github.com/powersync-ja/powersync-js/issues/1138, we should never request binary
+    // responses because that is very inefficient to forward with the Capacitor SQLite plugin.
+    const database = openDatabase('connect-ndjson');
+
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation((_resource, init) => {
+      // Never respond, but fail the request once the sync client aborts it.
+      return new Promise((_, reject) => {
+        init?.signal?.addEventListener('abort', () => reject(init.signal!.reason));
+      });
+    });
+    onTestFinished(() => {
+      fetchMock.mockRestore();
+    });
+
+    database.connect({
+      fetchCredentials: async () => ({ endpoint: 'https://powersync.example.com', token: 'token' }),
+      uploadData: async () => {}
+    });
+
+    await vi.waitFor(() => {
+      const syncRequest = fetchMock.mock.calls.find(([resource]) => String(resource).endsWith('/sync/stream'));
+      expect(syncRequest).toBeDefined();
+      expect(new Headers(syncRequest![1]?.headers).get('accept')).toBe('application/x-ndjson');
+    });
   });
 });
