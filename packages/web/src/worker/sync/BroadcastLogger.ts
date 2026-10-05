@@ -1,4 +1,5 @@
 import { PowerSyncLogger, LogLevels, CreateLoggerOptions, createConsoleLogger, LogRecord } from '@powersync/common';
+import { serializeErrorForRelay } from '@powersync/shared-internals';
 import { type WrappedSyncPort } from './SharedSyncImplementation.js';
 
 /**
@@ -7,6 +8,8 @@ import { type WrappedSyncPort } from './SharedSyncImplementation.js';
 export class BroadcastLogger implements PowerSyncLogger {
   private readonly inner: PowerSyncLogger & CreateLoggerOptions;
   private currentLevel: number = LogLevels.info;
+
+  private sequence = 0;
 
   sendBroadcasts = true;
 
@@ -48,27 +51,24 @@ export class BroadcastLogger implements PowerSyncLogger {
     }
   }
 
-  /**
-   * Guards against any logging errors.
-   * We don't want a logging exception to cause further issues upstream
-   */
   protected sanitizeRecord(record: LogRecord): LogRecord {
-    if (!record.error) {
+    // Preserve explicit undefined rejection reasons.
+    if (!('error' in record)) {
       return record;
     }
 
-    let error;
-    try {
-      // Try and clone here first. If it fails it won't be passable over a MessagePort
-      error = structuredClone(record.error);
-    } catch (ex) {
-      console.error(ex);
-      error = 'Could not serialize log params. Check shared worker logs for more details.';
-    }
-
+    const serialized = serializeErrorForRelay(record.error);
     return {
       ...record,
-      error
+      error: {
+        ...serialized,
+        relay: {
+          origin: 'shared-sync-worker',
+          sequence: this.sequence++,
+          errorState: serialized.state,
+          relayedAt: new Date().toISOString()
+        }
+      }
     };
   }
 }

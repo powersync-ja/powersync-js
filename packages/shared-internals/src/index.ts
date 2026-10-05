@@ -18,6 +18,8 @@ export * from './client/watched/OnChangeQueryProcessor.js';
 
 export * from './utils/AbortOperation.js';
 export * from './utils/compatibility.js';
+export { serializeErrorForRelay } from './utils/error-serialization.js';
+export type { SerializedRelayError, ErrorRelayState } from './utils/error-serialization.js';
 export * from './utils/ControlledExecutor.js';
 export * from './utils/mutex.js';
 export * from './utils/parseQuery.js';
