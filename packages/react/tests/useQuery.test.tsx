@@ -221,6 +221,13 @@ describe('useQuery', () => {
         expect(secondFetchingEvent).toBeDefined();
         // We should immediately report that we are fetching once we detect new params
         expect(secondFetchingEvent?.hookResults.isFetching).true;
+        // and why: the rows still returned belong to the previous parameters
+        expect(secondFetchingEvent?.hookResults.fetchReason).toEqual('settings-changed');
+        expect(secondFetchingEvent?.hookResults.data[0]?.name).toEqual('first');
+        // The first load reports 'initial', settled results report no reason
+        expect(hookEvents[0]?.hookResults.fetchReason).toEqual('initial');
+        expect(firstResultEvent?.hookResults.fetchReason).toBeUndefined();
+        expect(result.current.fetchReason).toBeUndefined();
       });
 
       it('should react to updated queries (many updates)', async () => {
@@ -895,9 +902,18 @@ describe('useQuery', () => {
       // Verifies backwards compatibility with the previous implementation (no comparison)
       it('should emit result data when data changes when not using rowComparator', async () => {
         const db = await openPowerSync();
-        const { result } = renderHook(() => useQuery('SELECT * FROM lists WHERE name = ?', ['aname']), {
-          wrapper: ({ children }) => testWrapper({ children, db })
-        });
+        // Refetches after the initial load are caused by table changes here
+        const refetchReasons = new Set<string | undefined>();
+        const { result } = renderHook(
+          () => {
+            const hookResult = useQuery('SELECT * FROM lists WHERE name = ?', ['aname']);
+            if (hookResult.isFetching && !hookResult.isLoading) {
+              refetchReasons.add(hookResult.fetchReason);
+            }
+            return hookResult;
+          },
+          { wrapper: ({ children }) => testWrapper({ children, db }) }
+        );
 
         expect(result.current.isLoading).toEqual(true);
 
@@ -931,6 +947,7 @@ describe('useQuery', () => {
 
         // It should be the same data array reference, no update should have happened
         expect(result.current.data == previousData).false;
+        expect([...refetchReasons]).toEqual(['tables-changed']);
       });
 
       it('should handle dependent query parameter changes with correct state transitions', async () => {
