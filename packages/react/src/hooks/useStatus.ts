@@ -29,9 +29,11 @@ export function useStatusOrNull(allowNull: false): SyncStatus;
 export function useStatusOrNull(allowNull: boolean = true): SyncStatus | null {
   // Conditional hook is okay, this is an internal hook and allowNull is a constant on each call site.
   const powerSync = allowNull ? usePowerSyncOrNull() : usePowerSync();
-  const [syncStatus, setSyncStatus] = useState(powerSync?.currentStatus ?? null);
+  const [syncStatus, setSyncStatus] = useState(powerSync?.currentStatus);
 
   useEffect(() => {
+    setSyncStatus(powerSync?.currentStatus);
+
     const listener = powerSync?.registerListener({
       statusChanged: (status) => {
         setSyncStatus(status);
@@ -41,5 +43,5 @@ export function useStatusOrNull(allowNull: boolean = true): SyncStatus | null {
     return () => listener?.();
   }, [powerSync]);
 
-  return syncStatus;
+  return syncStatus ?? null;
 }

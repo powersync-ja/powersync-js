@@ -372,9 +372,9 @@ describe('useQuery', () => {
             (event) =>
               event.parameters[0] == 'second' &&
               event.hookResults.data[0]?.name != 'second' &&
-              (event.hookResults.isFetching == false || event.hookResults.isLoading == false)
+              event.hookResults.isFetching == false
           )
-        );
+        ).toBeUndefined();
       });
 
       it('should react to updated queries (immediate updates)', async () => {

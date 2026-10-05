@@ -356,11 +356,9 @@ class WatchedQueryWork<RowType> implements QueryWork<RowType> {
         this.emit();
       },
       settingsWillUpdate: () => {
-        if (this.pendingUpdate) {
-          this.pendingUpdate = false;
-          this.result = this.mapState(this.watch.state);
-          this.emit();
-        }
+        // The watched query sets isFetching itself after this event, so we stop overriding it. We don't emit
+        // here because the state may not reflect that yet, the next onStateChange delivers the updated state.
+        this.pendingUpdate = false;
       }
     });
   }
