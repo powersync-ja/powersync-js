@@ -14,13 +14,10 @@ export const useWatchedSuspenseQuery = <T = any>(
   options: AdditionalOptions = {}
 ) => {
   const powerSync = usePowerSync();
-  if (!powerSync) {
-    throw new Error('PowerSync not configured.');
-  }
 
   // Note, we don't need to check if the query changed since we fetch the WatchedQuery
   // from the store given these query params
-  const { parsedQuery } = constructCompatibleQuery(query, parameters, options);
+  const parsedQuery = constructCompatibleQuery(query, parameters);
   const { sql: parsedSql, parameters: parsedParameters } = parsedQuery.compile();
 
   const key = generateQueryKey(parsedSql, parsedParameters, options);

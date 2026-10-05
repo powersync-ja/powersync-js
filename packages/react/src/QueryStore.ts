@@ -1,5 +1,5 @@
 import {
-  AbstractPowerSyncDatabase,
+  CommonPowerSyncDatabase,
   WatchCompatibleQuery,
   WatchedQuery,
   WatchedQueryListenerEvent
@@ -17,7 +17,7 @@ export function generateQueryKey(
 export class QueryStore {
   cache = new Map<string, WatchedQuery<unknown>>();
 
-  constructor(private db: AbstractPowerSyncDatabase) {}
+  constructor(private db: CommonPowerSyncDatabase) {}
 
   getQuery<RowType>(key: string, query: WatchCompatibleQuery<RowType[]>, options: DifferentialHookOptions<RowType>) {
     if (this.cache.has(key)) {
@@ -67,9 +67,9 @@ export class QueryStore {
   }
 }
 
-let queryStores: WeakMap<AbstractPowerSyncDatabase, QueryStore> | undefined = undefined;
+let queryStores: WeakMap<CommonPowerSyncDatabase, QueryStore> | undefined = undefined;
 
-export function getQueryStore(db: AbstractPowerSyncDatabase): QueryStore {
+export function getQueryStore(db: CommonPowerSyncDatabase): QueryStore {
   queryStores ||= new WeakMap();
   const existing = queryStores.get(db);
   if (existing) {
