@@ -121,6 +121,21 @@ export const TodoListsDisplayDemo = () => {
 
 ```
 
+When the SQL or parameters passed to `useQuery` change, the hook keeps returning the previous query's rows, with `isFetching` set to `true`, until the updated query has produced its first result. A refetch caused by a change to one of the queried tables reports `isFetching` in the same way. While `isFetching` is `true`, `fetchReason` says why: `'initial'` for the first load, `'tables-changed'` for a refetch of the same query, and `'settings-changed'` while the rows still belong to the previous query. It is `undefined` when nothing is being fetched.
+
+```JSX
+const { data: todos, fetchReason } = useQuery('SELECT * FROM todos WHERE list_id = ?', [listId]);
+const showingPreviousList = fetchReason === 'settings-changed';
+
+return (
+  <ul style={{ opacity: showingPreviousList ? 0.5 : 1 }}>
+    {todos.map((todo) => (
+      <li key={todo.id}>{todo.description}</li>
+    ))}
+  </ul>
+);
+```
+
 ### Suspense
 
 The `useSuspenseQuery` hook also allows you to access the results of a watched query, but its loading and fetching states are handled through [Suspense](https://react.dev/reference/react/Suspense). Unlike `useQuery`, the hook doesn't return `isLoading` or `isFetching` for the loading states nor `error` for the error state. These should be handled with variants of `<Suspense>` and `<ErrorBoundary>` respectively.

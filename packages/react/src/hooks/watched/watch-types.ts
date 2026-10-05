@@ -56,6 +56,16 @@ export interface DifferentialHookOptions<RowType> extends HookWatchOptions {
   rowComparator?: DifferentialWatchedQueryComparator<RowType>;
 }
 
+/**
+ * Why a `useQuery` hook is currently fetching.
+ *
+ * - `'initial'`: the first load of this query, `isLoading` is true as well.
+ * - `'tables-changed'`: a table the query depends on changed and the same query is re-running. `data` is still current.
+ * - `'settings-changed'`: the SQL, parameters or options changed. `data` still holds the previous query's rows until the
+ *   updated query has produced its first result.
+ */
+export type FetchReason = 'initial' | 'tables-changed' | 'settings-changed';
+
 export type ReadonlyQueryResult<RowType> = {
   readonly data: ReadonlyArray<Readonly<RowType>>;
   /**
@@ -67,6 +77,11 @@ export type ReadonlyQueryResult<RowType> = {
    */
   readonly isFetching: boolean;
   readonly error: Error | undefined;
+  /**
+   * Why the query is running while `isFetching` is true, `undefined` otherwise. `'settings-changed'` means the
+   * SQL, parameters or options changed and `data` still holds the previous query's rows until the new result arrives.
+   */
+  readonly fetchReason?: FetchReason;
   /**
    * Function used to run the query again.
    */
@@ -84,6 +99,11 @@ export type QueryResult<RowType> = {
    */
   isFetching: boolean;
   error: Error | undefined;
+  /**
+   * Why the query is running while `isFetching` is true, `undefined` otherwise. `'settings-changed'` means the
+   * SQL, parameters or options changed and `data` still holds the previous query's rows until the new result arrives.
+   */
+  fetchReason?: FetchReason;
   /**
    * Function used to run the query again.
    */
