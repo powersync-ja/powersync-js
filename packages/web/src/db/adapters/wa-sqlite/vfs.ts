@@ -1,5 +1,6 @@
 import type * as SQLite from '@journeyapps/wa-sqlite';
 import { RawWaSqliteDatabaseOptions } from './RawSqliteConnection.js';
+import type { WebSpecificOpenOptions } from '../options.js';
 
 /**
  * List of currently tested virtual filesystems
@@ -30,6 +31,15 @@ export enum WASQLiteVFS {
 
 export function vfsRequiresDedicatedWorkers(vfs: WASQLiteVFS) {
   return vfs != WASQLiteVFS.IDBBatchAtomicVFS && vfs != WASQLiteVFS.InMemoryVfs;
+}
+
+/**
+ * Whether the VFS can keep its files in a Storage Bucket, see {@link WebSpecificOpenOptions.storageBucket}.
+ */
+export function vfsSupportsStorageBuckets(vfs: WASQLiteVFS) {
+  return (
+    vfs == WASQLiteVFS.OPFSCoopSyncVFS || vfs == WASQLiteVFS.OPFSWriteAheadVFS || vfs == WASQLiteVFS.AccessHandlePoolVFS
+  );
 }
 
 /**
@@ -68,7 +78,8 @@ async function syncModuleFactory(encryptionKey: string | undefined): Promise<SQL
 export async function loadModuleAndVfs({
   vfs,
   filename,
-  encryptionKey
+  encryptionKey,
+  storageBucket
 }: RawWaSqliteDatabaseOptions): Promise<{ module: SQLiteModule; vfs: SQLiteVFS }> {
   let moduleFactory = syncModuleFactory;
   let resolveVfs: (module: any) => Promise<SQLiteVFS>;
@@ -86,19 +97,19 @@ export async function loadModuleAndVfs({
     case WASQLiteVFS.AccessHandlePoolVFS: {
       // @ts-expect-error The types for this import are missing upstream
       const { AccessHandlePoolVFS } = await import('@journeyapps/wa-sqlite/src/examples/AccessHandlePoolVFS.js');
-      resolveVfs = (module) => AccessHandlePoolVFS.create(filename, module);
+      resolveVfs = (module) => AccessHandlePoolVFS.create(filename, module, { storageBucket });
       break;
     }
     case WASQLiteVFS.OPFSCoopSyncVFS: {
       // @ts-expect-error The types for this import are missing upstream
       const { OPFSCoopSyncVFS } = await import('@journeyapps/wa-sqlite/src/examples/OPFSCoopSyncVFS.js');
-      resolveVfs = (module) => OPFSCoopSyncVFS.create(filename, module);
+      resolveVfs = (module) => OPFSCoopSyncVFS.create(filename, module, { storageBucket });
       break;
     }
     case WASQLiteVFS.OPFSWriteAheadVFS: {
       // @ts-expect-error The types for this import are missing upstream
       const { OPFSWriteAheadVFS } = await import('@journeyapps/wa-sqlite/src/examples/OPFSWriteAheadVFS.js');
-      resolveVfs = (module) => OPFSWriteAheadVFS.create(filename, module, {});
+      resolveVfs = (module) => OPFSWriteAheadVFS.create(filename, module, { storageBucket });
       break;
     }
     case WASQLiteVFS.InMemoryVfs: {

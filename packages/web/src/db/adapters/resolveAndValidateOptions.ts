@@ -1,6 +1,6 @@
 import { LogLevels } from '@powersync/common';
 import { TemporaryStorageOption, WebSpecificOpenOptions } from './options.js';
-import { vfsRequiresDedicatedWorkers, WASQLiteVFS } from './wa-sqlite/vfs.js';
+import { vfsRequiresDedicatedWorkers, vfsSupportsStorageBuckets, WASQLiteVFS } from './wa-sqlite/vfs.js';
 
 /**
  * The maximum length of a db filename we support.
@@ -42,6 +42,12 @@ export function resolveAndValidateOptions<And = {}>(
   if (vfsRequiresDedicatedWorkers(resolved.vfs) && !resolved.useWebWorker) {
     throw new Error(
       `Invalid configuration: The 'useWebWorker' flag must be true when using an OPFS-based VFS (${resolved.vfs}).`
+    );
+  }
+
+  if (resolved.storageBucket != null && !vfsSupportsStorageBuckets(resolved.vfs)) {
+    throw new Error(
+      `Invalid configuration: The 'storageBucket' option needs an OPFS-based VFS, which ${resolved.vfs} is not.`
     );
   }
 

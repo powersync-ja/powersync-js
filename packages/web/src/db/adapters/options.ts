@@ -96,6 +96,24 @@ export interface WebSpecificOpenOptions {
    * Defaults to 0 (disabling the cache).
    */
   preparedStatementsCache?: number;
+
+  /**
+   * The name of a [Storage Bucket](https://developer.mozilla.org/docs/Web/API/Storage_API/Storage_buckets) to keep
+   * the database files in, instead of the default bucket of the origin private file system.
+   *
+   * Only supported by the OPFS-based VFS implementations: {@link WASQLiteVFS.OPFSCoopSyncVFS},
+   * {@link WASQLiteVFS.OPFSWriteAheadVFS} and {@link WASQLiteVFS.AccessHandlePoolVFS}. Opening fails in a browser
+   * without the Storage Buckets API (`navigator.storageBuckets`), so check for it before setting this option.
+   *
+   * Bucket names contain lowercase letters, digits, `-` and `_`, start with a letter or a digit, and have at most 63
+   * characters.
+   *
+   * A database in a bucket is a different database from one of the same name in the default bucket. Setting this
+   * option for an existing database starts with an empty database; the files in the default bucket are not moved.
+   *
+   * Defaults to undefined, which uses the default bucket.
+   */
+  storageBucket?: string;
 }
 
 export interface ResolvedWebSQLOpenOptions extends SQLOpenOptions, WebSpecificOpenOptions {}
