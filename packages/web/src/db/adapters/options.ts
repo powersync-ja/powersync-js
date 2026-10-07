@@ -98,7 +98,7 @@ export interface WebSpecificOpenOptions {
   preparedStatementsCache?: number;
 
   /**
-   * The name of a [Storage Bucket](https://developer.mozilla.org/docs/Web/API/Storage_API/Storage_buckets) to keep
+   * The name of a [Storage Bucket](https://wicg.github.io/storage-buckets/) to keep
    * the database files in, instead of the default bucket of the origin private file system.
    *
    * Only supported by the OPFS-based VFS implementations: {@link WASQLiteVFS.OPFSCoopSyncVFS},
