@@ -102,13 +102,16 @@ export interface WebSpecificOpenOptions {
    * instead of the default bucket of the origin private file system.
    *
    * Only supported by the OPFS-based VFS implementations: {@link WASQLiteVFS.OPFSCoopSyncVFS},
-   * {@link WASQLiteVFS.OPFSWriteAheadVFS} and {@link WASQLiteVFS.AccessHandlePoolVFS}. Opening the database fails in
-   * a browser without the Storage Buckets API, so set this option only when `'storageBuckets' in navigator`.
+   * {@link WASQLiteVFS.OPFSWriteAheadVFS} and {@link WASQLiteVFS.AccessHandlePoolVFS}. Setting it in a browser
+   * without the Storage Buckets API is a configuration error, so set this option only when
+   * `'storageBuckets' in navigator`.
    *
-   * The bucket is opened by name, with the browser's default options. To change them, for example to ask for
-   * persistent storage, open the same bucket in your app with `navigator.storageBuckets.open(name, options)` or call
-   * `bucket.persist()`. Bucket names contain lowercase letters, digits, `-` and `_`, and start with a letter or a
-   * digit.
+   * The bucket is opened by name, with the browser's default options. Persistent storage is granted per origin by
+   * `navigator.storage.persist()`, and that call marks only the default bucket. For a named bucket, call
+   * `navigator.storage.persist()` first and then `persist()` on the bucket, which your app can open by the same name
+   * with `navigator.storageBuckets.open(name)`; the bucket-level call takes effect only while the origin has the
+   * permission. Bucket names have lowercase letters, digits, `-` and `_`, start with a letter or a digit, and have at
+   * most 63 characters.
    *
    * A database in a bucket is a different database from one of the same name in the default bucket: setting this
    * option for an existing database starts with an empty database, and the files in the default bucket are not

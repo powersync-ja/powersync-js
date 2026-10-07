@@ -25,7 +25,7 @@ describe('storageBucket', { sequential: true }, () => {
   const supportedVfs = [WASQLiteVFS.AccessHandlePoolVFS, WASQLiteVFS.OPFSCoopSyncVFS, WASQLiteVFS.OPFSWriteAheadVFS];
 
   for (const vfs of supportedVfs) {
-    describe(vfs, () => {
+    describe.skipIf(!('storageBuckets' in navigator))(vfs, () => {
       it('keeps the database files in the bucket', async () => {
         const dbFilename = `${uuid()}.db`;
         const db = generateTestDb({
@@ -42,6 +42,8 @@ describe('storageBucket', { sequential: true }, () => {
       });
 
       it('keeps apart from a database of the same name in the default bucket', async () => {
+        // The same name on purpose, although the option's documentation advises against it: this shows that the
+        // files and the VFS locks of the two databases stay apart.
         const dbFilename = `${uuid()}.db`;
         const inBucket = generateTestDb({
           schema: TEST_SCHEMA,
@@ -51,7 +53,7 @@ describe('storageBucket', { sequential: true }, () => {
         const inDefault = generateTestDb({
           schema: TEST_SCHEMA,
           logger: defaultTestLogger,
-          database: { dbFilename: vfs == WASQLiteVFS.AccessHandlePoolVFS ? `${uuid()}.db` : dbFilename, vfs }
+          database: { dbFilename, vfs }
         });
 
         await inBucket.execute('INSERT INTO assets(id, description) VALUES(uuid(), ?)', ['bucket']);
@@ -94,6 +96,17 @@ describe('storageBucket', { sequential: true }, () => {
         "The 'storageBucket' option needs the Storage Buckets API"
       );
     });
+  });
+
+  it('rejects a bucket name the Storage Buckets API would not accept', () => {
+    expect(
+      () =>
+        new PowerSyncDatabase({
+          schema: TEST_SCHEMA,
+          logger: defaultTestLogger,
+          database: { dbFilename: `${uuid()}.db`, vfs: WASQLiteVFS.OPFSWriteAheadVFS, storageBucket: 'Not-Valid' }
+        })
+    ).toThrow('is not a valid Storage Bucket name');
   });
 
   it('rejects a VFS that does not keep its files in OPFS', () => {
