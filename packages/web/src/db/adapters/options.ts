@@ -98,18 +98,22 @@ export interface WebSpecificOpenOptions {
   preparedStatementsCache?: number;
 
   /**
-   * The name of a [Storage Bucket](https://wicg.github.io/storage-buckets/) to keep
-   * the database files in, instead of the default bucket of the origin private file system.
+   * The name of a [Storage Bucket](https://wicg.github.io/storage-buckets/) to keep the database files in,
+   * instead of the default bucket of the origin private file system.
    *
    * Only supported by the OPFS-based VFS implementations: {@link WASQLiteVFS.OPFSCoopSyncVFS},
-   * {@link WASQLiteVFS.OPFSWriteAheadVFS} and {@link WASQLiteVFS.AccessHandlePoolVFS}. Opening fails in a browser
-   * without the Storage Buckets API (`navigator.storageBuckets`), so check for it before setting this option.
+   * {@link WASQLiteVFS.OPFSWriteAheadVFS} and {@link WASQLiteVFS.AccessHandlePoolVFS}. Opening the database fails in
+   * a browser without the Storage Buckets API, so set this option only when `'storageBuckets' in navigator`.
    *
-   * Bucket names contain lowercase letters, digits, `-` and `_`, start with a letter or a digit, and have at most 63
-   * characters.
+   * The bucket is opened by name, with the browser's default options. To change them, for example to ask for
+   * persistent storage, open the same bucket in your app with `navigator.storageBuckets.open(name, options)` or call
+   * `bucket.persist()`. Bucket names contain lowercase letters, digits, `-` and `_`, and start with a letter or a
+   * digit.
    *
-   * A database in a bucket is a different database from one of the same name in the default bucket. Setting this
-   * option for an existing database starts with an empty database; the files in the default bucket are not moved.
+   * A database in a bucket is a different database from one of the same name in the default bucket: setting this
+   * option for an existing database starts with an empty database, and the files in the default bucket are not
+   * moved. The SDK's cross-tab locks and channels are named after `dbFilename` alone, so give the database a name no
+   * other database of the app uses, in any bucket.
    *
    * Defaults to undefined, which uses the default bucket.
    */

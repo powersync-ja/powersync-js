@@ -1,6 +1,7 @@
 import { PowerSyncDatabase, WASQLiteVFS } from '@powersync/web';
 import { v4 as uuid } from 'uuid';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import { StorageBucketManagerLike, vfsOptionsForStorageBucket } from '../src/db/adapters/wa-sqlite/vfs.js';
 import { defaultTestLogger } from './utils/logger.js';
 import { TEST_SCHEMA } from './utils/test-schema.js';
 import { generateTestDb } from './utils/testDb.js';
@@ -65,6 +66,35 @@ describe('storageBucket', { sequential: true }, () => {
       });
     });
   }
+
+  describe('vfsOptionsForStorageBucket', () => {
+    it('gives the VFS no options without a bucket name', () => {
+      expect(vfsOptionsForStorageBucket(undefined)).toEqual({});
+      expect(vfsOptionsForStorageBucket(undefined, null)).toEqual({});
+    });
+
+    it('opens the bucket for the root directory and prefixes lock names with the bucket name', async () => {
+      const directory = {} as FileSystemDirectoryHandle;
+      const bucket = { getDirectory: vi.fn(async () => directory) };
+      const buckets: StorageBucketManagerLike = { open: vi.fn(async () => bucket) };
+
+      const options = vfsOptionsForStorageBucket('app-data', buckets);
+      expect(options.lockPrefix).toBe('app-data:');
+      expect(buckets.open).not.toHaveBeenCalled();
+
+      // Each call opens the bucket again, so a bucket the browser deleted is created again.
+      expect(await options.getRoot!()).toBe(directory);
+      expect(await options.getRoot!()).toBe(directory);
+      expect(buckets.open).toHaveBeenCalledTimes(2);
+      expect(buckets.open).toHaveBeenCalledWith('app-data');
+    });
+
+    it('fails without the Storage Buckets API', () => {
+      expect(() => vfsOptionsForStorageBucket('app-data', null)).toThrow(
+        "The 'storageBucket' option needs the Storage Buckets API"
+      );
+    });
+  });
 
   it('rejects a VFS that does not keep its files in OPFS', () => {
     expect(
