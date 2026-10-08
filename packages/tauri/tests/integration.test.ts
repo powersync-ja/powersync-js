@@ -21,7 +21,6 @@ async function installTauriInTestFrameHack() {
   // don't currently use binary responses in the PowerSync plugin, but it serves as an
   // example for general integration tests with Tauri.
   current.ArrayBuffer = root.ArrayBuffer;
-
 }
 
 const schema = new Schema({
@@ -112,4 +111,16 @@ test('can bind integers', async () => {
 
   const row = await db.get<{ a: string; b: string }>('SELECT typeof(?) as a, typeof(?) as b', [123, 1.23]);
   expect(row).toStrictEqual({ a: 'integer', b: 'real' });
+});
+
+test('can bind booleans', async () => {
+  const db = openDatabase({ schema });
+  await db.init();
+
+  const row = await db.get<{ a: string; b: number; c: number }>('SELECT typeof(?) as a, ? as b, ? as c', [
+    true,
+    true,
+    false
+  ]);
+  expect(row).toStrictEqual({ a: 'integer', b: 1, c: 0 });
 });
