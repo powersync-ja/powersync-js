@@ -34,7 +34,7 @@
   "peerDependencies": {
     "vue": "*",
     "@powersync/common": "workspace:^2.3.1",
-    "@powersync/shared-internals": "workspace:^1.3.1"
+    "@powersync/shared-internals": "workspace:^1.3.2"
   },
   "devDependencies": {
     "@powersync/common": "workspace:*",

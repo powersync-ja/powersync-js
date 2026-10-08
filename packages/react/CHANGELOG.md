@@ -1,5 +1,11 @@
 # @powersync/react
 
+## 2.0.3
+
+### Patch Changes
+
+- 774ecf9: Refactor `useQuery` hook to react to parameter changes more consistently.
+
 ## 2.0.2
 
 ### Patch Changes
