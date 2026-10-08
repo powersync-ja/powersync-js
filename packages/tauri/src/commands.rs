@@ -95,7 +95,7 @@ impl ExecuteBatch {
         let mut stmt = connection.prepare(&self.sql)?;
         for instantiation in &self.params {
             let mut cursor = stmt.query(params_from_iter(instantiation.iter()))?;
-            while let Some(_) = cursor.next()? {}
+            while cursor.next()?.is_some() {}
         }
 
         Ok(CommandResult::ExecuteBatchResult {
@@ -339,14 +339,14 @@ pub(crate) async fn powersync<R: Runtime>(
             let connection = handle.as_connection()?;
             let connection = connection.lock().await;
 
-            CommandResult::ExecuteSqlResult(stmt.run(&*connection)?)
+            CommandResult::ExecuteSqlResult(stmt.run(&connection)?)
         }
         Command::ExecuteBatch(batch) => {
             let handle = powersync.handles.lookup(batch.connection)?;
             let connection = handle.as_connection()?;
             let connection = connection.lock().await;
 
-            batch.run(&*connection)?
+            batch.run(&connection)?
         }
         Command::Disconnect(handle) => {
             let handle = powersync.handles.lookup(handle)?;
