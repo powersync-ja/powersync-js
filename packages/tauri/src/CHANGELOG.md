@@ -1,5 +1,11 @@
 # tauri-plugin-powersync
 
+## 0.1.1
+
+### Patch Changes
+
+- 6f14426: Allow binding boolean values (as `1` and `0`), matching the web SDK.
+
 ## 0.1.0
 
 ### Minor Changes

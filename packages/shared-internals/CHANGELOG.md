@@ -1,5 +1,11 @@
 # @powersync/shared-internals
 
+## 1.3.2
+
+### Patch Changes
+
+- 1a209a0: Preserve error details across Web worker boundaries, including error codes, HTTP status, causes, and missing rejection reasons.
+
 ## 1.3.1
 
 ### Patch Changes
