@@ -1,5 +1,6 @@
 import type * as SQLite from '@journeyapps/wa-sqlite';
 import { RawWaSqliteDatabaseOptions } from './RawSqliteConnection.js';
+import type { WebSpecificOpenOptions } from '../options.js';
 
 /**
  * List of currently tested virtual filesystems
@@ -30,6 +31,51 @@ export enum WASQLiteVFS {
 
 export function vfsRequiresDedicatedWorkers(vfs: WASQLiteVFS) {
   return vfs != WASQLiteVFS.IDBBatchAtomicVFS && vfs != WASQLiteVFS.InMemoryVfs;
+}
+
+/**
+ * Whether the VFS can keep its files in a Storage Bucket, see {@link WebSpecificOpenOptions.storageBucket}.
+ */
+export function vfsSupportsStorageBuckets(vfs: WASQLiteVFS) {
+  return (
+    vfs == WASQLiteVFS.OPFSCoopSyncVFS || vfs == WASQLiteVFS.OPFSWriteAheadVFS || vfs == WASQLiteVFS.AccessHandlePoolVFS
+  );
+}
+
+/**
+ * The part of the Storage Buckets API this module uses. The API is not in the TypeScript DOM library yet.
+ */
+export interface StorageBucketManagerLike {
+  open(name: string): Promise<{ getDirectory(): Promise<FileSystemDirectoryHandle> }>;
+}
+
+/**
+ * Options for an OPFS-based VFS that keep its files in the named Storage Bucket, see
+ * {@link WebSpecificOpenOptions.storageBucket}. Without a bucket name, no options: the VFS uses the root of the
+ * origin private file system.
+ *
+ * @internal
+ */
+export function vfsOptionsForStorageBucket(
+  storageBucket: string | undefined,
+  storageBuckets: StorageBucketManagerLike | null | undefined = (navigator as any).storageBuckets
+): { getRoot?: () => Promise<FileSystemDirectoryHandle>; lockPrefix?: string } {
+  if (storageBucket == null) {
+    return {};
+  }
+  if (storageBuckets == null) {
+    throw new Error(
+      `The 'storageBucket' option needs the Storage Buckets API (navigator.storageBuckets), which this browser does not have. Check for it before setting the option.`
+    );
+  }
+  return {
+    // Called by the VFS each time it needs its root directory. Opening the bucket again creates it when the
+    // browser deleted it with the rest of the site's data.
+    getRoot: () => storageBuckets.open(storageBucket).then((bucket) => bucket.getDirectory()),
+    // Keeps the locks and channels of a file apart from those of a file of the same name in another bucket.
+    // Bucket names cannot contain ':', so the names of two buckets never overlap.
+    lockPrefix: `${storageBucket}:`
+  };
 }
 
 /**
@@ -68,7 +114,8 @@ async function syncModuleFactory(encryptionKey: string | undefined): Promise<SQL
 export async function loadModuleAndVfs({
   vfs,
   filename,
-  encryptionKey
+  encryptionKey,
+  storageBucket
 }: RawWaSqliteDatabaseOptions): Promise<{ module: SQLiteModule; vfs: SQLiteVFS }> {
   let moduleFactory = syncModuleFactory;
   let resolveVfs: (module: any) => Promise<SQLiteVFS>;
@@ -86,19 +133,19 @@ export async function loadModuleAndVfs({
     case WASQLiteVFS.AccessHandlePoolVFS: {
       // @ts-expect-error The types for this import are missing upstream
       const { AccessHandlePoolVFS } = await import('@journeyapps/wa-sqlite/src/examples/AccessHandlePoolVFS.js');
-      resolveVfs = (module) => AccessHandlePoolVFS.create(filename, module);
+      resolveVfs = (module) => AccessHandlePoolVFS.create(filename, module, vfsOptionsForStorageBucket(storageBucket));
       break;
     }
     case WASQLiteVFS.OPFSCoopSyncVFS: {
       // @ts-expect-error The types for this import are missing upstream
       const { OPFSCoopSyncVFS } = await import('@journeyapps/wa-sqlite/src/examples/OPFSCoopSyncVFS.js');
-      resolveVfs = (module) => OPFSCoopSyncVFS.create(filename, module);
+      resolveVfs = (module) => OPFSCoopSyncVFS.create(filename, module, vfsOptionsForStorageBucket(storageBucket));
       break;
     }
     case WASQLiteVFS.OPFSWriteAheadVFS: {
       // @ts-expect-error The types for this import are missing upstream
       const { OPFSWriteAheadVFS } = await import('@journeyapps/wa-sqlite/src/examples/OPFSWriteAheadVFS.js');
-      resolveVfs = (module) => OPFSWriteAheadVFS.create(filename, module, {});
+      resolveVfs = (module) => OPFSWriteAheadVFS.create(filename, module, vfsOptionsForStorageBucket(storageBucket));
       break;
     }
     case WASQLiteVFS.InMemoryVfs: {

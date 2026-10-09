@@ -1,6 +1,6 @@
 import { LogLevels } from '@powersync/common';
 import { TemporaryStorageOption, WebSpecificOpenOptions } from './options.js';
-import { vfsRequiresDedicatedWorkers, WASQLiteVFS } from './wa-sqlite/vfs.js';
+import { vfsRequiresDedicatedWorkers, vfsSupportsStorageBuckets, WASQLiteVFS } from './wa-sqlite/vfs.js';
 
 /**
  * The maximum length of a db filename we support.
@@ -43,6 +43,25 @@ export function resolveAndValidateOptions<And = {}>(
     throw new Error(
       `Invalid configuration: The 'useWebWorker' flag must be true when using an OPFS-based VFS (${resolved.vfs}).`
     );
+  }
+
+  if (resolved.storageBucket != null) {
+    if (!vfsSupportsStorageBuckets(resolved.vfs)) {
+      throw new Error(
+        `Invalid configuration: The 'storageBucket' option needs an OPFS-based VFS, which ${resolved.vfs} is not.`
+      );
+    }
+    // The naming rules of https://wicg.github.io/storage-buckets/, with the length Chromium accepts.
+    if (!/^[a-z0-9][a-z0-9_-]{0,62}$/.test(resolved.storageBucket)) {
+      throw new Error(
+        `Invalid configuration: '${resolved.storageBucket}' is not a valid Storage Bucket name. A name has lowercase letters, digits, '-' and '_', starts with a letter or a digit, and has at most 63 characters.`
+      );
+    }
+    if (typeof navigator !== 'undefined' && !('storageBuckets' in navigator)) {
+      throw new Error(
+        `Invalid configuration: The 'storageBucket' option needs the Storage Buckets API (navigator.storageBuckets), which this browser does not have. Set the option only when 'storageBuckets' in navigator.`
+      );
+    }
   }
 
   return resolved;

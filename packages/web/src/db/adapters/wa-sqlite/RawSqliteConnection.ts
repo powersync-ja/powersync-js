@@ -29,6 +29,10 @@ export interface RawWaSqliteDatabaseOptions {
    * The amount of prepared statements to cache, or 0 to disable caching.
    */
   preparedStatementsCache: number;
+  /**
+   * The name of a Storage Bucket to keep the database files in, for the OPFS-based VFS implementations.
+   */
+  storageBucket?: string;
 }
 
 /**
