@@ -1,9 +1,10 @@
-import { CommonPowerSyncDatabase, WatchedQuery, WatchedQueryListenerEvent } from '@powersync/common';
-import { cleanup, renderHook, screen, waitFor } from '@testing-library/react';
+import { CommonPowerSyncDatabase, WatchedQuery } from '@powersync/common';
+import { act, cleanup, renderHook, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PowerSyncContext } from '../src/hooks/PowerSyncContext';
+import { TEMPORARY_HOLD_MS } from '../src/hooks/suspense/SuspenseQueryCache';
 import { useSuspenseQuery } from '../src/hooks/suspense/useSuspenseQuery';
 import { useWatchedQuerySuspenseSubscription } from '../src/hooks/suspense/useWatchedQuerySuspenseSubscription';
 import { openPowerSync } from './utils';
@@ -128,28 +129,20 @@ describe('useSuspenseQuery', () => {
     expect(watch).toBeDefined();
     expect(watch!.closed).false;
     expect(watch!.state.data.length).eq(1);
-    expect(watch!.listenerMeta.counts[WatchedQueryListenerEvent.ON_STATE_CHANGE]).greaterThanOrEqual(2); // should have a temporary hold and state listener
 
-    // wait for the temporary hold to elapse
-    await waitFor(
-      async () => {
-        expect(watch!.listenerMeta.counts[WatchedQueryListenerEvent.ON_STATE_CHANGE]).eq(1);
-      },
-      { timeout: 10_000, interval: 500 }
-    );
+    // The temporary hold placed while suspending expires, but the mounted component keeps the query alive.
+    await new Promise((r) => setTimeout(r, TEMPORARY_HOLD_MS + 500));
+    expect(watch!.closed).false;
 
-    // now unmount the hook, this should remove listeners from the watch and close the query
+    // Unmounting the hook removes the last subscriber, which closes the query.
     unmount();
-
-    // wait for the temporary hold to elapse
     await waitFor(
       async () => {
-        expect(watch!.listenerMeta.counts[WatchedQueryListenerEvent.ON_STATE_CHANGE]).undefined;
-        expect(watch?.closed).true;
+        expect(watch!.closed).true;
       },
-      { timeout: 10_000, interval: 500 }
+      { timeout: 1000, interval: 100 }
     );
-  }, 10_000);
+  }, 15_000);
 
   it('should run the query once if runQueryOnce flag is set', async () => {
     await powersync.execute("INSERT INTO lists (id, name) VALUES (uuid(), 'list1')");
@@ -273,6 +266,86 @@ describe('useSuspenseQuery', () => {
 
     await waitForCompletedSuspend();
     await waitForError();
+  });
+
+  it.for([false, true])(`should switch to new parameters after mount (runQueryOnce: %j)`, async (runQueryOnce) => {
+    await powersync.execute("INSERT INTO lists (id, name) VALUES (uuid(), 'a'), (uuid(), 'b')");
+
+    const { result, rerender } = renderHook(
+      ({ name }) =>
+        useSuspenseQuery<{ name: string }>('SELECT name FROM lists WHERE name = ?', [name], { runQueryOnce }),
+      { wrapper, initialProps: { name: 'a' } }
+    );
+
+    await waitFor(() => expect(result.current?.data).toEqual([{ name: 'a' }]), { timeout: 1000 });
+
+    rerender({ name: 'b' });
+    await waitFor(() => expect(result.current?.data).toEqual([{ name: 'b' }]), { timeout: 1000 });
+
+    if (!runQueryOnce) {
+      // The hook must be subscribed to the query for the new parameters.
+      await powersync.execute("INSERT INTO lists (id, name) VALUES (uuid(), 'b')");
+      await waitFor(() => expect(result.current?.data).toHaveLength(2), { timeout: 1000 });
+    }
+  });
+
+  it('should share watched queries between hooks', async () => {
+    const spy = vi.spyOn(powersync, 'customQuery');
+
+    const { result } = renderHook(
+      () => [useSuspenseQuery('SELECT * FROM lists'), useSuspenseQuery('SELECT * FROM lists')],
+      { wrapper }
+    );
+
+    await waitFor(() => expect(result.current).toHaveLength(2), { timeout: 1000 });
+    expect(spy).toHaveBeenCalledTimes(1);
+  });
+
+  it('should not suspend when refreshing', async () => {
+    let fallbackRenders = 0;
+    const Fallback = () => {
+      fallbackRenders++;
+      return loadingFallback;
+    };
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <PowerSyncContext.Provider value={powersync}>
+        <React.Suspense fallback={<Fallback />}>{children}</React.Suspense>
+      </PowerSyncContext.Provider>
+    );
+
+    const { result } = renderHook(() => useSuspenseQuery('SELECT * FROM lists', [], { runQueryOnce: true }), {
+      wrapper
+    });
+    await waitFor(() => expect(result.current?.refresh).toBeDefined(), { timeout: 1000 });
+    await waitForCompletedSuspend();
+
+    fallbackRenders = 0;
+    await act(() => result.current.refresh!());
+    expect(fallbackRenders).toBe(0);
+    expect(screen.queryByText(loadingFallback)).toBeFalsy();
+  });
+
+  it('should resubscribe when given a different WatchedQuery', async () => {
+    await powersync.execute("INSERT INTO lists (id, name) VALUES (uuid(), 'a'), (uuid(), 'b')");
+    const queryFor = (name: string) =>
+      powersync.query<{ name: string }>({ sql: 'SELECT name FROM lists WHERE name = ?', parameters: [name] }).watch();
+    const queryA = queryFor('a');
+    const queryB = queryFor('b');
+
+    const { result, rerender } = renderHook(({ query }) => useWatchedQuerySuspenseSubscription(query), {
+      wrapper,
+      initialProps: { query: queryA }
+    });
+    await waitFor(() => expect(result.current?.data).toEqual([{ name: 'a' }]), { timeout: 1000 });
+
+    rerender({ query: queryB });
+    await waitFor(() => expect(result.current?.data).toEqual([{ name: 'b' }]), { timeout: 1000 });
+
+    await powersync.execute("INSERT INTO lists (id, name) VALUES (uuid(), 'b')");
+    await waitFor(() => expect(result.current?.data).toHaveLength(2), { timeout: 1000 });
+
+    await queryA.close();
+    await queryB.close();
   });
 
   it('should use an existing WatchedQuery instance', async () => {

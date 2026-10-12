@@ -134,9 +134,27 @@ describe('useQuery', () => {
           { timeout: 500, interval: 100 }
         );
 
-        await act(() => refresh!());
+        // Keep the refreshed query pending so that we can observe the state while it runs.
+        const pendingQuery = pDefer<void>();
+        getAllSpy.mockImplementationOnce(async () => {
+          await pendingQuery.promise;
+          return [];
+        });
+
+        let refreshDone: Promise<void>;
+        act(() => {
+          refreshDone = refresh!();
+        });
+
+        // isLoading only describes the initial load, refreshing should only report isFetching.
+        expect(result.current.isFetching).toEqual(true);
+        expect(result.current.isLoading).toEqual(false);
+
+        pendingQuery.resolve();
+        await act(() => refreshDone);
 
         expect(getAllSpy).toHaveBeenCalledTimes(2);
+        expect(result.current.isFetching).toEqual(false);
       });
 
       it('should accept compilable queries', async () => {

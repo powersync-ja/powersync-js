@@ -1,6 +1,5 @@
-import { WatchedQuery } from '@powersync/common';
-import React from 'react';
-import { createSuspendingPromise, useTemporaryHold } from './suspense-utils.js';
+import { WatchedQuery, WatchedQueryState } from '@powersync/common';
+import { useCallback, useSyncExternalStore } from 'react';
 
 /**
  * A hook to access and subscribe to the results of an existing {@link WatchedQuery}.
@@ -29,32 +28,73 @@ export const useWatchedQuerySuspenseSubscription = <
 >(
   query: Query
 ): Query['state'] => {
-  useTemporaryHold(query);
+  const subscribe = useCallback((onChange: () => void) => query.registerListener({ onStateChange: onChange }), [query]);
+  const getSnapshot = useCallback(() => snapshotState(query), [query]);
+  const state = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 
-  // Force update state function
-  const [, setUpdateCounter] = React.useState(0);
-
-  React.useEffect(() => {
-    // This runs when the component came out of suspense
-    // This add a permanent hold since a listener has been added to the query
-    const dispose = query.registerListener({
-      onStateChange() {
-        // Trigger rerender
-        setUpdateCounter((prev) => prev + 1);
-      }
-    });
-
-    return dispose;
-  }, []);
-
-  if (query.state.error != null) {
-    // Report errors - this is caught by an error boundary
-    throw query.state.error;
-  } else if (!query.state.isLoading) {
-    // Happy path data return
-    return query.state;
+  if (state.error != null) {
+    throw state.error;
+  } else if (!state.isLoading) {
+    return state;
   } else {
-    // Notify suspense is required
-    throw createSuspendingPromise(query);
+    // Suspend until the query has results or an error.
+    throw suspendUntilDataOrError(query);
   }
 };
+
+let suspendingPromises: WeakMap<WatchedQuery<unknown>, Promise<void>> | undefined;
+let stateSnapshots: WeakMap<WatchedQuery<unknown>, WatchedQueryState<unknown>> | undefined;
+
+/**
+ * A promise that resolves once the query has loaded, cached to be suitable for hooks.
+ */
+function suspendUntilDataOrError(query: WatchedQuery<unknown>): Promise<void> {
+  const promises = (suspendingPromises ??= new WeakMap());
+  const existing = promises.get(query);
+  if (existing) {
+    return existing;
+  }
+
+  const promise = new Promise<void>((resolve) => {
+    // The listener here will dispose itself once the loading is done.
+    // This decreases the number of listeners on the query even if the component is unmounted.
+    const dispose = query.registerListener({
+      onStateChange: (state) => {
+        // Returns to the hook if loading is completed or if loading resulted in an error
+        if (!state.isLoading || state.error) {
+          promises.delete(query);
+          resolve();
+          dispose();
+        }
+      }
+    });
+  });
+  promises.set(query, promise);
+  return promise;
+}
+
+/**
+ * Returns a stable copy of the query's state.
+ *
+ * Watched queries update their `state` object in place, so it can't be used as a snapshot for `useSyncExternalStore`
+ * directly.
+ */
+function snapshotState<Data>(query: WatchedQuery<Data>): WatchedQueryState<Data> {
+  const state = query.state;
+  const snapshots = (stateSnapshots ??= new WeakMap());
+  const cached = snapshots.get(query) as WatchedQueryState<Data> | undefined;
+  if (
+    cached != null &&
+    cached.data === state.data &&
+    cached.isLoading === state.isLoading &&
+    cached.isFetching === state.isFetching &&
+    cached.error === state.error &&
+    cached.lastUpdated === state.lastUpdated
+  ) {
+    return cached;
+  }
+
+  const snapshot = { ...state };
+  snapshots.set(query, snapshot);
+  return snapshot;
+}
