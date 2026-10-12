@@ -180,6 +180,31 @@ databaseTest('closing a query processor while it is initializing does not leak l
   await expect.poll(() => countLifecycleListeners()).toStrictEqual(baseline);
 });
 
+databaseTest('watch with initially aborted signal does not leak listeners', async ({ database }) => {
+  await database.init();
+
+  function countLifecycleListeners() {
+    let found = 0;
+    (database as BasePowerSyncDatabase).iterateListeners((l) => {
+      if (l.closing || l.schemaChanged) {
+        found++;
+      }
+    });
+    return found;
+  }
+
+  const baseline = countLifecycleListeners();
+
+  database.watch('SELECT * FROM todos', [], { onResult: () => {} }, { signal: AbortSignal.abort() });
+  expect(countLifecycleListeners()).toStrictEqual(baseline);
+
+  const iterator = database.watch('SELECT * FROM todos', [], { signal: AbortSignal.abort() });
+  for await (const _ of iterator) {
+    expect.fail('Should not emit results for an aborted watch');
+  }
+  expect(countLifecycleListeners()).toStrictEqual(baseline);
+});
+
 tempDirectoryTest('throws error if target directory does not exist', async ({ tmpdir }) => {
   const directory = path.join(tmpdir, 'some', 'nested', 'location', 'that', 'does', 'not', 'exist');
 

@@ -1,4 +1,4 @@
-import { AbstractPowerSyncDatabase, LockContext } from '@powersync/common';
+import { CommonPowerSyncDatabase, LockContext } from '@powersync/common';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { getPowerSyncDb } from '../setup/db';
 import Chance from 'chance';
@@ -25,7 +25,7 @@ function createTestUser(context: LockContext) {
 }
 
 describe('Raw queries', () => {
-  let db: AbstractPowerSyncDatabase;
+  let db: CommonPowerSyncDatabase;
 
   beforeEach(async () => {
     db = getPowerSyncDb();

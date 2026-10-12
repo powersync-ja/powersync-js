@@ -1,5 +1,16 @@
 # @powersync/common
 
+## 2.3.1
+
+### Patch Changes
+
+- 3d0d5c4: Allow `PowerSyncCredentials.expiresAt` to be explicitly set to `undefined`.
+
+  `fetchCredentials` implementations compiled with `exactOptionalPropertyTypes` can now return
+  `{ endpoint, token, expiresAt: undefined }` without a type error.
+
+- 7bae50c: Fix `onChangeWithCallback`, `watchWithCallback`, `compilableQueryWatch`, `AbstractQueryProcessor` and `AttachmentQueue.startSync` leaking listeners when aborted or stopped early (closes #1056, closes #1127).
+
 ## 2.3.0
 
 ### Minor Changes

@@ -1,5 +1,14 @@
 # @powersync/shared-internals
 
+## 1.3.1
+
+### Patch Changes
+
+- 7bae50c: Fix `onChangeWithCallback`, `watchWithCallback`, `compilableQueryWatch`, `AbstractQueryProcessor` and `AttachmentQueue.startSync` leaking listeners when aborted or stopped early (closes #1056, closes #1127).
+- Updated dependencies [3d0d5c4]
+- Updated dependencies [7bae50c]
+  - @powersync/common@2.3.1
+
 ## 1.3.0
 
 ### Minor Changes

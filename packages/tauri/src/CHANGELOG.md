@@ -1,5 +1,11 @@
 # tauri-plugin-powersync
 
+## 0.1.0
+
+### Minor Changes
+
+- bb7e770: Support versions 0.1.x of the `powersync` crate.
+
 ## 0.0.6
 
 ### Patch Changes

@@ -127,7 +127,8 @@ jobs:
 
       - name: Install Capacitor example dependencies
         working-directory: ./packages/capacitor/example-app
-        run: pnpm install
+        # We need to patch workspace dependencies, which changes the lockfile
+        run: pnpm install --no-frozen-lockfile
 
       - name: Sync and build Capacitor Android app
         working-directory: ./packages/capacitor/example-app

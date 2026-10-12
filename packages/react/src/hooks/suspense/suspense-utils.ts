@@ -9,7 +9,7 @@ import React from 'react';
  * Creates a subscription for state change which creates a temporary hold on the query
  */
 export const useTemporaryHold = (watchedQuery?: WatchedQuery<unknown>) => {
-  const releaseTemporaryHold = React.useRef<() => void | undefined>(undefined);
+  const releaseTemporaryHold = React.useRef<(() => void) | undefined>(undefined);
   const addedHoldTo = React.useRef<WatchedQuery<unknown> | undefined>(undefined);
 
   if (addedHoldTo.current !== watchedQuery) {
@@ -28,7 +28,7 @@ export const useTemporaryHold = (watchedQuery?: WatchedQuery<unknown>) => {
       onStateChange: (state) => {}
     });
 
-    let timeout: ReturnType<typeof setTimeout>;
+    let timeout: ReturnType<typeof setTimeout> | undefined;
 
     const disposeClosedListener = watchedQuery.registerListener({
       closed: () => {
@@ -53,12 +53,12 @@ export const useTemporaryHold = (watchedQuery?: WatchedQuery<unknown>) => {
         releaseHold();
       } else {
         // Need to keep the hold, check again after timeout
-        setTimeout(checkHold, timeoutPollMs);
+        timeout = setTimeout(checkHold, timeoutPollMs);
       }
     };
 
     // Set a timeout to conditionally remove the temporary hold
-    setTimeout(checkHold, timeoutPollMs);
+    timeout = setTimeout(checkHold, timeoutPollMs);
   }
 };
 

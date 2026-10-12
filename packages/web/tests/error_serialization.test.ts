@@ -1,5 +1,5 @@
-import { SyncStreamConnectionMethod } from '@powersync/common';
-import { describe, expect } from 'vitest';
+import { LogRecord, SyncStreamConnectionMethod } from '@powersync/common';
+import { describe, expect, vi } from 'vitest';
 import { sharedMockSyncServiceTest } from './utils/mockSyncServiceTest.js';
 
 /**
@@ -38,6 +38,84 @@ describe('Error Serialization through MessagePorts', { sequential: true }, () =>
       expect(database.currentStatus?.downloadError?.name).toBe('Error');
       expect(database.currentStatus?.downloadError?.message).toBe('HTTP : "Unauthorized"\n');
       expect(database.currentStatus?.downloadError?.stack).toBeDefined();
+      // `status` is set on the error inside the shared worker (not across Comlink),
+      // so it must survive the SyncStatus serialization boundary.
+      expect((database.currentStatus?.downloadError as { status?: number })?.status).toBe(401);
+    }
+  );
+
+  sharedMockSyncServiceTest(
+    'should preserve a connector error code and cause across the shared worker relay',
+    { timeout: 10_000 },
+    async ({ context: { openDatabase } }) => {
+      const records: LogRecord[] = [];
+      const database = openDatabase({ logger: { log: (record: LogRecord) => records.push(record) } });
+
+      const connectorError = Object.assign(new Error('powersync_control: internal SQLite call returned CORRUPT'), {
+        code: 'SQLITE_CORRUPT',
+        cause: new Error('disk I/O error')
+      });
+
+      await database
+        .connect(
+          {
+            fetchCredentials: async () => {
+              throw connectorError;
+            },
+            uploadData: async () => {}
+          },
+          { connectionMethod: SyncStreamConnectionMethod.HTTP, retryDelayMs: 60_000 }
+        )
+        .catch(() => undefined);
+
+      await vi.waitFor(() => {
+        expect(database.currentStatus?.downloadError).toBeDefined();
+      });
+
+      // The connector rejection is serialized in `SharedSyncClientProvider#relay`
+      // before it crosses the MessagePort, so custom fields survive the worker relay.
+      const downloadError = database.currentStatus!.downloadError as Error & { code?: string | number; cause?: unknown };
+      expect(downloadError.code).toBe('SQLITE_CORRUPT');
+      expect(String((downloadError.cause as Error)?.message ?? downloadError.cause)).toContain('disk I/O error');
+
+      await vi.waitFor(() => {
+        expect(
+          records.some(
+            (record) => record.message === 'Sync error' && (record.error as { code?: string })?.code === 'SQLITE_CORRUPT'
+          )
+        ).toBe(true);
+      });
+    }
+  );
+
+  sharedMockSyncServiceTest(
+    'should mark a connector rejection without a reason as missing across the worker relay',
+    { timeout: 10_000 },
+    async ({ context: { openDatabase } }) => {
+      const records: LogRecord[] = [];
+      const database = openDatabase({ logger: { log: (record: LogRecord) => records.push(record) } });
+
+      await database
+        .connect(
+          {
+            fetchCredentials: async () => {
+              throw undefined;
+            },
+            uploadData: async () => {}
+          },
+          { connectionMethod: SyncStreamConnectionMethod.HTTP, retryDelayMs: 60_000 }
+        )
+        .catch(() => undefined);
+
+      await vi.waitFor(() => {
+        expect(database.currentStatus?.downloadError?.name).toBe('PowerSyncMissingRejectionReason');
+      });
+
+      await vi.waitFor(() => {
+        expect(
+          records.some((record) => record.message === 'Sync error' && (record.error as { state?: string })?.state === 'missing')
+        ).toBe(true);
+      });
     }
   );
 });

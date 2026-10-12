@@ -68,12 +68,10 @@ impl<R: Runtime> PowerSync<R> {
         let env = PowerSyncEnvironment::custom(
             reqwest::Client::new(),
             pool,
-            PowerSyncEnvironment::tokio_timer(),
+            PowerSyncEnvironment::tokio(),
         );
 
         let database = PowerSyncDatabase::new(env, schema);
-        database.async_tasks().spawn_with_tokio();
-
         let event_id = self.event_id_counter.fetch_add(1, Ordering::SeqCst);
         let db = Arc::new(TauriDatabaseState::new(app, event_id, database));
         entry.insert_entry(Arc::downgrade(&db));

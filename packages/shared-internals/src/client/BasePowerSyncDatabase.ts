@@ -718,7 +718,8 @@ SELECT * FROM crud_entries;
     if (!onResult) {
       throw new Error('onResult is required');
     }
-    const { comparator } = options ?? {};
+    const { comparator, signal } = options ?? {};
+    if (signal?.aborted) return;
 
     // This API yields a QueryResult type.
     // This is not a standard Array result, which makes it incompatible with the .query API.
@@ -753,7 +754,7 @@ SELECT * FROM crud_entries;
       }
     });
 
-    options?.signal?.addEventListener('abort', () => {
+    signal?.addEventListener('abort', () => {
       dispose();
       watchedQuery.close();
     });
@@ -840,17 +841,19 @@ SELECT * FROM crud_entries;
       executor.schedule({ changedTables: [] });
     }
 
-    const dispose = this.database.registerListener({
+    const disposeUpdateListener = this.database.registerListener({
       tablesUpdated: async (update) => {
         this.processTableUpdates(update, changedTables);
         flushTableUpdates();
       }
     });
 
-    signal?.addEventListener('abort', () => {
+    const dispose = () => {
       executor.dispose();
-      dispose();
-    });
+      disposeUpdateListener();
+      signal?.removeEventListener('abort', dispose);
+    };
+    signal?.addEventListener('abort', dispose);
 
     return dispose;
   }
