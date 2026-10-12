@@ -6,4 +6,4 @@ export { useAllSyncStreamsHaveSynced, useSyncStream, UseSyncStreamOptions } from
 export { useStatus } from './hooks/useStatus.js';
 export { useQuery } from './hooks/watched/useQuery.js';
 export { useWatchedQuerySubscription } from './hooks/watched/useWatchedQuerySubscription.js';
-export { AdditionalOptions, QuerySyncStreamOptions } from './hooks/watched/watch-types.js';
+export { AdditionalOptions, FetchReason, QuerySyncStreamOptions } from './hooks/watched/watch-types.js';

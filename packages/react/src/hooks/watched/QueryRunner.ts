@@ -6,7 +6,13 @@ import {
   DifferentialWatchedQueryComparator,
   WatchedQueryState
 } from '@powersync/common';
-import { AdditionalOptions, DifferentialHookOptions, QueryResult, ReadonlyQueryResult } from './watch-types.js';
+import {
+  AdditionalOptions,
+  DifferentialHookOptions,
+  FetchReason,
+  QueryResult,
+  ReadonlyQueryResult
+} from './watch-types.js';
 import { WatchCompatibleQueryWithParams } from './watch-utils.js';
 
 // We want to generate readonly results, but declare mutable results when useQuery is used without differential hooks
@@ -79,7 +85,13 @@ function idleResultFor<RowType>(config: RunnerConfig<RowType>): Result<RowType> 
     case 'query':
       // Single queries always report fetching while they run.
       const isFetching = config.runOnce || config.reportFetching;
-      return { isLoading: true, isFetching, data: [], error: undefined };
+      return {
+        isLoading: true,
+        isFetching,
+        data: [],
+        error: undefined,
+        fetchReason: isFetching ? 'initial' : undefined
+      };
   }
 }
 
@@ -275,7 +287,12 @@ class SingleQueryWork<RowType> implements QueryWork<RowType> {
     initial: Result<RowType>,
     private readonly emit: () => void
   ) {
-    this.result = { ...(initial as QueryResult<RowType>), isFetching: true, refresh: this.refresh };
+    this.result = {
+      ...(initial as QueryResult<RowType>),
+      isFetching: true,
+      fetchReason: 'initial',
+      refresh: this.refresh
+    };
     this.run();
   }
 
@@ -296,17 +313,17 @@ class SingleQueryWork<RowType> implements QueryWork<RowType> {
     const isAborted = () => signal.aborted || outerSignal?.aborted == true;
 
     if (!this.result.isLoading || !this.result.isFetching || this.result.error) {
-      this.setResult({ isLoading: true, isFetching: true, error: undefined });
+      this.setResult({ isLoading: true, isFetching: true, error: undefined, fetchReason: 'initial' });
     }
 
     const { query, sql, parameters, db } = this.config;
     try {
       const data = await query.execute({ sql, parameters: [...parameters], db });
       if (isAborted()) return;
-      this.setResult({ isLoading: false, isFetching: false, data, error: undefined });
+      this.setResult({ isLoading: false, isFetching: false, data, error: undefined, fetchReason: undefined });
     } catch (error) {
       if (isAborted()) return;
-      this.setResult({ isLoading: false, isFetching: false, data: [], error: error as Error });
+      this.setResult({ isLoading: false, isFetching: false, data: [], error: error as Error, fetchReason: undefined });
     }
   }
 
@@ -334,6 +351,11 @@ class WatchedQueryWork<RowType> implements QueryWork<RowType> {
    * `isFetching` in the meantime so that the hook doesn't briefly appear settled with stale data.
    */
   private pendingUpdate = false;
+  /**
+   * Set by {@link tryUpdate} until the updated query has produced its first result. Until then, `data` still holds the
+   * previous query's rows, which is reported as `fetchReason: 'settings-changed'`.
+   */
+  private awaitingUpdatedResult = false;
   private reportFetching: boolean;
 
   constructor(
@@ -352,6 +374,10 @@ class WatchedQueryWork<RowType> implements QueryWork<RowType> {
 
     this.disposeListener = this.watch.registerListener({
       onStateChange: (state) => {
+        if (this.awaitingUpdatedResult && !this.pendingUpdate && !state.isFetching) {
+          // The first completed fetch after the new settings were applied is the updated query's result.
+          this.awaitingUpdatedResult = false;
+        }
         this.result = this.mapState(state);
         this.emit();
       },
@@ -365,12 +391,20 @@ class WatchedQueryWork<RowType> implements QueryWork<RowType> {
 
   private mapState(state: WatchedQueryState<ReadonlyArray<Readonly<RowType>>>): Result<RowType> {
     // The state object may be mutated by the watched query, so we copy it into a fresh snapshot.
+    const isFetching = state.isFetching || (this.pendingUpdate && this.reportFetching);
     return {
       data: state.data as RowType[],
       isLoading: state.isLoading,
-      isFetching: state.isFetching || (this.pendingUpdate && this.reportFetching),
-      error: state.error ?? undefined
+      isFetching,
+      error: state.error ?? undefined,
+      fetchReason: this.fetchReasonFor(state.isLoading, isFetching)
     };
+  }
+
+  private fetchReasonFor(isLoading: boolean, isFetching: boolean): FetchReason | undefined {
+    if (!isFetching) return undefined;
+    if (isLoading) return 'initial';
+    return this.awaitingUpdatedResult ? 'settings-changed' : 'tables-changed';
   }
 
   private canUpdate(config: RunnerConfig<RowType>): config is QueryConfig<RowType> {
@@ -388,7 +422,12 @@ class WatchedQueryWork<RowType> implements QueryWork<RowType> {
     }
 
     // Keep the previous data while the updated query runs.
-    return { ...this.result, isFetching: this.result.isFetching || config.reportFetching };
+    const isFetching = this.result.isFetching || config.reportFetching;
+    return {
+      ...this.result,
+      isFetching,
+      fetchReason: !isFetching ? undefined : this.result.isLoading ? 'initial' : 'settings-changed'
+    };
   }
 
   tryUpdate(config: RunnerConfig<RowType>): boolean {
@@ -399,6 +438,7 @@ class WatchedQueryWork<RowType> implements QueryWork<RowType> {
     this.config = config;
     this.reportFetching = config.reportFetching;
     this.pendingUpdate = true;
+    this.awaitingUpdatedResult = true;
     this.watch.updateSettings({
       query: config.query,
       throttleMs: config.throttleMs,
