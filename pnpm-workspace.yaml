@@ -4,25 +4,10 @@ packages:
   - tools/*
   - docs/
 
-overrides:
-  'fast-xml-parser': '>=5.3.5'
-  # To avoid https://github.com/advisories/GHSA-2w6w-674q-4c4q
-  'handlebars': ^4.7.9
-  # To avoid https://github.com/advisories/GHSA-w7jw-789q-3m8p
-  'shell-quote': ^1.8.4
-  # To avoid https://github.com/advisories/GHSA-xv26-6w52-cph6
-  'websocket-driver': '>=0.7.5'
-  # To avoid https://github.com/advisories/GHSA-23hp-3jrh-7fpw
-  'tar': '>=7.5.19'
-  # To avoid https://github.com/advisories/GHSA-mv8w-475r-vwqw
-  'seroval': '>=1.5.6'
-  # To avoid https://github.com/advisories/GHSA-279x-mwfv-vcqv
-  '@nuxt/devtools': '^3.3.1'
-
 catalog:
   # We must depend on an exact version of wa-sqlite, as we want to update the core extension
   # (which can be breaking for SDKs) without a major revision.
-  '@journeyapps/wa-sqlite': 2.0.6
+  '@journeyapps/wa-sqlite': 2.0.7
   '@microsoft/api-extractor': ^7.59.0
   '@nuxt/devtools-kit': ^3.2.3
   '@nuxt/devtools-ui-kit': ^3.2.3
