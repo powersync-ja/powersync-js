@@ -56,7 +56,7 @@ export interface CoreStreamSubscription {
 
 export interface SyncPriorityStatus {
   priority: number;
-  last_synced_at: number | number;
+  last_synced_at: number | null;
   has_synced: boolean | null;
 }
 
