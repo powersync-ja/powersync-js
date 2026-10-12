@@ -56,6 +56,25 @@ test('stream subscriptions', async () => {
   });
 });
 
+test('reports priority sync status', async () => {
+  const db = openDatabase({ schema });
+  await db.init();
+  expect(db.currentStatus.hasSynced).toBe(false);
+
+  // Pretend that a full sync has completed before. The core extension stores this in ps_sync_state,
+  // with timestamps in microseconds since the epoch.
+  const lastSyncedAt = new Date('2026-01-01T00:00:00Z');
+  await db.execute('INSERT INTO ps_sync_state (priority, last_synced_at) VALUES (?, ?)', [
+    2147483647,
+    lastSyncedAt.getTime() * 1000
+  ]);
+
+  // While offline, subscribing to a stream makes the SDK reload the sync status from the database.
+  await db.syncStream('foo').subscribe();
+  await db.waitForFirstSync();
+  expect(db.currentStatus.lastSyncedAt).toStrictEqual(lastSyncedAt);
+});
+
 test('watch smoke test', async () => {
   const db = openDatabase({ schema });
   const fn = vi.fn();
