@@ -12,6 +12,7 @@ Prerequisites:
 * To run this demo, you need to have properly configured Supabase and PowerSync projects. Follow the instructions in our Supabase<>PowerSync integration guide:
   * [Configure Supabase](https://docs.powersync.com/integration-guides/supabase-+-powersync#configure-supabase)
   * [Configure PowerSync](https://docs.powersync.com/integration-guides/supabase-+-powersync#configure-powersync)
+* Or run Supabase and PowerSync locally instead. See [Run with Local Supabase and PowerSync](#run-with-local-supabase-and-powersync).
 
 Switch into the demo's directory:
 
@@ -40,6 +41,42 @@ pnpm dev
 ```
 
 Open [http://localhost:5173](http://localhost:5173) with your browser to see the result.
+
+## Run with Local Supabase and PowerSync
+
+The demo can also run against local Supabase and PowerSync services. You need the [Supabase CLI](https://supabase.com/docs/guides/cli/getting-started) and Docker. Install dependencies and copy `.env.local.template` to `.env.local` as above, then:
+
+1. Start Supabase. It creates the `lists` and `todos` tables from `supabase/migrations`:
+
+   ```bash
+   supabase start
+   ```
+
+2. In `.env.local`, set the three `VITE_` values to the local services. `.env.local.template` lists them under "Local setup". Copy the **Publishable** key from the `supabase start` output into `VITE_SUPABASE_ANON_KEY`.
+
+3. Start PowerSync on the Supabase network:
+
+   ```bash
+   docker run \
+     -p 8080:8080 \
+     -e POWERSYNC_CONFIG_B64=$(base64 -i ./powersync.yaml) \
+     -e POWERSYNC_SYNC_RULES_B64=$(base64 -i ./sync-config.yaml) \
+     --env-file ./.env.local \
+     --network supabase_network_react-supabase-todolist \
+     --name powersync-react-todolist journeyapps/powersync-service:latest
+   ```
+
+4. Run the development server:
+
+   ```bash
+   pnpm dev
+   ```
+
+Open [http://localhost:5173](http://localhost:5173), sign up with any email and password, and create a list.
+
+## PowerSync DevTools
+
+The development server includes [PowerSync DevTools](https://docs.powersync.com/tools/devtools/vite). Open the Vite DevTools dock at the bottom of the page and select **PowerSync** to see the sync status, buckets, streams, local data and logs. The first time, confirm the browser with the code that the terminal prints.
 
 ## Progressive Web App (PWA)
 
