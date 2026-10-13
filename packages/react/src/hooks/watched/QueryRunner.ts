@@ -330,7 +330,9 @@ class SingleQueryWork<RowType> implements QueryWork<RowType> {
     const isAborted = () => signal.aborted || outerSignal?.aborted == true;
 
     if (!this.result.isLoading || this.result.error) {
-      this.setResult({ isLoading: fetchReason === 'initial', isFetching: true, error: undefined, fetchReason });
+      // After an error, data is empty, so we're loading again rather than refreshing existing rows.
+      const isLoading = fetchReason === 'initial' || this.result.error != null;
+      this.setResult({ isLoading, isFetching: true, error: undefined, fetchReason });
     }
 
     const { query, sql, parameters, db } = this.config;
