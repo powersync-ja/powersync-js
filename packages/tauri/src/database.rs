@@ -1,6 +1,6 @@
 use powersync::error::PowerSyncError;
 use powersync::{PowerSyncDatabase, PriorityStatus, SyncStatusData};
-use serde::ser::SerializeStruct;
+use serde::ser::{SerializeSeq, SerializeStruct};
 use serde::{Serialize, Serializer};
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -117,12 +117,10 @@ impl Serialize for SerializableCoreSyncStatus<'_> {
         inner.serialize_field("connected", &status.is_connected())?;
         inner.serialize_field("connecting", &&status.is_connecting())?;
 
-        let priority_status: Vec<_> = status
-            .priority_status()
-            .iter()
-            .map(SerializablePriorityStatus)
-            .collect();
-        inner.serialize_field("priority_status", &priority_status)?;
+        inner.serialize_field(
+            "priority_status",
+            &SerializablePriorityStatuses(status.priority_status()),
+        )?;
 
         // Note: Download progress is not available outside of streams.
         if status.is_downloading() {
@@ -135,6 +133,22 @@ impl Serialize for SerializableCoreSyncStatus<'_> {
         inner.serialize_field("streams", status.internal_streams())?;
 
         inner.end()
+    }
+}
+
+struct SerializablePriorityStatuses<'a>(&'a [PriorityStatus]);
+
+impl Serialize for SerializablePriorityStatuses<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut seq = serializer.serialize_seq(Some(self.0.len()))?;
+        for status in self.0 {
+            seq.serialize_element(&SerializablePriorityStatus(status))?;
+        }
+
+        seq.end()
     }
 }
 
