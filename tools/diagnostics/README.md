@@ -71,6 +71,23 @@ Your process serves the DevTools window on a random free port. Open the printed 
 
 Options: `port` (default: a random free port), `host`, `auth` (default `true`), `open` (open the browser, default `false`), `sdk` and `id` (labels in the UI), `mcp` (see [MCP](#mcp)).
 
+## Your own host
+
+A page that opens the database itself and shows the UI in its own iframe, such as a dashboard or another tool's DevTools, builds the integration and hands it to the frame:
+
+```ts
+import { attachIframe, createIntegration } from '@powersync/diagnostics/agent';
+
+const integration = createIntegration(db, '@powersync/web');
+const detach = attachIframe(integration, iframe);
+```
+
+Serve the page in `@powersync/diagnostics-ui/dist/standalone` at a route of your own and point the iframe at it; `@powersync/diagnostics/vite-static` does that on a Vite dev server. If your host can delete the database files, pass `reset`: **Clear & re-sync** in DevTools then swaps in the empty database it returns instead of deleting rows, which stays fast on a large database.
+
+```ts
+createIntegration(db, '@powersync/web', { reset: () => reopenEmptyDatabase() });
+```
+
 ## MCP
 
 Every host exposes the same tools. Names are `powersync_<function>`. Arguments are positional, `arg0` first:
@@ -105,7 +122,7 @@ curl -X POST http://localhost:<port>/__mcp \
 
 ## Requirements
 
-- `@powersync/web >= 2.5` for browser apps, `@powersync/node` for node apps.
+- `@powersync/web >= 2.5` for browser apps, `@powersync/node` for node apps. The `agent` entry needs `@powersync/common >= 2.3` and no `devtools` subpath.
 - Vite DevTools for the dock: Vite `>= 8.3` with `devtools: true`, or the `@vitejs/devtools` plugin on Vite 7.
 - Node `>= 20.16` for the node entry.
 

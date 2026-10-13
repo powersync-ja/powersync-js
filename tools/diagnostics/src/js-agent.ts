@@ -49,6 +49,13 @@ export interface JsAgentOptions {
   coreEvents?: CoreEventSource;
   /** Read access to the live connection; omit if the runtime cannot expose it. */
   connection?: ConnectionAccess;
+  /**
+   * Answers the `clearData` action by replacing the database: returns an empty one for the agent to
+   * carry on with. A host that can delete the database files provides this, since dropping the files
+   * takes milliseconds however large the database is, where the default, `disconnectAndClear()`,
+   * deletes row by row. The agent has let go of the old database by the time this is called.
+   */
+  reset?: () => Promise<CommonPowerSyncDatabase>;
 }
 
 /**
@@ -143,7 +150,11 @@ export class JsAgent implements SdkIntegration {
         await this.db.disconnect();
         break;
       case 'clearData':
-        await this.db.disconnectAndClear();
+        if (this.options.reset) {
+          await this.resetDatabase(this.options.reset);
+        } else {
+          await this.db.disconnectAndClear();
+        }
         await this.reconnect();
         break;
       case 'reconnect':
@@ -174,6 +185,13 @@ export class JsAgent implements SdkIntegration {
   }
 
   async close(): Promise<void> {
+    this.detach();
+    this.options.coreEvents?.dispose();
+    this.handlers.clear();
+  }
+
+  /** Lets go of the database: debug subscriptions, listeners and the log capture. Subscribers stay. */
+  private detach(): void {
     for (const handle of this.streamHandles.values()) {
       handle.unsubscribe();
     }
@@ -182,8 +200,20 @@ export class JsAgent implements SdkIntegration {
       dispose();
     }
     this.disposers = [];
-    this.handlers.clear();
     this.started = false;
+  }
+
+  /** Swaps the database for the empty one `reset` provides and serves it to the current subscribers. */
+  private async resetDatabase(reset: () => Promise<CommonPowerSyncDatabase>): Promise<void> {
+    this.detach();
+    this.bucketTargets.clear();
+    this.db = await reset();
+    if (this.handlers.size > 0) {
+      this.start();
+      for (const handler of this.handlers) {
+        this.replay(handler);
+      }
+    }
   }
 
   // --- push bridge ---
@@ -207,9 +237,8 @@ export class JsAgent implements SdkIntegration {
     this.captureConnection();
 
     if (this.options.coreEvents) {
-      const source = this.options.coreEvents;
-      this.disposers.push(source.onEvent((event) => this.handleCoreEvent(event)));
-      this.disposers.push(() => source.dispose());
+      // The source outlives a reset; it is disposed with the agent.
+      this.disposers.push(this.options.coreEvents.onEvent((event) => this.handleCoreEvent(event)));
     }
 
     this.captureLogs();
