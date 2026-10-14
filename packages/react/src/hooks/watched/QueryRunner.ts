@@ -234,16 +234,20 @@ export class QueryRunner<RowType> extends BaseObserver<QueryRunnerListener> {
    * Applies the inputs of a committed render to this runner. This does nothing if they haven't changed.
    *
    * This modifies state and should not run during a render.
+   *
+   * `initial` can be an existing result from another runner. This is used for one-shot suspense queries where state is
+   * only shared in the initial loading state and then forked to give each component an independent runner.
    */
-  configure(next: RunnerConfig<RowType>) {
+  configure(next: RunnerConfig<RowType>, initial?: Result<RowType>) {
     if (this.config != null && configEquals(this.config, next)) {
       return;
     }
 
     const pending = this.uncommitedConfigChange;
     this.config = next;
-    this.idleResult =
-      pending != null && pending.isOptimisticStateChange && configEquals(pending.config, next)
+    this.idleResult = initial
+      ? initial
+      : pending != null && pending.isOptimisticStateChange && configEquals(pending.config, next)
         ? // We already returned this as an optimistic state in a previous resultFor call. Use the same result to not
           // cause another render.
           pending.result
@@ -303,6 +307,12 @@ class SingleQueryWork<RowType> implements QueryWork<RowType> {
     initial: Result<RowType>,
     private readonly emit: () => void
   ) {
+    if (!initial.isLoading && initial.error == null) {
+      // Seeded with an existing result, no need to run it again.
+      this.result = { ...(initial as QueryResult<RowType>), refresh: this.refresh };
+      return;
+    }
+
     const fetchReason = 'initial';
     this.result = {
       ...(initial as QueryResult<RowType>),

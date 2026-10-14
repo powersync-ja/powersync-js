@@ -21,8 +21,12 @@ export const TEMPORARY_HOLD_MS = 5_000;
  * Hooks never reference entries directly, they use a {@link SuspenseQuery} handle that looks up the current entry for
  * its query (creating it if necessary) and then sticks to that entry while it's alive.
  *
- * Queries that only run once are shared only before they report results: We want a suspending hook to obtain the same
- * query when invoked again, without reporting stale results to from oneshot queries that already ran.
+ * Watched queries are shared between all components using them. Queries that only run once are shared only until a
+ * component commits with their results: We want a suspending hook to obtain the same query when its render is retried,
+ * but components that have committed must be able to refresh independently, and components mounting later shouldn't
+ * see stale results. So the first component committing with a one-shot entry claims it, which evicts it from the cache.
+ * Other components that rendered with the same entry (e.g. siblings in the same suspense boundary) continue with their
+ * own runner, seeded with the loaded result.
  */
 class SuspenseQueryCache {
   private readonly entries = new Map<string, SuspenseQueryEntry<any>>();
@@ -32,6 +36,8 @@ class SuspenseQueryCache {
    */
   query<RowType>(key: string, config: QueryConfig<RowType>) {
     let entry: SuspenseQueryEntry<RowType> | null = null;
+    // For one-shot queries, a runner owned by this handle after another one claimed the shared entry.
+    let settledOneShotFork: QueryRunner<RowType> | null = null;
     const current = () => {
       if (entry == null || entry.isRemoved) {
         entry = this.entries.get(key) ?? this.checkOut(key, config);
@@ -39,24 +45,36 @@ class SuspenseQueryCache {
       return entry;
     };
 
-    return {
+    const handle = {
       markUsed: () => {
-        if (entry == null || entry.isRemoved) {
+        if (settledOneShotFork != null) {
+          return;
+        } else if (entry == null || entry.isRemoved) {
           entry = this.checkOut(key, config);
         } else {
           entry.ensureHeld();
         }
       },
       subscribe: (onChange: () => void): (() => void) => {
-        return current().subscribe(onChange);
+        if (settledOneShotFork == null) {
+          const shared = current();
+          if (shared.claim(handle)) {
+            return shared.subscribe(onChange);
+          }
+
+          settledOneShotFork = new QueryRunner();
+          settledOneShotFork.configure(config, shared.getSnapshot());
+        }
+        return settledOneShotFork.subscribe(onChange);
       },
       getSnapshot: (): Result<RowType> => {
-        return current().getSnapshot();
+        return (settledOneShotFork ?? current()).getSnapshot();
       },
       waitForLoaded: (): Promise<void> => {
         return current().loaded;
       }
     };
+    return handle;
   }
 
   /**
@@ -64,9 +82,9 @@ class SuspenseQueryCache {
    */
   private checkOut<RowType>(key: string, config: QueryConfig<RowType>): SuspenseQueryEntry<RowType> {
     let entry = this.entries.get(key) as SuspenseQueryEntry<RowType> | undefined;
-    if (entry == null || entry.isOutdated) {
+    if (entry == null) {
       const created: SuspenseQueryEntry<RowType> = new SuspenseQueryEntry(config, () => {
-        // An outdated entry may have been replaced already, don't evict its replacement.
+        // A claimed entry may have been replaced already, don't evict its replacement.
         if (this.entries.get(key) === created) {
           this.entries.delete(key);
         }
@@ -91,6 +109,10 @@ class SuspenseQueryEntry<RowType> {
   private pendingLoad: { promise: Promise<void>; resolve: () => void } | null = null;
   private readonly runOnce: boolean;
   /**
+   * For one-shot queries, the handle of the component that has committed with this entry.
+   */
+  private owner: object | null = null;
+  /**
    * Set once this entry is neither held nor subscribed to. Its runner is idle then, and it must not be used again.
    */
   isRemoved = false;
@@ -98,9 +120,9 @@ class SuspenseQueryEntry<RowType> {
   constructor(
     config: QueryConfig<RowType>,
     /**
-     * Evicts this entry from the cache once it's removed.
+     * Evicts this entry from the cache, called once it's removed or claimed.
      */
-    private readonly onUnused: () => void
+    private readonly evict: () => void
   ) {
     this.runOnce = config.runOnce;
     // We call configure once here, and then never again. A changed config is represented by a fresh query entry
@@ -109,12 +131,24 @@ class SuspenseQueryEntry<RowType> {
   }
 
   /**
-   * Whether a new checkout should create a fresh entry instead of sharing this one: For queries running once, the
-   * result is only shared with components rendering while the initial hold is active. This avoids reporting stale data
-   * after the initial load.
+   * Called before a committed component subscribes through the given handle. Returns whether it may subscribe to this
+   * entry, or whether it needs to use its own runner instead.
+   *
+   * Watched queries can always be shared. For queries running once, the first committing component takes ownership of
+   * this entry, so that refreshing it doesn't affect other components and components mounting later don't get its
+   * (potentially stale) result.
    */
-  get isOutdated(): boolean {
-    return this.runOnce && this.releaseHold == null && this.isSettled;
+  claim(handle: object): boolean {
+    if (!this.runOnce) {
+      return true;
+    }
+
+    if (this.owner == null) {
+      this.owner = handle;
+      this.evict();
+    }
+    // In StrictMode, React unsubscribes and resubscribes right away, so the owner may claim this entry again.
+    return this.owner === handle;
   }
 
   subscribe(onChange: () => void): () => void {
@@ -201,7 +235,7 @@ class SuspenseQueryEntry<RowType> {
     if (this.subscribers == 0 && this.releaseHold == null) {
       // The runner has disposed its work since it has no listeners left.
       this.isRemoved = true;
-      this.onUnused();
+      this.evict();
     }
   }
 }

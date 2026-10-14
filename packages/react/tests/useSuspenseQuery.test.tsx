@@ -429,4 +429,49 @@ describe('useSuspenseQuery', () => {
     expect(result.current).toBeDefined();
     expect(result.current.data.length).toEqual(0);
   });
+
+  it('reads current rows when another one-shot consumer mounts after a write', async () => {
+    const useRowsOnce = () => useSuspenseQuery<{ name: string }>('SELECT name FROM lists', [], { runQueryOnce: true });
+    const first = renderHook(useRowsOnce, { wrapper });
+
+    await waitFor(() => expect(first.result.current?.data).toEqual([]));
+
+    await act(async () => {
+      await powersync.execute("INSERT INTO lists (id, name) VALUES ('new-list', 'new')");
+      // The old implementation used a temporary watch during initial loading.
+      // Give its throttled table-change notification time to observe this write
+      // before mounting the second consumer. This is well inside the cache hold.
+      await new Promise((resolve) => setTimeout(resolve, 250));
+    });
+
+    // A one-shot consumer that has already loaded should retain its own snapshot.
+    expect(first.result.current.data).toEqual([]);
+
+    const second = renderHook(useRowsOnce, { wrapper });
+    await waitFor(() => expect(second.result.current?.data).toEqual([{ name: 'new' }]));
+  });
+
+  it('keeps another one-shot consumer unchanged when only the first is refreshed', async () => {
+    const useRowsOnce = () => useSuspenseQuery<{ name: string }>('SELECT name FROM lists', [], { runQueryOnce: true });
+
+    const first = renderHook(useRowsOnce, { wrapper });
+    const second = renderHook(useRowsOnce, { wrapper });
+
+    await waitFor(() => expect(first.result.current?.data).toEqual([]));
+    await waitFor(() => expect(second.result.current?.data).toEqual([]));
+
+    await act(async () => {
+      await powersync.execute("INSERT INTO lists (id, name) VALUES ('new-list', 'new')");
+    });
+    expect(first.result.current.data).toEqual([]);
+    expect(second.result.current.data).toEqual([]);
+
+    await act(async () => {
+      await first.result.current.refresh!();
+    });
+
+    // Prove the requested refresh worked before checking its unintended effect.
+    expect(first.result.current.data).toEqual([{ name: 'new' }]);
+    expect(second.result.current.data).toEqual([]);
+  });
 });
