@@ -48,18 +48,15 @@ export type IntegrationOptions = Pick<JsAgentOptions, 'reset'>;
 export function createIntegration(
   database: CommonPowerSyncDatabase,
   sdk: string,
-  options: IntegrationOptions = {}
+  { reset }: IntegrationOptions = {}
 ): SdkIntegration {
-  const { reset } = options;
-  // Reassigned by `reset`, so the connection accessors follow the database the agent is on.
-  let db = database as DiagnosableDatabase;
-  return new JsAgent(db, {
+  return new JsAgent(database, {
     sdk,
     coreEvents: typeof BroadcastChannel === 'function' ? new BroadcastCoreEvents() : undefined,
     connection: {
-      getConnector: () => db.connector ?? null,
-      getConnectionOptions: () => db.connectionOptions ?? null
+      getConnector: (db) => (db as DiagnosableDatabase).connector ?? null,
+      getConnectionOptions: (db) => (db as DiagnosableDatabase).connectionOptions ?? null
     },
-    reset: reset && (async () => (db = (await reset()) as DiagnosableDatabase))
+    reset
   });
 }

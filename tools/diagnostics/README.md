@@ -82,7 +82,7 @@ const integration = createIntegration(db, '@powersync/web');
 const detach = attachIframe(integration, iframe);
 ```
 
-Serve the page in `@powersync/diagnostics-ui/dist/standalone` at a route of your own and point the iframe at it; `@powersync/diagnostics/vite-static` does that on a Vite dev server. If your host can delete the database files, pass `reset`: **Clear & re-sync** in DevTools then swaps in the empty database it returns instead of deleting rows, which stays fast on a large database.
+Serve the page in `@powersync/diagnostics-ui/dist/standalone` at a route of your own and point the iframe at it; `@powersync/diagnostics/vite-static` does that on a Vite dev server. If your host can delete the database files, pass `reset`: **Clear & re-sync** in DevTools then swaps in the empty database it returns instead of deleting rows, which stays fast on a large database. The agent disconnects the old database before calling it, and requests made during the swap wait for the new one.
 
 ```ts
 createIntegration(db, '@powersync/web', { reset: () => reopenEmptyDatabase() });
