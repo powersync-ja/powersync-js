@@ -1,5 +1,21 @@
 # @powersync/node
 
+## 1.2.0
+
+### Minor Changes
+
+- 9a05212: Forward core diagnostics events to PowerSync DevTools, so the Buckets tab shows per-bucket totals.
+
+### Patch Changes
+
+- Updated dependencies [20ea996]
+- Updated dependencies [fe8ad22]
+- Updated dependencies [fe8ad22]
+- Updated dependencies [5a8ed5e]
+- Updated dependencies [1a209a0]
+  - @powersync/shared-internals@1.4.0
+  - @powersync/common@2.4.0
+
 ## 1.1.1
 
 ### Patch Changes
