@@ -3,7 +3,7 @@
  * agents to a devframe node side over an RPC client (a dock script in a web page, or a node process).
  */
 import type { DevframeRpcClient } from 'devframe/client';
-import type { CommonPowerSyncDatabase, PowerSyncBackendConnector, SyncOptions } from '@powersync/common';
+import type { CommonPowerSyncDatabase } from '@powersync/common';
 import type {
   ActionRequest,
   CoreDiagnosticsEvent,
@@ -18,15 +18,6 @@ import './rpc-types.js';
 
 /** The sync client broadcasts core diagnostics events on this channel (see `emitDiagnostics`). */
 const CORE_EVENTS_CHANNEL = 'powersync-diagnostics-events';
-
-/**
- * The connection accessors every SDK's database class has. They are not on the public
- * `CommonPowerSyncDatabase` interface, so the agent reads them through this internal view.
- */
-interface DiagnosableDatabase extends CommonPowerSyncDatabase {
-  readonly connector: PowerSyncBackendConnector | null | undefined;
-  readonly connectionOptions: SyncOptions | null | undefined;
-}
 
 /** Consumes the core diagnostics events the sync client broadcasts (from a worker or in-process). */
 class BroadcastCoreEvents implements CoreEventSource {
@@ -45,14 +36,9 @@ class BroadcastCoreEvents implements CoreEventSource {
 
 /** Builds the JavaScript integration over a live database. */
 export function createIntegration(database: CommonPowerSyncDatabase, sdk: string): SdkIntegration {
-  const db = database as DiagnosableDatabase;
-  return new JsAgent(db, {
+  return new JsAgent(database, {
     sdk,
-    coreEvents: typeof BroadcastChannel === 'function' ? new BroadcastCoreEvents() : undefined,
-    connection: {
-      getConnector: () => db.connector ?? null,
-      getConnectionOptions: () => db.connectionOptions ?? null
-    }
+    coreEvents: typeof BroadcastChannel === 'function' ? new BroadcastCoreEvents() : undefined
   });
 }
 

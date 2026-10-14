@@ -870,6 +870,9 @@ importers:
       '@powersync/common':
         specifier: workspace:*
         version: link:../../packages/common
+      '@powersync/shared-internals':
+        specifier: workspace:*
+        version: link:../../packages/shared-internals
       '@powersync/web':
         specifier: workspace:*
         version: link:../../packages/web
