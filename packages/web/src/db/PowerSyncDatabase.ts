@@ -10,10 +10,9 @@ import {
 } from '@powersync/common';
 import {
   BasePowerSyncDatabase,
-  BucketStorageAdapter,
   CreateSyncImplementationOptions,
+  InternalConnector,
   Mutex,
-  SqliteBucketStorage,
   StreamingSyncImplementation,
   TriggerManagerConfig,
   openDatabase
@@ -155,7 +154,7 @@ export class WebPowerSyncDatabase extends BasePowerSyncDatabase<WebPowerSyncData
   }
 
   protected generateSyncStreamImplementation(
-    connector: PowerSyncBackendConnector,
+    connector: InternalConnector,
     options: CreateSyncImplementationOptions
   ): StreamingSyncImplementation {
     const remote = new WebRemote(connector, this.logger);

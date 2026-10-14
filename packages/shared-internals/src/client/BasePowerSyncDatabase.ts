@@ -33,7 +33,9 @@ import {
   BaseObserver,
   SqliteRecord,
   SyncStreamConnectionMethod,
-  CheckpointRequest
+  CheckpointRequest,
+  DownloadOptions,
+  UploadOptions
 } from '@powersync/common';
 import { BucketStorageAdapter, PSInternalTable } from './sync/bucket/BucketStorageAdapter.js';
 import { SyncStatusSnapshot } from '../db/crud/SyncStatus.js';
@@ -57,13 +59,13 @@ import { DEFAULT_WATCH_THROTTLE_MS } from './watched/WatchedQuery.js';
 import { CustomQuery } from './CustomQuery.js';
 import { MEMORY_TRIGGER_CLAIM_MANAGER } from './triggers/MemoryTriggerClaimManager.js';
 import { symbolAsyncIterator } from '../utils/compatibility.js';
-import { MAX_OP_ID } from '../constants.js';
 import { SqliteBucketStorage } from './sync/bucket/SqliteBucketStorage.js';
 import {
   cannotRequestDueToDisconnectedError,
   checkpointRequestsNotEnabledError
 } from './sync/stream/CheckpointState.js';
 import { CheckpointRequestImpl } from './sync/CheckpointRequestImpl.js';
+import { InternalConnector, normalizeConnectCall } from './InternalConnector.js';
 
 const POWERSYNC_TABLE_MATCH = /(^ps_data__|^ps_data_local__)/;
 
@@ -260,27 +262,15 @@ export abstract class BasePowerSyncDatabase<Options extends BasePowerSyncDatabas
   }
 
   protected abstract generateSyncStreamImplementation(
-    connector: PowerSyncBackendConnector,
+    connector: InternalConnector,
     options: CreateSyncImplementationOptions
   ): StreamingSyncImplementation;
 
-  protected commonSyncOptions(connector: PowerSyncBackendConnector, options: CreateSyncImplementationOptions) {
+  protected commonSyncOptions(connector: InternalConnector, options: CreateSyncImplementationOptions) {
     return {
       ...options,
       adapter: this.bucketStorageAdapter,
-      // PowerSyncBackendConnector accepts no abort signal; these callbacks await it directly.
-      // TODO: We should eventually forward the abort signal to controllers as well.
-      uploadCrud: async () => {
-        await this.waitForReady();
-        await connector.uploadData(this);
-      },
-      postCheckpointRequest: (clientId, requestId) => {
-        if (connector.postCheckpointRequest) {
-          return this.waitForReady().then((_) => connector.postCheckpointRequest!(clientId, requestId));
-        } else {
-          return null;
-        }
-      },
+      connector,
       identifier: this.database.name,
       logger: this.logger
     } satisfies Partial<AbstractStreamingSyncImplementationOptions>;
@@ -443,8 +433,15 @@ export abstract class BasePowerSyncDatabase<Options extends BasePowerSyncDatabas
     return this.runExclusiveMutex.runExclusive(callback);
   }
 
-  async connect(connector: PowerSyncBackendConnector, options?: SyncOptions) {
-    return this.connectionManager.connect(connector, options ?? {}, this.schema.toJSON());
+  connect(connector: PowerSyncBackendConnector, options?: SyncOptions): Promise<void>;
+  connect(options: SyncOptions & (DownloadOptions | UploadOptions)): Promise<void>;
+
+  async connect(
+    connector: PowerSyncBackendConnector | (SyncOptions & (DownloadOptions | UploadOptions)),
+    options?: SyncOptions
+  ) {
+    const [resolvedConnector, resolvedOptions] = normalizeConnectCall(this, connector, options);
+    return this.connectionManager.connect(resolvedConnector, resolvedOptions, this.schema.toJSON());
   }
 
   async disconnect() {

@@ -1,5 +1,5 @@
 import { PowerSyncLogger } from '@powersync/common';
-import { AbstractRemote, FetchOptions, RemoteConnector, SocketSyncStreamOptions } from '@powersync/shared-internals';
+import { AbstractRemote, FetchOptions, InternalConnector, SocketSyncStreamOptions } from '@powersync/shared-internals';
 
 import { SimpleAsyncIterator } from '@powersync/shared-internals';
 import { type BSON } from 'bson';
@@ -75,7 +75,7 @@ export class WebRemote extends AbstractRemote {
   private _bson: typeof BSON | undefined;
 
   constructor(
-    protected connector: RemoteConnector,
+    protected connector: InternalConnector,
     logger: PowerSyncLogger
   ) {
     super(connector, logger);
