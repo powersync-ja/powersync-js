@@ -1,5 +1,19 @@
 # @powersync/shared-internals
 
+## 1.4.0
+
+### Minor Changes
+
+- fe8ad22: Wire the core diagnostics event stream into the sync client and keep the active `connector` available for the whole connection lifetime.
+
+### Patch Changes
+
+- 20ea996: Fix `expiresAt` and `lastSyncedAt` on sync stream subscriptions being invalid dates.
+- 5a8ed5e: Fix `lastSyncedAt` and `expiresAt` of sync stream subscriptions being `Invalid Date`, since the core extension reports these timestamps in microseconds.
+- 1a209a0: Preserve error details across Web worker boundaries, including error codes, HTTP status, causes, and missing rejection reasons.
+- Updated dependencies [fe8ad22]
+  - @powersync/common@2.4.0
+
 ## 1.3.1
 
 ### Patch Changes

@@ -1,5 +1,19 @@
 # @powersync/capacitor
 
+## 0.9.4
+
+### Patch Changes
+
+- bb7bf4a: Internal optimization: Use text format to receive sync lines from PowerSync service.
+- Updated dependencies [544c9ba]
+- Updated dependencies [fe8ad22]
+- Updated dependencies [20ea996]
+- Updated dependencies [fe8ad22]
+- Updated dependencies [5a8ed5e]
+- Updated dependencies [1a209a0]
+  - @powersync/web@2.5.0
+  - @powersync/shared-internals@1.4.0
+
 ## 0.9.3
 
 ### Patch Changes

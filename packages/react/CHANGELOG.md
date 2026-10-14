@@ -1,5 +1,19 @@
 # @powersync/react
 
+## 2.1.0
+
+### Minor Changes
+
+- 582babe: Passing sync streams to suspending hooks now causes a deprecation warning. This was already non-functional before.
+- 2a62930: Add `fetchReason` to the `useQuery` result. While `isFetching` is true it is `'initial'`, `'tables-changed'` or `'settings-changed'`, so a parameter change (the previous query's rows are still returned) can be told apart from a refetch of the same query.
+
+### Patch Changes
+
+- 582babe: Calling `refresh` on a `useQuery` with `runQueryOnce` no longer resets `isLoading`, it only sets `isFetching` while the query runs again.
+- 774ecf9: Refactor `useQuery` hook to react to parameter changes more consistently.
+- Updated dependencies [fe8ad22]
+  - @powersync/common@2.4.0
+
 ## 2.0.2
 
 ### Patch Changes
