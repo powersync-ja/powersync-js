@@ -17,7 +17,7 @@ import { WatchCompatibleQueryWithParams } from './watch-utils.js';
 
 // We want to generate readonly results, but declare mutable results when useQuery is used without differential hooks
 // for backwards compatibility.
-type Result<RowType> = QueryResult<RowType> | ReadonlyQueryResult<RowType>;
+export type Result<RowType> = QueryResult<RowType> | ReadonlyQueryResult<RowType>;
 
 /**
  * The configured state a {@link QueryRunner} is in.
@@ -33,7 +33,7 @@ export type RunnerConfig<RowType> =
   | { kind: 'compile-error'; error: Error }
   | QueryConfig<RowType>;
 
-interface QueryConfig<RowType> {
+export interface QueryConfig<RowType> {
   kind: 'query';
   db: CommonPowerSyncDatabase;
   query: WatchCompatibleQueryWithParams<RowType[]>;
@@ -70,6 +70,22 @@ function configEquals<RowType>(a: RunnerConfig<RowType>, b: RunnerConfig<RowType
         a.reportFetching == b.reportFetching
       );
   }
+}
+
+/**
+ * Returns a string identifying a query config, such that two configs have the same key if {@link configEquals} considers
+ * them equal (apart from the database, which callers are expected to scope keys to).
+ */
+export function configKey<RowType>(config: QueryConfig<RowType>): string {
+  const { runOnce, rowComparator, throttleMs, reportFetching, sql, stringifiedParams } = config;
+  return JSON.stringify([runOnce, !!rowComparator, throttleMs ?? null, reportFetching, sql, stringifiedParams]);
+}
+
+/**
+ * For configs that can't run a query, returns the error to report.
+ */
+export function configError<RowType>(config: Exclude<RunnerConfig<RowType>, QueryConfig<RowType>>): Error | null {
+  return idleResultFor(config).error ?? null;
 }
 
 const _loadingState: QueryResult<never> = { isLoading: true, isFetching: false, data: [], error: undefined };
@@ -218,16 +234,20 @@ export class QueryRunner<RowType> extends BaseObserver<QueryRunnerListener> {
    * Applies the inputs of a committed render to this runner. This does nothing if they haven't changed.
    *
    * This modifies state and should not run during a render.
+   *
+   * `initial` can be an existing result from another runner. This is used for one-shot suspense queries where state is
+   * only shared in the initial loading state and then forked to give each component an independent runner.
    */
-  configure(next: RunnerConfig<RowType>) {
+  configure(next: RunnerConfig<RowType>, initial?: Result<RowType>) {
     if (this.config != null && configEquals(this.config, next)) {
       return;
     }
 
     const pending = this.uncommitedConfigChange;
     this.config = next;
-    this.idleResult =
-      pending != null && pending.isOptimisticStateChange && configEquals(pending.config, next)
+    this.idleResult = initial
+      ? initial
+      : pending != null && pending.isOptimisticStateChange && configEquals(pending.config, next)
         ? // We already returned this as an optimistic state in a previous resultFor call. Use the same result to not
           // cause another render.
           pending.result
@@ -287,18 +307,25 @@ class SingleQueryWork<RowType> implements QueryWork<RowType> {
     initial: Result<RowType>,
     private readonly emit: () => void
   ) {
+    if (!initial.isLoading && initial.error == null) {
+      // Seeded with an existing result, no need to run it again.
+      this.result = { ...(initial as QueryResult<RowType>), refresh: this.refresh };
+      return;
+    }
+
+    const fetchReason = 'initial';
     this.result = {
       ...(initial as QueryResult<RowType>),
       isFetching: true,
-      fetchReason: 'initial',
+      fetchReason,
       refresh: this.refresh
     };
-    this.run();
+    this.run(fetchReason);
   }
 
   readonly refresh = async (signal?: AbortSignal) => {
     if (this.disposed) return;
-    await this.run(signal);
+    await this.run('refresh', signal);
   };
 
   private setResult(update: Partial<QueryResult<RowType>>) {
@@ -306,14 +333,16 @@ class SingleQueryWork<RowType> implements QueryWork<RowType> {
     this.emit();
   }
 
-  private async run(outerSignal?: AbortSignal) {
+  private async run(fetchReason: FetchReason, outerSignal?: AbortSignal) {
     this.abortController?.abort();
     const controller = (this.abortController = new AbortController());
     const signal = controller.signal;
     const isAborted = () => signal.aborted || outerSignal?.aborted == true;
 
-    if (!this.result.isLoading || !this.result.isFetching || this.result.error) {
-      this.setResult({ isLoading: true, isFetching: true, error: undefined, fetchReason: 'initial' });
+    if (!this.result.isLoading || this.result.error) {
+      // After an error, data is empty, so we're loading again rather than refreshing existing rows.
+      const isLoading = fetchReason === 'initial' || this.result.error != null;
+      this.setResult({ isLoading, isFetching: true, error: undefined, fetchReason });
     }
 
     const { query, sql, parameters, db } = this.config;
