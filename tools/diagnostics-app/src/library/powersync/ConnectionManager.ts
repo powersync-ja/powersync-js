@@ -137,14 +137,7 @@ export async function connect() {
   const syncOptions: WebStreamingSyncImplementationOptions = {
     adapter,
     remote,
-    connector: {
-      uploadCrud: async () => {
-        // No-op
-      },
-      postCheckpointRequest() {
-        return null; // No-op
-      }
-    },
+    connector,
     identifier: 'diagnostics',
     subscriptions: [],
     logger: baseLogger,
