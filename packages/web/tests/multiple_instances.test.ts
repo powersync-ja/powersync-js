@@ -351,6 +351,26 @@ describe('Multiple Instances', { sequential: true }, () => {
     }
   );
 
+  sharedMockSyncServiceTest(
+    'should reject clients connecting in a different mode',
+    async ({ context: { database, openDatabase, defaultSyncOptions } }) => {
+      // Upload-only connections don't need the sync service, so this completes immediately.
+      await database.connect({ ...defaultSyncOptions, upload: vi.fn().mockResolvedValue(undefined) });
+
+      const secondDatabase = openDatabase();
+      await expect(
+        secondDatabase.connect({
+          ...defaultSyncOptions,
+          powerSyncEndpoint: 'http://localhost:3000',
+          authenticator: { resolveCredentials: vi.fn().mockResolvedValue('test-token') }
+        })
+      ).rejects.toThrow('Different tabs connecting in different modes');
+
+      // The failed attempt should not prevent connecting in a compatible mode.
+      await secondDatabase.connect({ ...defaultSyncOptions, upload: vi.fn().mockResolvedValue(undefined) });
+    }
+  );
+
   describe('tab-local sync client', () => {
     const mockService = MockSyncService.GLOBAL_INSTANCE;
 

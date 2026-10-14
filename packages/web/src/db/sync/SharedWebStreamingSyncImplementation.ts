@@ -217,9 +217,30 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
   }
 
   async dispose(): Promise<void> {
-    await this.waitForReady();
+    let registeredWithWorker = true;
+    try {
+      await this.waitForReady();
+    } catch {
+      // The worker rejected this client (e.g. because it connects in a mode incompatible with other tabs), so it won't
+      // acknowledge a close request either.
+      registeredWithWorker = false;
+    }
 
-    await new Promise<void>((resolve) => {
+    if (registeredWithWorker) {
+      await this.#closeWorkerClient();
+    }
+
+    await super.dispose();
+
+    this.abortOnClose.abort();
+
+    // Release the proxy
+    this.syncManager[Comlink.releaseProxy]();
+    this.worker.close();
+  }
+
+  #closeWorkerClient() {
+    return new Promise<void>((resolve) => {
       // This will always be a message port since we use shared workers.
       const messagePort = this.worker.endpoint as MessagePort;
 
@@ -238,14 +259,6 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
       };
       messagePort.postMessage(closeMessagePayload);
     });
-
-    await super.dispose();
-
-    this.abortOnClose.abort();
-
-    // Release the proxy
-    this.syncManager[Comlink.releaseProxy]();
-    this.worker.close();
   }
 
   async waitForReady() {
