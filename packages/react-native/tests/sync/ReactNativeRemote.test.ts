@@ -76,6 +76,24 @@ describe('ReactNativeRemote', () => {
     });
   });
 
+  it('sends a User-Agent header on WebSocket connections', () => {
+    const WebSocketMock = vi.fn();
+    vi.stubGlobal('WebSocket', WebSocketMock);
+
+    try {
+      const remote = new ReactNativeRemote(connector, logger);
+      remote.createSocket('wss://example.com/sync/stream');
+
+      expect(WebSocketMock).toHaveBeenCalledWith('wss://example.com/sync/stream', null, {
+        headers: {
+          'User-Agent': remote.getUserAgent()
+        }
+      });
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it('throws when attempting to stream with unsupported fetch', async () => {
     const [fetchImplementation, mock] = mockFetchImplementation({ supportsStreams: false });
     const remote = new ReactNativeRemote(connector, logger, { fetchImplementation });
