@@ -50,12 +50,17 @@ export interface JsAgentOptions {
   /** Read access to the live connection; omit if the runtime cannot expose it. */
   connection?: ConnectionAccess;
   /**
-   * Answers the `clearData` action by replacing the database: returns an empty one for the agent to
-   * carry on with. A host that can delete the database files provides this, since dropping the files
-   * takes milliseconds however large the database is, where the default, `disconnectAndClear()`,
-   * deletes row by row. The agent has disconnected and let go of the old database by the time this
-   * is called, and requests made meanwhile wait for the replacement. If it throws, the agent carries
-   * on with the old database. If the agent is closed meanwhile, it does not connect the replacement.
+   * Rarely appropriate. Answers the `clearData` action by replacing the database with an empty one.
+   * A host that can delete the database files provides it: dropping files takes milliseconds at any
+   * size, where the default, `disconnectAndClear()`, deletes row by row. The agent has let go of the
+   * old database when this is called, and requests made meanwhile wait for the replacement. If it
+   * throws, the agent keeps the old database. If the agent is closed meanwhile, it does not connect
+   * the replacement.
+   *
+   * Only for an ephemeral client, such as the dashboard's. Deleting the files gives the replacement a
+   * new client id, which `disconnectAndClear()` preserves. The client id distinguishes one user's
+   * clients, so a new one reads as a new client and orphans backend state keyed to the old, such as
+   * custom write checkpoints. A real app should leave this unset.
    */
   reset?: () => Promise<CommonPowerSyncDatabase>;
 }
