@@ -85,11 +85,9 @@ export class RawSqliteConnection {
     const sqlite3 = WaSqliteFactory(module);
     sqlite3.vfs_register(vfs, true);
     /**
-     * Register the PowerSync core SQLite extension
+     * Register the PowerSync core and additional statically linked extensions
      */
-    module.ccall('powersync_init_static', 'int', []);
-
-    for (const name of this.options.additionalInitializationFunctions ?? []) {
+    for (const name of ['powersync_init_static', ...(this.options.additionalInitializationFunctions ?? [])]) {
       const result = module.ccall(name, 'int', []);
       if (result !== 0) {
         throw new Error(`SQLite extension initializer ${name} failed with code ${result}`);
