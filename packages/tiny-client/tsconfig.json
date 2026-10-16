@@ -1,0 +1,18 @@
+{
+  "extends": "@tsconfig/strictest/tsconfig.json",
+  "include": ["src/"],
+  "compilerOptions": {
+    "types": ["node"],
+    "rootDir": "src",
+    "outDir": "./lib",
+    "lib": ["esnext"],
+    "declaration": true,
+    "module": "nodenext",
+    "moduleDetection": "force",
+    "moduleResolution": "nodenext",
+    "sourceMap": true,
+    "declarationMap": true,
+    "composite": true
+  },
+
+}

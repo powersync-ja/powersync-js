@@ -1,0 +1,50 @@
+{
+  "name": "@powersync/tiny-client",
+  "version": "0.1.0",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
+  "description": "A very small and lightweight PowerSync client",
+  "main": "lib/index.js",
+  "files": [
+    "lib",
+    "src"
+  ],
+  "scripts": {
+    "build": " pnpm prepare:core && tsc -b",
+    "build:prod": "pnpm prepare:core && tsc -b",
+    "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
+    "test": "vitest"
+  },
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "import": "./lib/index.js",
+      "module-sync": "./lib/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/powersync-ja/powersync-js.git"
+  },
+  "author": "PowerSync",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/powersync-ja/powersync-js/issues"
+  },
+  "homepage": "https://docs.powersync.com/",
+  "devDependencies": {
+    "typescript": "catalog:",
+    "vitest": "catalog:",
+    "@tsconfig/strictest": "^2.0.8"
+  },
+  "keywords": [
+    "data sync",
+    "offline-first",
+    "real-time data stream",
+    "live data"
+  ]
+}
