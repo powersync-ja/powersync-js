@@ -51,6 +51,32 @@ export const db = new PowerSyncDatabase({
 });
 ```
 
+### Statically linked SQLite extensions
+
+Custom wa-sqlite builds can expose initialization functions through
+`powersync_exported_functions.json`. Each function must take no arguments, register
+its extension (for example with `sqlite3_auto_extension`), return `SQLITE_OK` (0) on
+success, and be safe to call more than once for a module.
+
+Pass the exported names without Emscripten's leading underscore:
+
+```typescript
+const db = new PowerSyncDatabase({
+  schema: AppSchema,
+  database: {
+    dbFilename: 'example.db',
+    worker: '/custom-powersync-worker.js',
+    additionalInitializationFunctions: ['decimal_init_static']
+  }
+});
+```
+
+The SDK calls these exports in array order after `powersync_init_static` and before
+opening each SQLite connection, including read-only connections. A missing export
+or nonzero result aborts initialization. The default is no additional calls.
+Bundle the custom worker against the matching generated JavaScript/WASM pair;
+the standard WASM builds do not include your custom exports.
+
 ## Webpack
 
 See the [example Webpack config](https://github.com/powersync-ja/powersync-js/blob/main/demos/example-webpack/webpack.config.js) for details on polyfills and requirements.
