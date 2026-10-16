@@ -65,6 +65,17 @@ export interface WebSpecificOpenOptions {
   vfs: WASQLiteVFS;
 
   /**
+   * Names of additional no-argument WebAssembly exports to call after the PowerSync core initializer and before
+   * opening each SQLite connection, in array order. Each must register a statically linked extension, return
+   * SQLITE_OK (0) on success, and be safe to call more than once for a module.
+   *
+   * Requires a custom wa-sqlite build exporting these functions and a worker bundled against its matching JavaScript.
+   * Use exported names without Emscripten's leading underscore, e.g. `decimal_init_static`.
+   * Defaults to no additional initialization functions.
+   */
+  additionalInitializationFunctions?: readonly string[];
+
+  /**
    * If the {@link vfs} supports it, an additional amount of read-only connections to open. Using additional read
    * connections can speed up queries by dispatching them to multiple workers running them concurrently.
    *

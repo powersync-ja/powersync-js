@@ -29,6 +29,7 @@ export interface RawWaSqliteDatabaseOptions {
    * The amount of prepared statements to cache, or 0 to disable caching.
    */
   preparedStatementsCache: number;
+  additionalInitializationFunctions?: readonly string[];
 }
 
 /**
@@ -84,9 +85,14 @@ export class RawSqliteConnection {
     const sqlite3 = WaSqliteFactory(module);
     sqlite3.vfs_register(vfs, true);
     /**
-     * Register the PowerSync core SQLite extension
+     * Register the PowerSync core and additional statically linked extensions
      */
-    module.ccall('powersync_init_static', 'int', []);
+    for (const name of ['powersync_init_static', ...(this.options.additionalInitializationFunctions ?? [])]) {
+      const result = module.ccall(name, 'int', []);
+      if (result !== 0) {
+        throw new Error(`SQLite extension initializer ${name} failed with code ${result}`);
+      }
+    }
 
     /**
      * Create the multiple cipher vfs if an encryption key is provided
