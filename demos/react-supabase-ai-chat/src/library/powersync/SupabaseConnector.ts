@@ -1,9 +1,9 @@
 import {
-  AbstractPowerSyncDatabase,
   BaseObserver,
   CrudEntry,
   PowerSyncBackendConnector,
   UpdateType,
+  type CommonPowerSyncDatabase,
   type PowerSyncCredentials
 } from '@powersync/web';
 
@@ -110,7 +110,7 @@ export class SupabaseConnector extends BaseObserver<SupabaseConnectorListener> i
     } satisfies PowerSyncCredentials;
   }
 
-  async uploadData(database: AbstractPowerSyncDatabase): Promise<void> {
+  async uploadData(database: CommonPowerSyncDatabase): Promise<void> {
     const transaction = await database.getNextCrudTransaction();
 
     if (!transaction) {

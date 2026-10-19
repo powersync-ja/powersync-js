@@ -1,7 +1,9 @@
+import { cn } from '@/library/cn';
 import { MessageRecord, MessageStatus } from '@/library/powersync/AppSchema';
 import { useStatus } from '@powersync/react';
-import { Check, CloudOff, Copy, RotateCcw, TriangleAlert } from 'lucide-react';
+import { CloudOff, RotateCcw, TriangleAlert } from 'lucide-react';
 import React from 'react';
+import { CopyIcon } from './CopyIcon';
 import { Markdown } from './Markdown';
 import { useCopyToClipboard } from './useCopyToClipboard';
 import { useSmoothText } from './useSmoothText';
@@ -38,7 +40,7 @@ function Reply({ message, onRetry }: MessageProps) {
   const writes = message.write_count ?? 0;
 
   return (
-    <div>
+    <div className="group">
       {status === 'error' ? (
         <div className="flex items-start gap-2.5 rounded-xl border border-red-500/25 bg-red-500/5 px-4 py-3 text-sm text-red-700 dark:text-red-300">
           <TriangleAlert className="mt-0.5 size-4 shrink-0" />
@@ -51,7 +53,14 @@ function Reply({ message, onRetry }: MessageProps) {
       ) : null}
 
       {finished && (
-        <div className="mt-2 flex items-center gap-1 text-muted">
+        <div
+          className={cn(
+            'mt-2 flex items-center gap-1 text-muted transition-opacity',
+            // With a mouse, earlier replies show their actions on hover. The last reply, which can be retried, always does.
+            !onRetry &&
+              'pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100 pointer-fine:focus-within:opacity-100'
+          )}
+        >
           {status === 'stopped' && <span className="mr-2 text-sm">Stopped</span>}
           {status !== 'error' && content && <CopyButton text={content} />}
           {onRetry && (
@@ -134,7 +143,7 @@ function CopyButton({ text }: { text: string }) {
 
   return (
     <IconButton label="Copy" onClick={() => copy(text)}>
-      {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
+      <CopyIcon copied={copied} className="size-4" />
     </IconButton>
   );
 }

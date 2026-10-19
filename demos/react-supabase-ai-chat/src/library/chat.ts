@@ -1,4 +1,4 @@
-import { AbstractPowerSyncDatabase } from '@powersync/web';
+import type { CommonPowerSyncDatabase } from '@powersync/web';
 
 /**
  * Asks a question: writes the user's message and an empty assistant placeholder to the local database.
@@ -8,7 +8,7 @@ import { AbstractPowerSyncDatabase } from '@powersync/web';
  *
  * @returns The id of the chat, which is created when `chatId` is `null`.
  */
-export async function sendMessage(db: AbstractPowerSyncDatabase, chatId: string | null, text: string) {
+export async function sendMessage(db: CommonPowerSyncDatabase, chatId: string | null, text: string) {
   const id = chatId ?? crypto.randomUUID();
   const now = Date.now();
   const askedAt = new Date(now).toISOString();
@@ -40,18 +40,18 @@ export async function sendMessage(db: AbstractPowerSyncDatabase, chatId: string 
 }
 
 /** Stops a reply. The worker notices on its next write to the row and cancels generation. */
-export async function stopReply(db: AbstractPowerSyncDatabase, messageId: string) {
+export async function stopReply(db: CommonPowerSyncDatabase, messageId: string) {
   await db.execute(`UPDATE messages SET status = 'stopped' WHERE id = ? AND status IN ('pending', 'streaming')`, [
     messageId
   ]);
 }
 
 /** Generates a reply again. Setting it back to 'pending' notifies the worker, just like a new placeholder. */
-export async function retryReply(db: AbstractPowerSyncDatabase, messageId: string) {
+export async function retryReply(db: CommonPowerSyncDatabase, messageId: string) {
   await db.execute(`UPDATE messages SET status = 'pending', content = '' WHERE id = ?`, [messageId]);
 }
 
-export async function deleteChat(db: AbstractPowerSyncDatabase, chatId: string) {
+export async function deleteChat(db: CommonPowerSyncDatabase, chatId: string) {
   await db.writeTransaction(async (tx) => {
     await tx.execute('DELETE FROM messages WHERE chat_id = ?', [chatId]);
     await tx.execute('DELETE FROM chats WHERE id = ?', [chatId]);

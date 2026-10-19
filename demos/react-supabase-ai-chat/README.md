@@ -132,6 +132,7 @@ Run `supabase db reset` to re-apply the migrations from scratch.
 
 - The app signs in with `signInAnonymously()` in the connector, so each browser profile is a separate user.
 - Use **Go offline** at the bottom of the sidebar to ask a question while offline.
+- Keyboard shortcuts: **Esc** stops a reply, **⇧⌘O** (Ctrl+Shift+O on Windows and Linux) starts a new chat, and typing anywhere on the page goes into the message box.
 - The development server includes [PowerSync DevTools](https://docs.powersync.com/tools/devtools/vite). Open the Vite DevTools dock and select **PowerSync** to watch the `messages` table change while a reply streams.
 - The worker connects as the `postgres` superuser. In production, give it a role that can only read and update `messages`.
 - Several workers can run at once. Each one claims a reply with a conditional `UPDATE`, so a reply is only generated once. On startup, the worker restarts replies that a previous run left `streaming`. With several workers, track which worker owns a reply instead.

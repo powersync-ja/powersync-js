@@ -22,9 +22,20 @@ export function Composer({ onSend, onStop, autoFocus }: ComposerProps) {
     el.style.height = `${Math.min(el.scrollHeight, MAX_HEIGHT)}px`;
   }, [text]);
 
-  // Escape stops the reply, wherever the focus is.
+  const stop = () => {
+    onStop?.();
+    // The stop button is about to disappear, so keep the focus in the composer.
+    textarea.current?.focus();
+  };
+
+  // Escape stops the reply, wherever the focus is, and typing outside a text field goes into the composer.
   const handleKeyDown = React.useEffectEvent((event: KeyboardEvent) => {
-    if (event.key === 'Escape' && !event.isComposing) onStop?.();
+    if (event.isComposing || event.defaultPrevented) return;
+    if (event.key === 'Escape' && onStop) {
+      stop();
+    } else if (isStrayKeystroke(event)) {
+      textarea.current?.focus();
+    }
   });
   React.useEffect(() => {
     const listener = (event: KeyboardEvent) => handleKeyDown(event);
@@ -66,7 +77,7 @@ export function Composer({ onSend, onStop, autoFocus }: ComposerProps) {
         {onStop ? (
           <button
             type="button"
-            onClick={onStop}
+            onClick={stop}
             aria-label="Stop generating"
             aria-keyshortcuts="Escape"
             title="Stop generating (Esc)"
@@ -86,5 +97,18 @@ export function Composer({ onSend, onStop, autoFocus }: ComposerProps) {
         )}
       </div>
     </form>
+  );
+}
+
+/** A printable key typed while the focus isn't in a text field, e.g. after clicking a message. Space still scrolls. */
+function isStrayKeystroke(event: KeyboardEvent) {
+  return (
+    event.key.length === 1 &&
+    event.key !== ' ' &&
+    !event.ctrlKey &&
+    !event.metaKey &&
+    !event.altKey &&
+    event.target instanceof Element &&
+    !event.target.closest('input, textarea, select, [contenteditable]')
   );
 }

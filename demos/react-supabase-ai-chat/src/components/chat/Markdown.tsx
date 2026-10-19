@@ -1,8 +1,8 @@
 import { cn } from '@/library/cn';
-import { Check, Copy } from 'lucide-react';
 import React from 'react';
 import ReactMarkdown, { type Components, type ExtraProps } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { CopyIcon } from './CopyIcon';
 import { useCopyToClipboard } from './useCopyToClipboard';
 
 const components: Components = { pre: CodeBlock };
@@ -38,7 +38,7 @@ function CodeBlock({ node, children }: React.ComponentProps<'pre'> & ExtraProps)
           onClick={() => copy(source)}
           className="flex items-center gap-1.5 rounded-md px-2 py-1 transition-colors hover:bg-white/10 hover:text-stone-100"
         >
-          {copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
+          <CopyIcon copied={copied} className="size-3.5" />
           {copied ? 'Copied' : 'Copy'}
         </button>
       </div>

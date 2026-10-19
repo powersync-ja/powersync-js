@@ -2,8 +2,10 @@ import { Composer } from '@/components/chat/Composer';
 import { Message } from '@/components/chat/Message';
 import { TopBar } from '@/components/chat/TopBar';
 import { retryReply, sendMessage, stopReply } from '@/library/chat';
+import { cn } from '@/library/cn';
 import { ChatRecord, MessageRecord } from '@/library/powersync/AppSchema';
 import { usePowerSync, useQuery } from '@powersync/react';
+import { ArrowDown } from 'lucide-react';
 import React from 'react';
 import { useParams } from 'react-router';
 
@@ -35,7 +37,7 @@ function ChatView({ chatId }: { chatId: string }) {
   const last = messages.at(-1);
   const replying = last?.role === 'assistant' && (last.status === 'pending' || last.status === 'streaming');
 
-  const { scrollRef, contentRef, stickToBottom } = useStickToBottom();
+  const { scrollRef, contentRef, atBottom, scrollToBottom } = useStickToBottom();
 
   const retry = React.useCallback((messageId: string) => retryReply(db, messageId), [db]);
 
@@ -50,11 +52,23 @@ function ChatView({ chatId }: { chatId: string }) {
         </div>
       </div>
       <div className="px-4 pb-4 md:px-6">
-        <div className="mx-auto max-w-3xl">
+        <div className="relative mx-auto max-w-3xl">
+          <button
+            type="button"
+            aria-label="Scroll to bottom"
+            onClick={scrollToBottom}
+            inert={atBottom}
+            className={cn(
+              'absolute -top-12 left-1/2 flex size-9 -translate-x-1/2 items-center justify-center rounded-full border border-line bg-raised text-muted shadow-[0_2px_12px_rgb(0_0_0/0.08)] transition-opacity hover:text-ink',
+              atBottom && 'opacity-0'
+            )}
+          >
+            <ArrowDown className="size-4" />
+          </button>
           <Composer
             autoFocus
             onSend={(text) => {
-              stickToBottom();
+              scrollToBottom();
               sendMessage(db, chatId, text);
             }}
             onStop={replying ? () => stopReply(db, last.id) : undefined}
@@ -75,12 +89,15 @@ function ChatView({ chatId }: { chatId: string }) {
 function useStickToBottom() {
   const scrollRef = React.useRef<HTMLDivElement>(null);
   const contentRef = React.useRef<HTMLDivElement>(null);
+  // The same flag twice: a ref for the resize observer, and state to show or hide the scroll button.
   const pinned = React.useRef(true);
+  const [atBottom, setAtBottom] = React.useState(true);
 
   React.useEffect(() => {
     const scroller = scrollRef.current!;
     const onScroll = () => {
       pinned.current = scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight < 80;
+      setAtBottom(pinned.current);
     };
     const resizes = new ResizeObserver(() => {
       if (pinned.current) scroller.scrollTop = scroller.scrollHeight;
@@ -94,5 +111,11 @@ function useStickToBottom() {
     };
   }, []);
 
-  return { scrollRef, contentRef, stickToBottom: () => (pinned.current = true) };
+  const scrollToBottom = () => {
+    pinned.current = true;
+    setAtBottom(true);
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
+  };
+
+  return { scrollRef, contentRef, atBottom, scrollToBottom };
 }
