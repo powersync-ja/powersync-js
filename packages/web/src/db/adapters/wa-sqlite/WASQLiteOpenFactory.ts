@@ -75,7 +75,8 @@ export class WASQLiteOpenFactory implements SQLOpenFactory {
       encryptionKey,
       temporaryStorage,
       cacheSizeKb,
-      preparedStatementsCache
+      preparedStatementsCache,
+      storageBucket
     } = this.options;
 
     if (!enableMultiTabs) {
@@ -95,7 +96,8 @@ export class WASQLiteOpenFactory implements SQLOpenFactory {
         temporaryStorage,
         cacheSizeKb,
         // TODO: Enable prepared statement cache by default?
-        preparedStatementsCache: preparedStatementsCache ?? 0
+        preparedStatementsCache: preparedStatementsCache ?? 0,
+        storageBucket
       };
     }
 
