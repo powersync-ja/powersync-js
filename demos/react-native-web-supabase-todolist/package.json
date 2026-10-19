@@ -21,7 +21,7 @@
     "@powersync/attachments-storage-react-native": "^0.1.1",
     "@powersync/common": "^2.4.0",
     "@powersync/react": "^2.1.0",
-    "@powersync/react-native": "^2.3.2",
+    "@powersync/react-native": "^2.3.3",
     "@powersync/web": "^2.5.0",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@rneui/base": "4.0.0-rc.8",
