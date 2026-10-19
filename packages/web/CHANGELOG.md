@@ -1,5 +1,23 @@
 # @powersync/web
 
+## 2.5.0
+
+### Minor Changes
+
+- fe8ad22: Add a `@powersync/web/devtools` subpath that lists the page's open databases for development tooling, and broadcast core diagnostics events to it.
+
+### Patch Changes
+
+- 544c9ba: OPFS WriteAhead VFS: Improve performance of checkpoints.
+- 1a209a0: Preserve error details across Web worker boundaries, including error codes, HTTP status, causes, and missing rejection reasons.
+- Updated dependencies [20ea996]
+- Updated dependencies [fe8ad22]
+- Updated dependencies [fe8ad22]
+- Updated dependencies [5a8ed5e]
+- Updated dependencies [1a209a0]
+  - @powersync/shared-internals@1.4.0
+  - @powersync/common@2.4.0
+
 ## 2.4.2
 
 ### Patch Changes

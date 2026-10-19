@@ -1,5 +1,11 @@
 # @powersync/common
 
+## 2.4.0
+
+### Minor Changes
+
+- fe8ad22: Add a `diagnostics` sync option that enables the SQLite core's diagnostics event stream.
+
 ## 2.3.1
 
 ### Patch Changes

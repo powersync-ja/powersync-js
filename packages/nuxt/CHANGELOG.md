@@ -1,5 +1,26 @@
 # @powersync/nuxt
 
+## 2.0.0
+
+### Major Changes
+
+- fe8ad22: **Breaking:** `NuxtPowerSyncDatabase` is removed; use `PowerSyncDatabase` with `connect(connector, { diagnostics: true })`. Diagnostics now come from `@powersync/diagnostics`: a PowerSync tab on Nuxt DevTools 3, the devframe dock with MCP tools on Nuxt DevTools 4.
+
+### Patch Changes
+
+- Updated dependencies [544c9ba]
+- Updated dependencies [255456b]
+- Updated dependencies [fe8ad22]
+- Updated dependencies [20ea996]
+- Updated dependencies [fe8ad22]
+- Updated dependencies [5a8ed5e]
+- Updated dependencies [1a209a0]
+  - @powersync/web@2.5.0
+  - @powersync/diagnostics@0.0.2
+  - @powersync/shared-internals@1.4.0
+  - @powersync/kysely-driver@2.0.2
+  - @powersync/vue@0.7.0
+
 ## 1.0.0
 
 ### Patch Changes
