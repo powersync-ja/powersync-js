@@ -84,7 +84,7 @@ const detach = attachIframe(integration, iframe, new URL(iframe.src).origin);
 
 Serve the folder `uiDistDir()` from `@powersync/diagnostics` returns at a route of your own and point the iframe at it; `@powersync/diagnostics/vite-static` does that on a Vite dev server. Pass the page's origin to `attachIframe`: the port it sends can run any SQL and read the sync token.
 
-**Clear & re-sync** in DevTools deletes the local rows, which is slow on a large database. A host that can delete the database files can handle `clearData` itself instead: close the integration and the database, delete the files, then open a new database with a new integration and iframe.
+**Clear & re-sync** in DevTools deletes the local rows, which is slow on a large database. A host running a throwaway client, like the dashboard's, can handle `clearData` itself instead: close the integration and the database, delete the files, then open a new database with a new integration and iframe. Do not do this for a real app's database: deleting the files also gives the client a new client id, which `disconnectAndClear()` keeps.
 
 ## MCP
 

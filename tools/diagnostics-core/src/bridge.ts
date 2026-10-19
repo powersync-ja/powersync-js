@@ -67,28 +67,38 @@ export function connectIntegration(port: MessagePort): SdkIntegration {
 }
 
 /**
- * Host side of the iframe hand-off: creates a dedicated channel, serves `integration` on one end,
- * and posts the other end to the iframe. Returns a function that stops serving.
+ * Host side of the iframe hand-off: answers the iframe's port requests with a dedicated channel that
+ * serves `integration`. It waits to be asked because a new iframe's blank placeholder already reports
+ * `complete`, and a port posted to it is lost when the real page loads. A later request (the page
+ * reloaded) replaces the earlier channel. Returns a function that stops serving.
  */
 export function attachIframe(integration: SdkIntegration, frame: HTMLIFrameElement, targetOrigin = '*'): () => void {
-  const channel = new MessageChannel();
-  const stop = exposeIntegration(integration, channel.port1);
-  const send = () => frame.contentWindow?.postMessage({ type: PORT_MESSAGE }, targetOrigin, [channel.port2]);
-  if (frame.contentDocument?.readyState === 'complete') {
-    send();
-  } else {
-    frame.addEventListener('load', send, { once: true });
-  }
-  return stop;
+  let stop: (() => void) | null = null;
+  const onMessage = (event: MessageEvent) => {
+    const uiWindow = frame.contentWindow;
+    if (!uiWindow || event.source !== uiWindow || event.data?.type !== REQUEST_PORT_MESSAGE) {
+      return;
+    }
+    if (targetOrigin !== '*' && event.origin !== targetOrigin) {
+      return;
+    }
+    stop?.();
+    const channel = new MessageChannel();
+    stop = exposeIntegration(integration, channel.port1);
+    uiWindow.postMessage({ type: PORT_MESSAGE }, targetOrigin, [channel.port2]);
+  };
+  window.addEventListener('message', onMessage);
+  return () => {
+    window.removeEventListener('message', onMessage);
+    stop?.();
+  };
 }
 
 /**
  * UI side of the iframe hand-off: resolves once a host posts the dedicated port.
  *
- * Works with either hand-off direction. A host that knows the iframe (see {@link attachIframe})
- * posts the port on load. A host that only serves ports on request (an in-page script the dock
- * cannot reference) is asked: the UI posts a request to its parent, retrying until a port arrives,
- * so it also recovers when the page's script loads after the iframe.
+ * Hosts serve ports on request (see {@link attachIframe}): the UI posts a request to its ancestors,
+ * retrying until a port arrives, so it also recovers when the host's script loads after the iframe.
  */
 export function awaitIntegration(options: { requestIntervalMs?: number } = {}): Promise<SdkIntegration> {
   const interval = options.requestIntervalMs ?? 500;
