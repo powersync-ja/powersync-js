@@ -4,6 +4,7 @@ import { TopBar } from '@/components/chat/TopBar';
 import { retryReply, sendMessage, stopReply } from '@/library/chat';
 import { cn } from '@/library/cn';
 import { ChatRecord, MessageRecord } from '@/library/powersync/AppSchema';
+import { STREAM_MODE_DESCRIPTION } from '@/library/streamMode';
 import { usePowerSync, useQuery } from '@powersync/react';
 import { ArrowDown } from 'lucide-react';
 import React from 'react';
@@ -73,9 +74,7 @@ function ChatView({ chatId }: { chatId: string }) {
             }}
             onStop={replying ? () => stopReply(db, last.id) : undefined}
           />
-          <p className="mt-2.5 text-center text-xs text-muted">
-            Replies are written to Postgres as they generate and synced to every open tab and device by PowerSync.
-          </p>
+          <p className="mt-2.5 text-center text-xs text-muted">{STREAM_MODE_DESCRIPTION}</p>
         </div>
       </div>
     </>

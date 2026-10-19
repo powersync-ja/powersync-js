@@ -1,23 +1,26 @@
-import postgres from 'postgres';
-import { describeError, generateReply, generateTitle, missingApiKey, modelId } from './model.ts';
+import { pg, type ClaimedReply } from './db.ts';
+import { generateTitle, missingApiKey, modelId } from './model.ts';
 
 /**
- * How often the growing reply is written to Postgres. Every write becomes one row update that PowerSync syncs to
- * clients, however many tokens arrived in between: a lower interval streams more smoothly, a higher one writes less.
+ * How replies reach the app while they generate. Set with VITE_STREAM_MODE, which the app reads too. Each mode is
+ * one file with the same exports:
+ * - `postgres` (default, stream-postgres.ts): the worker writes the growing reply to its row, and PowerSync syncs
+ *   each write.
+ * - `sse` (stream-sse.ts): the worker sends the reply to the app over Server-Sent Events, and writes its row once,
+ *   when the reply is finished.
  */
-const FLUSH_INTERVAL_MS = Number(process.env.STREAM_FLUSH_INTERVAL_MS) || 100;
-
-const pg = postgres(process.env.DATABASE_URL || 'postgresql://postgres:postgres@127.0.0.1:54322/postgres');
+const STREAM_MODE = process.env.VITE_STREAM_MODE === 'sse' ? 'sse' : 'postgres';
+const streaming = STREAM_MODE === 'sse' ? await import('./stream-sse.ts') : await import('./stream-postgres.ts');
 
 /**
- * Generates the reply for one pending assistant message, writing it to the row as it streams in.
+ * Generates the reply for one pending assistant message.
  */
 async function respond(messageId: string) {
   // Claim the message. If it was stopped, or another worker already claimed it, there is nothing to do.
-  const [reply] = await pg<{ id: string; chat_id: string }[]>`
+  const [reply] = await pg<ClaimedReply[]>`
     UPDATE messages SET status = 'streaming', content = '', write_count = 0
     WHERE id = ${messageId} AND role = 'assistant' AND status = 'pending'
-    RETURNING id, chat_id`;
+    RETURNING id, chat_id, user_id`;
   if (!reply) return;
 
   const history = await pg<{ role: 'user' | 'assistant'; content: string }[]>`
@@ -34,51 +37,7 @@ async function respond(messageId: string) {
     );
   }
 
-  const startedAt = Date.now();
-  const abort = new AbortController();
-  let content = '';
-  let lastWriteAt = 0;
-  let writes = 0;
-
-  /**
-   * Writes the reply so far. The update only matches while the reply is streaming, so when the user stops it (their
-   * client sets the status to 'stopped'), the next write matches nothing and generation is cancelled.
-   */
-  async function write(status: 'streaming' | 'done' | 'error', text = content) {
-    const rows = await pg`
-      UPDATE messages SET content = ${text}, status = ${status}, write_count = write_count + 1
-      WHERE id = ${reply.id} AND status = 'streaming'
-      RETURNING id`;
-    lastWriteAt = Date.now();
-    if (rows.length > 0) {
-      writes++;
-    } else {
-      abort.abort();
-    }
-  }
-
-  try {
-    for await (const text of generateReply(history, abort.signal)) {
-      content += text;
-      if (Date.now() - lastWriteAt >= FLUSH_INTERVAL_MS) {
-        await write('streaming');
-      }
-    }
-  } catch (error) {
-    if (!abort.signal.aborted) {
-      console.error(`Reply ${reply.id} failed:`, error);
-      await write('error', describeError(error));
-      return;
-    }
-  }
-
-  if (abort.signal.aborted) {
-    console.log(`Reply ${reply.id}: stopped by the user after ${writes} writes`);
-    return;
-  }
-
-  await write('done');
-  console.log(`Reply ${reply.id}: ${content.length} characters in ${writes} writes over ${Date.now() - startedAt} ms`);
+  await streaming.streamReply(reply, history);
 }
 
 /**
@@ -104,6 +63,8 @@ async function respondToPending() {
 // A reply that was streaming when the worker last stopped will never finish, so start it over.
 await pg`UPDATE messages SET status = 'pending' WHERE role = 'assistant' AND status = 'streaming'`;
 
+await streaming.start();
+
 // The `assistant_reply_requested` trigger notifies this channel (see supabase/migrations). The listen callback also
 // runs after reconnecting to Postgres, which picks up anything missed while disconnected.
 await pg.listen('assistant_reply_requested', handle, respondToPending);
@@ -112,7 +73,7 @@ console.log(
   missingApiKey
     ? `AI worker ready. Simulating replies, because ${missingApiKey} is not set for ${modelId}.`
     : `AI worker ready, replying with ${modelId}.`,
-  `Writing to Postgres every ${FLUSH_INTERVAL_MS} ms.`
+  streaming.summary
 );
 
 for (const signal of ['SIGINT', 'SIGTERM'] as const) {

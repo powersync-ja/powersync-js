@@ -58,3 +58,19 @@ CREATE TRIGGER assistant_reply_requested
   FOR EACH ROW
   WHEN (NEW.role = 'assistant' AND NEW.status = 'pending')
   EXECUTE FUNCTION public.notify_assistant_reply_requested();
+
+-- Tell the AI worker when the user stops a reply. Only the SSE streaming mode needs this: in the Postgres mode, the
+-- worker notices on its next write to the row.
+CREATE FUNCTION public.notify_assistant_reply_stopped() RETURNS trigger
+LANGUAGE plpgsql AS $$
+BEGIN
+  PERFORM pg_notify('assistant_reply_stopped', NEW.id::text);
+  RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER assistant_reply_stopped
+  AFTER UPDATE OF status ON public.messages
+  FOR EACH ROW
+  WHEN (NEW.role = 'assistant' AND NEW.status = 'stopped' AND OLD.status IS DISTINCT FROM 'stopped')
+  EXECUTE FUNCTION public.notify_assistant_reply_stopped();

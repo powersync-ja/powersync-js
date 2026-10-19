@@ -1,6 +1,6 @@
 # PowerSync + Supabase: AI Chat
 
-This demo shows how to stream AI chat replies to clients with PowerSync. The app looks like a typical chatbot, but the browser never calls the model. It writes the question to its local SQLite database, and the reply arrives as updates to a synced row.
+This demo shows two ways to stream AI chat replies to clients with PowerSync. The app looks like a typical chatbot, but the browser never calls the model. It writes the question to its local SQLite database, and an AI worker writes the reply to a synced row.
 
 Because each reply is a database row:
 
@@ -8,16 +8,39 @@ Because each reply is a database row:
 - The reply streams to every tab and device that has the chat open.
 - A question asked offline is answered after the app reconnects.
 
-A reply goes through these steps:
+## Two streaming modes
+
+`VITE_STREAM_MODE` in `.env.local` picks how the text reaches the app while the reply generates:
+
+|                            | `postgres` (default)                                                                           | `sse`                                                                                   |
+| -------------------------- | ---------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| While the reply generates  | The worker writes the text so far to the reply's row every 100 ms. PowerSync syncs each write. | The worker sends the text to the app over Server-Sent Events. Postgres isn't touched.   |
+| When the reply is finished | The last write sets the status to `done`.                                                      | The worker writes the full text and `done` to the row once. PowerSync syncs that write. |
+| Postgres writes per reply  | About 10 per second while it generates                                                         | 1                                                                                       |
+| Code                       | `worker/stream-postgres.ts`                                                                    | `worker/stream-sse.ts` and `src/components/chat/useSseReply.ts`                         |
+
+Postgres mode is the simpler one: the database is the only channel, and PowerSync does the rest. SSE mode keeps the token stream out of Postgres, which matters when many replies generate at once. It uses a pattern some chat apps use at scale: tokens over SSE, and the database only for the finished message.
+
+Everything else is shared:
 
 1. `sendMessage` in `src/library/chat.ts` writes the user's message and an empty assistant message (status `pending`) in one local transaction. PowerSync uploads both to Supabase.
-2. A trigger on the `messages` table calls `pg_notify`. The AI worker in `worker/` listens for it, claims the message and generates a reply with the [AI SDK](https://ai-sdk.dev).
-3. While the reply streams, the worker writes the text so far to `messages.content` every 100 ms. When the reply is complete, it sets the status to `done`.
-4. PowerSync syncs each write to the clients subscribed to that chat, and `useQuery` re-renders the message.
+2. A trigger on the `messages` table calls `pg_notify`. The AI worker (`worker/index.ts`) listens for it, claims the message by setting its status to `streaming`, and generates a reply with the [AI SDK](https://ai-sdk.dev).
+3. The text reaches the app in the way the mode describes.
+4. The finished reply ends up in the row, and PowerSync syncs it to every client subscribed to that chat.
 
-Writing on an interval instead of once per token keeps each reply at about 10 updates per second, however fast the model produces tokens. The app shows the write count under each reply, and the worker logs it, for example `1601 characters in 9 writes over 2041 ms`. Each write syncs the whole row, so very long replies or many viewers per chat add up. At that scale you could append chunks to a separate table, or stream tokens to the active client over a direct connection and only persist the finished message through PowerSync.
+### Postgres mode
 
-Each write adds a step of text, and some models (Gemini included) send text in a few large chunks. To keep replies readable, `useSmoothText` in `src/components/chat/` reveals new text at a steady pace between writes.
+Writing on an interval instead of once per token keeps each reply at about 10 updates per second, however fast the model produces tokens. The app shows the write count under each reply, and the worker logs it, for example `1601 characters in 9 writes over 2041 ms`. Each write syncs the whole row, so very long replies or many viewers per chat add up.
+
+### SSE mode
+
+The app opens an SSE connection for each reply whose synced status is `streaming`, so other tabs and devices stream it too. The Vite dev server proxies `/replies` to the worker's SSE server on port 8787. The worker keeps each reply's text in memory, and a client that connects late or reconnects first gets everything generated so far. The endpoint only serves a reply to the user who owns it, checked with their Supabase access token.
+
+When the reply is finished, the worker writes it once and ends the SSE connections. The app keeps showing the streamed text until the saved row syncs. Because the text only lives in memory while it generates, a worker restart loses it and the reply starts over. With several workers, each chat's clients have to reach the worker generating its reply, which is the problem services like Cloudflare Durable Objects solve.
+
+### In both modes
+
+Each synced write or SSE event adds a step of text, and some models (Gemini included) send text in a few large chunks. To keep replies readable, `useSmoothText` in `src/components/chat/` reveals new text at a steady pace.
 
 The first reply in a chat also names it: the worker asks the model for a short title and writes it to `chats.title`, and the sidebar updates through the `chats` stream.
 
@@ -46,7 +69,7 @@ const { data: messages } = useQuery<MessageRecord>(
 );
 ```
 
-Stopping and retrying a reply are data changes too. **Stop** (or **Esc**) sets the status to `stopped`. The worker only writes while the status is `streaming`, so its next write matches no row and it cancels the model request. **Retry** sets the status back to `pending`, which fires the trigger again.
+Stopping and retrying a reply are data changes too. **Stop** (or **Esc**) sets the status to `stopped`. In Postgres mode, the worker only writes while the status is `streaming`, so its next write matches no row and it cancels the model request. In SSE mode, an `assistant_reply_stopped` trigger tells the worker, which cancels the request and saves the text generated so far. **Retry** sets the status back to `pending`, which fires the first trigger again.
 
 The demo runs against local Supabase (`supabase start`) and self-hosted PowerSync (via the PowerSync CLI). It uses anonymous Supabase auth, so there is no login screen.
 
@@ -106,14 +129,15 @@ Open [http://localhost:5173](http://localhost:5173).
 
 The worker reads these settings from `.env.local`. Vite only exposes `VITE_` variables to the browser, so API keys stay on the server.
 
-| Variable                       | Default                           | Description                                                  |
-| ------------------------------ | --------------------------------- | ------------------------------------------------------------ |
-| `AI_MODEL`                     | `google/gemini-flash-lite-latest` | Model used for replies, as `provider/model`.                 |
-| `GOOGLE_GENERATIVE_AI_API_KEY` | (empty)                           | Google Gemini API key.                                       |
-| `ANTHROPIC_API_KEY`            | (empty)                           | Anthropic API key, for `anthropic/...` models.               |
-| `OPENAI_API_KEY`               | (empty)                           | OpenAI API key, for `openai/...` models.                     |
-| `STREAM_FLUSH_INTERVAL_MS`     | `100`                             | How often the reply is written to Postgres while it streams. |
-| `DATABASE_URL`                 | Local Supabase                    | Postgres connection the worker listens on and writes to.     |
+| Variable                       | Default                           | Description                                                     |
+| ------------------------------ | --------------------------------- | --------------------------------------------------------------- |
+| `AI_MODEL`                     | `google/gemini-flash-lite-latest` | Model used for replies, as `provider/model`.                    |
+| `GOOGLE_GENERATIVE_AI_API_KEY` | (empty)                           | Google Gemini API key.                                          |
+| `ANTHROPIC_API_KEY`            | (empty)                           | Anthropic API key, for `anthropic/...` models.                  |
+| `OPENAI_API_KEY`               | (empty)                           | OpenAI API key, for `openai/...` models.                        |
+| `VITE_STREAM_MODE`             | `postgres`                        | How replies stream: `postgres` or `sse` (see above).            |
+| `STREAM_FLUSH_INTERVAL_MS`     | `100`                             | Postgres mode: how often the reply is written while it streams. |
+| `DATABASE_URL`                 | Local Supabase                    | Postgres connection the worker listens on and writes to.        |
 
 To use Claude, for example, set `AI_MODEL=anthropic/claude-opus-5-5` and `ANTHROPIC_API_KEY`. To add another provider, install its [AI SDK provider package](https://ai-sdk.dev/providers/ai-sdk-providers) and register it in `worker/model.ts`.
 
@@ -123,7 +147,7 @@ The schema is in `supabase/migrations/20261016000000_init_chat.sql`. When Supaba
 
 - the `chats` and `messages` tables
 - RLS policies that limit each user, including anonymous users, to their own chats
-- the `assistant_reply_requested` trigger that notifies the worker
+- the `assistant_reply_requested` trigger that notifies the worker, and the `assistant_reply_stopped` trigger that SSE mode uses
 - the `powersync` publication
 
 Run `supabase db reset` to re-apply the migrations from scratch.
@@ -135,7 +159,7 @@ Run `supabase db reset` to re-apply the migrations from scratch.
 - Keyboard shortcuts: **Esc** stops a reply, **⇧⌘O** (Ctrl+Shift+O on Windows and Linux) starts a new chat, and typing anywhere on the page goes into the message box.
 - The development server includes [PowerSync DevTools](https://docs.powersync.com/tools/devtools/vite). Open the Vite DevTools dock and select **PowerSync** to watch the `messages` table change while a reply streams.
 - The worker connects as the `postgres` superuser. In production, give it a role that can only read and update `messages`.
-- Several workers can run at once. Each one claims a reply with a conditional `UPDATE`, so a reply is only generated once. On startup, the worker restarts replies that a previous run left `streaming`. With several workers, track which worker owns a reply instead.
+- Several workers can run at once. Each one claims a reply with a conditional `UPDATE`, so a reply is only generated once. On startup, the worker restarts replies that a previous run left `streaming`. With several workers, track which worker owns a reply instead, and in SSE mode route each client to that worker.
 - To stop local services:
 
   ```bash

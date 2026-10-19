@@ -1,5 +1,6 @@
 import { cn } from '@/library/cn';
 import { MessageRecord, MessageStatus } from '@/library/powersync/AppSchema';
+import { STREAM_MODE } from '@/library/streamMode';
 import { useStatus } from '@powersync/react';
 import { CloudOff, RotateCcw, TriangleAlert } from 'lucide-react';
 import React from 'react';
@@ -7,6 +8,7 @@ import { CopyIcon } from './CopyIcon';
 import { Markdown } from './Markdown';
 import { useCopyToClipboard } from './useCopyToClipboard';
 import { useSmoothText } from './useSmoothText';
+import { useSseReply } from './useSseReply';
 
 export type MessageProps = {
   message: MessageRecord;
@@ -33,7 +35,13 @@ export const Message = React.memo(function Message({ message, onRetry }: Message
 
 function Reply({ message, onRetry }: MessageProps) {
   const status = message.status as MessageStatus;
-  const content = message.content ?? '';
+  // In SSE mode, the text of a streaming reply comes over SSE. When the user stops it, the streamed text stays up until
+  // the saved partial reply syncs. Otherwise, and always in Postgres mode, the text comes from the synced row.
+  const streamed = useSseReply(
+    message.id,
+    STREAM_MODE === 'sse' && (status === 'streaming' || (status === 'stopped' && !message.content))
+  );
+  const content = streamed ?? message.content ?? '';
   const text = useSmoothText(content);
   const revealing = text.length < content.length;
   const finished = (status === 'done' || status === 'stopped' || status === 'error') && !revealing;
@@ -68,14 +76,25 @@ function Reply({ message, onRetry }: MessageProps) {
               <RotateCcw className="size-4" />
             </IconButton>
           )}
-          {status !== 'error' && writes > 0 && (
-            <span className="ml-2 text-xs" title="Each write synced to this device as one update">
-              Streamed in {writes} {writes === 1 ? 'write' : 'writes'}
-            </span>
-          )}
+          {status !== 'error' && writes > 0 && <WriteCount writes={writes} />}
         </div>
       )}
     </div>
+  );
+}
+
+/**
+ * How many times the reply was written to Postgres, each synced as one update. It comes from the row, so it's right
+ * whichever mode generated the reply: several writes in Postgres mode, one in SSE mode.
+ */
+function WriteCount({ writes }: { writes: number }) {
+  return (
+    <span
+      className="ml-2 text-xs"
+      title="How many times this reply was written to Postgres. PowerSync syncs each write."
+    >
+      {writes} {writes === 1 ? 'write' : 'writes'} to Postgres
+    </span>
   );
 }
 

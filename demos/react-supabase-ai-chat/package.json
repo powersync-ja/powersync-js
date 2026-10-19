@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "concurrently --names web,worker --prefix-colors magenta,cyan \"vite\" \"pnpm worker\"",
-    "worker": "tsx watch --env-file=.env.local worker/index.ts",
+    "worker": "node --watch-path=worker --watch-path=.env.local --watch-preserve-output --env-file=.env.local --import tsx worker/index.ts",
     "build": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p worker/tsconfig.json && vite build",
     "preview": "vite preview",
     "start": "pnpm build && pnpm preview",

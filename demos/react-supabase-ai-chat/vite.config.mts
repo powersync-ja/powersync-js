@@ -30,6 +30,10 @@ export default defineConfig({
   // Vite DevTools with the PowerSync dock, on the dev server only. The dock starts on the right edge, because on the
   // bottom edge it covers the sidebar's footer.
   devtools: { apply: 'serve', dockPreferences: { defaultPosition: 'right' } },
+  server: {
+    // The AI worker's SSE server, used when VITE_STREAM_MODE=sse (see worker/stream-sse.ts).
+    proxy: { '/replies': 'http://127.0.0.1:8787' }
+  },
   plugins: [react(), tailwindcss(), powersyncDevtools()],
   worker: {
     format: 'es'
