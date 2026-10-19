@@ -3,8 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "description": "monorepo for PowerSync JavaScript SDKs",
-  "main": "index.js",
-  "scripts": {
+   "scripts": {
     "reset:repo": "tsc -b scripts && node scripts/dist/reset-repo.js",
     "build:packages": "pnpm run --filter {./packages/**} --filter {./tools/diagnostics} --filter {./tools/diagnostics-core} --filter {./tools/diagnostics-ui} -r build",
     "build:packages:prod": "pnpm run --filter {./packages/**} --filter {./tools/diagnostics} --filter {./tools/diagnostics-core} --filter {./tools/diagnostics-ui} -r build:prod",
