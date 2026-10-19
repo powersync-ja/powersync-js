@@ -1,4 +1,14 @@
-import { BucketChecksum, BucketLine, Checkpoint, RawOplogEntry, StreamingSyncCheckpointDiff } from './protocol.js';
+import { LocalWriteState } from '../checkpoints.js';
+import {
+  BucketChecksum,
+  BucketLine,
+  BucketRequest,
+  Checkpoint,
+  RawOplogEntry,
+  StreamingSyncCheckpointDiff,
+  StreamingSyncRequest,
+  StreamSubscriptionRequest
+} from './protocol.js';
 
 export interface DownloadChanges {
   updatedRows: Map<string, Map<string, Record<string, unknown> | null>>;
@@ -11,17 +21,35 @@ export class DownloadClientState {
   #bucketsByPriority: Map<number, Bucket[]> | undefined;
   #checkpoint: TrackedCheckpoint | undefined;
 
-  /**
-   * State of local writes.
-   *
-   *  - 'dirty' means that local writes have not been uploaded yet (roughly corresponds to a non-empty `ps_crud` table).
-   *  - a bigint value means that we have requested a checkpoint for local writes, and are waiting for it to be part of
-   *    the sync response.
-   *  - null means that there's never been a local write.
-   */
-  #localWriteState: 'dirty' | bigint | null = null;
+  #writeState: LocalWriteState;
   readonly #rowKeyToBuckets = new Map<string, Set<Bucket>>();
   readonly #updatedRows = new Map<string, RowKey>();
+
+  constructor(writeState: LocalWriteState) {
+    this.#writeState = writeState;
+  }
+
+  prepareConnectRequest(
+    clientId: string,
+    parameters: Record<string, unknown>,
+    streams: StreamSubscriptionRequest,
+    metadata?: Record<string, string>
+  ): StreamingSyncRequest {
+    const buckets = this.#buckets
+      .values()
+      .filter((f) => f.lastEntry >= 0n)
+      .map((bkt) => ({ name: bkt.name, after: String(bkt.lastEntry) }) satisfies BucketRequest);
+
+    return {
+      buckets: buckets.toArray(),
+      include_checksum: false,
+      raw_data: true,
+      client_id: clientId,
+      parameters,
+      streams,
+      app_metadata: metadata
+    };
+  }
 
   push(line: BucketLine): DownloadEvent[] {
     if ('checkpoint' in line) {
@@ -51,10 +79,6 @@ export class DownloadClientState {
     return [];
   }
 
-  markLocalWrite(state: 'dirty' | bigint) {
-    this.#localWriteState = state;
-  }
-
   #addToUpdatedRows(key: RowKey) {
     this.#updatedRows.set(key.formatted, key);
   }
@@ -66,13 +90,7 @@ export class DownloadClientState {
     for (const [bucket, entry] of checkpoint.buckets.entries()) {
       bucketsToDelete.delete(bucket);
 
-      let resolvedBucket = this.#buckets.get(bucket);
-      if (!resolvedBucket) {
-        const newBucket = new Bucket();
-        resolvedBucket = newBucket;
-        this.#buckets.set(bucket, newBucket);
-      }
-
+      const resolvedBucket = this.#buckets.getOrInsertComputed(bucket, () => new Bucket(bucket));
       resolvedBucket.priority = entry.priority;
     }
 
@@ -116,14 +134,15 @@ export class DownloadClientState {
    * outstanding local writes.
    */
   #checkLocalWrites(): DownloadEvent | undefined {
-    const localWrites = this.#localWriteState;
+    const localWrites = this.#writeState;
+    const target = localWrites.targetCheckpoint;
     const writeCheckpoint = this.#checkpoint?.write_checkpoint;
 
-    if (localWrites === 'dirty') {
-      // Can't apply checkpoints with local sync changes.
+    if (localWrites.hasLocalWrites) {
+      // Can't apply checkpoints with mutations that haven't been uploaded yet.
       return 'blockedDueToLocalData';
-    } else if (localWrites != null && (writeCheckpoint == null || writeCheckpoint < localWrites)) {
-      return { waitingForCheckpoint: localWrites };
+    } else if (target != null && (writeCheckpoint == null || writeCheckpoint < target)) {
+      return { waitingForCheckpoint: target };
     }
 
     return undefined;
@@ -218,10 +237,12 @@ class TrackedCheckpoint {
 class Bucket {
   priority: number = 3;
 
-  #lastEntry: bigint = -1n;
+  lastEntry: bigint = -1n;
   readonly appliedChanges = new Map<string, OplogEntry>(); // indexed by partial row key
   readonly #allChanges = new Map<string, OplogEntry>(); // indexed by full row key (including subkeys)
   readonly #dirtyKeys = new Map<string, { row: RowKey; full: string }>();
+
+  constructor(readonly name: string) {}
 
   get dirtyKeys() {
     return this.#dirtyKeys.values();
@@ -232,7 +253,7 @@ class Bucket {
   }
 
   pushLine(raw: RawOplogEntry, data: OplogEntry) {
-    if (this.#lastEntry >= data.id) {
+    if (this.lastEntry >= data.id) {
       // To simplify the sync client, we only support a linear bucket history. This works for compacting buckets, but
       // breaks for full defrag if that doesn't generate new bucket names. We just delete everything and restart. This
       // allows not tracking checksums.
@@ -261,7 +282,7 @@ class Bucket {
         break;
     }
 
-    this.#lastEntry = data.id;
+    this.lastEntry = data.id;
   }
 
   entryFor(key: string, includeUnapplied: boolean) {

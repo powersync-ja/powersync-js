@@ -1,3 +1,4 @@
+import { checkpointId, LocalWriteState, RequestedCheckpoint } from '../src/checkpoints';
 import { DownloadChanges, DownloadClientState, DownloadEvent } from '../src/download/buckets';
 import { OpType, SyncDataBucket } from '../src/download/protocol';
 
@@ -70,7 +71,7 @@ downloadClientTest('can delete buckets with checkpoint diff', ({ client }) => {
 
 downloadClientTest('does not publish until reaching checkpoint', ({ client }) => {
   client.pushCheckpoint(1n, priorityBuckets);
-  client.state.markLocalWrite('dirty');
+  client.localWrites.mutationGuard();
 
   // pushData asserts that data lines alone don't emit an event.
   client.putRow('prio1', 'row-0', { col: 'hi' });
@@ -80,7 +81,7 @@ downloadClientTest('does not publish until reaching checkpoint', ({ client }) =>
 describe('publishes with local data for prio=0 buckets', () => {
   downloadClientTest('for explicit partial checkpoint', ({ client }) => {
     client.pushCheckpoint(1n, priorityBuckets);
-    client.state.markLocalWrite('dirty');
+    client.localWrites.mutationGuard();
 
     client.putRow('prio0', 'row-0', { col: 'hi' });
     expect(client.pushCheckpointComplete(0)).toStrictEqual([updatedRows({ items: { 'row-0': { col: 'hi' } } })]);
@@ -89,7 +90,7 @@ describe('publishes with local data for prio=0 buckets', () => {
   downloadClientTest('for full checkpoint', ({ client }) => {
     // A full checkpoint might consist entirely of prio 0 buckets, in which case it should still be applied.
     client.pushCheckpoint(1n, [{ name: 'prio0', priority: 0 }]);
-    client.state.markLocalWrite('dirty');
+    const guard = client.localWrites.mutationGuard();
 
     client.putRow('prio0', 'row-0', { col: 'hi' });
     // The full checkpoint is still delayed, we only applied prio 0 buckets.
@@ -99,7 +100,7 @@ describe('publishes with local data for prio=0 buckets', () => {
     ]);
 
     // Once local writes are resolved, the full checkpoint is applied without further changes.
-    client.state.markLocalWrite(1n);
+    guard.completeWith(client.fakeCheckpoint(1n));
     client.pushCheckpoint(1n, [{ name: 'prio0', priority: 0 }], 1n);
     expect(client.pushCheckpointComplete()).toStrictEqual([updatedRows({})]);
   });
@@ -107,7 +108,7 @@ describe('publishes with local data for prio=0 buckets', () => {
   downloadClientTest('does not apply prio 0 buckets if other priorities exist', ({ client }) => {
     // With multiple priorities, the service sends an explicit partial_checkpoint_complete line for prio 0.
     client.pushCheckpoint(2n, priorityBuckets);
-    client.state.markLocalWrite('dirty');
+    client.localWrites.mutationGuard();
 
     client.putRow('prio0', 'row-0', { col: 'hi' });
     client.putRow('prio1', 'row-1', { col: 'hi' });
@@ -117,13 +118,13 @@ describe('publishes with local data for prio=0 buckets', () => {
 
 downloadClientTest('does not publish with pending local data', ({ client }) => {
   client.pushCheckpoint(1n, [{ name: 'a' }]);
-  client.state.markLocalWrite('dirty');
+  const guard = client.localWrites.mutationGuard();
 
   client.pushCheckpoint(1n, [{ name: 'a' }]);
   client.pushData({ bucket: 'a', rowId: 'rowid', op: 'PUT', objectId: 'first', data: { foo: 'bar' } });
   expect(client.pushCheckpointComplete()).toStrictEqual(['blockedDueToLocalData']);
 
-  client.state.markLocalWrite(2n);
+  guard.completeWith(client.fakeCheckpoint(2n));
   client.pushCheckpoint(1n, [{ name: 'a' }], 2n);
   expect(client.pushCheckpointComplete()).toStrictEqual([updatedRows({ items: { first: { foo: 'bar' } } })]);
 });
@@ -148,7 +149,7 @@ describe('applies pending changes', () => {
 
   downloadClientTest('write checkpoint before upload complete', ({ client }) => {
     // Local write while offline
-    client.state.markLocalWrite('dirty');
+    const guard = client.localWrites.mutationGuard();
 
     // Assume data has been uploaded and a write checkpoint has been requested, but not received yet.
     client.pushCheckpoint(1n, priorityBuckets, 1n);
@@ -156,12 +157,12 @@ describe('applies pending changes', () => {
     expect(client.pushCheckpointComplete()).toStrictEqual(['blockedDueToLocalData']);
 
     // Now complete the upload process, this should apply the pending checkpoint.
-    client.state.markLocalWrite(1n);
+    guard.completeWith(client.fakeCheckpoint(1n));
     expect(client.pushCheckpointComplete()).toStrictEqual([updatedRows({ items: { 'row-0': { col: 'hi' } } })]);
   });
 
   downloadClientTest('write checkpoint before upload complete, only prio 0', ({ client }) => {
-    client.state.markLocalWrite('dirty');
+    const guard = client.localWrites.mutationGuard();
 
     client.pushCheckpoint(1n, [{ name: 'prio0', priority: 0 }], 1n);
     client.putRow('prio0', 'row-0', { col: 'hi' });
@@ -172,14 +173,14 @@ describe('applies pending changes', () => {
     ]);
 
     // Completing the upload should apply the full checkpoint.
-    client.state.markLocalWrite(1n);
+    guard.completeWith(client.fakeCheckpoint(1n));
     expect(client.pushCheckpointComplete()).toStrictEqual([updatedRows({})]);
   });
 
   downloadClientTest('write checkpoint with synced data', ({ client }) => {
     // Local write while offline, followed by completed upload
-    client.state.markLocalWrite('dirty');
-    client.state.markLocalWrite(1n);
+    const guard = client.localWrites.mutationGuard();
+    guard.completeWith(client.fakeCheckpoint(1n));
 
     // Sync afterwards containing data and write checkpoint.
     client.pushCheckpoint(1n, priorityBuckets, 1n);
@@ -188,7 +189,7 @@ describe('applies pending changes', () => {
   });
 
   downloadClientTest('write checkpoint after synced data', ({ client }) => {
-    client.state.markLocalWrite('dirty');
+    const guard = client.localWrites.mutationGuard();
 
     // Upload changes, assume that triggered a checkpoint.
     client.pushCheckpoint(1n, priorityBuckets);
@@ -196,7 +197,7 @@ describe('applies pending changes', () => {
     expect(client.pushCheckpointComplete()).toStrictEqual(['blockedDueToLocalData']);
 
     // Now the upload is complete and requests a write checkpoint, which hasn't been synced yet.
-    client.state.markLocalWrite(1n);
+    guard.completeWith(client.fakeCheckpoint(1n));
     expect(client.pushCheckpointComplete()).toStrictEqual([{ waitingForCheckpoint: 1n }]);
 
     // Which triggers a new iteration
@@ -205,18 +206,20 @@ describe('applies pending changes', () => {
   });
 
   downloadClientTest('second local write', ({ client }) => {
-    client.state.markLocalWrite('dirty');
+    const guard0 = client.localWrites.mutationGuard();
 
     client.pushCheckpoint(1n, priorityBuckets, 1n);
     client.putRow('prio1', 'row-0', { col: 'hi' });
     expect(client.pushCheckpointComplete()).toStrictEqual(['blockedDueToLocalData']);
 
     // Second local write during sync, before the first upload completed.
-    client.state.markLocalWrite('dirty');
+    const guard1 = client.localWrites.mutationGuard();
     expect(client.pushCheckpointComplete()).toStrictEqual(['blockedDueToLocalData']);
 
     // Uploading the second write requests a newer write checkpoint, so the current one isn't sufficient.
-    client.state.markLocalWrite(2n);
+    const cp = client.fakeCheckpoint(2n);
+    guard0.completeWith(cp);
+    guard1.completeWith(cp);
     expect(client.pushCheckpointComplete()).toStrictEqual([{ waitingForCheckpoint: 2n }]);
 
     client.pushCheckpoint(1n, priorityBuckets, 2n);
@@ -254,7 +257,8 @@ function updatedRows(tables: Record<string, Record<string, Record<string, unknow
 }
 
 class TestClient {
-  state = new DownloadClientState();
+  localWrites = new LocalWriteState();
+  state = new DownloadClientState(this.localWrites);
   nextOpId = 1n;
 
   pushCheckpoint(lastOpId: bigint, buckets: Bucket[], checkpointRequest?: bigint) {
@@ -304,6 +308,10 @@ class TestClient {
             }
           }
     );
+  }
+
+  fakeCheckpoint(id: bigint) {
+    return { [checkpointId]: id } satisfies RequestedCheckpoint;
   }
 }
 

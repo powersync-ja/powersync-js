@@ -14,5 +14,5 @@
     "declarationMap": true,
     "composite": true
   },
-
+  "references": [{ "path": "../shared-internals" }]
 }
