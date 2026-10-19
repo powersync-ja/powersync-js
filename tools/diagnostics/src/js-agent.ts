@@ -2,7 +2,6 @@ import type {
   CommonPowerSyncDatabase,
   LogLevels,
   LogRecord as SdkLogRecord,
-  PowerSyncBackendConnector,
   SyncOptions,
   SyncStatus,
   SyncStreamSubscription
@@ -19,25 +18,16 @@ import type {
   SchemaPayload,
   SdkIntegration,
   StreamActionArgs,
-  SyncState,
   Unsubscribe,
   UploadQueueState
 } from '@powersync/diagnostics-core';
 import { toStreamStates, toSyncState } from './sync-state.js';
+import type { BasePowerSyncDatabase, InternalConnector } from '@powersync/shared-internals';
 
 /** Delivers the SQLite core's diagnostics events to the agent. How they arrive is runtime-specific. */
 export interface CoreEventSource {
   onEvent(handler: (event: CoreDiagnosticsEvent) => void): Unsubscribe;
   dispose(): void;
-}
-
-/**
- * Read access to the live connection. The connector and options are not on the database's public
- * interface, so the code that installs the agent (which can see the concrete database) hands them in.
- */
-export interface ConnectionAccess {
-  getConnector(): PowerSyncBackendConnector | null;
-  getConnectionOptions(): SyncOptions | null;
 }
 
 export interface JsAgentOptions {
@@ -47,8 +37,6 @@ export interface JsAgentOptions {
   bucketThrottleMs?: number;
   /** Core diagnostics events (per-bucket `target_count`). Omit when core diagnostics are off. */
   coreEvents?: CoreEventSource;
-  /** Read access to the live connection; omit if the runtime cannot expose it. */
-  connection?: ConnectionAccess;
 }
 
 /**
@@ -63,15 +51,19 @@ export class JsAgent implements SdkIntegration {
   /** Debug subscriptions created through `action`, keyed by name + params, so they can be released. */
   private streamHandles = new Map<string, SyncStreamSubscription>();
   // Retained so reconnect / clear work after a disconnect, when the connection no longer exposes them.
-  private lastConnector: PowerSyncBackendConnector | null = null;
+  private lastConnector: InternalConnector | null = null;
   private lastConnectionOptions: SyncOptions | null = null;
   // Per-bucket total operation counts from the core diagnostics stream (not stored in ps_buckets).
   private bucketTargets = new Map<string, number>();
 
+  private readonly db: BasePowerSyncDatabase;
+
   constructor(
-    private db: CommonPowerSyncDatabase,
+    db: CommonPowerSyncDatabase,
     private options: JsAgentOptions = {}
-  ) {}
+  ) {
+    this.db = db as BasePowerSyncDatabase;
+  }
 
   // --- SdkIntegration ---
 
@@ -87,12 +79,10 @@ export class JsAgent implements SdkIntegration {
   }
 
   async getInfo(): Promise<ProtocolInfo> {
-    const connection = this.options.connection;
-
     let endpoint: string | null = null;
     let token: string | null = null;
     try {
-      const credentials = await connection?.getConnector()?.fetchCredentials();
+      const credentials = await this.db.connector?.fetchCredentials?.();
       endpoint = credentials?.endpoint ?? null;
       token = credentials?.token ?? null;
     } catch {
@@ -114,7 +104,7 @@ export class JsAgent implements SdkIntegration {
       // Non-fatal.
     }
 
-    const connectionOptions = connection?.getConnectionOptions() ?? null;
+    const connectionOptions = this.db.connectionOptions ?? null;
     return {
       endpoint,
       token,
@@ -345,17 +335,20 @@ export class JsAgent implements SdkIntegration {
   }
 
   private captureConnection(): void {
-    const connection = this.options.connection;
-    const connector = connection?.getConnector() ?? null;
+    const connector = this.db.connector ?? null;
     if (connector) {
       this.lastConnector = connector;
-      this.lastConnectionOptions = connection?.getConnectionOptions() ?? null;
+      this.lastConnectionOptions = this.db.connectionOptions ?? null;
     }
   }
 
   private async reconnect(): Promise<void> {
     if (this.lastConnector) {
-      await this.db.connect(this.lastConnector, this.lastConnectionOptions ?? undefined);
+      await this.db.connectionManager.connect(
+        this.lastConnector,
+        this.lastConnectionOptions ?? {},
+        this.db.schema.toJSON()
+      );
     }
   }
 }
