@@ -1,5 +1,18 @@
 # @powersync/adapter-sql-js
 
+## 0.0.26
+
+### Patch Changes
+
+- 6e6cf99: Add warning about deprecated `persister` option to readme.
+- Updated dependencies [20ea996]
+- Updated dependencies [fe8ad22]
+- Updated dependencies [fe8ad22]
+- Updated dependencies [5a8ed5e]
+- Updated dependencies [1a209a0]
+  - @powersync/shared-internals@1.4.0
+  - @powersync/common@2.4.0
+
 ## 0.0.25
 
 ### Patch Changes
