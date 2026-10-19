@@ -1,0 +1,23 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+
+# local env files
+.env*.local
+.env
+# Local PowerSync Docker settings (well-known local defaults, no secrets)
+!powersync/docker/.env
+
+# typescript
+*.tsbuildinfo
+
+# Supabase CLI state
+supabase/.branches
+supabase/.temp
+
+# IDE
+.vscode
+.fleet
+.idea
