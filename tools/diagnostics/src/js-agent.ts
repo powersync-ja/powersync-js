@@ -32,12 +32,12 @@ export interface CoreEventSource {
 }
 
 /**
- * Read access to a database's live connection. The connector and options are not on the database's
- * public interface, so the code that installs the agent (which can see the concrete class) reads them.
+ * Read access to the live connection. The connector and options are not on the database's public
+ * interface, so the code that installs the agent (which can see the concrete database) hands them in.
  */
 export interface ConnectionAccess {
-  getConnector(db: CommonPowerSyncDatabase): PowerSyncBackendConnector | null;
-  getConnectionOptions(db: CommonPowerSyncDatabase): SyncOptions | null;
+  getConnector(): PowerSyncBackendConnector | null;
+  getConnectionOptions(): SyncOptions | null;
 }
 
 export interface JsAgentOptions {
@@ -49,20 +49,6 @@ export interface JsAgentOptions {
   coreEvents?: CoreEventSource;
   /** Read access to the live connection; omit if the runtime cannot expose it. */
   connection?: ConnectionAccess;
-  /**
-   * Rarely appropriate. Answers the `clearData` action by replacing the database with an empty one.
-   * A host that can delete the database files provides it: dropping files takes milliseconds at any
-   * size, where the default, `disconnectAndClear()`, deletes row by row. The agent has let go of the
-   * old database when this is called, and requests made meanwhile wait for the replacement. If it
-   * throws, the agent keeps the old database. If the agent is closed meanwhile, it does not connect
-   * the replacement.
-   *
-   * Only for an ephemeral client, such as the dashboard's. Deleting the files gives the replacement a
-   * new client id, which `disconnectAndClear()` preserves. The client id distinguishes one user's
-   * clients, so a new one reads as a new client and orphans backend state keyed to the old, such as
-   * custom write checkpoints. A real app should leave this unset.
-   */
-  reset?: () => Promise<CommonPowerSyncDatabase>;
 }
 
 /**
@@ -71,16 +57,9 @@ export interface JsAgentOptions {
  * live client. Hosts reach it through a bridge or call it directly when they share the page.
  */
 export class JsAgent implements SdkIntegration {
-  /**
-   * The database the agent serves, awaited by every request. While a reset runs, this is the pending
-   * replacement. It never rejects: a failed reset leaves it on the database the agent had.
-   */
-  private database: Promise<CommonPowerSyncDatabase>;
-  /** The database the listeners are on, or null while detached. Reads from any other are dropped. */
-  private attached: CommonPowerSyncDatabase | null = null;
-  private closed = false;
   private handlers = new Set<(event: DiagnosticsEvent) => void>();
   private disposers: Array<() => void> = [];
+  private started = false;
   /** Debug subscriptions created through `action`, keyed by name + params, so they can be released. */
   private streamHandles = new Map<string, SyncStreamSubscription>();
   // Retained so reconnect / clear work after a disconnect, when the connection no longer exposes them.
@@ -90,35 +69,30 @@ export class JsAgent implements SdkIntegration {
   private bucketTargets = new Map<string, number>();
 
   constructor(
-    db: CommonPowerSyncDatabase,
+    private db: CommonPowerSyncDatabase,
     private options: JsAgentOptions = {}
-  ) {
-    this.database = Promise.resolve(db);
-  }
+  ) {}
 
   // --- SdkIntegration ---
 
   async runQuery({ sql, params }: QueryParams): Promise<QueryResult> {
-    const db = await this.database;
-    const records = await db.getAll<Record<string, unknown>>(sql, params);
+    const records = await this.db.getAll<Record<string, unknown>>(sql, params);
     const columns = records.length > 0 ? Object.keys(records[0]) : [];
     return { columns, rows: records.map((record) => columns.map((column) => record[column])) };
   }
 
   async getSchema(): Promise<SchemaPayload> {
-    const db = await this.database;
     // The core payload: what the client already sends to `powersync_replace_schema`.
-    return db.schema.toJSON() as SchemaPayload;
+    return this.db.schema.toJSON() as SchemaPayload;
   }
 
   async getInfo(): Promise<ProtocolInfo> {
-    const db = await this.database;
     const connection = this.options.connection;
 
     let endpoint: string | null = null;
     let token: string | null = null;
     try {
-      const credentials = await connection?.getConnector(db)?.fetchCredentials();
+      const credentials = await connection?.getConnector()?.fetchCredentials();
       endpoint = credentials?.endpoint ?? null;
       token = credentials?.token ?? null;
     } catch {
@@ -127,72 +101,65 @@ export class JsAgent implements SdkIntegration {
 
     let clientId: string | null = null;
     try {
-      clientId = await db.getClientId();
+      clientId = await this.db.getClientId();
     } catch {
       // Non-fatal.
     }
 
     let sqliteCoreVersion: string | null = null;
     try {
-      const [row] = await db.getAll<{ v: string }>('SELECT powersync_rs_version() AS v');
+      const [row] = await this.db.getAll<{ v: string }>('SELECT powersync_rs_version() AS v');
       sqliteCoreVersion = row?.v ?? null;
     } catch {
       // Non-fatal.
     }
 
-    const connectionOptions = connection?.getConnectionOptions(db) ?? null;
+    const connectionOptions = connection?.getConnectionOptions() ?? null;
     return {
       endpoint,
       token,
       clientId,
       connectionMethod: connectionOptions?.connectionMethod ?? null,
       params: connectionOptions?.params ?? null,
-      connected: db.currentStatus?.connected ?? false,
+      connected: this.db.currentStatus?.connected ?? false,
       sqliteCoreVersion,
       sdk: this.options.sdk ?? null
     };
   }
 
   async observeEvents(handler: (event: DiagnosticsEvent) => void): Promise<Unsubscribe> {
-    const db = await this.database;
     this.handlers.add(handler);
-    this.start(db);
+    this.start();
     // A late subscriber receives the present state at once.
-    this.replay(db, handler);
+    this.replay(handler);
     return () => {
       this.handlers.delete(handler);
     };
   }
 
   async action(request: ActionRequest): Promise<void> {
-    const db = await this.database;
     switch (request.action) {
       case 'disconnect':
-        await db.disconnect();
+        await this.db.disconnect();
         break;
       case 'clearData':
-        if (this.options.reset) {
-          await this.replaceDatabase(this.options.reset);
-        } else {
-          await db.disconnectAndClear();
-        }
-        // A later clear may be replacing the database already; this waits for it and connects the newest.
-        await this.reconnect(await this.database);
+        await this.db.disconnectAndClear();
+        await this.reconnect();
         break;
       case 'reconnect':
-        await db.disconnect();
-        await this.reconnect(db);
+        await this.db.disconnect();
+        await this.reconnect();
         break;
       case 'requestCheckpoint': {
         // Confirms the client is caught up right now. Needs `checkpointMode: 'requests'` on connect.
-        const checkpoint = await db.requestCheckpoint();
+        const checkpoint = await this.db.requestCheckpoint();
         await checkpoint.waitForSync({ signal: AbortSignal.timeout(120_000) });
         break;
       }
       case 'subscribeStream': {
         const { name, params, ttl, priority } = request.args as StreamActionArgs;
         // TTL defaults to 0 so a forgotten debug subscription is evicted as soon as it is released.
-        const handle = await db.syncStream(name, params).subscribe({ ttl: ttl ?? 0, priority });
+        const handle = await this.db.syncStream(name, params).subscribe({ ttl: ttl ?? 0, priority });
         this.streamHandles.set(streamKey(name, params), handle);
         break;
       }
@@ -207,14 +174,6 @@ export class JsAgent implements SdkIntegration {
   }
 
   async close(): Promise<void> {
-    this.closed = true;
-    this.detach();
-    this.options.coreEvents?.dispose();
-    this.handlers.clear();
-  }
-
-  /** Lets go of the database: debug subscriptions, listeners and the log capture. Subscribers stay. */
-  private detach(): void {
     for (const handle of this.streamHandles.values()) {
       handle.unsubscribe();
     }
@@ -223,75 +182,46 @@ export class JsAgent implements SdkIntegration {
       dispose();
     }
     this.disposers = [];
-    this.attached = null;
-  }
-
-  /** Swaps the database for the empty one `reset` returns. Requests made meanwhile wait for the swap. */
-  private async replaceDatabase(reset: () => Promise<CommonPowerSyncDatabase>): Promise<void> {
-    const previous = this.database;
-    const replacement = this.release(previous).then(() => reset());
-    // If the swap fails, the agent carries on with the old database, so the clear can be retried.
-    const current = replacement.catch(() => previous);
-    this.database = current;
-    this.resume(await current);
-    await replacement;
-  }
-
-  /** Disconnects the database and drops the agent's listeners on it. */
-  private async release(database: Promise<CommonPowerSyncDatabase>): Promise<void> {
-    const db = await database;
-    await db.disconnect();
-    this.detach();
-    this.bucketTargets.clear();
-  }
-
-  /** Listens on `db` again and brings every subscriber up to date. */
-  private resume(db: CommonPowerSyncDatabase): void {
-    if (this.handlers.size === 0) {
-      return;
-    }
-    this.start(db);
-    for (const handler of this.handlers) {
-      this.replay(db, handler);
-    }
+    this.handlers.clear();
+    this.started = false;
   }
 
   // --- push bridge ---
 
-  /** Listens on `db` until `detach()`. Every listener reads the database it was attached to. */
-  private start(db: CommonPowerSyncDatabase): void {
-    if (this.attached || this.closed) {
+  private start(): void {
+    if (this.started) {
       return;
     }
-    this.attached = db;
+    this.started = true;
 
     this.disposers.push(
-      db.registerListener({
+      this.db.registerListener({
         statusChanged: (status: SyncStatus) => {
-          this.captureConnection(db);
+          this.captureConnection();
           this.pushStatus(status);
-          void this.pushUploadQueue(db);
-          void this.pushBuckets(db);
+          void this.pushUploadQueue();
+          void this.pushBuckets();
         }
       })
     );
-    this.captureConnection(db);
+    this.captureConnection();
 
     if (this.options.coreEvents) {
-      // The source outlives a reset; it is disposed with the agent.
-      this.disposers.push(this.options.coreEvents.onEvent((event) => this.handleCoreEvent(event)));
+      const source = this.options.coreEvents;
+      this.disposers.push(source.onEvent((event) => this.handleCoreEvent(event)));
+      this.disposers.push(() => source.dispose());
     }
 
-    this.captureLogs(db);
+    this.captureLogs();
 
     // Re-read bucket stats and the upload queue when internal tables change, so a local write shows up
     // before the sync status moves.
     this.disposers.push(
-      db.onChangeWithCallback(
+      this.db.onChangeWithCallback(
         {
           onChange: () => {
-            void this.pushBuckets(db);
-            void this.pushUploadQueue(db);
+            void this.pushBuckets();
+            void this.pushUploadQueue();
           }
         },
         { tables: ['ps_buckets', 'ps_oplog', 'ps_crud'], throttleMs: this.options.bucketThrottleMs ?? 300 }
@@ -299,19 +229,15 @@ export class JsAgent implements SdkIntegration {
     );
   }
 
-  private replay(db: CommonPowerSyncDatabase, handler: (event: DiagnosticsEvent) => void): void {
-    const status = db.currentStatus;
+  private replay(handler: (event: DiagnosticsEvent) => void): void {
+    const status = this.db.currentStatus;
     handler({ type: 'status', payload: toSyncState(status) });
     handler({ type: 'streams', payload: toStreamStates(status) });
-    void this.readUploadQueue(db)
-      .then((payload) => {
-        if (this.attached === db) handler({ type: 'uploadQueue', payload });
-      })
+    void this.readUploadQueue()
+      .then((payload) => handler({ type: 'uploadQueue', payload }))
       .catch(() => {});
-    void this.readBuckets(db)
-      .then((payload) => {
-        if (this.attached === db) handler({ type: 'buckets', payload });
-      })
+    void this.readBuckets()
+      .then((payload) => handler({ type: 'buckets', payload }))
       .catch(() => {});
   }
 
@@ -330,42 +256,39 @@ export class JsAgent implements SdkIntegration {
     this.emit({ type: 'streams', payload: toStreamStates(status) });
   }
 
-  private async readUploadQueue(db: CommonPowerSyncDatabase): Promise<UploadQueueState> {
-    const stats = await db.getUploadQueueStats(true);
+  private async readUploadQueue(): Promise<UploadQueueState> {
+    const stats = await this.db.getUploadQueueStats(true);
     return { count: stats.count, size: stats.size ?? null };
   }
 
-  private async pushUploadQueue(db: CommonPowerSyncDatabase): Promise<void> {
+  private async pushUploadQueue(): Promise<void> {
     try {
-      const payload = await this.readUploadQueue(db);
-      // A read that finishes after a reset describes the database the agent has let go of.
-      if (this.attached === db) this.emit({ type: 'uploadQueue', payload });
+      this.emit({ type: 'uploadQueue', payload: await this.readUploadQueue() });
     } catch {
       // Non-fatal: queue stats are best-effort.
     }
   }
 
-  private async pushBuckets(db: CommonPowerSyncDatabase): Promise<void> {
+  private async pushBuckets(): Promise<void> {
     try {
-      const payload = await this.readBuckets(db);
-      if (this.attached === db) this.emit({ type: 'buckets', payload });
+      this.emit({ type: 'buckets', payload: await this.readBuckets() });
     } catch {
       // Non-fatal: the diagnostic tables may not exist yet.
     }
   }
 
-  private async readBuckets(db: CommonPowerSyncDatabase): Promise<BucketState[]> {
-    const downloading = db.currentStatus?.downloading ?? false;
+  private async readBuckets(): Promise<BucketState[]> {
+    const downloading = this.db.currentStatus?.downloading ?? false;
     const withSize =
       'SELECT name, count_at_last + count_since_last AS ops, downloaded_size AS size, last_op FROM ps_buckets ORDER BY name';
     const withoutSize = 'SELECT name, count_at_last + count_since_last AS ops, last_op FROM ps_buckets ORDER BY name';
 
     let rows: Record<string, unknown>[];
     try {
-      rows = await db.getAll(withSize);
+      rows = await this.db.getAll(withSize);
     } catch {
       // `downloaded_size` is absent on older cores.
-      rows = await db.getAll(withoutSize);
+      rows = await this.db.getAll(withoutSize);
     }
 
     return rows.map((row) => {
@@ -381,9 +304,9 @@ export class JsAgent implements SdkIntegration {
     });
   }
 
-  /** Wraps `db.logger.log` so every SDK log record is forwarded; restored on detach. */
-  private captureLogs(db: CommonPowerSyncDatabase): void {
-    const logger = db.logger;
+  /** Wraps `db.logger.log` so every SDK log record is forwarded; restored on close. */
+  private captureLogs(): void {
+    const logger = this.db.logger;
     if (!logger || typeof logger.log !== 'function') {
       return;
     }
@@ -417,26 +340,22 @@ export class JsAgent implements SdkIntegration {
       for (const bucket of event.BucketStateChange.changes) {
         this.bucketTargets.set(bucket.name, bucket.progress.target_count);
       }
-      // While detached for a reset, the targets are kept and the replay afterwards reads the buckets.
-      if (this.attached) {
-        void this.pushBuckets(this.attached);
-      }
+      void this.pushBuckets();
     }
   }
 
-  private captureConnection(db: CommonPowerSyncDatabase): void {
+  private captureConnection(): void {
     const connection = this.options.connection;
-    const connector = connection?.getConnector(db) ?? null;
+    const connector = connection?.getConnector() ?? null;
     if (connector) {
       this.lastConnector = connector;
-      this.lastConnectionOptions = connection?.getConnectionOptions(db) ?? null;
+      this.lastConnectionOptions = connection?.getConnectionOptions() ?? null;
     }
   }
 
-  private async reconnect(db: CommonPowerSyncDatabase): Promise<void> {
-    // Once closed, the host owns the database; connecting it would start a sync nobody stops.
-    if (this.lastConnector && !this.closed) {
-      await db.connect(this.lastConnector, this.lastConnectionOptions ?? undefined);
+  private async reconnect(): Promise<void> {
+    if (this.lastConnector) {
+      await this.db.connect(this.lastConnector, this.lastConnectionOptions ?? undefined);
     }
   }
 }

@@ -79,14 +79,12 @@ A page that opens the database itself and shows the UI in its own iframe, such a
 import { attachIframe, createIntegration } from '@powersync/diagnostics/agent';
 
 const integration = createIntegration(db, '@powersync/web');
-const detach = attachIframe(integration, iframe);
+const detach = attachIframe(integration, iframe, new URL(iframe.src).origin);
 ```
 
-Serve the page in `@powersync/diagnostics-ui/dist/standalone` at a route of your own and point the iframe at it; `@powersync/diagnostics/vite-static` does that on a Vite dev server. If your host can delete the database files, pass `reset`: **Clear & re-sync** in DevTools then swaps in the empty database it returns instead of deleting rows, which stays fast on a large database. The agent disconnects the old database before calling it, and requests made during the swap wait for the new one.
+Serve the folder `uiDistDir()` from `@powersync/diagnostics` returns at a route of your own and point the iframe at it; `@powersync/diagnostics/vite-static` does that on a Vite dev server. Pass the page's origin to `attachIframe`: the port it sends can run any SQL and read the sync token.
 
-```ts
-createIntegration(db, '@powersync/web', { reset: () => reopenEmptyDatabase() });
-```
+**Clear & re-sync** in DevTools deletes the local rows, which is slow on a large database. A host that can delete the database files can handle `clearData` itself instead: close the integration and the database, delete the files, then open a new database with a new integration and iframe.
 
 ## MCP
 

@@ -5,7 +5,7 @@
  */
 import type { CommonPowerSyncDatabase, PowerSyncBackendConnector, SyncOptions } from '@powersync/common';
 import type { CoreDiagnosticsEvent, SdkIntegration, Unsubscribe } from '@powersync/diagnostics-core';
-import { JsAgent, type CoreEventSource, type JsAgentOptions } from './js-agent.js';
+import { JsAgent, type CoreEventSource } from './js-agent.js';
 
 // The iframe hand-off an embedding host needs, so it imports nothing from the protocol package.
 export { attachIframe } from '@powersync/diagnostics-core';
@@ -37,26 +37,15 @@ class BroadcastCoreEvents implements CoreEventSource {
   }
 }
 
-/** What a host may hand the integration besides the database. */
-export type IntegrationOptions = Pick<JsAgentOptions, 'reset'>;
-
-/**
- * Builds the JavaScript integration over a live database. The agent reads the connection from the
- * database itself. A host that can delete the database files passes `reset`, and `clearData` then
- * replaces the database instead of deleting its rows (see {@link JsAgentOptions.reset}).
- */
-export function createIntegration(
-  database: CommonPowerSyncDatabase,
-  sdk: string,
-  { reset }: IntegrationOptions = {}
-): SdkIntegration {
-  return new JsAgent(database, {
+/** Builds the JavaScript integration over a live database. The agent reads the connection from the database itself. */
+export function createIntegration(database: CommonPowerSyncDatabase, sdk: string): SdkIntegration {
+  const db = database as DiagnosableDatabase;
+  return new JsAgent(db, {
     sdk,
     coreEvents: typeof BroadcastChannel === 'function' ? new BroadcastCoreEvents() : undefined,
     connection: {
-      getConnector: (db) => (db as DiagnosableDatabase).connector ?? null,
-      getConnectionOptions: (db) => (db as DiagnosableDatabase).connectionOptions ?? null
-    },
-    reset
+      getConnector: () => db.connector ?? null,
+      getConnectionOptions: () => db.connectionOptions ?? null
+    }
   });
 }
