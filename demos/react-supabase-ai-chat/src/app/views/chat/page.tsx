@@ -94,8 +94,16 @@ function useStickToBottom() {
 
   React.useEffect(() => {
     const scroller = scrollRef.current!;
+    let lastTop = scroller.scrollTop;
     const onScroll = () => {
-      pinned.current = scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight < 80;
+      // Only scrolling up unpins. Our own jumps to the bottom also fire scroll events, and by then the reply may have
+      // grown further (a code block or table can add a lot at once), so distance from the bottom alone isn't enough.
+      if (scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight < 80) {
+        pinned.current = true;
+      } else if (scroller.scrollTop < lastTop) {
+        pinned.current = false;
+      }
+      lastTop = scroller.scrollTop;
       setAtBottom(pinned.current);
     };
     const resizes = new ResizeObserver(() => {
