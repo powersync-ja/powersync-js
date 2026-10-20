@@ -930,6 +930,8 @@ The next upload iteration will be delayed.`
         // want to show the error first.
         this.updateJsSyncState({ downloadError: e as Error });
       }
+
+      throw e;
     } finally {
       this.notifyCompletedUploads = this.handleActiveStreamsChange = undefined;
       notifyTokenRefreshed = undefined;
