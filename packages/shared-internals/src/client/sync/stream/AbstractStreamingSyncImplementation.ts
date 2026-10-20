@@ -747,13 +747,13 @@ The next upload iteration will be delayed.`
       return invokePowerSyncControl(PowerSyncControlCommand.START, JSON.stringify(options));
     }
 
-    async function stop(dueToError?: unknown) {
+    async function stop() {
       const instructions = await invokePowerSyncControl(PowerSyncControlCommand.STOP);
       for (const instruction of instructions) {
         // We don't need to handle interrupting instructions since we're unconditionally ending the sync iteration at
         // this point.
         if (isInterruptingInstruction(instruction)) continue;
-        await handleInstruction(instruction, dueToError);
+        await handleInstruction(instruction);
       }
     }
 
@@ -777,7 +777,7 @@ The next upload iteration will be delayed.`
       return JSON.parse(rawResponse);
     }
 
-    async function handleInstruction(instruction: NonInterruptingInstruction, dueToError?: unknown) {
+    async function handleInstruction(instruction: NonInterruptingInstruction) {
       if ('LogLine' in instruction) {
         const { severity, line } = instruction.LogLine;
 
@@ -802,10 +802,7 @@ The next upload iteration will be delayed.`
             break;
         }
       } else if ('UpdateSyncStatus' in instruction) {
-        const updatedJsState: JavaScriptSyncState = {};
-        if (dueToError != null) updatedJsState.downloadError = dueToError as Error;
-
-        syncImplementation.updateSyncStatus(instruction.UpdateSyncStatus.status, updatedJsState);
+        syncImplementation.updateSyncStatus(instruction.UpdateSyncStatus.status);
       } else if ('FetchCredentials' in instruction) {
         if (instruction.FetchCredentials.did_expire) {
           remote.invalidateCredentials();
@@ -832,12 +829,11 @@ The next upload iteration will be delayed.`
         syncImplementation.updateJsSyncState({ downloadError: undefined });
       } else if ('HandleDiagnostics' in instruction) {
         syncImplementation.emitDiagnostics(instruction.HandleDiagnostics);
-      } else if ('CheckpointDelayedDueToLocalData' in instruction) {
-        // Can be ignored if not in download-only mode.
       }
     }
 
-    const runSync = async () => {
+    try {
+      const defaultResult = { immediateRestart: false };
       // Pending sync lines received from the service, as well as local events that trigger a powersync_control
       // invocation (local events include refreshed tokens and completed uploads).
       // This is a single data stream so that we can handle all control calls from a single place.
@@ -877,12 +873,12 @@ The next upload iteration will be delayed.`
             });
           }
         } else if ('CloseSyncStream' in startInstruction) {
-          return;
+          return defaultResult;
         } else {
           await handleInstruction(startInstruction);
         }
       }
-      if (controlInvocations == null) return;
+      if (controlInvocations == null) return defaultResult;
 
       this.notifyCompletedUploads = () => {
         controlInvocations.inject({ command: PowerSyncControlCommand.NOTIFY_CRUD_UPLOAD_COMPLETED });
@@ -928,19 +924,16 @@ The next upload iteration will be delayed.`
           }
         }
       }
-    };
-
-    try {
-      await runSync();
-      await stop();
     } catch (e) {
-      // This stop command updates the sync status to disconnected. If that is because of an error, we want the same
-      // status update to contain that error.
-      await stop(this.abortController?.signal.aborted ? undefined : e);
-      throw e;
+      if (!signal.aborted) {
+        // The stop() call in finally resets the sync status to disconnected. If we're calling that due to an error, we
+        // want to show the error first.
+        this.updateJsSyncState({ downloadError: e as Error });
+      }
     } finally {
       this.notifyCompletedUploads = this.handleActiveStreamsChange = undefined;
       notifyTokenRefreshed = undefined;
+      await stop();
     }
 
     return { immediateRestart: hideDisconnectOnRestart };

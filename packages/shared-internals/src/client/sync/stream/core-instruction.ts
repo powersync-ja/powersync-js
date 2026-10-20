@@ -17,8 +17,7 @@ export type NonInterruptingInstruction =
   | { FetchCredentials: FetchCredentials }
   | { FlushFileSystem: any }
   | { DidCompleteSync: any }
-  | { HandleDiagnostics: DiagnosticsEvent }
-  | { CheckpointDelayedDueToLocalData: null };
+  | { HandleDiagnostics: DiagnosticsEvent };
 
 /**
  * Emitted by the core extension when diagnostics are enabled on the sync stream (see
