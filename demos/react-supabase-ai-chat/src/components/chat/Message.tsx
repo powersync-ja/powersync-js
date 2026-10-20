@@ -84,16 +84,17 @@ function Reply({ message, onRetry }: MessageProps) {
 }
 
 /**
- * How many times the reply was written to Postgres, each synced as one update. It comes from the row, so it's right
- * whichever mode generated the reply: several writes in Postgres mode, one in SSE mode.
+ * How many times the reply's text was written to Postgres, each synced as one update. It comes from the row, so it's
+ * right whichever mode generated the reply: several writes in Postgres mode, one in SSE mode. The worker's claim, which
+ * only sets the status, isn't counted.
  */
 function WriteCount({ writes }: { writes: number }) {
   return (
     <span
       className="ml-2 text-xs"
-      title="How many times this reply was written to Postgres. PowerSync syncs each write."
+      title="How many times the worker wrote this reply's text to Postgres. PowerSync syncs each write."
     >
-      {writes} {writes === 1 ? 'write' : 'writes'} to Postgres
+      {writes} text {writes === 1 ? 'write' : 'writes'} to Postgres
     </span>
   );
 }

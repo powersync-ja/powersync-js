@@ -10,14 +10,46 @@ Because each reply is a database row:
 
 ## Two streaming modes
 
-`VITE_STREAM_MODE` in `.env.local` picks how the text reaches the app while the reply generates:
+`VITE_STREAM_MODE` in `.env.local` picks how the text reaches the app while the reply generates. Thick arrows carry the reply while it generates, and dotted arrows carry it once, when it's finished.
 
-|                            | `postgres` (default)                                                                           | `sse`                                                                                   |
-| -------------------------- | ---------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| While the reply generates  | The worker writes the text so far to the reply's row every 100 ms. PowerSync syncs each write. | The worker sends the text to the app over Server-Sent Events. Postgres isn't touched.   |
-| When the reply is finished | The last write sets the status to `done`.                                                      | The worker writes the full text and `done` to the row once. PowerSync syncs that write. |
-| Postgres writes per reply  | About 10 per second while it generates                                                         | 1                                                                                       |
-| Code                       | `worker/stream-postgres.ts`                                                                    | `worker/stream-sse.ts` and `src/components/chat/useSseReply.ts`                         |
+**Postgres mode**
+
+```mermaid
+flowchart LR
+  app["App<br>(local SQLite)"] -->|question and empty reply| pg[("Postgres")]
+  pg -->|pg_notify| worker
+  subgraph worker [AI worker]
+    buffer["Reply text<br>(in memory)"]
+  end
+  buffer <==>|tokens| model[Model]
+  buffer ==>|"text so far, at most every 100 ms"| pg
+  pg ==>|replication| powersync[PowerSync Service]
+  powersync ==>|syncs each write| app
+```
+
+**SSE mode**
+
+```mermaid
+flowchart LR
+  app["App<br>(local SQLite)"] -->|question and empty reply| pg[("Postgres")]
+  pg -->|pg_notify| worker
+  subgraph worker [AI worker]
+    buffer["Reply text<br>(in memory)"] ==> endpoint["SSE endpoint<br>/replies/:id/stream"]
+  end
+  buffer <==>|tokens| model[Model]
+  worker -.->|"status, then full text"| pg
+  pg -.->|replication| powersync[PowerSync Service]
+  powersync -.->|"syncs status, then full text"| app
+  app -->|connects when streaming| endpoint
+  endpoint ==>|"text so far, then new text"| app
+```
+
+|                            | `postgres` (default)                                                                                   | `sse`                                                                                   |
+| -------------------------- | ------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------- |
+| While the reply generates  | The worker writes the text so far to the reply's row at most every 100 ms. PowerSync syncs each write. | The worker sends the text to the app over Server-Sent Events. Postgres isn't touched.   |
+| When the reply is finished | The last write sets the status to `done`.                                                              | The worker writes the full text and `done` to the row once. PowerSync syncs that write. |
+| Text writes per reply      | Up to 10 per second while it generates                                                                 | 1                                                                                       |
+| Code                       | `worker/stream-postgres.ts`                                                                            | `worker/stream-sse.ts` and `src/components/chat/useSseReply.ts`                         |
 
 Postgres mode is the simpler one: the database is the only channel, and PowerSync does the rest. SSE mode keeps the token stream out of Postgres, which matters when many replies generate at once. It uses a pattern some chat apps use at scale: tokens over SSE, and the database only for the finished message.
 
@@ -30,7 +62,7 @@ Everything else is shared:
 
 ### Postgres mode
 
-Writing on an interval instead of once per token keeps each reply at about 10 updates per second, however fast the model produces tokens. The app shows the write count under each reply, and the worker logs it, for example `1601 characters in 9 writes over 2041 ms`. Each write syncs the whole row, so very long replies or many viewers per chat add up.
+Writing on an interval instead of once per token keeps each reply to at most 10 writes per second, however fast the model produces tokens. The app shows the write count under each reply, and the worker logs it, for example `1601 characters in 9 writes over 2041 ms`. Each write syncs the whole row, so very long replies or many viewers per chat add up.
 
 ### SSE mode
 
