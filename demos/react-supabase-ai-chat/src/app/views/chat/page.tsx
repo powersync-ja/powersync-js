@@ -46,14 +46,14 @@ function ChatView({ chatId }: { chatId: string }) {
     <>
       <TopBar title={chats[0]?.title ?? undefined} />
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 md:px-6">
-        <div ref={contentRef} className="mx-auto flex max-w-3xl flex-col gap-8 pt-4 pb-10">
+        <div ref={contentRef} className="mx-auto flex max-w-chat flex-col gap-8 pt-4 pb-10">
           {messages.map((message) => (
             <Message key={message.id} message={message} onRetry={message === last && !replying ? retry : undefined} />
           ))}
         </div>
       </div>
       <div className="px-4 pb-4 md:px-6">
-        <div className="relative mx-auto max-w-3xl">
+        <div className="relative mx-auto max-w-chat">
           <button
             type="button"
             aria-label="Scroll to bottom"

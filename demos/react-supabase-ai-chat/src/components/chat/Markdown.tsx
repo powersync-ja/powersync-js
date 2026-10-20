@@ -12,7 +12,8 @@ export function Markdown({ children, streaming }: { children: string; streaming?
     <div
       className={cn(
         'prose max-w-none text-[15px] leading-7 text-ink dark:prose-invert',
-        'prose-headings:font-semibold prose-headings:text-ink prose-strong:text-ink prose-a:text-brand',
+        'prose-headings:font-semibold prose-headings:tracking-tight prose-headings:text-ink prose-strong:text-ink prose-a:text-brand prose-a:underline-offset-2',
+        'prose-li:marker:text-muted prose-hr:border-line prose-blockquote:border-l-brand/40 prose-blockquote:font-normal prose-blockquote:text-muted prose-th:text-ink prose-thead:border-line prose-tr:border-line',
         'prose-code:rounded prose-code:bg-bubble prose-code:px-1 prose-code:py-0.5 prose-code:font-normal prose-code:text-ink prose-code:before:content-none prose-code:after:content-none',
         streaming && 'streaming'
       )}
@@ -30,19 +31,19 @@ function CodeBlock({ node, children }: React.ComponentProps<'pre'> & ExtraProps)
   const { language, source } = readCode(node);
 
   return (
-    <div className="not-prose my-5 overflow-hidden rounded-xl bg-stone-900 text-stone-100 first:mt-0 last:mb-0 dark:bg-black/40">
-      <div className="flex items-center justify-between py-1 pr-1.5 pl-4 text-xs text-stone-400">
-        <span>{language ?? 'code'}</span>
+    <div className="not-prose my-5 overflow-hidden rounded-xl bg-code text-slate-100 ring-1 ring-white/5 first:mt-0 last:mb-0">
+      <div className="flex items-center justify-between border-b border-white/10 py-1.5 pr-1.5 pl-4 text-xs text-slate-400">
+        <span className="font-mono">{language ?? 'code'}</span>
         <button
           type="button"
           onClick={() => copy(source)}
-          className="flex items-center gap-1.5 rounded-md px-2 py-1 transition-colors hover:bg-white/10 hover:text-stone-100"
+          className="flex items-center gap-1.5 rounded-md px-2 py-1 transition-colors hover:bg-white/10 hover:text-slate-100"
         >
           <CopyIcon copied={copied} className="size-3.5" />
           {copied ? 'Copied' : 'Copy'}
         </button>
       </div>
-      <pre className="overflow-x-auto px-4 pb-4 text-[13px] leading-6">{children}</pre>
+      <pre className="overflow-x-auto px-4 py-3.5 text-[13px] leading-6">{children}</pre>
     </div>
   );
 }

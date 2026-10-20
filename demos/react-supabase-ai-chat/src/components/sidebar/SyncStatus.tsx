@@ -13,24 +13,24 @@ export function SyncStatus() {
 
   const [label, color] = status.connected
     ? status.uploading || status.downloading
-      ? ['Syncing', 'bg-brand']
-      : ['Synced', 'bg-emerald-500']
+      ? ['Syncing', 'bg-brand ring-brand/15']
+      : ['Synced', 'bg-emerald-500 ring-emerald-500/15']
     : status.connecting
-      ? ['Connecting', 'bg-amber-500']
-      : ['Offline', 'bg-stone-400'];
+      ? ['Connecting', 'bg-amber-500 ring-amber-500/15']
+      : ['Offline', 'bg-muted ring-muted/15'];
 
   const online = status.connected || status.connecting;
 
   return (
     <div className="flex items-center justify-between gap-2 border-t border-line px-5 py-3.5 text-sm">
-      <span className="flex items-center gap-2">
-        <span className={cn('size-2 rounded-full', color)} />
+      <span className="flex items-center gap-2.5">
+        <span className={cn('size-2 rounded-full ring-4', color)} />
         {label}
       </span>
       <button
         type="button"
         onClick={() => (online ? powerSync.disconnect() : connector && powerSync.connect(connector))}
-        className="rounded-md px-2 py-1 text-xs text-muted hover:bg-hover hover:text-ink"
+        className="rounded-lg border border-line px-2.5 py-1 text-xs text-muted transition-colors hover:bg-raised hover:text-ink"
       >
         {online ? 'Go offline' : 'Go online'}
       </button>

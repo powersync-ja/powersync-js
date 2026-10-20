@@ -40,14 +40,14 @@ export function Sidebar({ open }: { open: boolean }) {
     >
       <Link to={NEW_CHAT_ROUTE} className="flex items-center gap-2.5 px-5 pt-5 pb-4">
         <img src="/powersync-mark.svg" alt="" className="h-6 w-6" />
-        <span className="font-semibold tracking-tight">PowerSync Chat</span>
+        <span className="text-[15px] font-semibold tracking-tight">PowerSync Chat</span>
       </Link>
 
       <div className="px-3">
         <Link
           to={NEW_CHAT_ROUTE}
           aria-keyshortcuts="Meta+Shift+O Control+Shift+O"
-          className="group flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium hover:bg-hover"
+          className="group flex items-center gap-2.5 rounded-xl border border-line bg-raised px-3 py-2 text-sm font-medium shadow-[0_1px_2px_rgb(21_24_38/0.05)] transition-colors hover:border-muted/40"
         >
           <SquarePen className="size-4" />
           New chat
@@ -57,13 +57,15 @@ export function Sidebar({ open }: { open: boolean }) {
         </Link>
       </div>
 
-      <nav className="mt-5 flex-1 overflow-y-auto px-3 pb-3">
+      <nav className="mt-6 flex-1 overflow-y-auto px-3 pb-3">
         {groupByDate(chats).map(([label, group]) => (
-          <section key={label} className="mb-4">
+          <section key={label} className="mb-5">
             <h2 className="px-3 pb-1.5 text-xs font-medium text-muted">{label}</h2>
-            {group.map((chat) => (
-              <ChatLink key={chat.id} chat={chat} onDelete={remove} />
-            ))}
+            <div className="flex flex-col gap-1">
+              {group.map((chat) => (
+                <ChatLink key={chat.id} chat={chat} onDelete={remove} />
+              ))}
+            </div>
           </section>
         ))}
       </nav>
@@ -79,13 +81,17 @@ function ChatLink({ chat, onDelete }: { chat: ChatListItem; onDelete: (chatId: s
       to={chatRoute(chat.id)}
       className={({ isActive }) =>
         cn(
-          'group flex items-center gap-2 rounded-lg py-2 pr-2 pl-3 text-sm',
-          isActive ? 'bg-hover font-medium' : 'hover:bg-hover'
+          'group flex items-center gap-2 rounded-lg py-2 pr-2 pl-3 text-sm transition-colors',
+          isActive
+            ? 'bg-raised font-medium shadow-[0_1px_2px_rgb(21_24_38/0.06)] ring-1 ring-line'
+            : 'text-ink/80 hover:bg-hover hover:text-ink'
         )
       }
     >
       <span className="min-w-0 flex-1 truncate">{chat.title}</span>
-      {chat.replying ? <span className="size-2 shrink-0 animate-pulse rounded-full bg-brand" /> : null}
+      {chat.replying ? (
+        <span className="size-2 shrink-0 animate-pulse rounded-full bg-[image:var(--live-gradient)]" />
+      ) : null}
       <button
         type="button"
         aria-label="Delete chat"

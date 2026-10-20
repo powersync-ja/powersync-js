@@ -18,6 +18,8 @@
     "@ai-sdk/anthropic": "^4.0.81",
     "@ai-sdk/google": "^4.0.98",
     "@ai-sdk/openai": "^4.0.95",
+    "@fontsource-variable/figtree": "^5.3.0",
+    "@fontsource-variable/jetbrains-mono": "^5.3.0",
     "@powersync/react": "^2.0.2",
     "@powersync/web": "^2.4.2",
     "@supabase/supabase-js": "^2.118.0",

@@ -56,7 +56,7 @@ export function Composer({ onSend, onStop, autoFocus }: ComposerProps) {
         event.preventDefault();
         submit();
       }}
-      className="rounded-[26px] border border-line bg-raised p-2.5 shadow-[0_2px_16px_rgb(0_0_0/0.05)] transition-colors focus-within:border-muted/50"
+      className="rounded-3xl border border-line bg-raised p-2.5 shadow-[0_1px_2px_rgb(21_24_38/0.04),0_12px_32px_-16px_rgb(21_24_38/0.16)] transition-[border-color,box-shadow] focus-within:border-brand/40 focus-within:ring-4 focus-within:ring-brand/10"
     >
       <textarea
         ref={textarea}
@@ -90,7 +90,7 @@ export function Composer({ onSend, onStop, autoFocus }: ComposerProps) {
             type="submit"
             disabled={!text.trim()}
             aria-label="Send message"
-            className="flex size-9 items-center justify-center rounded-full bg-brand text-white transition-opacity hover:opacity-90 disabled:opacity-30"
+            className="flex size-9 items-center justify-center rounded-full bg-brand text-white transition-colors hover:bg-brand/90 disabled:bg-line disabled:text-muted"
           >
             <ArrowUp className="size-5" strokeWidth={2.25} />
           </button>

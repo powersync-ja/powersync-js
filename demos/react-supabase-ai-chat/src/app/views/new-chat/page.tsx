@@ -40,8 +40,10 @@ export default function NewChatPage() {
       <TopBar />
       <div className="flex flex-1 flex-col items-center justify-center overflow-y-auto px-4 pb-[14vh]">
         <img src="/powersync-mark.svg" alt="" className="mb-5 h-11" />
-        <h1 className="mb-8 text-center text-3xl font-medium tracking-tight">How can I help you today?</h1>
-        <div className="w-full max-w-3xl">
+        <h1 className="mb-8 text-center text-[32px] leading-tight font-semibold tracking-[-0.02em]">
+          How can I help you today?
+        </h1>
+        <div className="w-full max-w-chat">
           <Composer autoFocus onSend={send} />
           <div className="mt-4 flex flex-wrap justify-center gap-2">
             {SUGGESTIONS.map((suggestion) => (
@@ -49,7 +51,7 @@ export default function NewChatPage() {
                 key={suggestion.label}
                 type="button"
                 onClick={() => send(suggestion.prompt)}
-                className="rounded-full border border-line px-3.5 py-1.5 text-sm text-muted transition-colors hover:bg-hover hover:text-ink"
+                className="rounded-full border border-line bg-raised/60 px-3.5 py-1.5 text-sm text-muted transition-colors hover:border-muted/40 hover:text-ink"
               >
                 {suggestion.label}
               </button>

@@ -23,7 +23,7 @@ export const Message = React.memo(function Message({ message, onRetry }: Message
   if (message.role === 'user') {
     return (
       <div className="flex justify-end">
-        <div className="max-w-[85%] rounded-3xl bg-bubble px-5 py-2.5 text-[15px] leading-7 break-words whitespace-pre-wrap">
+        <div className="max-w-[85%] rounded-[20px] rounded-br-md bg-bubble px-4 py-2.5 text-[15px] leading-7 break-words whitespace-pre-wrap">
           {message.content}
         </div>
       </div>
