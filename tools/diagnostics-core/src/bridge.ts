@@ -1,5 +1,6 @@
 import * as Comlink from 'comlink';
 import type { SdkIntegration } from './integration.js';
+import type { Unsubscribe } from './shapes.js';
 
 /**
  * Moves an {@link SdkIntegration} across a `postMessage` boundary with comlink.
@@ -11,16 +12,22 @@ import type { SdkIntegration } from './integration.js';
  * channel.
  */
 
-/** Sent by the UI side to ask the host for a dedicated port. */
+/**
+ * Sent by the UI side to ask the host for a dedicated port. Its `requestId` stays the same when the UI
+ * repeats the request.
+ */
 export const REQUEST_PORT_MESSAGE = 'powersync-diagnostics:request-port';
 /** Sent by the integration side to hand the UI its dedicated port. */
 export const PORT_MESSAGE = 'powersync-diagnostics:port';
 
 /**
  * Serves an integration on `port` — call on the side that owns the {@link SdkIntegration}.
- * Returns a function that stops serving.
+ * Returns a function that stops serving. Stopping also ends every event subscription the UI made through the port.
  */
 export function exposeIntegration(integration: SdkIntegration, port: MessagePort): () => void {
+  // A UI that goes away, such as a page that reloads, never unsubscribes, so stopping has to do it.
+  const subscriptions = new Set<Unsubscribe>();
+  let isStopped = false;
   // Callbacks and the returned unsubscribe cross the boundary as comlink proxies.
   const remote: SdkIntegration = {
     runQuery: (params) => integration.runQuery(params),
@@ -32,12 +39,28 @@ export function exposeIntegration(integration: SdkIntegration, port: MessagePort
       const unsubscribe = await integration.observeEvents((event) => {
         void handler(event);
       });
-      return Comlink.proxy(unsubscribe);
+      // If serving stopped while this call was waiting, nothing will unsubscribe later, so do it now.
+      if (isStopped) {
+        unsubscribe();
+        return Comlink.proxy(() => {});
+      }
+      subscriptions.add(unsubscribe);
+      return Comlink.proxy(() => {
+        subscriptions.delete(unsubscribe);
+        unsubscribe();
+      });
     }
   };
   Comlink.expose(remote, port);
   port.start();
-  return () => port.close();
+  return () => {
+    isStopped = true;
+    for (const unsubscribe of subscriptions) {
+      unsubscribe();
+    }
+    subscriptions.clear();
+    port.close();
+  };
 }
 
 /**
@@ -66,32 +89,84 @@ export function connectIntegration(port: MessagePort): SdkIntegration {
   };
 }
 
+/** Options for {@link attachIframe}. */
+export interface AttachIframeOptions {
+  /**
+   * Only a page from this origin gets the port, because the port can run any SQL and read the sync
+   * token. It accepts the same values as `postMessage`: an origin or a URL on it, `'/'` for this
+   * page's own origin, or `'*'` for any origin. It defaults to the origin of the frame's `src`.
+   */
+  targetOrigin?: string;
+  /** Called each time a page in the frame is handed its port, on the first load and again after every reload. */
+  onHandOff?: () => void;
+}
+
 /**
  * Host side of the iframe hand-off: answers the iframe's port requests with a dedicated channel that
  * serves `integration`. It waits to be asked because a new iframe's blank placeholder already reports
- * `complete`, and a port posted to it is lost when the real page loads. A later request (the page
- * reloaded) replaces the earlier channel. Returns a function that stops serving.
+ * `complete`, and a port posted to it is lost when the real page loads. The page repeats its request
+ * until a port arrives and keeps the first port it gets, so a repeated request is ignored. A request
+ * with a new id means the page reloaded, so it replaces the channel of the page before. Returns a
+ * function that stops serving.
  */
-export function attachIframe(integration: SdkIntegration, frame: HTMLIFrameElement, targetOrigin = '*'): () => void {
-  let stop: (() => void) | null = null;
+export function attachIframe(
+  integration: SdkIntegration,
+  frame: HTMLIFrameElement,
+  options: AttachIframeOptions = {}
+): () => void {
+  // Resolve the origin now, so an invalid one throws when attaching instead of on the first request.
+  const fixedOrigin = options.targetOrigin === undefined ? null : resolveTargetOrigin(options.targetOrigin);
+  const stops = new Set<() => void>();
+  let pageRequestId: unknown;
+  const stopAll = () => {
+    for (const stop of stops) {
+      stop();
+    }
+    stops.clear();
+  };
+
   const onMessage = (event: MessageEvent) => {
     const uiWindow = frame.contentWindow;
     if (!uiWindow || event.source !== uiWindow || event.data?.type !== REQUEST_PORT_MESSAGE) {
       return;
     }
-    if (targetOrigin !== '*' && event.origin !== targetOrigin) {
+    // Read the frame's `src` on every request, so the host can set or change it after attaching.
+    const origin = fixedOrigin ?? (frame.src ? new URL(frame.src).origin : null);
+    if (origin === null || (origin !== '*' && event.origin !== origin)) {
       return;
     }
-    stop?.();
+    const requestId: unknown = event.data.requestId;
+    if (requestId !== undefined) {
+      // The page is repeating a request whose port is already on the way.
+      if (requestId === pageRequestId) {
+        return;
+      }
+      // A new page loaded in the frame, so nothing uses the channels of the page before it.
+      stopAll();
+      pageRequestId = requestId;
+    }
+    // Pages built before request ids send none. Their retries look like reloads, so their channels stay until detach.
     const channel = new MessageChannel();
-    stop = exposeIntegration(integration, channel.port1);
-    uiWindow.postMessage({ type: PORT_MESSAGE }, targetOrigin, [channel.port2]);
+    stops.add(exposeIntegration(integration, channel.port1));
+    uiWindow.postMessage({ type: PORT_MESSAGE }, origin, [channel.port2]);
+    options.onHandOff?.();
   };
   window.addEventListener('message', onMessage);
   return () => {
     window.removeEventListener('message', onMessage);
-    stop?.();
+    stopAll();
   };
+}
+
+/**
+ * Returns the origin that `postMessage` delivers to for `targetOrigin`. Throws on an invalid value, as
+ * `postMessage` does.
+ */
+function resolveTargetOrigin(targetOrigin: string): string {
+  if (targetOrigin === '*') {
+    return '*';
+  }
+  return targetOrigin === '/' ? window.location.origin : new URL(targetOrigin).origin;
 }
 
 /**
@@ -99,9 +174,12 @@ export function attachIframe(integration: SdkIntegration, frame: HTMLIFrameEleme
  *
  * Hosts serve ports on request (see {@link attachIframe}): the UI posts a request to its ancestors,
  * retrying until a port arrives, so it also recovers when the host's script loads after the iframe.
+ * Every retry carries the same id, so a host can tell a retry from a reloaded page.
  */
 export function awaitIntegration(options: { requestIntervalMs?: number } = {}): Promise<SdkIntegration> {
   const interval = options.requestIntervalMs ?? 500;
+  // crypto.randomUUID() needs a secure context, and the page may be served over plain http.
+  const requestId = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
   return new Promise((resolve) => {
     let timer: ReturnType<typeof setInterval> | undefined;
     const listener = (event: MessageEvent) => {
@@ -119,7 +197,7 @@ export function awaitIntegration(options: { requestIntervalMs?: number } = {}): 
     const targets = ancestors();
     const request = () => {
       for (const ancestor of targets) {
-        ancestor.postMessage({ type: REQUEST_PORT_MESSAGE }, '*');
+        ancestor.postMessage({ type: REQUEST_PORT_MESSAGE, requestId }, '*');
       }
     };
     request();

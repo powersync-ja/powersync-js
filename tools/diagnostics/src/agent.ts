@@ -7,8 +7,15 @@ import type { CommonPowerSyncDatabase, PowerSyncBackendConnector, SyncOptions } 
 import type { CoreDiagnosticsEvent, SdkIntegration, Unsubscribe } from '@powersync/diagnostics-core';
 import { JsAgent, type CoreEventSource } from './js-agent.js';
 
-// The iframe hand-off an embedding host needs, so it imports nothing from the protocol package.
+// The iframe hand-off and the protocol types an embedding host needs, so the host never imports the protocol package.
 export { attachIframe } from '@powersync/diagnostics-core';
+export type {
+  ActionRequest,
+  AttachIframeOptions,
+  DiagnosticsEvent,
+  SdkIntegration,
+  SyncState
+} from '@powersync/diagnostics-core';
 
 /** The sync client broadcasts core diagnostics events on this channel (see `emitDiagnostics`). */
 const CORE_EVENTS_CHANNEL = 'powersync-diagnostics-events';

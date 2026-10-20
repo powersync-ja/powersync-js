@@ -12,7 +12,7 @@ One implementation runs in several hosts:
 
 The process that runs your app also serves the DevTools window. You start nothing else.
 
-DevTools run in development only. Nothing from this package goes into a production build.
+The hosts above run in development only, and nothing from them goes into a production build.
 
 Full guide: [PowerSync DevTools](https://docs.powersync.com/tools/devtools-overview).
 
@@ -73,18 +73,24 @@ Options: `port` (default: a random free port), `host`, `auth` (default `true`), 
 
 ## Your own host
 
-A page that opens the database itself and shows the UI in its own iframe, such as a dashboard or another tool's DevTools, builds the integration and hands it to the frame:
+A page that opens the database itself and shows DevTools in its own iframe, such as the PowerSync Dashboard, builds the integration and hands it to the frame:
 
 ```ts
 import { attachIframe, createIntegration } from '@powersync/diagnostics/agent';
 
 const integration = createIntegration(db, '@powersync/web');
-const detach = attachIframe(integration, iframe, new URL(iframe.src).origin);
+const detach = attachIframe(integration, iframe);
+
+// When the panel goes away:
+detach();
+await integration.close();
 ```
 
-Serve the folder `uiDistDir()` from `@powersync/diagnostics` returns at a route of your own and point the iframe at it; `@powersync/diagnostics/vite-static` does that on a Vite dev server. Pass the page's origin to `attachIframe`: the port it sends can run any SQL and read the sync token.
+`uiDistDir()` from `@powersync/diagnostics` returns the folder that holds the DevTools page. Serve it at a route of your own and point the iframe at its `index.html`. In development, the `@powersync/diagnostics/vite-static` plugin serves it at `/__powersync/`. For production, copy the folder into your build output.
 
-**Clear & re-sync** in DevTools deletes the local rows, which is slow on a large database. A host running a throwaway client, like the dashboard's, can handle `clearData` itself instead: close the integration and the database, delete the files, then open a new database with a new integration and iframe. Do not do this for a real app's database: deleting the files also gives the client a new client id, which `disconnectAndClear()` keeps.
+The port can run any SQL and read the sync token, so `attachIframe` only hands it to a page from the origin of the iframe's `src`. The `targetOrigin` option allows a different origin. The `onHandOff` option is called each time `attachIframe` hands the page a port, for example to hide a loading state.
+
+**Clear & re-sync** in DevTools deletes the local rows, which is slow on a large database. A host with a throwaway client, like the PowerSync Dashboard, can pass `attachIframe` a wrapper whose `action` handles `clearData` itself and whose other methods call the integration's. Write each method out, because `{ ...integration }` copies none of them and TypeScript does not catch it. Do not delete a real app's database files, because the client would get a new client id. `disconnectAndClear()` keeps the existing one.
 
 ## MCP
 
@@ -120,7 +126,7 @@ curl -X POST http://localhost:<port>/__mcp \
 
 ## Requirements
 
-- `@powersync/web >= 2.5` for browser apps, `@powersync/node` for node apps. The `agent` entry needs `@powersync/common >= 2.3` and no `devtools` subpath.
+- `@powersync/web >= 2.5` for browser apps and the `agent` entry, and `@powersync/node >= 1.2` for node apps. Earlier versions drop the connector once the database connects, so DevTools cannot reconnect the client.
 - Vite DevTools for the dock: Vite `>= 8.3` with `devtools: true`, or the `@vitejs/devtools` plugin on Vite 7.
 - Node `>= 20.16` for the node entry.
 
