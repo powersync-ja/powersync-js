@@ -17,7 +17,7 @@ import type { Unsubscribe } from './shapes.js';
  * repeats the request.
  */
 export const REQUEST_PORT_MESSAGE = 'powersync-diagnostics:request-port';
-/** Sent by the integration side to hand the UI its dedicated port. */
+/** Sent by the integration side to hand the UI its dedicated port, with the `requestId` it answers. */
 export const PORT_MESSAGE = 'powersync-diagnostics:port';
 
 /**
@@ -148,7 +148,7 @@ export function attachIframe(
     // Pages built before request ids send none. Their retries look like reloads, so their channels stay until detach.
     const channel = new MessageChannel();
     stops.add(exposeIntegration(integration, channel.port1));
-    uiWindow.postMessage({ type: PORT_MESSAGE }, origin, [channel.port2]);
+    uiWindow.postMessage({ type: PORT_MESSAGE, requestId }, origin, [channel.port2]);
     options.onHandOff?.();
   };
   window.addEventListener('message', onMessage);
@@ -184,7 +184,9 @@ export function awaitIntegration(options: { requestIntervalMs?: number } = {}): 
     let timer: ReturnType<typeof setInterval> | undefined;
     const listener = (event: MessageEvent) => {
       const port = event.ports?.[0];
-      if (event.data?.type === PORT_MESSAGE && port) {
+      // A port answering another id was meant for the page before a reload. Hosts before request ids send none.
+      const isForThisPage = event.data?.requestId === undefined || event.data.requestId === requestId;
+      if (event.data?.type === PORT_MESSAGE && port && isForThisPage) {
         window.removeEventListener('message', listener);
         if (timer) clearInterval(timer);
         resolve(connectIntegration(port));
