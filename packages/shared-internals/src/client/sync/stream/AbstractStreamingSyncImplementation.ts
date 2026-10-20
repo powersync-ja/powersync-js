@@ -829,6 +829,8 @@ The next upload iteration will be delayed.`
         syncImplementation.updateJsSyncState({ downloadError: undefined });
       } else if ('HandleDiagnostics' in instruction) {
         syncImplementation.emitDiagnostics(instruction.HandleDiagnostics);
+      } else if ('CheckpointDelayedDueToLocalData' in instruction) {
+        // Can be ignored if not in download-only mode.
       }
     }
 
