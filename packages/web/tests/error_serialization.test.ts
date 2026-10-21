@@ -74,14 +74,18 @@ describe('Error Serialization through MessagePorts', { sequential: true }, () =>
 
       // The connector rejection is serialized in `SharedSyncClientProvider#relay`
       // before it crosses the MessagePort, so custom fields survive the worker relay.
-      const downloadError = database.currentStatus!.downloadError as Error & { code?: string | number; cause?: unknown };
+      const downloadError = database.currentStatus!.downloadError as Error & {
+        code?: string | number;
+        cause?: unknown;
+      };
       expect(downloadError.code).toBe('SQLITE_CORRUPT');
       expect(String((downloadError.cause as Error)?.message ?? downloadError.cause)).toContain('disk I/O error');
 
       await vi.waitFor(() => {
         expect(
           records.some(
-            (record) => record.message === 'Sync error' && (record.error as { code?: string })?.code === 'SQLITE_CORRUPT'
+            (record) =>
+              record.message === 'Sync error' && (record.error as { code?: string })?.code === 'SQLITE_CORRUPT'
           )
         ).toBe(true);
       });
@@ -108,14 +112,15 @@ describe('Error Serialization through MessagePorts', { sequential: true }, () =>
         .catch(() => undefined);
 
       await vi.waitFor(() => {
-        expect(database.currentStatus?.downloadError?.name).toBe('PowerSyncMissingRejectionReason');
+        expect(records.some((record) => record.message === 'Sync error')).toBe(true);
       });
 
-      await vi.waitFor(() => {
-        expect(
-          records.some((record) => record.message === 'Sync error' && (record.error as { state?: string })?.state === 'missing')
-        ).toBe(true);
-      });
+      expect(database.currentStatus?.downloadError?.name).toBe('PowerSyncMissingRejectionReason');
+      expect(
+        records.some(
+          (record) => record.message === 'Sync error' && (record.error as { state?: string })?.state === 'missing'
+        )
+      ).toBe(true);
     }
   );
 });

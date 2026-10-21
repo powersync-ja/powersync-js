@@ -18,16 +18,18 @@ import {
   mockSyncServiceTest,
   stream,
   TestConnector,
-  waitForSyncStatus, databaseTest
+  waitForSyncStatus,
+  databaseTest
 } from './utils.js';
 import { BucketChecksum, OplogEntryJSON } from '@powersync/shared-internals/internal/sync_protocol';
 import {
   AbstractStreamingSyncImplementation,
   BasePowerSyncDatabase,
-  resolveSyncOptions, SqliteBucketStorage
+  resolveSyncOptions,
+  SqliteBucketStorage
 } from '@powersync/shared-internals';
 import { asyncNotifier } from '../../shared-internals/src/utils/async.js';
-import {NodeRemote} from "../src/sync/stream/NodeRemote.js";
+import { NodeRemote } from '../src/sync/stream/NodeRemote.js';
 
 const defaultConnectOptions: SyncOptions = {
   // This might help with test stability/timeouts if a retry is needed.
@@ -109,8 +111,7 @@ describe('Sync', () => {
       });
 
       database.connect(new TestConnector(), { checkpointMode: 'requests' });
-      await database.waitForStatus((s) => s.downloadError != null);
-      expect(database.currentStatus.connected).toBeFalsy();
+      await database.waitForStatus((s) => s.downloadError != null && !s.connected);
     });
 
     mockSyncServiceTest('reposts current checkpoint until applied', async ({ syncService }) => {
@@ -221,74 +222,74 @@ describe('Sync', () => {
     });
 
     databaseTest(
-        'checkpoint retry cancellation',
-        async ({ database }) => {
-          await database.init();
+      'checkpoint retry cancellation',
+      async ({ database }) => {
+        await database.init();
 
-          class TestSync extends AbstractStreamingSyncImplementation {
-            obtainLock<T>({ callback }: any): Promise<T> {
-              return callback();
-            }
-
-            async startCheckpointRetry() {
-              const controller = new AbortController();
-              this.abortController = controller;
-              await this['checkpoints'].markCheckpointsReady(Promise.resolve());
-              this.streamingSyncPromise = Promise.all([
-                Promise.resolve(),
-                Promise.resolve(),
-                this['repostUnacknowledgedCheckpointRequests'](
-                    controller.signal,
-                    resolveSyncOptions({ checkpointMode: 'requests' }, SyncStreamConnectionMethod.HTTP)
-                )
-              ]);
-            }
-
-            endDownloadIteration() {
-              this['checkpoints'].downloadIterationEnded();
-            }
+        class TestSync extends AbstractStreamingSyncImplementation {
+          obtainLock<T>({ callback }: any): Promise<T> {
+            return callback();
           }
 
-          const firstRead = Promise.withResolvers<void>();
-          const logger: PowerSyncLogger = { log: vi.fn() };
-          const adapter = new SqliteBucketStorage(database.database, logger);
+          async startCheckpointRetry() {
+            const controller = new AbortController();
+            this.abortController = controller;
+            await this['checkpoints'].markCheckpointsReady(Promise.resolve());
+            this.streamingSyncPromise = Promise.all([
+              Promise.resolve(),
+              Promise.resolve(),
+              this['repostUnacknowledgedCheckpointRequests'](
+                controller.signal,
+                resolveSyncOptions({ checkpointMode: 'requests' }, SyncStreamConnectionMethod.HTTP)
+              )
+            ]);
+          }
 
-          const readCheckpointRequestId = vi.spyOn(adapter, 'readCheckpointRequestId');
-          readCheckpointRequestId.mockImplementation(async (_) => {
-            firstRead.resolve();
-            return '1';
-          });
+          endDownloadIteration() {
+            this['checkpoints'].downloadIterationEnded();
+          }
+        }
 
-          const sync = new TestSync({
-            subscriptions: [],
-            serializedSchema: new Schema([]).toJSON(),
+        const firstRead = Promise.withResolvers<void>();
+        const logger: PowerSyncLogger = { log: vi.fn() };
+        const adapter = new SqliteBucketStorage(database.database, logger);
+
+        const readCheckpointRequestId = vi.spyOn(adapter, 'readCheckpointRequestId');
+        readCheckpointRequestId.mockImplementation(async (_) => {
+          firstRead.resolve();
+          return '1';
+        });
+
+        const sync = new TestSync({
+          subscriptions: [],
+          serializedSchema: new Schema([]).toJSON(),
+          logger,
+          adapter,
+          uploadCrud: vi.fn(),
+          postCheckpointRequest: vi.fn(),
+          remote: new NodeRemote(
+            {
+              fetchCredentials: vi.fn()
+            },
             logger,
-            adapter,
-            uploadCrud: vi.fn(),
-            postCheckpointRequest: vi.fn(),
-            remote: new NodeRemote(
-                {
-                  fetchCredentials: vi.fn()
-                },
-                logger,
-                {
-                  customFetch: () => {
-                    throw new Error(`Unexpected HTTP request`);
-                  }
-                }
-            )
-          });
+            {
+              customFetch: () => {
+                throw new Error(`Unexpected HTTP request`);
+              }
+            }
+          )
+        });
 
-          await sync.startCheckpointRetry();
-          await firstRead.promise;
-          // The download loop resets checkpoint readiness as it exits. Disconnect wakes the
-          // retry delay, which used to wait again on the already-aborted signal forever.
-          sync.endDownloadIteration();
-          await sync.disconnect();
+        await sync.startCheckpointRetry();
+        await firstRead.promise;
+        // The download loop resets checkpoint readiness as it exits. Disconnect wakes the
+        // retry delay, which used to wait again on the already-aborted signal forever.
+        sync.endDownloadIteration();
+        await sync.disconnect();
 
-          expect(sync.isConnected).toBe(false);
-        },
-        500
+        expect(sync.isConnected).toBe(false);
+      },
+      500
     );
 
     describe('requestCheckpoint', () => {

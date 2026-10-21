@@ -7,8 +7,8 @@ settings:
 catalogs:
   default:
     '@journeyapps/wa-sqlite':
-      specifier: 2.0.7
-      version: 2.0.7
+      specifier: 2.0.8
+      version: 2.0.8
     '@microsoft/api-extractor':
       specifier: ^7.59.0
       version: 7.59.0
@@ -248,8 +248,8 @@ importers:
         version: link:../shared-internals
     devDependencies:
       '@powersync/sql-js':
-        specifier: 0.0.12
-        version: 0.0.12
+        specifier: 0.0.13
+        version: 0.0.13
       '@powersync/web':
         specifier: workspace:*
         version: link:../web
@@ -411,7 +411,7 @@ importers:
     devDependencies:
       '@journeyapps/wa-sqlite':
         specifier: 'catalog:'
-        version: 2.0.7
+        version: 2.0.8
       '@powersync/web':
         specifier: workspace:*
         version: link:../web
@@ -436,7 +436,7 @@ importers:
     devDependencies:
       '@journeyapps/wa-sqlite':
         specifier: 'catalog:'
-        version: 2.0.7
+        version: 2.0.8
       '@powersync/web':
         specifier: workspace:*
         version: link:../web
@@ -543,7 +543,7 @@ importers:
     devDependencies:
       '@journeyapps/wa-sqlite':
         specifier: 'catalog:'
-        version: 2.0.7
+        version: 2.0.8
       '@nuxt/module-builder':
         specifier: ^1.0.2
         version: 1.0.2(@nuxt/cli@3.34.0(@nuxt/schema@4.3.1)(cac@6.7.14)(commander@12.1.0)(magicast@0.5.2)(supports-color@10.2.2))(@vue/compiler-core@3.5.43)(esbuild@0.27.3)(typescript@6.0.3)(vue-tsc@3.2.5(typescript@6.0.3))(vue@3.5.30(typescript@6.0.3))
@@ -795,7 +795,7 @@ importers:
     dependencies:
       '@journeyapps/wa-sqlite':
         specifier: 'catalog:'
-        version: 2.0.7
+        version: 2.0.8
       '@powersync/common':
         specifier: workspace:*
         version: link:../common
@@ -890,7 +890,7 @@ importers:
     dependencies:
       '@journeyapps/wa-sqlite':
         specifier: 'catalog:'
-        version: 2.0.7
+        version: 2.0.8
       '@monaco-editor/react':
         specifier: ^4.7.0
         version: 4.7.0(monaco-editor@0.55.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -4160,8 +4160,8 @@ packages:
     resolution: {integrity: sha512-u3UPsIilWKOM3F9CXtrG8LEJmNxwoCQC/XVj4IKYXvvpx7QIi/Kg1LI5uDmDpKlac62NUtX7eLjRh+jVZcLOzw==}
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
 
-  '@journeyapps/wa-sqlite@2.0.7':
-    resolution: {integrity: sha512-mc6xUricl4QB2s8QTRGS+FofSr1cjwDtf6dPXAdMBuGWodjfEgkSJGDPWQ7zVqgc7hMfXYLT7WIfEBAxara8YA==}
+  '@journeyapps/wa-sqlite@2.0.8':
+    resolution: {integrity: sha512-WRXEms2515S/0DFSWzmlggHu9hSJomhugDUO17rWkL6VpokV/hfjIDLs954Egx/eqrk3WADmiOMzOc7MuJbznQ==}
 
   '@jridgewell/gen-mapping@0.3.13':
     resolution: {integrity: sha512-2kkt/7niJ6MgEPxF0bYdQ6etZaA+fQvDcLKckhy1yIQOzaoKjBBjSj63/aLVjYE3qhRt5dvM+uUyfCg6UKCBbA==}
@@ -5823,8 +5823,8 @@ packages:
   '@poppinss/exception@1.2.3':
     resolution: {integrity: sha512-dCED+QRChTVatE9ibtoaxc+WkdzOSjYTKi/+uacHWIsfodVfpsueo3+DKpgU5Px8qXjgmXkSvhXvSCz3fnP9lw==}
 
-  '@powersync/sql-js@0.0.12':
-    resolution: {integrity: sha512-OO4gKWtIXxtcAuRhq5+RDWjHkA2zgeaSL26skku35DkCwrU+oFr2IItN1Tcb+/Rj2fJASYl7K++KJGrKuVrEPg==}
+  '@powersync/sql-js@0.0.13':
+    resolution: {integrity: sha512-ebmex34/+OM9/rVEuvJzFe67Mt0WCT2jhWEP6bLW/KwJ8n7NKSB7mbUR+aESuTU5OMnz3kwx29hxIke9oMm9ig==}
 
   '@quansync/fs@1.0.0':
     resolution: {integrity: sha512-4TJ3DFtlf1L5LDMaM6CanJ/0lckGNtJcMjQ1NAV6zDmA0tEHKZtxNKin8EgPaVX1YzljbxckyT2tJrpQKAtngQ==}
@@ -23200,7 +23200,7 @@ snapshots:
       '@types/yargs': 17.0.35
       chalk: 4.1.2
 
-  '@journeyapps/wa-sqlite@2.0.7': {}
+  '@journeyapps/wa-sqlite@2.0.8': {}
 
   '@jridgewell/gen-mapping@0.3.13':
     dependencies:
@@ -25694,7 +25694,7 @@ snapshots:
 
   '@poppinss/exception@1.2.3': {}
 
-  '@powersync/sql-js@0.0.12': {}
+  '@powersync/sql-js@0.0.13': {}
 
   '@quansync/fs@1.0.0':
     dependencies:

@@ -924,6 +924,14 @@ The next upload iteration will be delayed.`
           }
         }
       }
+    } catch (e) {
+      if (!signal.aborted) {
+        // The stop() call in finally resets the sync status to disconnected. If we're calling that due to an error, we
+        // want to show the error first.
+        this.updateJsSyncState({ downloadError: e as Error });
+      }
+
+      throw e;
     } finally {
       this.notifyCompletedUploads = this.handleActiveStreamsChange = undefined;
       notifyTokenRefreshed = undefined;
