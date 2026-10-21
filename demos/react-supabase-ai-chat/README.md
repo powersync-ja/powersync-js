@@ -72,7 +72,7 @@ When the reply is finished, the worker writes it once and ends the SSE connectio
 
 ### In both modes
 
-Each synced write or SSE event adds a step of text, and some models (Gemini included) send text in a few large chunks. To keep replies readable, `useSmoothText` in `src/components/chat/` reveals new text at a steady pace.
+Each synced write or SSE event adds a step of text, and some models (Gemini included) send text in a few large chunks. To keep replies readable, `useSmoothText` in `src/components/chat/` reveals new text at a steady pace. Set `VITE_SMOOTH_TEXT=false` to see the steps as they arrive.
 
 The first reply in a chat also names it: the worker asks the model for a short title and writes it to `chats.title`, and the sidebar updates through the `chats` stream.
 
@@ -168,6 +168,7 @@ The worker reads these settings from `.env.local`. Vite only exposes `VITE_` var
 | `ANTHROPIC_API_KEY`            | (empty)                           | Anthropic API key, for `anthropic/...` models.                  |
 | `OPENAI_API_KEY`               | (empty)                           | OpenAI API key, for `openai/...` models.                        |
 | `VITE_STREAM_MODE`             | `postgres`                        | How replies stream: `postgres` or `sse` (see above).            |
+| `VITE_SMOOTH_TEXT`             | `true`                            | Reveal reply text at a steady pace (see above).                 |
 | `STREAM_FLUSH_INTERVAL_MS`     | `100`                             | Postgres mode: how often the reply is written while it streams. |
 | `DATABASE_URL`                 | Local Supabase                    | Postgres connection the worker listens on and writes to.        |
 
