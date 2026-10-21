@@ -1,4 +1,5 @@
 import { defineConfig } from 'vite';
+import powersyncDevtools from '@powersync/diagnostics/vite';
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -18,5 +19,10 @@ export default defineConfig({
   },
   worker: {
     format: 'es'
-  }
+  },
+  // Reachable from a device or emulator during live reload.
+  server: { host: true },
+  // Vite DevTools with the PowerSync dock, on the dev server only.
+  devtools: { apply: 'serve' },
+  plugins: [powersyncDevtools()]
 });

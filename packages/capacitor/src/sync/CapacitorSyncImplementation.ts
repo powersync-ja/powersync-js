@@ -1,4 +1,9 @@
-import { AbstractStreamingSyncImplementation, LockOptions, LockType } from '@powersync/shared-internals';
+import {
+  AbstractStreamingSyncImplementation,
+  DiagnosticsEvent,
+  LockOptions,
+  LockType
+} from '@powersync/shared-internals';
 import { Mutex } from '@powersync/shared-internals';
 
 type MutexMap = {
@@ -22,9 +27,21 @@ let _CAPACITOR_STREAMING_SYNC_SEQUENCE = 0;
 export class CapacitorStreamingSyncImplementation extends AbstractStreamingSyncImplementation {
   // A unique ID for tacking this specific instance of CapacitorStreamingSyncImplementation
   protected instanceId = _CAPACITOR_STREAMING_SYNC_SEQUENCE++;
+  private diagnosticsChannel?: BroadcastChannel;
+
+  /**
+   * Broadcasts a core diagnostics event on a same-origin channel for diagnostics tooling in the
+   * WebView to consume.
+   */
+  protected override emitDiagnostics(event: DiagnosticsEvent): void {
+    this.diagnosticsChannel ??= new BroadcastChannel('powersync-diagnostics-events');
+    this.diagnosticsChannel.postMessage(event);
+  }
 
   async dispose(): Promise<void> {
     await super.dispose();
+    this.diagnosticsChannel?.close();
+    this.diagnosticsChannel = undefined;
 
     // Clear up any global mutexes which aren't used anymore
     for (const mutexEntry of GLOBAL_MUTEX_STORE.entries()) {

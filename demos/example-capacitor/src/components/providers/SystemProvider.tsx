@@ -19,7 +19,8 @@ const powerSync = new PowerSyncDatabase({
 });
 const connector = new BackendConnector();
 
-powerSync.connect(connector);
+// `diagnostics` feeds per-bucket download totals to PowerSync DevTools.
+powerSync.connect(connector, { diagnostics: import.meta.env.DEV });
 
 export const SystemProvider = ({ children }: { children: React.ReactNode }) => {
   return (
