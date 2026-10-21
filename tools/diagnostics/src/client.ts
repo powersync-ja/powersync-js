@@ -5,7 +5,8 @@
  */
 import type { DockClientScriptContext } from '@devframes/hub/client';
 import { observeRegisteredDatabases } from '@powersync/web/devtools';
-import { createAgentServer, createIntegration } from './agent.js';
+import { createIntegration } from './agent.js';
+import { createAgentServer } from './agent-server.js';
 
 const SDK = '@powersync/web';
 
