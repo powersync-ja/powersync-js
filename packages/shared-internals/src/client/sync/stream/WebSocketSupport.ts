@@ -268,6 +268,12 @@ export class WebSocketSupport {
           },
           onComplete: () => {
             abortRequest(); // this will also emit a done event
+
+            if (!connectionEstablished) {
+              // Closed without ever emitting an event? Still emit an empty queue.
+              connectionEstablished = true;
+              resolve(queueAsIterator);
+            }
           },
           onExtension: () => {}
         }
