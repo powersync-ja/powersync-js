@@ -77,16 +77,16 @@
     }
   },
   "dependencies": {
-    "@devframes/agentic": "^1.2.6",
+    "@devframes/agentic": "catalog:",
     "@powersync/diagnostics-core": "workspace:*",
     "@powersync/diagnostics-ui": "workspace:*",
-    "@powersync/shared-internals": "workspace:*",
-    "devframe": "^1.2.6",
+    "devframe": "catalog:",
     "zod": "^4.6.5"
   },
   "devDependencies": {
-    "@devframes/hub": "^1.2.6",
+    "@devframes/hub": "catalog:",
     "@powersync/common": "workspace:*",
+    "@powersync/shared-internals": "workspace:*",
     "@powersync/web": "workspace:*",
     "@types/node": "catalog:",
     "@vitejs/devtools-kit": "^0.7.5",
