@@ -6,7 +6,7 @@
 import type { CommonPowerSyncDatabase } from '@powersync/common';
 import type { CoreDiagnosticsEvent, SdkIntegration, Unsubscribe } from '@powersync/diagnostics-core';
 import { JsAgent, type CoreEventSource } from './js-agent.js';
-import { BasePowerSyncDatabase } from '@powersync/shared-internals';
+import type { BasePowerSyncDatabase } from '@powersync/shared-internals';
 
 // The iframe hand-off and the protocol types an embedding host needs, so the host never imports the protocol package.
 export { attachIframe } from '@powersync/diagnostics-core';
