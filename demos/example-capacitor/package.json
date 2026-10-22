@@ -17,7 +17,9 @@
     "test:build": "pnpm build && npx cap sync android && npx cap build android",
     "start": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "backend:up": "docker compose -f docker/compose.yaml up -d --build",
+    "backend:down": "docker compose -f docker/compose.yaml down -v"
   },
   "dependencies": {
     "@capacitor-community/sqlite": "^8.1.0",

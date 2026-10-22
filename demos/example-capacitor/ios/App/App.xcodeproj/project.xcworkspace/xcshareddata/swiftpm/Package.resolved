@@ -1,13 +1,13 @@
 {
-  "originHash" : "be643516652f32a04b45042ad9585cbef48c10220ad8e48abcb51d76757e571f",
+  "originHash" : "3827077aa007cd7e1d6453cccb596d09bd0bde14659ff03412a112f4b67be289",
   "pins" : [
     {
       "identity" : "capacitor-swift-pm",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/ionic-team/capacitor-swift-pm.git",
       "state" : {
-        "branch" : "8.0.0",
-        "revision" : "596259033e94829dffc552a40e7129262122995e"
+        "revision" : "4c7f346d16196e21fbe23d4a7a6fc7af62af6742",
+        "version" : "8.5.3"
       }
     },
     {
@@ -15,8 +15,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/powersync-ja/powersync-sqlite-core-swift.git",
       "state" : {
-        "revision" : "8571d46d169a24ee1f3733cb554b23b9408cbe09",
-        "version" : "0.4.14"
+        "revision" : "a41d0f52aa5fac82d12b842ce140ce206fbfcba3",
+        "version" : "0.5.4"
       }
     },
     {

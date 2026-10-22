@@ -2,24 +2,29 @@ import { AbstractPowerSyncDatabase, PowerSyncBackendConnector } from '@powersync
 
 export class BackendConnector implements PowerSyncBackendConnector {
   private powersyncUrl: string | undefined;
-  private powersyncToken: string | undefined;
+  private backendUrl: string;
 
   constructor() {
     this.powersyncUrl = import.meta.env.VITE_POWERSYNC_URL;
-    // This token is for development only.
-    // For production applications, integrate with an auth provider or custom auth.
-    this.powersyncToken = import.meta.env.VITE_PUBLIC_POWERSYNC_TOKEN;
+    // Empty means the page's own origin; the Vite dev server proxies `/api` to the backend.
+    this.backendUrl = import.meta.env.VITE_BACKEND_URL ?? '';
   }
 
   async fetchCredentials() {
-    // TODO: Use an authentication service or custom implementation here.
-    if (this.powersyncToken == null || this.powersyncUrl == null) {
+    if (!this.powersyncUrl) {
+      // Local-only mode.
       return null;
     }
 
+    const response = await fetch(`${this.backendUrl}/api/auth/token`);
+    if (response.status != 200) {
+      throw new Error(`Could not fetch a token: HTTP ${response.status}`);
+    }
+    const { token } = await response.json();
+
     return {
       endpoint: this.powersyncUrl,
-      token: this.powersyncToken
+      token
     };
   }
 
@@ -31,7 +36,21 @@ export class BackendConnector implements PowerSyncBackendConnector {
     }
 
     try {
-      // TODO: Upload here
+      const batch = transaction.crud.map((op) => ({
+        table: op.table,
+        op: op.op,
+        id: op.id,
+        data: op.opData
+      }));
+
+      const response = await fetch(`${this.backendUrl}/api/data`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ batch })
+      });
+      if (response.status !== 200) {
+        throw new Error(`Server returned HTTP ${response.status}: ${await response.text()}`);
+      }
 
       await transaction.complete();
     } catch (error: any) {

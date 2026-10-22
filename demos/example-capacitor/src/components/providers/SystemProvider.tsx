@@ -12,9 +12,6 @@ const powerSync = new PowerSyncDatabase({
     dbFilename: 'tests.sqlite'
   },
   schema: AppSchema,
-  flags: {
-    enableMultiTabs: typeof SharedWorker !== 'undefined'
-  },
   logger: createConsoleLogger({ minLevel: LogLevels.debug })
 });
 const connector = new BackendConnector();

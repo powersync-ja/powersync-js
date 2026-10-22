@@ -1,0 +1,54 @@
+# Local backend for this demo: Postgres, the PowerSync service, and a Node.js backend that issues
+# tokens and applies uploads. Start it with `pnpm backend:up` from the demo directory.
+name: example-capacitor
+
+services:
+  postgres:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    command: ['postgres', '-c', 'wal_level=logical']
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  powersync:
+    image: journeyapps/powersync-service:1.27.0
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./powersync.yaml:/app/powersync.yaml:ro
+      - ./sync-config.yaml:/app/sync-config.yaml:ro
+    ports:
+      - 8080:8080
+
+  # Issues tokens (`/api/auth/token`), serves their public keys (`/api/auth/keys`), and writes
+  # uploads to Postgres (`/api/data`).
+  backend:
+    build:
+      context: https://github.com/powersync-ja/powersync-nodejs-backend-todolist-demo.git#07cecc991c484a5640904bdbee89299416bfd016
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_TYPE: postgres
+      DATABASE_URI: postgresql://postgres:postgres@postgres:5432/postgres
+      POWERSYNC_URL: powersync-dev
+      JWT_ISSUER: powersync-dev
+      PORT: 6060
+    ports:
+      - 6060:6060
+
+volumes:
+  postgres_data:
