@@ -1,6 +1,6 @@
 {
   "name": "@powersync/diagnostics",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "PowerSync DevTools: a devframe definition that serves live PowerSync diagnostics as a Vite DevTools dock, a node dev server, and MCP tools.",
   "type": "module",
   "main": "lib/src/index.js",
@@ -57,8 +57,8 @@
     "watch": "tsc --build -w"
   },
   "peerDependencies": {
-    "@powersync/common": "workspace:^2.4.0",
-    "@powersync/web": "workspace:^2.5.0",
+    "@powersync/common": "workspace:^2.5.0",
+    "@powersync/web": "workspace:^2.6.0",
     "@vitejs/devtools-kit": ">=0.7.5",
     "vite": ">=7.0.0"
   },
