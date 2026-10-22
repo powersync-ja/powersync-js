@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, vi } from 'vitest';
 
 import {
+  column,
   CommonPowerSyncDatabase,
   LogRecord,
   PowerSyncLogger,
@@ -8,7 +9,8 @@ import {
   Schema,
   SyncOptions,
   SyncStatus,
-  SyncStreamConnectionMethod
+  SyncStreamConnectionMethod,
+  Table
 } from '@powersync/common';
 import {
   bucket,
@@ -1424,6 +1426,56 @@ function defineSyncTests(bson: boolean) {
     await vi.waitFor(() => powersync.currentStatus.downloading == false);
 
     expect((await query.next()).value.rows._array).toStrictEqual([]);
+  });
+
+  mockSyncServiceTest('direct tables', async ({ syncService }) => {
+    // This is mostly a smoke test, the core extension manages direct tables and covers things like migrations.
+    const customSchema = new Schema({
+      users: new Table({ name: column.text }, { direct: true })
+    });
+
+    const powersync = await syncService.createDatabase({ schema: customSchema });
+    const { type } = await powersync.get<{ type: string }>('pragma table_list(users)');
+    expect(type).toBe('table');
+
+    powersync.connect(new TestConnector(), options);
+    await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
+
+    syncService.pushLine({
+      checkpoint: {
+        last_op_id: '1',
+        buckets: [bucket('a', 1)]
+      }
+    });
+    syncService.pushLine({
+      data: {
+        bucket: 'a',
+        data: [
+          {
+            checksum: 0,
+            op_id: '1',
+            op: 'PUT',
+            object_id: 'user',
+            object_type: 'users',
+            data: '{"name": "synced user"}'
+          }
+        ]
+      }
+    });
+    syncService.pushLine({ checkpoint_complete: { last_op_id: '1' } });
+    await powersync.waitForFirstSync();
+
+    expect(await powersync.getAll('SELECT id, name FROM users')).toStrictEqual([{ id: 'user', name: 'synced user' }]);
+    await powersync.disconnect();
+
+    await powersync.execute('UPDATE users SET name = ?', ['local user']);
+    expect(await powersync.getAll('SELECT id, name FROM users')).toStrictEqual([{ id: 'user', name: 'local user' }]);
+
+    const tx = await powersync.getNextCrudTransaction();
+    expect(tx?.crud).toHaveLength(1);
+    const entry = tx!.crud[0];
+    expect(entry.table).toBe('users');
+    expect(entry.opData).toStrictEqual({ name: 'local user' });
   });
 
   mockSyncServiceTest('can reconnect based on query changes', async ({ syncService }) => {
