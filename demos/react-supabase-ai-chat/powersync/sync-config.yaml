@@ -1,0 +1,18 @@
+# yaml-language-server: $schema=https://unpkg.com/@powersync/service-sync-rules@latest/schema/sync_config.json
+config:
+  edition: 3
+
+streams:
+  # The chat list in the sidebar is always synced.
+  chats:
+    auto_subscribe: true
+    query: SELECT * FROM chats WHERE user_id = auth.user_id()
+
+  # Messages are synced per chat while it is open. The client subscribes with `useQuery(..., { streams })`.
+  # Assistant replies are written to `messages.content` as they are generated, so they stream to every client
+  # subscribed to the chat.
+  chat_messages:
+    query: |
+      SELECT * FROM messages
+      WHERE chat_id = subscription.parameter('chat_id')
+        AND user_id = auth.user_id()

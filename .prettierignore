@@ -16,5 +16,7 @@
 **/routeTree.gen.ts
 
 demos/**/.pnpmfile.cjs
+# Postgres syntax such as `$$` function bodies, which the SQL formatter can't parse.
+demos/**/supabase/migrations/**
 
 pnpm-lock.yaml

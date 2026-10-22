@@ -1,0 +1,50 @@
+{
+  "name": "react-supabase-ai-chat",
+  "version": "0.1.0",
+  "private": true,
+  "description": "PowerSync React demo: an AI chat whose replies stream to clients through Postgres and Sync Streams",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently --names web,worker --prefix-colors magenta,cyan \"vite\" \"pnpm worker\"",
+    "worker": "node --watch-path=worker --watch-path=.env.local --watch-preserve-output --env-file=.env.local --import tsx worker/index.ts",
+    "build": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p worker/tsconfig.json && vite build",
+    "preview": "vite preview",
+    "start": "pnpm build && pnpm preview",
+    "test:build": "pnpm build",
+    "local:up": "supabase start && powersync docker start",
+    "local:down": "powersync docker stop && supabase stop"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "^4.0.81",
+    "@ai-sdk/google": "^4.0.98",
+    "@ai-sdk/openai": "^4.0.95",
+    "@fontsource-variable/figtree": "^5.3.0",
+    "@fontsource-variable/jetbrains-mono": "^5.3.0",
+    "@powersync/react": "^2.0.2",
+    "@powersync/web": "^2.4.2",
+    "@supabase/supabase-js": "^2.118.0",
+    "ai": "^7.0.142",
+    "lucide-react": "^1.58.0",
+    "postgres": "^3.4.9",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-markdown": "^10.1.0",
+    "react-router": "^8.4.0",
+    "remark-gfm": "^4.0.1"
+  },
+  "devDependencies": {
+    "@powersync/diagnostics": "~0.0.1",
+    "@tailwindcss/typography": "^0.5.20",
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/node": "^22.20.5",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/devtools": "^0.7.6",
+    "@vitejs/plugin-react": "^6.1.2",
+    "concurrently": "^10.0.6",
+    "tailwindcss": "^4.3.3",
+    "tsx": "^4.23.15",
+    "typescript": "^6.0.3",
+    "vite": "^8.3.4"
+  }
+}
