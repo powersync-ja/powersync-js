@@ -21,6 +21,7 @@ import IconChevron from '~icons/carbon/chevron-right';
 import IconTable from '~icons/carbon/table';
 import IconRefresh from '~icons/carbon/renew';
 import IconWarning from '~icons/carbon/warning-alt';
+import IconFolder from '~icons/carbon/folder';
 
 const { client, connected } = useDiagnostics();
 const info = ref<ProtocolInfo | null>(null);
@@ -128,6 +129,7 @@ function indexColumns(columns: { name: string; ascending: boolean }[]): string {
         <InfoRow :icon="IconConnect" label="Method" :value="info?.connectionMethod" />
         <InfoRow :icon="IconParams" label="Params" :value="formatParams(info?.params)" mono />
         <InfoRow :icon="IconCode" label="SDK" :value="info?.sdk" mono />
+        <InfoRow v-if="info?.path" :icon="IconFolder" label="Database path" :value="info?.path" mono copyable />
         <InfoRow :icon="IconChip" label="Core version" :value="info?.sqliteCoreVersion" mono />
       </div>
       <div v-else class="p-2"><CodeBlock :code="infoJson" lang="json" /></div>

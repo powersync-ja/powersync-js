@@ -77,14 +77,15 @@
     }
   },
   "dependencies": {
-    "@devframes/agentic": "1.0.0",
+    "@devframes/agentic": "^1.2.6",
     "@powersync/diagnostics-core": "workspace:*",
     "@powersync/diagnostics-ui": "workspace:*",
-    "devframe": "1.0.0",
+    "@powersync/shared-internals": "workspace:*",
+    "devframe": "^1.2.6",
     "zod": "^4.6.5"
   },
   "devDependencies": {
-    "@devframes/hub": "1.0.0",
+    "@devframes/hub": "^1.2.6",
     "@powersync/common": "workspace:*",
     "@powersync/web": "workspace:*",
     "@types/node": "catalog:",
