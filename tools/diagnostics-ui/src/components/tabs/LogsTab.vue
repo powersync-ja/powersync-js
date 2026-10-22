@@ -62,7 +62,7 @@ function argsText(args: readonly unknown[] | undefined): string {
           {{ l }}
         </button>
       </div>
-      <SearchInput v-model="query" placeholder="Search logs…" class="w-48" />
+      <SearchInput v-model="query" placeholder="Search logs…" class="w-48 @max-md:order-last @max-md:w-full" />
       <span class="tabular-nums text-xs text-muted-foreground">{{ results.length }}</span>
       <Button size="sm" variant="ghost" class="ml-auto" @click="clearLogs()"><IconClear class="size-3.5" /> Clear</Button>
     </div>
@@ -78,7 +78,7 @@ function argsText(args: readonly unknown[] | undefined): string {
           class="absolute left-0 top-0 flex w-full items-baseline gap-2 px-3 leading-[22px]"
           :style="{ height: row.size + 'px', transform: `translateY(${row.start}px)` }"
         >
-          <span class="shrink-0 tabular-nums text-muted-foreground/50">{{ formatPrecise(results[row.index].timestamp) }}</span>
+          <span class="hidden shrink-0 tabular-nums text-muted-foreground/50 @md:inline">{{ formatPrecise(results[row.index].timestamp) }}</span>
           <span :class="['w-10 shrink-0 font-semibold uppercase', levelColor[results[row.index].level]]">{{ results[row.index].level }}</span>
           <span class="truncate">
             {{ results[row.index].message }}<span v-if="results[row.index].args" class="text-muted-foreground"> {{ argsText(results[row.index].args) }}</span>

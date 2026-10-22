@@ -22,6 +22,12 @@ import IconConnecting from '~icons/carbon/circle-dash';
 import IconOffline from '~icons/carbon/connection-signal-off';
 import IconSync from '~icons/carbon/update-now';
 import IconTrash from '~icons/carbon/trash-can';
+import IconTabStatus from '~icons/carbon/activity';
+import IconTabData from '~icons/carbon/data-table';
+import IconTabBuckets from '~icons/carbon/data-base';
+import IconTabStreams from '~icons/carbon/flow';
+import IconTabConfig from '~icons/carbon/settings-adjust';
+import IconTabLogs from '~icons/carbon/terminal';
 
 const { isDark, hostControlled, toggle } = useTheme();
 const { connected, sources, activeSource, selectSource } = useDiagnostics();
@@ -123,13 +129,14 @@ const noSourceDescription = computed(() => {
   return `DevTools is connected, but no app is serving a database. ${hints.join(' ')} The view fills in as soon as one attaches.`;
 });
 
+// Narrow panels show the icon only; the label stays the accessible name.
 const tabs = [
-  { value: 'status', label: 'Sync Status' },
-  { value: 'data', label: 'Data Inspector' },
-  { value: 'buckets', label: 'Buckets' },
-  { value: 'streams', label: 'Streams' },
-  { value: 'config', label: 'Config' },
-  { value: 'logs', label: 'Logs' }
+  { value: 'status', label: 'Sync Status', icon: IconTabStatus },
+  { value: 'data', label: 'Data Inspector', icon: IconTabData },
+  { value: 'buckets', label: 'Buckets', icon: IconTabBuckets },
+  { value: 'streams', label: 'Streams', icon: IconTabStreams },
+  { value: 'config', label: 'Config', icon: IconTabConfig },
+  { value: 'logs', label: 'Logs', icon: IconTabLogs }
 ];
 
 // Keep the selected tab across reloads of this tab.
@@ -154,20 +161,23 @@ watch(activeTab, (value) => {
 </script>
 
 <template>
-  <div :class="['flex h-full flex-col bg-background text-sm text-foreground', { dark: isDark }]">
+  <!-- `@container`: layouts follow the panel's width, whatever the host or device. -->
+  <div
+    :class="['@container flex h-full min-w-0 flex-col overflow-hidden bg-background text-sm text-foreground', { dark: isDark }]"
+  >
     <!-- Header: brand + theme toggle -->
     <header class="flex items-center justify-between border-b px-3 py-1.5">
       <span class="inline-flex items-center gap-1.5">
         <Logo class="size-4 shrink-0" />
         <span class="font-semibold tracking-tight">PowerSync</span>
-        <span class="text-xs text-muted-foreground">Diagnostics</span>
+        <span class="hidden text-xs text-muted-foreground @xs:inline">Diagnostics</span>
       </span>
       <TooltipProvider>
         <div class="flex items-center gap-0.5">
           <!-- Several databases attached: pick the one to show -->
           <select
             v-if="sourceChoices.length > 1"
-            class="mr-1 rounded border bg-background px-1.5 py-0.5 text-xs text-foreground"
+            class="mr-1 max-w-40 rounded border bg-background px-1.5 py-0.5 text-xs text-foreground"
             title="Attached database"
             aria-label="Attached database"
             :value="activeSource?.id"
@@ -244,14 +254,17 @@ watch(activeTab, (value) => {
     </div>
 
     <TabsRoot v-else v-model="activeTab" class="flex min-h-0 flex-1 flex-col">
-      <TabsList class="flex gap-0.5 border-b px-1.5">
+      <TabsList class="flex gap-0.5 overflow-x-auto border-b px-1.5 @max-xl:justify-around">
         <TabsTrigger
           v-for="t in tabs"
           :key="t.value"
           :value="t.value"
-          class="cursor-pointer border-b-2 border-transparent px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground"
+          :aria-label="t.label"
+          :title="t.label"
+          class="inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap border-b-2 border-transparent px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground @max-xl:px-3 @max-xl:py-2"
         >
-          {{ t.label }}
+          <component :is="t.icon" class="size-4 shrink-0 @xl:hidden" aria-hidden="true" />
+          <span class="@max-xl:sr-only">{{ t.label }}</span>
         </TabsTrigger>
       </TabsList>
 

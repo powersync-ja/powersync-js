@@ -22,6 +22,22 @@ type SortKey = 'name' | 'downloadedOperations' | 'downloadedSize' | 'lastOp';
 const sortKey = ref<SortKey>('downloadedOperations');
 const sortDir = ref<'asc' | 'desc'>('desc');
 
+// Narrow panels sort from a menu; the table header does it on wide ones.
+const sortChoice = computed({
+  get: () => `${sortKey.value}:${sortDir.value}`,
+  set: (value: string) => {
+    const [key, dir] = value.split(':') as [SortKey, 'asc' | 'desc'];
+    sortKey.value = key;
+    sortDir.value = dir;
+  }
+});
+const sortChoices: { value: string; label: string }[] = [
+  { value: 'downloadedOperations:desc', label: 'Most operations' },
+  { value: 'downloadedSize:desc', label: 'Largest' },
+  { value: 'name:asc', label: 'Name A–Z' },
+  { value: 'lastOp:desc', label: 'Latest op' }
+];
+
 function toggleSort(key: SortKey) {
   if (sortKey.value === key) {
     sortDir.value = sortDir.value === 'asc' ? 'desc' : 'asc';
@@ -81,12 +97,59 @@ const columns: { key: SortKey; label: string; align: string }[] = [
       </div>
     </div>
 
-    <SearchInput v-model="query" placeholder="Search buckets…" />
+    <div class="flex items-center gap-2">
+      <SearchInput v-model="query" placeholder="Search buckets…" class="min-w-0 flex-1" />
+      <select
+        v-model="sortChoice"
+        class="h-7 shrink-0 rounded-md border bg-background px-1.5 text-xs text-foreground @lg:hidden"
+        aria-label="Sort buckets"
+      >
+        <option v-for="choice in sortChoices" :key="choice.value" :value="choice.value">{{ choice.label }}</option>
+      </select>
+    </div>
 
     <div v-if="!sorted.length" class="rounded-lg border bg-card px-3 py-6 text-center text-xs text-muted-foreground">
       {{ buckets.length ? 'No buckets match your search.' : 'No buckets.' }}
     </div>
-    <div v-else class="overflow-x-auto rounded-lg border">
+    <!-- Narrow panels: one card per bucket -->
+    <ul v-if="sorted.length" class="space-y-1.5 @lg:hidden">
+      <li v-for="b in sorted" :key="b.name">
+        <button
+          class="w-full rounded-lg border bg-card px-3 py-2 text-left text-xs hover:bg-muted/40"
+          title="Explore this bucket's data"
+          @click="selected = b"
+        >
+          <div class="flex items-center gap-2">
+            <span class="min-w-0 flex-1 truncate font-mono text-primary">{{ b.name }}</span>
+            <span
+              :class="[
+                'inline-flex shrink-0 items-center rounded px-1.5 py-0.5 text-[10px] font-medium',
+                b.downloading ? 'bg-blue-500/15 text-blue-600 dark:text-blue-400' : 'bg-muted text-muted-foreground'
+              ]"
+            >
+              {{ b.downloading ? 'downloading' : 'idle' }}
+            </span>
+          </div>
+          <div class="mt-1 flex items-center gap-3 tabular-nums text-muted-foreground">
+            <span class="text-foreground"
+              >{{ formatCompact(b.downloadedOperations)
+              }}<span v-if="b.totalOperations != null" class="text-muted-foreground">
+                / {{ formatCompact(b.totalOperations) }}</span
+              >
+              ops</span
+            >
+            <span>{{ formatBytes(b.downloadedSize) }}</span>
+            <span class="ml-auto font-mono">#{{ b.lastOp ?? '—' }}</span>
+          </div>
+          <div v-if="b.totalOperations != null" class="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-muted">
+            <div class="h-full rounded-full bg-primary" :style="{ width: fraction(b) * 100 + '%' }" />
+          </div>
+        </button>
+      </li>
+    </ul>
+
+    <!-- Wide panels: sortable table -->
+    <div v-if="sorted.length" class="hidden overflow-x-auto rounded-lg border @lg:block">
       <table class="w-full text-xs">
         <thead class="bg-muted/40 text-muted-foreground">
           <tr>

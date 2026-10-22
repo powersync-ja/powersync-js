@@ -104,9 +104,9 @@ const priorityRows = computed(() =>
         >
         <span class="inline-flex items-center gap-2">
           <span class="tabular-nums text-foreground">
-            <template v-if="progress">
+            <span v-if="progress" class="hidden @sm:inline">
               {{ formatCompact(progress.downloadedOperations) }} / {{ formatCompact(progress.totalOperations) }} ops
-            </template>
+            </span>
             {{ Math.round(downloadFraction * 100) }}%
           </span>
           <Button size="sm" variant="outline" :disabled="syncing || !status.connected" @click="syncNow">
