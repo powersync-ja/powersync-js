@@ -1,5 +1,20 @@
 # @powersync/nuxt
 
+## 2.0.1
+
+### Patch Changes
+
+- Updated dependencies [bf54805]
+- Updated dependencies [6f05fc7]
+- Updated dependencies [7d5255f]
+- Updated dependencies [d6a9cb4]
+- Updated dependencies [7d5255f]
+  - @powersync/web@2.6.0
+  - @powersync/diagnostics@0.0.3
+  - @powersync/shared-internals@1.5.0
+  - @powersync/kysely-driver@2.0.2
+  - @powersync/vue@0.7.0
+
 ## 2.0.0
 
 ### Major Changes

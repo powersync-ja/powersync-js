@@ -1,5 +1,11 @@
 # @powersync/common
 
+## 2.5.0
+
+### Minor Changes
+
+- d6a9cb4: Support [direct tables](https://docs.powersync.com/client-sdks/advanced/performance-optimization#direct-tables).
+
 ## 2.4.0
 
 ### Minor Changes

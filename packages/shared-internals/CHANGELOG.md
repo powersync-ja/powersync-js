@@ -1,5 +1,17 @@
 # @powersync/shared-internals
 
+## 1.5.0
+
+### Minor Changes
+
+- d6a9cb4: Support [direct tables](https://docs.powersync.com/client-sdks/advanced/performance-optimization#direct-tables).
+
+### Patch Changes
+
+- 7d5255f: Support version 0.5.4 of the PowerSync SQLite core extension.
+- Updated dependencies [d6a9cb4]
+  - @powersync/common@2.5.0
+
 ## 1.4.0
 
 ### Minor Changes
