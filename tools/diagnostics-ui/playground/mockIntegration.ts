@@ -217,7 +217,8 @@ export class MockIntegration implements SdkIntegration {
       params: { store_id: '42' },
       connected: this.connected,
       sqliteCoreVersion: '0.4.2 (mock core)',
-      sdk: '@powersync/web (mock)'
+      sdk: '@powersync/web (mock)',
+      path: '/foo/bar.db'
     };
   }
 
