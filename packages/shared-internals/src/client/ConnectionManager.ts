@@ -297,8 +297,13 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
 
     this.disconnectingPromise = this.performDisconnect();
 
-    await this.disconnectingPromise;
-    this.disconnectingPromise = null;
+    try {
+      await this.disconnectingPromise;
+    } finally {
+      // Clear the promise even if the disconnect failed, so that later calls don't keep returning
+      // the same rejection.
+      this.disconnectingPromise = null;
+    }
   }
 
   protected async performDisconnect() {

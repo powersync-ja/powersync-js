@@ -199,4 +199,22 @@ describe('ConnectionManager', () => {
       await harness.manager.disconnect();
     });
   });
+
+  test('can disconnect and connect again after a failed disconnect', async () => {
+    const harness = managerWithCreateHook();
+    await harness.manager.connect(connector, {}, {});
+
+    const failing = harness.sync;
+    failing.disconnect = async () => {
+      throw new Error('disconnect failed');
+    };
+    await expect(harness.manager.disconnect()).rejects.toThrow('disconnect failed');
+
+    await harness.manager.connect(connector, {}, {});
+    expect(harness.syncs).toHaveLength(2);
+    expect(harness.sync.isConnected).toBe(true);
+
+    await harness.manager.disconnect();
+    expect(harness.sync.isConnected).toBe(false);
+  });
 });
