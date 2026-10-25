@@ -501,7 +501,10 @@ The next upload iteration will be delayed.`
           this.logger.log({ level: LogLevels.warn, message: 'Sync aborted', error: ex });
           shouldDelayRetry = false;
           // A disconnect was requested, we should not delay since there is no explicit retry
-        } else if (this.connectionMayHaveChanged && (ex as Error).message?.indexOf('No iteration is active') >= 0) {
+        } else if (
+          this.connectionMayHaveChanged &&
+          (ex as Error | null | undefined)?.message?.includes('No iteration is active')
+        ) {
           this.connectionMayHaveChanged = false;
           this.logger.log({
             level: LogLevels.info,
