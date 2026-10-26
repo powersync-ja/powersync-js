@@ -167,8 +167,8 @@ export class PowerSyncClient {
             events = state.push(line);
           } catch (e) {
             if (e instanceof RestartSyncError && e.clearLocal) {
-              // Start from scratch while still allowing markUpdated() calls before the next sync iteration.
-              this.#state = new DownloadClientState(this.#localWrites);
+              // Start from scratch
+              this.#state = new DownloadClientState(this.#localWrites, state);
             }
 
             throw e;

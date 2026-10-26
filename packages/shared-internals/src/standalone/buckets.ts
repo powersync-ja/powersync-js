@@ -29,13 +29,24 @@ export class DownloadClientState {
   #writeState: LocalWriteState;
   // For each row (table + id pair), all buckets referencing that row in their oplog history. This is used to find the
   // latest oplog entry for a specific row.
-  readonly #rowKeyToBuckets = new Map<string, Set<Bucket>>();
+  readonly #rowKeyToBuckets = new Map<string, { key: RowKey; buckets: Set<Bucket> }>();
   // Rows that need to be updated on the next complete sync, e.g. because there was a local mutation for which we need
   // to check whether it synced back down.
-  readonly #updatedRows = new Map<string, RowKey>();
+  readonly #updatedRows: Map<string, RowKey>;
 
-  constructor(writeState: LocalWriteState) {
+  constructor(writeState: LocalWriteState, previous?: DownloadClientState) {
     this.#writeState = writeState;
+
+    if (previous) {
+      this.#updatedRows = previous.#updatedRows;
+      // This replaces a previous client state. Mark all rows tracked by that state as updated, so that we can emit a
+      // delete event if they're removed.
+      for (const [formattedKey, { key }] of previous.#rowKeyToBuckets) {
+        this.#updatedRows.set(formattedKey, key);
+      }
+    } else {
+      this.#updatedRows = new Map();
+    }
   }
 
   prepareConnectRequest(
@@ -83,7 +94,9 @@ export class DownloadClientState {
         }
 
         resolvedBucket.pushLine(raw, parsed);
-        this.#rowKeyToBuckets.getOrInsertComputed(parsed.key.formatted, () => new Set()).add(resolvedBucket);
+        this.#rowKeyToBuckets
+          .getOrInsertComputed(parsed.key.formatted, () => ({ key: parsed.key, buckets: new Set() }))
+          .buckets.add(resolvedBucket);
       }
     } else if ('checkpoint_complete' in line) {
       this.#checkpointComplete = true;
@@ -124,7 +137,7 @@ export class DownloadClientState {
         // All data visible because of this bucket needs to be rechecked at the next full checkpoint.
         for (const applied of bucket.appliedChanges.values()) {
           this.addToUpdatedRows(applied.key);
-          this.#rowKeyToBuckets.get(applied.key.formatted)?.delete(bucket);
+          this.#rowKeyToBuckets.get(applied.key.formatted)?.buckets.delete(bucket);
         }
       }
 
@@ -191,7 +204,7 @@ export class DownloadClientState {
 
       // Find the latest oplog entry for this key in all buckets.
       let latestEntry: OplogEntry | undefined;
-      const buckets = this.#rowKeyToBuckets.get(key.formatted);
+      const buckets = this.#rowKeyToBuckets.get(key.formatted)?.buckets;
       if (buckets) {
         for (const bucket of buckets) {
           const entry = bucket.entryFor(
