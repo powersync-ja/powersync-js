@@ -30,6 +30,7 @@ export class PowerSyncClient {
   #state: DownloadClientState | null = null;
   #localWrites: LocalWriteState;
   #fetch: typeof fetch;
+  readonly #retryListeners = new Set<() => void>();
 
   constructor({ localWrites, fetch = globalThis.fetch.bind(globalThis) }: ClientOptions) {
     this.#localWrites = localWrites;
@@ -57,6 +58,18 @@ export class PowerSyncClient {
 
     const text = await response.text();
     throw new UnexpectedResponseError(response.status, text);
+  }
+
+  /**
+   * Retries applying the last fully-received checkpoint on the active {@link streamingSync} iteration, emitting the
+   * resulting events from it.
+   *
+   * This should be called after updating {@link LocalWriteState}: Since checkpoint requests and the sync stream are
+   * independent requests, a checkpoint including the requested write checkpoint may have been received (and either
+   * applied or rejected) before {@link requestCheckpoint} completes.
+   */
+  retryCheckpoint() {
+    for (const listener of this.#retryListeners) listener();
   }
 
   markUpdated(table: string, id: string) {
@@ -112,16 +125,36 @@ export class PowerSyncClient {
 
     const lines = extractJsonLines(response.body![Symbol.asyncIterator](), new TextDecoder());
 
+    // Whether we've received a signal to retry applying the last checkpoint, sent after uploads are completed.
+    let checkpointRetryRequested = false;
+    // Resolved when a checkpoint retry is requested, rejected when the service doesn't send a line in time.
+    let interrupt: PromiseWithResolvers<null> | undefined;
+    const requestRetry = () => {
+      checkpointRetryRequested = true;
+      interrupt?.resolve(null);
+    };
+    this.#retryListeners.add(requestRetry);
+
+    let nextLine: Promise<IteratorResult<string>> | undefined;
+    let idleTimeout: ReturnType<typeof setTimeout> | undefined;
+
     try {
       while (true) {
-        const { promise, reject } = Promise.withResolvers<never>();
-        const idleTimeout = setTimeout(
-          () => reject(new Error('No sync line received within timeout')),
-          SERVICE_TIMEOUT
-        );
+        if (checkpointRetryRequested) {
+          checkpointRetryRequested = false;
+          yield* state.retryCheckpoint();
+        }
 
-        const event = await Promise.race([lines.next(), promise]);
+        nextLine ??= lines.next();
+        const { promise, reject } = (interrupt = Promise.withResolvers<null>());
+        idleTimeout = setTimeout(() => reject(new Error('No sync line received within timeout')), SERVICE_TIMEOUT);
+
+        const event = await Promise.race([nextLine, promise]);
         clearTimeout(idleTimeout);
+        interrupt = undefined;
+        if (event == null) continue; // Resolves to null when a checkpoint retry is requested
+
+        nextLine = undefined;
         if (event.done) break;
 
         const line: StreamingSyncLine = JSON.parse(event.value);
@@ -145,6 +178,8 @@ export class PowerSyncClient {
         }
       }
     } finally {
+      clearTimeout(idleTimeout);
+      this.#retryListeners.delete(requestRetry);
       abort.abort();
 
       while (!(await lines.next()).done) {

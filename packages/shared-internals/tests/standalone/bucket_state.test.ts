@@ -221,13 +221,51 @@ downloadClientTest('emits stream descriptions from checkpoints', ({ client }) =>
     { name: 'b', is_default: false, errors: [{ subscription: 1, message: 'invalid parameters' }] }
   ];
   expect(client.state.push({ checkpoint: { last_op_id: '0', buckets: [], streams } })).toStrictEqual([
-    { type: 'checkpoint', streams }
+    { type: 'resolvedStreams', streams }
   ]);
 
   // Checkpoint diffs don't describe streams.
   expect(
     client.state.push({ checkpoint_diff: { last_op_id: '0', updated_buckets: [], removed_buckets: [] } })
   ).toStrictEqual([]);
+});
+
+describe('retryCheckpoint', () => {
+  downloadClientTest('applies checkpoint received before target was known', ({ client }) => {
+    // The checkpoint request response arrives after the checkpoint with the write checkpoint, which has been applied
+    // already.
+    client.pushCheckpoint(1n, [{ name: 'a' }], 1n);
+    client.putRow('a', 'row-0', { col: 'hi' });
+    expect(client.pushCheckpointComplete()).toStrictEqual([updatedRows({ items: { 'row-0': { col: 'hi' } } })]);
+
+    client.localWrites.targetCheckpoint = 1n;
+    expect(client.state.retryCheckpoint()).toStrictEqual([updatedRows({})]);
+  });
+
+  downloadClientTest('applies blocked checkpoint', ({ client }) => {
+    client.localWrites.targetCheckpoint = 1n;
+    client.pushCheckpoint(1n, [{ name: 'a' }], 2n);
+    client.putRow('a', 'row-0', { col: 'hi' });
+    client.localWrites.targetCheckpoint = 3n;
+    expect(client.pushCheckpointComplete()).toStrictEqual([{ received: 2n, target: 3n, type: 'waitingForCheckpoint' }]);
+
+    client.localWrites.targetCheckpoint = 2n;
+    expect(client.state.retryCheckpoint()).toStrictEqual([updatedRows({ items: { 'row-0': { col: 'hi' } } })]);
+  });
+
+  downloadClientTest('does not apply incomplete checkpoints', ({ client }) => {
+    expect(client.state.retryCheckpoint()).toStrictEqual([]);
+
+    client.pushCheckpoint(1n, [{ name: 'a' }]);
+    client.putRow('a', 'row-0', { col: 'hi' });
+    expect(client.state.retryCheckpoint()).toStrictEqual([]);
+
+    expect(client.pushCheckpointComplete()).toStrictEqual([updatedRows({ items: { 'row-0': { col: 'hi' } } })]);
+    expect(
+      client.state.push({ checkpoint_diff: { last_op_id: '2', updated_buckets: [], removed_buckets: [] } })
+    ).toStrictEqual([]);
+    expect(client.state.retryCheckpoint()).toStrictEqual([]);
+  });
 });
 
 describe('errors', () => {

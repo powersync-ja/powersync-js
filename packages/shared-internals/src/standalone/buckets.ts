@@ -17,6 +17,8 @@ export class DownloadClientState {
   readonly #buckets = new Map<string, Bucket>();
   #bucketsByPriority: Map<number, Bucket[]> | undefined;
   #checkpoint: TrackedCheckpoint | undefined;
+  // Whether all data for #checkpoint has been received.
+  #checkpointComplete = false;
 
   #writeState: LocalWriteState;
   // For each row (table + id pair), all buckets referencing that row in their oplog history. This is used to find the
@@ -54,6 +56,7 @@ export class DownloadClientState {
 
   push(line: BucketLine): DownloadEvent[] {
     if ('checkpoint' in line) {
+      this.#checkpointComplete = false;
       this.#reconcileBuckets(new TrackedCheckpoint(line.checkpoint));
       const streams = line.checkpoint.streams;
       if (streams != null) {
@@ -61,6 +64,7 @@ export class DownloadClientState {
       }
     } else if ('checkpoint_diff' in line) {
       const existing = this.#checkpoint!;
+      this.#checkpointComplete = false;
       existing.applyDiff(line);
       this.#reconcileBuckets(existing);
     } else if ('data' in line) {
@@ -76,12 +80,21 @@ export class DownloadClientState {
         this.#rowKeyToBuckets.getOrInsertComputed(parsed.key.formatted, () => new Set()).add(resolvedBucket);
       }
     } else if ('checkpoint_complete' in line) {
+      this.#checkpointComplete = true;
       return this.#syncLocal();
     } else {
       return this.#syncLocal(line.partial_checkpoint_complete.priority);
     }
 
     return [];
+  }
+
+  /**
+   * Attempts to apply the last checkpoint again if all of its data has been received, e.g. because
+   * {@link LocalWriteState} has changed since it was received.
+   */
+  retryCheckpoint(): DownloadEvent[] {
+    return this.#checkpointComplete ? this.#syncLocal() : [];
   }
 
   addToUpdatedRows(key: RowKey) {
