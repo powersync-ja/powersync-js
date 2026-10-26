@@ -13,6 +13,12 @@ export class LocalWriteState {
   targetCheckpoint?: bigint;
 }
 
+/**
+ * A JavaScript sync client.
+ *
+ * This tracks the equivalent of `ps_oplog`, `ps_buckets` and `ps_updated_rows` from the core extension and can update
+ * its state for sync lines, emitting changed rows.
+ */
 export class DownloadClientState {
   readonly #buckets = new Map<string, Bucket>();
   #bucketsByPriority: Map<number, Bucket[]> | undefined;

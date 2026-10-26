@@ -20,6 +20,6 @@ export interface StreamSubscriptionRequest {
 
 export interface RequestedStreamSubscription {
   stream: string;
-  parameters: Record<string, unknown> | undefined;
+  parameters: Record<string, unknown>;
   override_priority: number | null;
 }

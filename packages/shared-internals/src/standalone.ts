@@ -30,7 +30,7 @@ export class PowerSyncClient {
   #state: DownloadClientState | null = null;
   #localWrites: LocalWriteState;
   #fetch: typeof fetch;
-  readonly #retryListeners = new Set<() => void>();
+  readonly #notifyUploadComplete = new Set<() => void>();
 
   constructor({ localWrites, fetch = globalThis.fetch.bind(globalThis) }: ClientOptions) {
     this.#localWrites = localWrites;
@@ -45,7 +45,7 @@ export class PowerSyncClient {
 
   #defaultHeaders(request: ServiceRequest): Record<string, string> {
     return {
-      'X-UserAgent': userAgent,
+      'X-User-Agent': userAgent, // We can't set User-Agent on the web, the service respects this header
       'Content-Type': applicationJson,
       Authorization: `Token ${request.token}`
     } satisfies HeadersInit;
@@ -69,7 +69,7 @@ export class PowerSyncClient {
    * applied or rejected) before {@link requestCheckpoint} completes.
    */
   retryCheckpoint() {
-    for (const listener of this.#retryListeners) listener();
+    for (const listener of this.#notifyUploadComplete) listener();
   }
 
   markUpdated(table: string, id: string) {
@@ -133,7 +133,7 @@ export class PowerSyncClient {
       checkpointRetryRequested = true;
       interrupt?.resolve(null);
     };
-    this.#retryListeners.add(requestRetry);
+    this.#notifyUploadComplete.add(requestRetry);
 
     let nextLine: Promise<IteratorResult<string>> | undefined;
     let idleTimeout: ReturnType<typeof setTimeout> | undefined;
@@ -179,7 +179,7 @@ export class PowerSyncClient {
       }
     } finally {
       clearTimeout(idleTimeout);
-      this.#retryListeners.delete(requestRetry);
+      this.#notifyUploadComplete.delete(requestRetry);
       abort.abort();
 
       while (!(await lines.next()).done) {
