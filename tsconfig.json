@@ -44,9 +44,6 @@
             "path": "./packages/tauri"
         },
         {
-            "path": "./packages/tiny-client"
-        },
-        {
             "path": "./packages/vue"
         },
         {

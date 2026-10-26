@@ -1,20 +1,17 @@
-import { LocalWriteState } from '../checkpoints.js';
-import {
+import { DownloadChanges, DownloadEvent, RestartSyncError } from './api.js';
+import { BucketRequest, StreamingSyncRequest, StreamSubscriptionRequest } from './requests.js';
+import type {
   BucketChecksum,
   BucketLine,
-  BucketRequest,
   Checkpoint,
-  RawOplogEntry,
-  StreamingSyncCheckpointDiff,
-  StreamingSyncRequest,
-  StreamSubscriptionRequest
-} from './protocol.js';
+  OplogEntryJSON,
+  StreamingSyncCheckpointDiff
+} from './sync_protocol.js';
 
-export interface DownloadChanges {
-  updatedRows: Map<string, Map<string, Record<string, unknown> | null>>;
+export class LocalWriteState {
+  hasLocalWrites: boolean = false;
+  targetCheckpoint?: bigint;
 }
-
-export type DownloadEvent = DownloadChanges | 'blockedDueToLocalData' | { waitingForCheckpoint: bigint };
 
 export class DownloadClientState {
   readonly #buckets = new Map<string, Bucket>();
@@ -22,7 +19,11 @@ export class DownloadClientState {
   #checkpoint: TrackedCheckpoint | undefined;
 
   #writeState: LocalWriteState;
+  // For each row (table + id pair), all buckets referencing that row in their oplog history. This is used to find the
+  // latest oplog entry for a specific row.
   readonly #rowKeyToBuckets = new Map<string, Set<Bucket>>();
+  // Rows that need to be updated on the next complete sync, e.g. because there was a local mutation for which we need
+  // to check whether it synced back down.
   readonly #updatedRows = new Map<string, RowKey>();
 
   constructor(writeState: LocalWriteState) {
@@ -79,7 +80,7 @@ export class DownloadClientState {
     return [];
   }
 
-  #addToUpdatedRows(key: RowKey) {
+  addToUpdatedRows(key: RowKey) {
     this.#updatedRows.set(key.formatted, key);
   }
 
@@ -91,7 +92,7 @@ export class DownloadClientState {
       bucketsToDelete.delete(bucket);
 
       const resolvedBucket = this.#buckets.getOrInsertComputed(bucket, () => new Bucket(bucket));
-      resolvedBucket.priority = entry.priority;
+      if (entry.priority != null) resolvedBucket.priority = entry.priority;
     }
 
     for (const remaining of bucketsToDelete) {
@@ -99,7 +100,7 @@ export class DownloadClientState {
       if (bucket) {
         // All data visible because of this bucket needs to be rechecked at the next full checkpoint.
         for (const applied of bucket.appliedChanges.values()) {
-          this.#addToUpdatedRows(applied.key);
+          this.addToUpdatedRows(applied.key);
           this.#rowKeyToBuckets.get(applied.key.formatted)?.delete(bucket);
         }
       }
@@ -119,14 +120,14 @@ export class DownloadClientState {
         // emulates that line.
         const buckets = [...this.#buckets.values()];
         if (targetPriority == null && buckets.length != 0 && buckets.every((b) => b.priority == 0)) {
-          return [this.#applyChanges(0), blocked];
+          return [{ type: 'rows', changes: this.#applyChanges(0) }, blocked];
         }
 
         return [blocked];
       }
     }
 
-    return [this.#applyChanges(targetPriority)];
+    return [{ type: 'rows', changes: this.#applyChanges(targetPriority) }];
   }
 
   /**
@@ -140,9 +141,9 @@ export class DownloadClientState {
 
     if (localWrites.hasLocalWrites) {
       // Can't apply checkpoints with mutations that haven't been uploaded yet.
-      return 'blockedDueToLocalData';
+      return { type: 'blockedDueToLocalData' };
     } else if (target != null && (writeCheckpoint == null || writeCheckpoint < target)) {
-      return { waitingForCheckpoint: target };
+      return { type: 'waitingForCheckpoint', target, received: writeCheckpoint };
     }
 
     return undefined;
@@ -221,6 +222,9 @@ class TrackedCheckpoint {
     }
   }
 
+  /**
+   * Merges bucket changes from a diff checkpoint line into this full checkpoint.
+   */
   applyDiff({ checkpoint_diff }: StreamingSyncCheckpointDiff) {
     this.last_op = BigInt(checkpoint_diff.last_op_id);
     this.write_checkpoint = checkpoint_diff.write_checkpoint == null ? null : BigInt(checkpoint_diff.write_checkpoint);
@@ -252,7 +256,7 @@ class Bucket {
     this.#dirtyKeys.set(key.formatted, { row: key, full: fullKey });
   }
 
-  pushLine(raw: RawOplogEntry, data: OplogEntry) {
+  pushLine(raw: OplogEntryJSON, data: OplogEntry) {
     if (this.lastEntry >= data.id) {
       // To simplify the sync client, we only support a linear bucket history. This works for compacting buckets, but
       // breaks for full defrag if that doesn't generate new bucket names. We just delete everything and restart. This
@@ -318,7 +322,7 @@ class OplogEntry {
 
   constructor(
     readonly bucket: Bucket,
-    source: RawOplogEntry
+    source: OplogEntryJSON
   ) {
     this.id = BigInt(source.op_id);
     this.data = source.data ? new OplogData(source.data) : undefined;
@@ -333,7 +337,7 @@ class OplogEntry {
   }
 }
 
-class RowKey {
+export class RowKey {
   readonly formatted: string;
 
   constructor(
@@ -357,14 +361,5 @@ class OplogData {
     }
 
     return (this.#parsedData = JSON.parse(this.data));
-  }
-}
-
-export class RestartSyncError extends Error {
-  constructor(
-    message: string,
-    readonly clearLocal = false
-  ) {
-    super(message);
   }
 }

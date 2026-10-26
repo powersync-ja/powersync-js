@@ -1,56 +1,40 @@
-export interface StreamingSyncRequest {
-  buckets: BucketRequest[];
-  include_checksum: false;
-  raw_data: true;
-  client_id: string;
-  parameters: Record<string, unknown>;
-  streams: StreamSubscriptionRequest;
-  app_metadata: Record<string, string> | undefined;
-}
+// TypeScript definitions for sync lines sent by the PowerSync service. These aren't used in the implementation of
+// PowerSync SDKs, but we keep them around for:
+//
+//  1. Tests mocking the PowerSync service.
+//  2. The diagnostic app tracking schema updates and bucket sizes by decoding protocol messages.
+//  3. A small standalone client not used in the main SDK.
+//
+// Use 2 should be replaced with the builtin diagnostic collection of the core extension eventually.
 
-export interface BucketRequest {
-  name: string;
-  after: string;
-}
-
-export interface StreamSubscriptionRequest {
-  include_defaults: boolean;
-  subscriptions: RequestedStreamSubscription[];
-}
-
-export interface RequestedStreamSubscription {
-  stream: string;
-  parameters: Record<string, unknown> | undefined;
-  override_priority: number | null;
-}
-
-export interface SyncDataBucket {
+export type SyncDataBucketJSON = {
   bucket: string;
-  data: RawOplogEntry[];
-}
-
-export interface RawOplogEntry {
+  has_more?: boolean;
+  after?: string;
+  next_after?: string;
+  data: OplogEntryJSON[];
+};
+export interface OplogEntryJSON {
   checksum: number;
   data?: string;
   object_id?: string;
   object_type?: string;
   op_id: string;
-  op: OpType;
+  op: OpTypeJSON;
   subkey?: string;
 }
-
-export type OpType = 'CLEAR' | 'MOVE' | 'PUT' | 'REMOVE';
+export type OpTypeJSON = 'CLEAR' | 'MOVE' | 'PUT' | 'REMOVE';
 
 /**
  * 64-bit unsigned integer stored as a string in base-10.
  *
  * Not sortable as a string.
  */
-export type RawOpId = string;
+export type OpId = string;
 
 export interface BucketChecksum {
   bucket: string;
-  priority: number;
+  priority?: number;
   /**
    * 32-bit unsigned hash.
    */
@@ -69,9 +53,9 @@ export interface BucketChecksum {
 }
 
 export interface Checkpoint {
-  last_op_id: RawOpId;
+  last_op_id: OpId;
   buckets: BucketChecksum[];
-  write_checkpoint: string | null | undefined;
+  write_checkpoint?: string;
   streams?: any[];
 }
 
@@ -81,27 +65,27 @@ export interface StreamingSyncCheckpoint {
 
 export interface StreamingSyncCheckpointDiff {
   checkpoint_diff: {
-    last_op_id: RawOpId;
+    last_op_id: OpId;
     updated_buckets: BucketChecksum[];
     removed_buckets: string[];
-    write_checkpoint: string | null | undefined;
+    write_checkpoint?: string;
   };
 }
 
-export interface StreamingSyncData {
-  data: SyncDataBucket;
+export interface StreamingSyncDataJSON {
+  data: SyncDataBucketJSON;
 }
 
 export interface StreamingSyncCheckpointComplete {
   checkpoint_complete: {
-    last_op_id: RawOpId;
+    last_op_id: OpId;
   };
 }
 
 export interface StreamingSyncCheckpointPartiallyComplete {
   partial_checkpoint_complete: {
     priority: number;
-    last_op_id: RawOpId;
+    last_op_id: OpId;
   };
 }
 
@@ -111,9 +95,9 @@ export interface StreamingSyncKeepalive {
 }
 
 export type BucketLine =
-  | StreamingSyncData
   | StreamingSyncCheckpoint
   | StreamingSyncCheckpointDiff
+  | StreamingSyncDataJSON
   | StreamingSyncCheckpointComplete
   | StreamingSyncCheckpointPartiallyComplete;
 
