@@ -1,5 +1,25 @@
 # diagnostics-app
 
+## 0.13.24
+
+### Patch Changes
+
+- Updated dependencies [544c9ba]
+- Updated dependencies [582babe]
+- Updated dependencies [fe8ad22]
+- Updated dependencies [774ecf9]
+- Updated dependencies [20ea996]
+- Updated dependencies [fe8ad22]
+- Updated dependencies [fe8ad22]
+- Updated dependencies [5a8ed5e]
+- Updated dependencies [582babe]
+- Updated dependencies [2a62930]
+- Updated dependencies [1a209a0]
+  - @powersync/web@2.5.0
+  - @powersync/react@2.1.0
+  - @powersync/shared-internals@1.4.0
+  - @powersync/common@2.4.0
+
 ## 0.13.23
 
 ### Patch Changes

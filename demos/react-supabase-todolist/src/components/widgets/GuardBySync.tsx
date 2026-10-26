@@ -9,7 +9,7 @@ import { FC, ReactNode } from 'react';
 export const GuardBySync: FC<{ children: ReactNode; priority?: number }> = ({ children, priority }) => {
   const status = useStatus();
 
-  const hasSynced = priority == null ? status.hasSynced : status.statusForPriority(priority).hasSynced;
+  const hasSynced = priority == null ? status.hasSynced : status.statusForPriority(priority)?.hasSynced;
   if (hasSynced) {
     return children;
   }

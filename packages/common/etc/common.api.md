@@ -867,6 +867,8 @@ export class ResolvedTable {
     // (undocumented)
     get columns(): Column[];
     // (undocumented)
+    get direct(): boolean | undefined;
+    // (undocumented)
     get ignoreEmptyUpdates(): boolean;
     // (undocumented)
     get indexes(): Index[];
@@ -889,7 +891,7 @@ export class ResolvedTable {
         include_metadata: boolean | undefined;
         ignore_empty_update: boolean | undefined;
         name: string;
-        view_name: string;
+        view_name: string | undefined;
         columns: {
             name: string;
             type: ColumnType | undefined;
@@ -902,6 +904,7 @@ export class ResolvedTable {
                 type: ColumnType;
             }[];
         }[];
+        direct: boolean | undefined;
     };
     // (undocumented)
     get trackMetadata(): boolean;
@@ -1062,6 +1065,7 @@ export interface SyncOptions {
     checkpointMode?: CheckpointMode;
     connectionMethod?: SyncStreamConnectionMethod;
     crudUploadThrottleMs?: number;
+    diagnostics?: boolean;
     // (undocumented)
     fetchStrategy?: FetchStrategy;
     includeDefaultStreams?: boolean;

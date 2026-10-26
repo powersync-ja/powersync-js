@@ -27,7 +27,7 @@ process.on('beforeExit', printSummary);
 const lazyLoadWorkspace = async () => {
   if (!lazyWorkspacePackagePaths) {
     const workspacePackages = await findWorkspacePackages(WORKSPACE_ROOT, {
-      patterns: ['./packages/*']
+      patterns: ['./packages/*', './tools/diagnostics', './tools/diagnostics-core', './tools/diagnostics-ui']
     });
     lazyWorkspacePackagePaths = Object.fromEntries(
       workspacePackages

@@ -1,5 +1,29 @@
 # @powersync/react-native
 
+## 2.3.3
+
+### Patch Changes
+
+- f6a7dd3: Send a `User-Agent` header on the WebSocket handshake used for sync connections, matching the Node.js SDK. This fixes connections to self-hosted PowerSync service deployments behind proxies or WAF rules that reject requests without a `User-Agent` header.
+
+## 2.3.2
+
+### Patch Changes
+
+- 4aae81d: Load `@op-engineering/op-sqlite` lazily to avoid importing it on incompatible platforms like Expo Go.
+- Updated dependencies [582babe]
+- Updated dependencies [774ecf9]
+- Updated dependencies [20ea996]
+- Updated dependencies [fe8ad22]
+- Updated dependencies [fe8ad22]
+- Updated dependencies [5a8ed5e]
+- Updated dependencies [582babe]
+- Updated dependencies [2a62930]
+- Updated dependencies [1a209a0]
+  - @powersync/react@2.1.0
+  - @powersync/shared-internals@1.4.0
+  - @powersync/common@2.4.0
+
 ## 2.3.1
 
 ### Patch Changes

@@ -75,6 +75,17 @@ describe('Sync streams', () => {
     status = await statusPromise;
     expect(status.forStream(a).subscription.lastSyncedAt).toBeNull();
     expect(status.forStream(b).subscription.lastSyncedAt).not.toBeNull();
+
+    const lastSyncedAt = status.forStream(b).subscription.lastSyncedAt!;
+    expect(lastSyncedAt.getTime()).not.toBeNaN();
+    expect(Math.abs(lastSyncedAt.getTime() - Date.now())).toBeLessThan(60_000);
+
+    const expiresAt = status.forStream(b).subscription.expiresAt!;
+    expect(expiresAt).not.toBeNull();
+    expect(expiresAt.getTime()).not.toBeNaN();
+    // The default TTL for stream subscriptions is one day.
+    expect(expiresAt.getTime()).toBeGreaterThan(Date.now());
+    expect(expiresAt.getTime()).toBeLessThan(Date.now() + 2 * 24 * 60 * 60 * 1000);
     await b.waitForFirstSync();
 
     syncService.pushLine({ checkpoint_complete: { last_op_id: '0' } });
@@ -157,7 +168,7 @@ describe('Sync streams', () => {
 
     // Pretend the streams are expired - they should still be requested because the core extension extends the lifetime
     // of streams currently referenced before connecting.
-    await database.execute('UPDATE ps_stream_subscriptions SET expires_at = unixepoch() - 1000');
+    await database.execute('UPDATE ps_stream_subscriptions SET expires_at = (unixepoch() - 1000) * 1000000');
     await database.connect(new TestConnector(), defaultOptions);
 
     expect(syncService.connectedListeners[0]).toMatchObject({

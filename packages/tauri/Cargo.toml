@@ -1,6 +1,6 @@
 [package]
 name = "tauri-plugin-powersync"
-version = "0.1.0"
+version = "0.1.1"
 authors = [ "POWERSYNC" ]
 description = "Rust parts of the PowerSync Tauri SDK"
 edition = "2021"
@@ -18,7 +18,7 @@ tauri = { version = "2.10.3" }
 serde = "1"
 serde_json = { version = "1", features = ["raw_value"] }
 thiserror = "2"
-powersync = { version = "0.1.0", features = ["tokio", "reqwest"] }
+powersync = { version = "0.1.1", features = ["tokio", "reqwest"] }
 reqwest = "0.13.2"
 rusqlite = { version = "0.39.0", features = ["bundled"] }
 tokio = { version = "1.50.0", features = ["time"] }

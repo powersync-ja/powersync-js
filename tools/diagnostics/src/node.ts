@@ -1,0 +1,89 @@
+/**
+ * PowerSync DevTools for a node app: the database lives in this process, so this process hosts the
+ * dev server itself. Opens the diagnostics UI on a local port and exposes the MCP tools at `/__mcp`.
+ */
+import type { McpSetting } from 'devframe';
+import { createDevServer } from 'devframe/adapters/dev';
+import { buildOtpAuthUrl } from 'devframe/node/auth';
+import type { CommonPowerSyncDatabase } from '@powersync/common';
+import { createIntegration } from './agent.js';
+import { definition, registerIntegration, setSetupSdks } from './definition.js';
+
+export interface EnableDiagnosticsOptions {
+  /**
+   * Port for the DevTools window. By default the OS picks a free port, so other websites cannot
+   * probe a known one. @default random
+   */
+  port?: number;
+  /** Bind host. @default 'localhost' */
+  host?: string;
+  /**
+   * Gate the window behind a code printed in the terminal, together with a link that carries it, so
+   * opening the link is enough. `false` trusts every local browser. @default true
+   */
+  auth?: boolean;
+  /** Open the browser once the server is up. @default false */
+  open?: boolean;
+  /** A label for the SDK, shown in the UI. @default '@powersync/node' */
+  sdk?: string;
+  /** The source id shown in the UI. @default 'node-1' */
+  id?: string;
+  /**
+   * The MCP endpoint at `<url>/__mcp`. By default it mounts once the tools exist and accepts only
+   * requests with a loopback `Origin` header; a request without one gets `403`. Pass
+   * `{ allowedOrigins: false }` for an MCP client that sends no `Origin` header, `false` to leave
+   * the endpoint off, or `{ authorization }` to require a bearer token. @default 'auto'
+   */
+  mcp?: McpSetting;
+}
+
+export interface DiagnosticsServer {
+  /** Where the UI is, e.g. `http://localhost:51234`. The base for `<url>/__mcp`. */
+  url: string;
+  /**
+   * The link to open in the browser. With `auth` on, it carries a one-time code (valid for five
+   * minutes, for one browser), so opening it trusts the browser. With `auth: false`, it equals `url`.
+   */
+  signInUrl: string;
+  /** Stops serving and detaches the database. */
+  close(): Promise<void>;
+}
+
+/**
+ * Serves live diagnostics for `db` from this process. Development only: call it behind your own
+ * environment check.
+ *
+ * @example
+ * ```ts
+ * const db = new PowerSyncDatabase({ ... });
+ * if (process.env.NODE_ENV !== 'production') {
+ *   const { enablePowerSyncDiagnostics } = await import('@powersync/diagnostics/node');
+ *   const devtools = await enablePowerSyncDiagnostics(db);
+ *   console.log(`PowerSync DevTools: ${devtools.signInUrl}`);
+ * }
+ * ```
+ */
+export async function enablePowerSyncDiagnostics(
+  db: CommonPowerSyncDatabase,
+  options: EnableDiagnosticsOptions = {}
+): Promise<DiagnosticsServer> {
+  const sdk = options.sdk ?? '@powersync/node';
+  const detach = await registerIntegration(options.id ?? 'node-1', createIntegration(db, sdk), sdk);
+  setSetupSdks(['node']);
+  const auth = options.auth ?? true;
+  const server = await createDevServer(definition, {
+    port: options.port ?? 0,
+    host: options.host,
+    auth,
+    openBrowser: options.open ?? false,
+    mcp: options.mcp ?? 'auto'
+  });
+  return {
+    url: server.origin,
+    signInUrl: auth ? buildOtpAuthUrl(server.origin) : server.origin,
+    async close() {
+      detach();
+      await server.close();
+    }
+  };
+}

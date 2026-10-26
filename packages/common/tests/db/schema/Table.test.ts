@@ -231,5 +231,13 @@ describe('Table', () => {
         ).validate()
       ).toThrowError("Can't include old values for local-only tables.");
     });
+
+    it('should throw an error for direct tables with a view name override', () => {
+      new Table({ name: column.text }, { direct: true }).validate();
+
+      expect(() => new Table({ name: column.text }, { direct: true, viewName: 'forbidden' }).validate()).toThrowError(
+        "can't use a view name override"
+      );
+    });
   });
 });

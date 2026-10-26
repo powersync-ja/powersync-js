@@ -6,10 +6,10 @@
   "main": "index.js",
   "scripts": {
     "reset:repo": "tsc -b scripts && node scripts/dist/reset-repo.js",
-    "build:packages": "pnpm run --filter {./packages/**} -r build",
-    "build:packages:prod": "pnpm run --filter {./packages/**} -r build:prod",
-    "clean:packages": "pnpm run --filter {./packages/**} -r clean",
-    "watch:packages": "pnpm run --parallel --filter {./packages/**} -r build -w",
+    "build:packages": "pnpm run --filter {./packages/**} --filter {./tools/diagnostics} --filter {./tools/diagnostics-core} --filter {./tools/diagnostics-ui} -r build",
+    "build:packages:prod": "pnpm run --filter {./packages/**} --filter {./tools/diagnostics} --filter {./tools/diagnostics-core} --filter {./tools/diagnostics-ui} -r build:prod",
+    "clean:packages": "pnpm run --filter {./packages/**} --filter {./tools/diagnostics} --filter {./tools/diagnostics-core} --filter {./tools/diagnostics-ui} -r clean",
+    "watch:packages": "pnpm run --parallel --filter {./packages/**} --filter {./tools/diagnostics} --filter {./tools/diagnostics-core} --filter {./tools/diagnostics-ui} -r build -w",
     "watch:ts": "tsc -b -w --preserveWatchOutput",
     "changeset:version": "pnpm changeset version && pnpm demos:update --all && pnpm install --lockfile-only --frozen-lockfile=false && pnpm -r postversion",
     "build": "pnpm run -r build",
@@ -25,7 +25,7 @@
     "lint": "eslint .",
     "release": "pnpm build:packages:prod && pnpm changeset publish",
     "test": "pnpm run -r --workspace-concurrency=1 --filter=!@powersync/tauri-plugin test --run",
-    "test:packages:exports": "pnpm -r --filter {./packages/**} test:exports"
+    "test:packages:exports": "pnpm -r --filter {./packages/**} --filter {./tools/diagnostics} --filter {./tools/diagnostics-core} --filter {./tools/diagnostics-ui} test:exports"
   },
   "keywords": [],
   "type": "module",

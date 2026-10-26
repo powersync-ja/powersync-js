@@ -18,7 +18,8 @@ import {
   CoreSyncStatus,
   Instruction,
   NonInterruptingInstruction,
-  isInterruptingInstruction
+  isInterruptingInstruction,
+  DiagnosticsEvent
 } from './core-instruction.js';
 import {
   doneResult,
@@ -194,6 +195,12 @@ export abstract class AbstractStreamingSyncImplementation
     this.crudUpdateListener?.();
     this.crudUpdateListener = undefined;
   }
+
+  /**
+   * Receives a core diagnostics event (emitted only when diagnostics are enabled on the sync stream).
+   * Does nothing here; an SDK with diagnostics tooling overrides it to hand the event on.
+   */
+  protected emitDiagnostics(_event: DiagnosticsEvent): void {}
 
   abstract obtainLock<T>(lockOptions: LockOptions<T>): Promise<T>;
 
@@ -732,6 +739,10 @@ The next upload iteration will be delayed.`
       if (serializedSchema) {
         options.schema = serializedSchema;
       }
+      if (resolvedOptions.diagnostics) {
+        // An empty object enables the core's diagnostics event stream (Option<DiagnosticOptions>).
+        options.diagnostics = {};
+      }
 
       return invokePowerSyncControl(PowerSyncControlCommand.START, JSON.stringify(options));
     }
@@ -816,6 +827,8 @@ The next upload iteration will be delayed.`
         // Not necessary on JS platforms.
       } else if ('DidCompleteSync' in instruction) {
         syncImplementation.updateJsSyncState({ downloadError: undefined });
+      } else if ('HandleDiagnostics' in instruction) {
+        syncImplementation.emitDiagnostics(instruction.HandleDiagnostics);
       }
     }
 
@@ -911,6 +924,14 @@ The next upload iteration will be delayed.`
           }
         }
       }
+    } catch (e) {
+      if (!signal.aborted) {
+        // The stop() call in finally resets the sync status to disconnected. If we're calling that due to an error, we
+        // want to show the error first.
+        this.updateJsSyncState({ downloadError: e as Error });
+      }
+
+      throw e;
     } finally {
       this.notifyCompletedUploads = this.handleActiveStreamsChange = undefined;
       notifyTokenRefreshed = undefined;
