@@ -6,11 +6,12 @@
 import type { DockClientScriptContext } from '@devframes/hub/client';
 import { observeRegisteredDatabases } from '@powersync/web/devtools';
 import { createAgentServer, createIntegration } from './agent.js';
-
-const SDK = '@powersync/web';
+import { pageSdk } from './page-sdk.js';
 
 export default function setup(context: DockClientScriptContext): void {
   const server = createAgentServer(context.rpc);
+  const sdk = pageSdk();
+  const idPrefix = sdk === '@powersync/capacitor' ? 'capacitor' : 'web';
   let counter = 0;
   let currentId: string | null = null;
 
@@ -30,7 +31,7 @@ export default function setup(context: DockClientScriptContext): void {
       return;
     }
     if (currentId) return;
-    currentId = `web-${++counter}`;
-    void server.serve(currentId, createIntegration(database, SDK), SDK);
+    currentId = `${idPrefix}-${++counter}`;
+    void server.serve(currentId, createIntegration(database, sdk), sdk);
   });
 }
