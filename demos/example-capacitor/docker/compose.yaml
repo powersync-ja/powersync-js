@@ -10,12 +10,12 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: postgres
-    command: ['postgres', '-c', 'wal_level=logical']
+    command: ["postgres", "-c", "wal_level=logical"]
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -30,7 +30,7 @@ services:
       - ./powersync.yaml:/app/powersync.yaml:ro
       - ./sync-config.yaml:/app/sync-config.yaml:ro
     ports:
-      - 8080:8080
+      - 8180:8080
 
   # Issues tokens (`/api/auth/token`), serves their public keys (`/api/auth/keys`), and writes
   # uploads to Postgres (`/api/data`).

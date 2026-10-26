@@ -34,20 +34,20 @@ The dev server includes [PowerSync DevTools](https://docs.powersync.com/tools/de
    - iOS simulator:
 
      ```bash
-     npx cap run ios --live-reload --host localhost --port 5173
+     npx cap run ios --live-reload --host localhost --port 5174
      ```
 
    - Android emulator. Forward the dev server and PowerSync ports first, so `localhost` in the emulator reaches your computer. Capacitor 8 needs JDK 21; Android Studio ships one.
 
      ```bash
-     adb reverse tcp:5173 tcp:5173
-     adb reverse tcp:8080 tcp:8080
+     adb reverse tcp:5174 tcp:5174
+     adb reverse tcp:8180 tcp:8180
      JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home" \
-       npx cap run android --live-reload --host localhost --port 5173
+       npx cap run android --live-reload --host localhost --port 5174
      ```
 
 3. Tap **Unauthorized** in the DevTools dock at the bottom of the app. The dev server terminal prints a code for the device. Enter it in the app.
-4. Open the **PowerSync** entry in the dock. Or open `http://localhost:5173/__devtools/` in a desktop browser: the device shows up there as an attached database.
+4. Open the **PowerSync** entry in the dock. Or open `http://localhost:5174/__devtools/` in a desktop browser: the device shows up there as an attached database.
 
 ## iOS
 

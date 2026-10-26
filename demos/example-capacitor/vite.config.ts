@@ -24,6 +24,8 @@ export default defineConfig({
   server: {
     // Reachable from a device or emulator during live reload.
     host: true,
+    port: 5174,
+    strictPort: true,
     // The local backend sends no CORS headers, so the app reaches it through the dev server.
     proxy: { '/api': 'http://localhost:6060' }
   },
