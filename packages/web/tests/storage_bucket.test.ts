@@ -81,7 +81,7 @@ describe('storageBucket', { sequential: true }, () => {
       const buckets: StorageBucketManagerLike = { open: vi.fn(async () => bucket) };
 
       const options = vfsOptionsForStorageBucket('app-data', buckets);
-      expect(options.lockPrefix).toBe('app-data:');
+      expect(options.prefix).toBe('app-data:');
       expect(buckets.open).not.toHaveBeenCalled();
 
       // Each call opens the bucket again, so a bucket the browser deleted is created again.

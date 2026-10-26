@@ -59,7 +59,7 @@ export interface StorageBucketManagerLike {
 export function vfsOptionsForStorageBucket(
   storageBucket: string | undefined,
   storageBuckets: StorageBucketManagerLike | null | undefined = (navigator as any).storageBuckets
-): { getRoot?: () => Promise<FileSystemDirectoryHandle>; lockPrefix?: string } {
+): { getRoot?: () => Promise<FileSystemDirectoryHandle>; prefix?: string } {
   if (storageBucket == null) {
     return {};
   }
@@ -74,7 +74,7 @@ export function vfsOptionsForStorageBucket(
     getRoot: () => storageBuckets.open(storageBucket).then((bucket) => bucket.getDirectory()),
     // Keeps the locks and channels of a file apart from those of a file of the same name in another bucket.
     // Bucket names cannot contain ':', so the names of two buckets never overlap.
-    lockPrefix: `${storageBucket}:`
+    prefix: `${storageBucket}:`
   };
 }
 
