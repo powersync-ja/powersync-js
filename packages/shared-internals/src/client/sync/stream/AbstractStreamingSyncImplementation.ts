@@ -299,17 +299,8 @@ The next upload iteration will be delayed.`
             } else {
               // Uploading is completed
               const neededUpdate =
-                this.options.connector.fetchCredentials &&
-                (await this.options.adapter.updateLocalTarget(() => {
-                  if (options.checkpointMode === 'legacy') {
-                    return this.getLegacyWriteCheckpoint(signal);
-                  } else {
-                    return this.requestNextCheckpointFromService(signal);
-                  }
-                }));
-              if (neededUpdate) {
-                this.notifyCompletedUploads?.();
-              } else if (checkedCrudItem != null) {
+                this.options.connector.fetchCredentials && (await this.updateLocalTarget(signal, options));
+              if (!neededUpdate && checkedCrudItem != null) {
                 // Only log this if there was something to upload
                 this.logger.log({ level: LogLevels.debug, message: 'Upload complete, no write checkpoint needed.' });
               }
@@ -319,8 +310,9 @@ The next upload iteration will be delayed.`
             checkedCrudItem = undefined;
             this.updateJsSyncState({ uploading: false, uploadError: ex as Error });
             await this.delayRetry(signal, options.retryDelayMs);
-            if (!this.isConnected) {
-              // Exit the upload loop if the sync stream is no longer connected
+            if (this.options.connector.fetchCredentials && !this.isConnected) {
+              // Exit the upload loop if the sync stream is no longer connected. The upload is triggered again once it
+              // reconnects. In upload-only mode, there is no sync stream and we keep retrying.
               break;
             }
             this.logger.log({
@@ -336,14 +328,20 @@ The next upload iteration will be delayed.`
     });
   }
 
-  private updateLocalTarget(signal: AbortSignal, options: ResolvedSyncOptions): Promise<boolean> {
-    return this.options.adapter.updateLocalTarget(() => {
+  private async updateLocalTarget(signal: AbortSignal, options: ResolvedSyncOptions): Promise<boolean> {
+    const didUpdate = await this.options.adapter.updateLocalTarget(() => {
       if (options.checkpointMode === 'legacy') {
         return this.getLegacyWriteCheckpoint(signal);
       } else {
         return this.requestNextCheckpointFromService(signal);
       }
     });
+
+    if (didUpdate) {
+      this.notifyCompletedUploads?.();
+    }
+
+    return didUpdate;
   }
 
   async connect(options: ResolvedSyncOptions) {
@@ -749,6 +747,14 @@ The next upload iteration will be delayed.`
     await this.options.adapter.readCheckpointRequestId('seed', seed);
   }
 
+  private async willUpload(): Promise<boolean> {
+    if (this.options.connector.uploadCrud) return true;
+
+    // If we're connected in download-only mode, we can still request checkpoints. But if there's a local write, that
+    // won't be uploaded.
+    return !(await this.options.adapter.hasCrud());
+  }
+
   private async rustSyncIteration(
     signal: AbortSignal,
     resolvedOptions: ResolvedSyncOptions
@@ -865,6 +871,14 @@ The next upload iteration will be delayed.`
         syncImplementation.updateJsSyncState({ downloadError: undefined });
       } else if ('HandleDiagnostics' in instruction) {
         syncImplementation.emitDiagnostics(instruction.HandleDiagnostics);
+      } else if ('CheckpointDelayedDueToLocalData' in instruction) {
+        if (!(await syncImplementation.willUpload())) {
+          const message =
+            'Applying checkpoint is blocked on local mutations, but no uploader is set. The sync client cannot proceed.';
+
+          syncImplementation.logger.log({ level: LogLevels.error, message });
+          syncImplementation.updateJsSyncState({ downloadError: new Error(message) });
+        }
       }
     }
 

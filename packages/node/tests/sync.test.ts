@@ -586,6 +586,13 @@ describe('Sync', () => {
       // Create a local mutation, which is never uploaded.
       await database.execute('INSERT INTO lists (id, name) VALUES (uuid(), ?)', ['local mutation']);
 
+      // A new checkpoint can't be applied in this state, and should report an error.
+      syncService.pushLine(checkpoint({ last_op_id: 0 }));
+      syncService.pushLine({ checkpoint_complete: { last_op_id: '0' } });
+      await database.waitForStatus(
+        (s) => s.downloadError?.message.includes('blocked on local mutations, but no uploader is set') == true
+      );
+
       // Upgrade to a full connection, which should upload.
       const didUpload = Promise.withResolvers<void>();
       await database.connect({
@@ -609,31 +616,87 @@ describe('Sync', () => {
       });
 
       const database = await syncService.createDatabase();
+      await database.execute('INSERT INTO lists (id, name) VALUES (?, ?)', ['test1', 'local mutation']);
+
       const didUpload = Promise.withResolvers<void>();
+      let isFirstUpload = true;
       await database.connect({
         ...defaultConnectOptions,
         async upload({ database }) {
           const tx = await database.getNextCrudTransaction();
           if (tx) {
-            didUpload.resolve();
+            if (isFirstUpload) {
+              // Verify that uploads are retried in upload-only mode too.
+              isFirstUpload = false;
+              throw new Error('expected upload error');
+            }
+
             await tx.complete();
+            didUpload.resolve();
           }
         }
       });
-
-      await database.execute('INSERT INTO lists (id, name) VALUES (uuid(), ?)', ['local mutation']);
       await didUpload.promise;
 
-      // Reconnect in download-only mode. This should request a write checkpoint because the upload-only mode can't.
-      const didRequestCheckpoint = Promise.withResolvers<void>();
-      syncService.installRequestInterceptor(async (request) => {
-        if (request.url.includes('/write-checkpoint2.json')) {
-          didRequestCheckpoint.resolve();
+      // Reconnect in download-only mode. This should request a checkpoint because the upload-only mode can't.
+      syncService.installRequestInterceptor(async () => {});
+      const targetCheckpointRequest = Promise.withResolvers<string>();
+      const releaseCheckpointRequest = Promise.withResolvers<void>();
+      let isSeedRequest = true;
+
+      await database.connect({
+        ...defaultConnectOptions,
+        checkpointMode: 'requests',
+        powerSyncEndpoint: downloadOptions.powerSyncEndpoint,
+        authenticator: {
+          ...downloadOptions.authenticator,
+          async postCheckpointRequest(_clientId, requestId) {
+            if (isSeedRequest) {
+              isSeedRequest = false;
+            } else {
+              targetCheckpointRequest.resolve(requestId);
+              await releaseCheckpointRequest.promise;
+            }
+            return requestId;
+          }
         }
       });
+      await database.waitForStatus((s) => s.connected);
 
-      await database.connect({ ...defaultConnectOptions, ...downloadOptions });
-      await didRequestCheckpoint.promise;
+      const watched = database.watch('SELECT name FROM lists ORDER BY name')[Symbol.asyncIterator]();
+      expect((await watched.next()).value.array).toStrictEqual([{ name: 'local mutation' }]);
+
+      const requestId = await targetCheckpointRequest.promise;
+      syncService.pushLine({
+        checkpoint: {
+          last_op_id: '1',
+          buckets: [bucket('a', 1)],
+          write_checkpoint: requestId
+        }
+      });
+      syncService.pushLine({
+        data: {
+          bucket: 'a',
+          data: [
+            {
+              checksum: 0,
+              op_id: '1',
+              object_id: 'test1',
+              object_type: 'lists',
+              op: 'PUT',
+              data: '{"name": "from server"}'
+            }
+          ]
+        }
+      });
+      syncService.pushLine({ checkpoint_complete: { last_op_id: '1' } });
+
+      // The checkpoint can't be applied before the local target is updated.
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      expect(await database.getAll('SELECT name FROM lists')).toStrictEqual([{ name: 'local mutation' }]);
+
+      releaseCheckpointRequest.resolve();
+      expect((await watched.next()).value.array).toStrictEqual([{ name: 'from server' }]);
     });
   });
 });
