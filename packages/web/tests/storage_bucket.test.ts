@@ -8,6 +8,12 @@ import { generateTestDb } from './utils/testDb.js';
 
 const BUCKET = 'powersync-test';
 
+// Reads through the writer connection. A reader connection of OPFSWriteAheadVFS can briefly miss a write that just
+// finished, with or without a bucket, so a read straight after a write would make these tests flaky.
+function descriptions(db: PowerSyncDatabase): Promise<{ description: string }[]> {
+  return db.writeTransaction((tx) => tx.getAll<{ description: string }>('SELECT description FROM assets'));
+}
+
 async function namesIn(directory: FileSystemDirectoryHandle): Promise<string[]> {
   const names: string[] = [];
   for await (const name of (directory as any).keys()) {
@@ -34,7 +40,7 @@ describe('storageBucket', { sequential: true }, () => {
           database: { dbFilename, vfs, storageBucket: BUCKET }
         });
         await db.execute('INSERT INTO assets(id, description) VALUES(uuid(), ?)', ['in the bucket']);
-        expect(await db.getAll('SELECT description FROM assets')).toEqual([{ description: 'in the bucket' }]);
+        expect(await descriptions(db)).toEqual([{ description: 'in the bucket' }]);
 
         // AccessHandlePoolVFS keeps its files in a directory named after the database.
         expect(await namesIn(await bucketDirectory())).toContain(dbFilename);
@@ -60,11 +66,8 @@ describe('storageBucket', { sequential: true }, () => {
         await inDefault.execute('INSERT INTO assets(id, description) VALUES(uuid(), ?)', ['default']);
         await inDefault.execute('INSERT INTO assets(id, description) VALUES(uuid(), ?)', ['default']);
 
-        expect(await inBucket.getAll('SELECT description FROM assets')).toEqual([{ description: 'bucket' }]);
-        expect(await inDefault.getAll('SELECT description FROM assets')).toEqual([
-          { description: 'default' },
-          { description: 'default' }
-        ]);
+        expect(await descriptions(inBucket)).toEqual([{ description: 'bucket' }]);
+        expect(await descriptions(inDefault)).toEqual([{ description: 'default' }, { description: 'default' }]);
       });
     });
   }
