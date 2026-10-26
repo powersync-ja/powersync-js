@@ -56,7 +56,22 @@ export interface Checkpoint {
   last_op_id: OpId;
   buckets: BucketChecksum[];
   write_checkpoint?: string;
-  streams?: any[];
+  streams?: StreamDescription[];
+}
+
+export interface StreamDescription {
+  name: string;
+  is_default: boolean;
+  errors: StreamSubscriptionError[];
+}
+
+export interface StreamSubscriptionError {
+  /**
+   * The index of the subscription in the request's `streams.subscriptions` array, or `default` for errors on a stream
+   * included by default.
+   */
+  subscription: number | 'default';
+  message: string;
 }
 
 export interface StreamingSyncCheckpoint {

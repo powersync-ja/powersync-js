@@ -84,7 +84,7 @@ describe('publishes with local data for prio=0 buckets', () => {
     client.localWrites.hasLocalWrites = true;
 
     client.putRow('prio0', 'row-0', { col: 'hi' });
-    expect(client.pushCheckpointComplete(0)).toStrictEqual([updatedRows({ items: { 'row-0': { col: 'hi' } } })]);
+    expect(client.pushCheckpointComplete(0)).toStrictEqual([updatedRows({ items: { 'row-0': { col: 'hi' } } }, 0)]);
   });
 
   downloadClientTest('for full checkpoint', ({ client }) => {
@@ -95,7 +95,7 @@ describe('publishes with local data for prio=0 buckets', () => {
     client.putRow('prio0', 'row-0', { col: 'hi' });
     // The full checkpoint is still delayed, we only applied prio 0 buckets.
     expect(client.pushCheckpointComplete()).toStrictEqual([
-      updatedRows({ items: { 'row-0': { col: 'hi' } } }),
+      updatedRows({ items: { 'row-0': { col: 'hi' } } }, 0),
       blockedDueToWrite
     ]);
 
@@ -140,7 +140,9 @@ downloadClientTest('can publish partial checkpoints under different priorities',
 
   // Each partial checkpoint includes all higher priorities, but those have already been applied in an earlier step.
   for (let i = 0; i < 4; i++) {
-    expect(client.pushCheckpointComplete(i)).toStrictEqual([updatedRows({ items: { [`row-${i}`]: { col: `${i}` } } })]);
+    expect(client.pushCheckpointComplete(i)).toStrictEqual([
+      updatedRows({ items: { [`row-${i}`]: { col: `${i}` } } }, i)
+    ]);
   }
 
   expect(client.pushCheckpointComplete()).toStrictEqual([updatedRows({})]);
@@ -172,7 +174,7 @@ describe('applies pending changes', () => {
     client.putRow('prio0', 'row-0', { col: 'hi' });
     // Prio 0 buckets are applied as a partial checkpoint already.
     expect(client.pushCheckpointComplete()).toStrictEqual([
-      updatedRows({ items: { 'row-0': { col: 'hi' } } }),
+      updatedRows({ items: { 'row-0': { col: 'hi' } } }, 0),
       blockedDueToWrite
     ]);
 
@@ -213,6 +215,21 @@ describe('applies pending changes', () => {
   });
 });
 
+downloadClientTest('emits stream descriptions from checkpoints', ({ client }) => {
+  const streams = [
+    { name: 'a', is_default: false, errors: [] },
+    { name: 'b', is_default: false, errors: [{ subscription: 1, message: 'invalid parameters' }] }
+  ];
+  expect(client.state.push({ checkpoint: { last_op_id: '0', buckets: [], streams } })).toStrictEqual([
+    { type: 'checkpoint', streams }
+  ]);
+
+  // Checkpoint diffs don't describe streams.
+  expect(
+    client.state.push({ checkpoint_diff: { last_op_id: '0', updated_buckets: [], removed_buckets: [] } })
+  ).toStrictEqual([]);
+});
+
 describe('errors', () => {
   downloadClientTest('diff without prior checkpoint', ({ client }) => {
     expect(() =>
@@ -234,13 +251,14 @@ describe('errors', () => {
 
 const priorityBuckets: Bucket[] = [0, 1, 2, 3].map((priority) => ({ name: `prio${priority}`, priority }));
 
-function updatedRows(tables: Record<string, Record<string, Record<string, unknown> | null>>): DownloadEvent {
-  return {
-    type: 'rows',
-    changes: {
-      updatedRows: new Map(Object.entries(tables).map(([table, rows]) => [table, new Map(Object.entries(rows))]))
-    } satisfies DownloadChanges
+function updatedRows(
+  tables: Record<string, Record<string, Record<string, unknown> | null>>,
+  priority?: number
+): DownloadEvent {
+  const changes: DownloadChanges = {
+    updatedRows: new Map(Object.entries(tables).map(([table, rows]) => [table, new Map(Object.entries(rows))]))
   };
+  return priority == null ? { type: 'rows', changes } : { type: 'rows', changes, priority };
 }
 
 const blockedDueToWrite: DownloadEvent = { type: 'blockedDueToLocalData' };

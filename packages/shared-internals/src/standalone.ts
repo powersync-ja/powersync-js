@@ -12,7 +12,10 @@ import { extractJsonLines } from './utils/stream_transform.js';
 import { POWERSYNC_JS_VERSION } from './version.js';
 
 export type * from './standalone/api.js';
+export type { StreamDescription, StreamSubscriptionError } from './standalone/sync_protocol.js';
+export type { RequestedStreamSubscription, StreamSubscriptionRequest } from './standalone/requests.js';
 export { LocalWriteState } from './standalone/buckets.js';
+export { RestartSyncError, UnexpectedResponseError } from './standalone/api.js';
 
 /**
  * A small and simple PowerSync client built without SQLite.
@@ -104,7 +107,7 @@ export class PowerSyncClient {
         Accept: 'application/x-ndjson'
       }
     });
-    this.#checkResponse(response);
+    await this.#checkResponse(response);
     yield { type: 'headersReceived' };
 
     const lines = extractJsonLines(response.body![Symbol.asyncIterator](), new TextDecoder());
@@ -131,7 +134,8 @@ export class PowerSyncClient {
             events = state.push(line);
           } catch (e) {
             if (e instanceof RestartSyncError && e.clearLocal) {
-              this.#state = null;
+              // Start from scratch while still allowing markUpdated() calls before the next sync iteration.
+              this.#state = new DownloadClientState(this.#localWrites);
             }
 
             throw e;

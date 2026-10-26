@@ -1,5 +1,5 @@
 import { StreamSubscriptionRequest } from './requests.js';
-import { StreamingSyncKeepalive } from './sync_protocol.js';
+import { StreamDescription, StreamingSyncKeepalive } from './sync_protocol.js';
 
 export interface DownloadChanges {
   updatedRows: Map<string, Map<string, Record<string, unknown> | null>>;
@@ -8,8 +8,11 @@ export interface DownloadChanges {
 export type DownloadEvent =
   // Response resolved, can mark as connected.
   | { type: 'headersReceived' }
-  // Local materialized rows have changed.
-  | { type: 'rows'; changes: DownloadChanges }
+  // Received an initial checkpoint describing the resolved sync streams (including errors for individual
+  // subscriptions).
+  | { type: 'resolvedStreams'; streams: StreamDescription[] }
+  // Local materialized rows have changed. The priority is set for partial checkpoints, and absent for complete ones.
+  | { type: 'rows'; changes: DownloadChanges; priority?: number }
   // Could not apply server-side changes due to local data that has not yet been uploaded.
   | { type: 'blockedDueToLocalData' }
   // Could not apply server-side changes due to local mutations that have been uploaded, but not acknowledged yet.

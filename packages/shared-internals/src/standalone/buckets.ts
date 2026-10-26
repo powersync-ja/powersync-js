@@ -55,6 +55,10 @@ export class DownloadClientState {
   push(line: BucketLine): DownloadEvent[] {
     if ('checkpoint' in line) {
       this.#reconcileBuckets(new TrackedCheckpoint(line.checkpoint));
+      const streams = line.checkpoint.streams;
+      if (streams != null) {
+        return [{ type: 'resolvedStreams', streams }];
+      }
     } else if ('checkpoint_diff' in line) {
       const existing = this.#checkpoint!;
       existing.applyDiff(line);
@@ -120,14 +124,15 @@ export class DownloadClientState {
         // emulates that line.
         const buckets = [...this.#buckets.values()];
         if (targetPriority == null && buckets.length != 0 && buckets.every((b) => b.priority == 0)) {
-          return [{ type: 'rows', changes: this.#applyChanges(0) }, blocked];
+          return [{ type: 'rows', changes: this.#applyChanges(0), priority: 0 }, blocked];
         }
 
         return [blocked];
       }
     }
 
-    return [{ type: 'rows', changes: this.#applyChanges(targetPriority) }];
+    const changes = this.#applyChanges(targetPriority);
+    return [targetPriority == null ? { type: 'rows', changes } : { type: 'rows', changes, priority: targetPriority }];
   }
 
   /**
