@@ -29,6 +29,10 @@
     "./node": {
       "types": "./lib/src/node.d.ts",
       "default": "./lib/src/node.js"
+    },
+    "./agent": {
+      "types": "./lib/src/agent.d.ts",
+      "default": "./lib/src/agent.js"
     }
   },
   "author": "PowerSync",
