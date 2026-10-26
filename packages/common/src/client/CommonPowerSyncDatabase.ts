@@ -29,7 +29,7 @@ export interface DisconnectAndClearOptions {
   /**
    * A [soft] clear deletes publicly visible tables, but keeps internal copies of data synced in the database.
    *
-   * This usually means that if {@link CommonPowerSyncDatabase#connect} is later called again with a JWT from the same
+   * This usually means that if {@link CommonPowerSyncDatabase.(connect:1)} is later called again with a JWT from the same
    * user, the first sync is very fast because all internal data is still available. When a different user  logs in, no
    * old data would be visible at any point. Using soft deletes is recommended where it's not a security issue that old
    * data could be reconstructed from internal database tables.
@@ -204,7 +204,7 @@ export interface CommonPowerSyncDatabase extends BaseObserverInterface<PowerSync
   /**
    * Replace the schema with a new version. This is for advanced use cases - typically the schema should just be specified once in the constructor.
    *
-   * Cannot be used while connected - this should only be called before {@link CommonPowerSyncDatabase.connect}.
+   * Cannot be used while connected - this should only be called before {@link CommonPowerSyncDatabase.(connect:1)}.
    */
   updateSchema(schema: Schema): Promise<void>;
 
@@ -236,7 +236,7 @@ export interface CommonPowerSyncDatabase extends BaseObserverInterface<PowerSync
   /**
    * Close the sync connection.
    *
-   * Use {@link CommonPowerSyncDatabase.connect} to connect again.
+   * Use {@link CommonPowerSyncDatabase.(connect:1)} to connect again.
    */
   disconnect(): Promise<void>;
 

@@ -1,5 +1,4 @@
 import type {
-  CommonPowerSyncDatabase,
   LogLevels,
   LogRecord as SdkLogRecord,
   SyncOptions,

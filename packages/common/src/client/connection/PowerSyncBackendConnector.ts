@@ -62,9 +62,9 @@ export interface Authenticator extends PostCustomCheckpoints {
 
   /**
    * Invoked by the SDK when the PowerSync service has rejected credentials previously returned by
-   * {@link resolveCredentials}.
+   * {@link Authenticator.resolveCredentials}.
    *
-   * Subsequent calls to {@link resolveCredentials} should return new credentials in this case.
+   * Subsequent calls to {@link Authenticator.resolveCredentials} should return new credentials in this case.
    */
   invalidateCredentials?(): void;
 }
@@ -107,7 +107,7 @@ export interface ResolveCredentialsOptions extends HasAbortSignal {}
  */
 export interface UploadMutationsOptions extends HasAbortSignal {
   /**
-   * The database on which {@link CommonPowerSyncDatabase.connect} has been called, for convenience.
+   * The database on which {@link CommonPowerSyncDatabase.(connect:1)} has been called, for convenience.
    */
   database: CommonPowerSyncDatabase;
 }
