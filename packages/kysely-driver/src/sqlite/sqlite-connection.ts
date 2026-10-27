@@ -1,4 +1,4 @@
-import { type AbstractPowerSyncDatabase, type Transaction } from '@powersync/common';
+import type { CommonPowerSyncDatabase, Transaction } from '@powersync/common';
 import { CompiledQuery, DatabaseConnection, QueryResult } from 'kysely';
 
 /**
@@ -11,14 +11,14 @@ import { CompiledQuery, DatabaseConnection, QueryResult } from 'kysely';
  * This allows us to bypass write locks when doing pure select queries outside a transaction.
  */
 export class PowerSyncConnection implements DatabaseConnection {
-  readonly #db: AbstractPowerSyncDatabase;
-  #completeTransaction: (() => void) | null;
+  readonly #db: CommonPowerSyncDatabase;
+  #completeOuterTransaction: (() => void) | null = null;
+  #failOuterTransaction: ((error: unknown) => void) | null = null;
   #tx: Transaction | null;
 
-  constructor(db: AbstractPowerSyncDatabase) {
+  constructor(db: CommonPowerSyncDatabase) {
     this.#db = db;
     this.#tx = null;
-    this.#completeTransaction = null;
   }
 
   async executeQuery<O>(compiledQuery: CompiledQuery): Promise<QueryResult<O>> {
@@ -69,13 +69,11 @@ export class PowerSyncConnection implements DatabaseConnection {
           // Set the current active transaction
           this.#tx = tx;
 
-          /**
-           * Wait for this transaction to be completed
-           * Rejecting would cause any uncommitted changes to be
-           * rolled back.
-           */
-          const transactionCompleted = new Promise<void>((resolve) => {
-            this.#completeTransaction = resolve;
+          // Wait for this transaction to be completed.
+          // Rejecting causes any uncommitted changes to be rolled back.
+          const transactionCompleted = new Promise<void>((resolve, reject) => {
+            this.#completeOuterTransaction = resolve;
+            this.#failOuterTransaction = reject;
           });
 
           // Allow this transaction to be used externally
@@ -94,23 +92,30 @@ export class PowerSyncConnection implements DatabaseConnection {
 
     try {
       await this.#tx.commit();
-    } finally {
-      // The SQLite transaction is over whether or not COMMIT succeeded. Holding the write lock
-      // any longer would block every other write.
-      this.releaseTransaction();
+    } catch (e) {
+      // A failed COMMIT may leave the transaction open. Rejecting makes writeTransaction roll it back
+      // before releasing the write lock.
+      this.#completeError(e);
+      throw e;
     }
+    this.#complete();
   }
 
   async rollbackTransaction(): Promise<void> {
     if (!this.#tx) {
-      throw new Error('Transaction is not defined');
+      // Kysely calls this after a failed commitTransaction, which already handed the rollback to
+      // writeTransaction. Throwing here would hide the original COMMIT error.
+      return;
     }
 
     try {
       await this.#tx.rollback();
-    } finally {
-      this.releaseTransaction();
+    } catch (e) {
+      // Let writeTransaction retry the rollback so that the changes are never committed.
+      this.#completeError(e);
+      throw e;
     }
+    this.#complete();
   }
 
   async releaseConnection(): Promise<void> {
@@ -119,17 +124,27 @@ export class PowerSyncConnection implements DatabaseConnection {
     if (this.#tx) {
       try {
         await this.#tx.rollback();
-      } catch {
-        // The transaction may already be over, nothing left to roll back.
-      } finally {
-        this.releaseTransaction();
+        this.#complete();
+      } catch (e) {
+        // Let writeTransaction retry the rollback. If the transaction is already over, that's a no-op.
+        this.#completeError(e);
       }
     }
   }
 
-  private releaseTransaction() {
-    this.#completeTransaction?.();
-    this.#completeTransaction = null;
+  #complete() {
+    this.#completeOuterTransaction?.();
+    this.#markOuterTransactionReleased();
+  }
+
+  #completeError(cause: unknown) {
+    this.#failOuterTransaction?.(cause);
+    this.#markOuterTransactionReleased();
+  }
+
+  #markOuterTransactionReleased() {
+    this.#completeOuterTransaction = null;
+    this.#failOuterTransaction = null;
     this.#tx = null;
   }
 }
