@@ -1,6 +1,6 @@
 import express from 'express';
 import { authenticate, issueToken } from './auth.ts';
-import { missingApiKey, modelId } from './model.ts';
+import { missingKeyVariable, modelId } from './model.ts';
 import { resumeReplies, STREAM_MODE, streaming } from './replies.ts';
 import { sendReply } from './stream-sse.ts';
 import { summary as throttleSummary } from './throttle.ts';
@@ -37,8 +37,8 @@ await new Promise<void>((resolve, reject) =>
 );
 
 console.log(
-  missingApiKey
-    ? `Backend listening on port ${PORT}. Simulating replies, because ${missingApiKey} is not set for ${modelId}.`
+  missingKeyVariable
+    ? `Backend listening on port ${PORT}. Simulating replies, because ${missingKeyVariable} is not set for ${modelId}.`
     : `Backend listening on port ${PORT}, replying with ${modelId}.`,
   streaming.summary,
   throttleSummary

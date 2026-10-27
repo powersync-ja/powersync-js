@@ -12,21 +12,21 @@ const TITLE_PROMPT =
   'Write a title of at most five words for a chat that starts with the message below. Reply with the title only, in the language of the message, without quotes or a final period.';
 
 // Models are addressed as `provider/model`, e.g. `google/gemini-flash-lite-latest`. To use another AI SDK provider,
-// install its package and add it here and to API_KEY_VARIABLES: https://ai-sdk.dev/providers/ai-sdk-providers
+// install its package and add it here and to KEY_VARIABLES: https://ai-sdk.dev/providers/ai-sdk-providers
 const registry = createProviderRegistry({ google, anthropic, openai }, { separator: '/' });
 
 /** The environment variable each provider reads its API key from. */
-const API_KEY_VARIABLES: Record<string, string> = {
+const KEY_VARIABLES: Record<string, string> = {
   google: 'GOOGLE_GENERATIVE_AI_API_KEY',
   anthropic: 'ANTHROPIC_API_KEY',
   openai: 'OPENAI_API_KEY'
 };
 
 export const modelId = process.env.AI_MODEL || 'google/gemini-flash-lite-latest';
-const apiKeyVariable = API_KEY_VARIABLES[modelId.split('/')[0]];
+const keyVariable = KEY_VARIABLES[modelId.split('/')[0]];
 
-/** Set when replies are simulated, because the model's provider has no API key. */
-export const missingApiKey = apiKeyVariable && !process.env[apiKeyVariable] ? apiKeyVariable : null;
+/** The name of the provider's API key variable when it isn't set, so replies are simulated. Never the key itself. */
+export const missingKeyVariable = keyVariable && !process.env[keyVariable] ? keyVariable : null;
 
 const model = registry.languageModel(modelId as Parameters<typeof registry.languageModel>[0]);
 
@@ -35,7 +35,7 @@ const model = registry.languageModel(modelId as Parameters<typeof registry.langu
  * STREAM_CHARS_PER_SECOND (see throttle.ts).
  */
 export function generateReply(history: ModelMessage[], signal: AbortSignal): AsyncGenerator<string> {
-  return throttle(missingApiKey ? simulateReply(signal) : streamModelReply(history, signal), signal);
+  return throttle(missingKeyVariable ? simulateReply(signal) : streamModelReply(history, signal), signal);
 }
 
 /** Streams the model's reply to a conversation, as fast as the model generates it. */
@@ -61,7 +61,7 @@ async function* streamModelReply(history: ModelMessage[], signal: AbortSignal): 
 
 /** Writes a short title for a chat from its first message, or returns null when replies are simulated. */
 export async function generateTitle(firstMessage: string): Promise<string | null> {
-  if (missingApiKey) return null;
+  if (missingKeyVariable) return null;
 
   const { text } = await generateText({ model, instructions: TITLE_PROMPT, prompt: firstMessage, maxOutputTokens: 30 });
   // Models don't always follow the formatting instructions.
@@ -90,7 +90,7 @@ While the reply streams, its text only lives in the backend's memory. A tab that
 
 Because the reply lives in the database, nothing is lost when the connection drops. Try refreshing the page, or opening this chat in a second tab, while a reply is streaming.`;
 
-const SIMULATED_REPLY = `This reply is **simulated**: the backend has no \`${missingApiKey}\` for \`${modelId}\`, so it streams this text instead of calling the model. Add the key to \`.env.local\` to chat with a real model. The backend restarts by itself when the file changes.
+const SIMULATED_REPLY = `This reply is **simulated**: the backend has no \`${missingKeyVariable}\` for \`${modelId}\`, so it streams this text instead of calling the model. Add the key to \`.env.local\` to chat with a real model. The backend restarts by itself when the file changes.
 
 The path a reply takes is the same either way:
 

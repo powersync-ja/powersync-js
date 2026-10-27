@@ -24,7 +24,7 @@ export function respond(messageId: string) {
   generations.set(messageId, abort);
 
   generate(messageId, abort)
-    .catch((error) => console.error(`Could not respond to ${messageId}:`, error))
+    .catch((error) => console.error('Could not respond to %s:', messageId, error))
     .finally(() => {
       // Unless a retry has started a newer attempt in the meantime.
       if (generations.get(messageId) === abort) generations.delete(messageId);
