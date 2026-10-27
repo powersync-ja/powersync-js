@@ -30,4 +30,6 @@ export function usePowerSync() {
  *
  * @returns The PowerSync database instance, or null.
  */
-export const usePowerSyncOrNull = () => React.useContext(PowerSyncContext);
+export function usePowerSyncOrNull(): CommonPowerSyncDatabase | null {
+  return React.useContext(PowerSyncContext);
+}
