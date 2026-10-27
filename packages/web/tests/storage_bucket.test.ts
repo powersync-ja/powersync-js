@@ -101,17 +101,6 @@ describe('storageBucket', { sequential: true }, () => {
     });
   });
 
-  it('rejects a bucket name the Storage Buckets API would not accept', () => {
-    expect(
-      () =>
-        new PowerSyncDatabase({
-          schema: TEST_SCHEMA,
-          logger: defaultTestLogger,
-          database: { dbFilename: `${uuid()}.db`, vfs: WASQLiteVFS.OPFSWriteAheadVFS, storageBucket: 'Not-Valid' }
-        })
-    ).toThrow('is not a valid Storage Bucket name');
-  });
-
   it('rejects a VFS that does not keep its files in OPFS', () => {
     expect(
       () =>

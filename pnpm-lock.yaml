@@ -7,8 +7,8 @@ settings:
 catalogs:
   default:
     '@journeyapps/wa-sqlite':
-      specifier: 2.0.9
-      version: 2.0.9
+      specifier: 2.0.10
+      version: 2.0.10
     '@microsoft/api-extractor':
       specifier: ^7.59.0
       version: 7.59.0
@@ -411,7 +411,7 @@ importers:
     devDependencies:
       '@journeyapps/wa-sqlite':
         specifier: 'catalog:'
-        version: 2.0.9
+        version: 2.0.10
       '@powersync/web':
         specifier: workspace:*
         version: link:../web
@@ -436,7 +436,7 @@ importers:
     devDependencies:
       '@journeyapps/wa-sqlite':
         specifier: 'catalog:'
-        version: 2.0.9
+        version: 2.0.10
       '@powersync/web':
         specifier: workspace:*
         version: link:../web
@@ -549,7 +549,7 @@ importers:
     devDependencies:
       '@journeyapps/wa-sqlite':
         specifier: 'catalog:'
-        version: 2.0.9
+        version: 2.0.10
       '@nuxt/module-builder':
         specifier: ^1.0.2
         version: 1.0.2(@nuxt/cli@3.34.0(@nuxt/schema@4.3.1)(cac@6.7.14)(commander@12.1.0)(magicast@0.5.2)(supports-color@10.2.2))(@vue/compiler-core@3.5.43)(esbuild@0.27.3)(typescript@6.0.3)(vue-tsc@3.2.5(typescript@6.0.3))(vue@3.5.30(typescript@6.0.3))
@@ -801,7 +801,7 @@ importers:
     dependencies:
       '@journeyapps/wa-sqlite':
         specifier: 'catalog:'
-        version: 2.0.9
+        version: 2.0.10
       '@powersync/common':
         specifier: workspace:*
         version: link:../common
@@ -896,7 +896,7 @@ importers:
     dependencies:
       '@journeyapps/wa-sqlite':
         specifier: 'catalog:'
-        version: 2.0.9
+        version: 2.0.10
       '@monaco-editor/react':
         specifier: ^4.7.0
         version: 4.7.0(monaco-editor@0.55.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -4166,8 +4166,8 @@ packages:
     resolution: {integrity: sha512-u3UPsIilWKOM3F9CXtrG8LEJmNxwoCQC/XVj4IKYXvvpx7QIi/Kg1LI5uDmDpKlac62NUtX7eLjRh+jVZcLOzw==}
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
 
-  '@journeyapps/wa-sqlite@2.0.9':
-    resolution: {integrity: sha512-RDRm2KIBFrCcxq+/UVB1K2LAj1dIOHuyyWHcfrLGS8lrLHH6clU29FHpMXfJglgq6ePds7J17nvxJmxNxYLBAg==}
+  '@journeyapps/wa-sqlite@2.0.10':
+    resolution: {integrity: sha512-6Wo5ZijOc4/6M9u+MDsJdW8zDCdrct/p+7LcG7S7CT5YKu42j6lshMfUvgtGYMaZeuH7rpQHULZupPTQFqbS0w==}
 
   '@jridgewell/gen-mapping@0.3.13':
     resolution: {integrity: sha512-2kkt/7niJ6MgEPxF0bYdQ6etZaA+fQvDcLKckhy1yIQOzaoKjBBjSj63/aLVjYE3qhRt5dvM+uUyfCg6UKCBbA==}
@@ -23221,7 +23221,7 @@ snapshots:
       '@types/yargs': 17.0.35
       chalk: 4.1.2
 
-  '@journeyapps/wa-sqlite@2.0.9': {}
+  '@journeyapps/wa-sqlite@2.0.10': {}
 
   '@jridgewell/gen-mapping@0.3.13':
     dependencies:
