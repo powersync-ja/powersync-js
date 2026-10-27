@@ -17,16 +17,25 @@ import { SyncStatus } from '@powersync/common';
  * };
  */
 export function useStatus(): SyncStatus {
-  return useStatusOrNull(false);
+  return useStatusInternal(false);
+}
+
+/**
+ * A variant of {@link useStatus} that returns null when no PowerSync database is in context (instead of throwing).
+ *
+ * @returns The current sync status of the PowerSync database, or null.
+ */
+export function useStatusOrNull(): SyncStatus | null {
+  return useStatusInternal(true);
 }
 
 /**
  * @internal
  */
-export function useStatusOrNull(allowNull?: boolean): SyncStatus | null;
-export function useStatusOrNull(allowNull: false): SyncStatus;
+function useStatusInternal(allowNull?: boolean): SyncStatus | null;
+function useStatusInternal(allowNull: false): SyncStatus;
 
-export function useStatusOrNull(allowNull: boolean = true): SyncStatus | null {
+function useStatusInternal(allowNull: boolean = true): SyncStatus | null {
   // Conditional hook is okay, this is an internal hook and allowNull is a constant on each call site.
   const powerSync = allowNull ? usePowerSyncOrNull() : usePowerSync();
   const [syncStatus, setSyncStatus] = useState(powerSync?.currentStatus);

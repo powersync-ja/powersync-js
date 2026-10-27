@@ -25,4 +25,9 @@ export function usePowerSync() {
   return db;
 }
 
+/**
+ * A variant of {@link usePowerSync} that returns null when no PowerSync database is in context (instead of throwing).
+ *
+ * @returns The PowerSync database instance, or null.
+ */
 export const usePowerSyncOrNull = () => React.useContext(PowerSyncContext);
