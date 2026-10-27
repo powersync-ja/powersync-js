@@ -56,6 +56,13 @@ export interface SyncOptions {
   checkpointMode?: CheckpointMode;
 
   /**
+   * How long to wait for the PowerSync Service to respond when requesting a checkpoint, in milliseconds.
+   *
+   * A request that takes longer fails and is retried after {@link SyncOptions.retryDelayMs}. This defaults to 40 seconds.
+   */
+  checkpointRequestTimeoutMs?: number;
+
+  /**
    * Enables the core extension's diagnostics event stream: detailed per-bucket download stats,
    * including each bucket's `target_count`, and inferred column types. Off by default.
    *

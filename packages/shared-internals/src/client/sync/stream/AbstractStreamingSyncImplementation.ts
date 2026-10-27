@@ -28,9 +28,9 @@ import {
   SimpleAsyncIterator,
   valueResult
 } from '../../../utils/stream_transform.js';
-import { asyncNotifier } from '../../../utils/async.js';
+import { asyncNotifier, runWithTimeout } from '../../../utils/async.js';
 import { JavaScriptSyncState, SyncStatusSnapshot } from '../../../db/crud/SyncStatus.js';
-import { ResolvedSyncOptions } from '../options.js';
+import { DEFAULT_CHECKPOINT_REQUEST_TIMEOUT_MS, ResolvedSyncOptions } from '../options.js';
 import { CheckpointStateSignals, isCheckpointRequestApplied } from './CheckpointState.js';
 
 /**
@@ -141,6 +141,7 @@ export abstract class AbstractStreamingSyncImplementation
   private connectionMayHaveChanged = false;
   private crudUploadNotifier = asyncNotifier();
   private checkpoints = new CheckpointStateSignals();
+  private checkpointRequestTimeoutMs = DEFAULT_CHECKPOINT_REQUEST_TIMEOUT_MS;
 
   private notifyCompletedUploads?: () => void;
   private handleActiveStreamsChange?: () => void;
@@ -217,33 +218,40 @@ export abstract class AbstractStreamingSyncImplementation
     });
   }
 
-  private async requestCheckpointFromService(signal: AbortSignal, request: CheckpointRequestPayload): Promise<string> {
-    // First, check if we can use a custom checkpoint request implementation.
-    {
-      const customResponse = await this.options.postCheckpointRequest(
-        request.client_id,
-        request.checkpoint_request_id,
-        signal
-      );
-      if (customResponse != null) {
-        return customResponse;
+  private requestCheckpointFromService(abort: AbortSignal, request: CheckpointRequestPayload): Promise<string> {
+    return runWithTimeout(abort, this.checkpointRequestTimeoutMs, 'Checkpoint request', async (signal) => {
+      // First, check if we can use a custom checkpoint request implementation.
+      {
+        const customResponse = await this.options.postCheckpointRequest(
+          request.client_id,
+          request.checkpoint_request_id,
+          signal
+        );
+        if (customResponse != null) {
+          return customResponse;
+        }
       }
-    }
 
-    const status = await this.options.remote.fetchAndDecodeJson({
-      method: 'POST',
-      path: '/sync/checkpoint-request',
-      body: JSON.stringify(request),
-      signal
+      const status = await this.options.remote.fetchAndDecodeJson({
+        method: 'POST',
+        path: '/sync/checkpoint-request',
+        body: JSON.stringify(request),
+        signal
+      });
+
+      return status.data.checkpoint_request_id;
     });
-
-    return status.data.checkpoint_request_id;
   }
 
-  private async getLegacyWriteCheckpoint(): Promise<string> {
+  private async getLegacyWriteCheckpoint(abort: AbortSignal): Promise<string> {
     const clientId = await this.options.adapter.getClientId();
     let path = `/write-checkpoint2.json?client_id=${clientId}`;
-    const response = await this.options.remote.fetchAndDecodeJson({ path });
+    const response = await runWithTimeout(
+      abort,
+      this.checkpointRequestTimeoutMs,
+      'Write checkpoint request',
+      (signal) => this.options.remote.fetchAndDecodeJson({ path, signal })
+    );
     const checkpoint = response['data']['write_checkpoint'] as string;
     this.logger.log({ level: LogLevels.debug, message: `Created write checkpoint: ${checkpoint}` });
     return checkpoint;
@@ -299,7 +307,7 @@ The next upload iteration will be delayed.`
               // Uploading is completed
               const neededUpdate = await this.options.adapter.updateLocalTarget(() => {
                 if (options.checkpointMode === 'legacy') {
-                  return this.getLegacyWriteCheckpoint();
+                  return this.getLegacyWriteCheckpoint(signal);
                 } else {
                   return this.requestNextCheckpointFromService(signal);
                 }
@@ -340,6 +348,7 @@ The next upload iteration will be delayed.`
 
     const controller = new AbortController();
     this.abortController = controller;
+    this.checkpointRequestTimeoutMs = options.checkpointRequestTimeoutMs;
     const signal = controller.signal;
     this.streamingSyncPromise = Promise.all([
       this.crudUploadLoop(signal, options).catch((error) => {
@@ -401,7 +410,9 @@ The next upload iteration will be delayed.`
 
   async requestCheckpoint(): Promise<bigint> {
     const neverAbort = new AbortController().signal;
-    return BigInt(await this.requestNextCheckpointFromService(neverAbort));
+    // disconnect() aborts the connection's signal. It is missing only when called before connect() starts.
+    const untilDisconnected = this.abortController?.signal ?? neverAbort;
+    return BigInt(await this.requestNextCheckpointFromService(untilDisconnected));
   }
 
   async disconnect(): Promise<void> {

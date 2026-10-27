@@ -1063,6 +1063,7 @@ export interface SyncDataFlowStatus {
 export interface SyncOptions {
     appMetadata?: Record<string, string>;
     checkpointMode?: CheckpointMode;
+    checkpointRequestTimeoutMs?: number;
     connectionMethod?: SyncStreamConnectionMethod;
     crudUploadThrottleMs?: number;
     diagnostics?: boolean;
