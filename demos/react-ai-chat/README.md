@@ -128,7 +128,7 @@ There is no row-level security either, because the backend is the only writer. `
 - [Docker](https://docs.docker.com/get-docker/) (running)
 - Node.js 22.22 or later
 - [pnpm](https://pnpm.io/installation)
-- The [PowerSync CLI](https://docs.powersync.com/tools/cli) (`npm install -g @powersync/cli`), which runs the local Docker services
+- The [PowerSync CLI](https://docs.powersync.com/tools/cli) (`npm install -g powersync`), which runs the local Docker services
 
 ## Local development
 
