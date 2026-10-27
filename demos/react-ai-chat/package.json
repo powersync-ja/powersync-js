@@ -4,14 +4,17 @@
   "private": true,
   "description": "PowerSync React demo: an AI chat whose replies stream to clients through Postgres or over SSE, and sync to every device with Sync Streams",
   "type": "module",
+  "engines": {
+    "node": ">=22.22.0"
+  },
   "scripts": {
     "dev": "concurrently --names web,backend --prefix-colors magenta,cyan \"vite\" \"pnpm backend\"",
     "backend": "node --watch-path=server --watch-path=.env.local --watch-preserve-output --env-file=.env.local --import tsx server/index.ts",
     "build": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p server/tsconfig.json && vite build",
     "preview": "vite preview",
     "test:build": "pnpm build",
-    "local:up": "powersync docker start --directory powersync",
-    "local:down": "powersync docker stop --directory powersync"
+    "local:up": "powersync docker start",
+    "local:down": "powersync docker stop"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.81",
