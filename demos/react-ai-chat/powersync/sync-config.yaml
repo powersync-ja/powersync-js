@@ -1,0 +1,18 @@
+# yaml-language-server: $schema=https://unpkg.com/@powersync/service-sync-rules@latest/schema/sync_config.json
+config:
+  edition: 3
+
+streams:
+  # The chat list in the sidebar is always synced. auth.user_id() is the `sub` of the token the backend issued.
+  chats:
+    auto_subscribe: true
+    query: SELECT * FROM chats WHERE user_id = auth.user_id()
+
+  # Messages are synced per chat while it is open. The client subscribes with `useQuery(..., { streams })`.
+  # In Postgres mode, the backend writes assistant replies to `messages.content` as they are generated, so they stream to
+  # every client subscribed to the chat. In SSE mode, the backend writes each reply once, when it's finished.
+  chat_messages:
+    query: |
+      SELECT * FROM messages
+      WHERE chat_id = subscription.parameter('chat_id')
+        AND user_id = auth.user_id()
