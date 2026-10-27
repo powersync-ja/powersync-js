@@ -16,5 +16,7 @@
 **/routeTree.gen.ts
 
 demos/**/.pnpmfile.cjs
+# The SQL formatter mangles some Postgres statements, such as splitting a CREATE PUBLICATION table list across lines.
+demos/react-ai-chat/powersync/docker/modules/database-postgres/init-scripts/01-init.sql
 
 pnpm-lock.yaml
