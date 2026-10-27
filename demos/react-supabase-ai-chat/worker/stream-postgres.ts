@@ -25,13 +25,14 @@ export async function streamReply(reply: ClaimedReply, history: ModelMessage[]) 
   let writes = 0;
 
   /**
-   * Writes the reply so far. The update only matches while the reply is streaming, so when the user stops it (their
-   * client sets the status to 'stopped'), the next write matches nothing and generation is cancelled.
+   * Writes the reply so far. The update only matches while this claim's reply is streaming, so when the user stops it
+   * (their client sets the status to 'stopped'), or stops and retries it, the next write matches nothing and generation
+   * is cancelled.
    */
   async function write(status: 'streaming' | 'done' | 'error', text = content) {
     const rows = await pg`
       UPDATE messages SET content = ${text}, status = ${status}, write_count = write_count + 1
-      WHERE id = ${reply.id} AND status = 'streaming'
+      WHERE id = ${reply.id} AND claim_id = ${reply.claim_id} AND status = 'streaming'
       RETURNING id`;
     lastWriteAt = Date.now();
     if (rows.length > 0) {

@@ -39,7 +39,8 @@ function Reply({ message, onRetry }: MessageProps) {
   // the saved partial reply syncs. Otherwise, and always in Postgres mode, the text comes from the synced row.
   const streamed = useSseReply(
     message.id,
-    STREAM_MODE === 'sse' && (status === 'streaming' || (status === 'stopped' && !message.content))
+    STREAM_MODE === 'sse' && (status === 'streaming' || (status === 'stopped' && !message.content)),
+    status === 'streaming'
   );
   const content = streamed ?? message.content ?? '';
   const text = useSmoothText(content);

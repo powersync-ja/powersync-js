@@ -1,5 +1,6 @@
 import { pg, type ClaimedReply } from './db.ts';
 import { generateTitle, missingApiKey, modelId } from './model.ts';
+import { summary as throttleSummary } from './throttle.ts';
 
 /**
  * How replies reach the app while they generate. Set with VITE_STREAM_MODE, which the app reads too. Each mode is
@@ -18,9 +19,9 @@ const streaming = STREAM_MODE === 'sse' ? await import('./stream-sse.ts') : awai
 async function respond(messageId: string) {
   // Claim the message. If it was stopped, or another worker already claimed it, there is nothing to do.
   const [reply] = await pg<ClaimedReply[]>`
-    UPDATE messages SET status = 'streaming', content = '', write_count = 0
+    UPDATE messages SET status = 'streaming', content = '', write_count = 0, claim_id = gen_random_uuid()
     WHERE id = ${messageId} AND role = 'assistant' AND status = 'pending'
-    RETURNING id, chat_id, user_id`;
+    RETURNING id, chat_id, user_id, claim_id`;
   if (!reply) return;
 
   const history = await pg<{ role: 'user' | 'assistant'; content: string }[]>`
@@ -73,7 +74,8 @@ console.log(
   missingApiKey
     ? `AI worker ready. Simulating replies, because ${missingApiKey} is not set for ${modelId}.`
     : `AI worker ready, replying with ${modelId}.`,
-  streaming.summary
+  streaming.summary,
+  throttleSummary
 );
 
 for (const signal of ['SIGINT', 'SIGTERM'] as const) {

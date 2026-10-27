@@ -67,22 +67,25 @@ export async function streamReply(reply: ClaimedReply, history: ModelMessage[]) 
         console.error(`Reply ${reply.id} failed:`, error);
         await pg`
           UPDATE messages SET content = ${describeError(error)}, status = 'error'
-          WHERE id = ${reply.id} AND status = 'streaming'`;
+          WHERE id = ${reply.id} AND claim_id = ${reply.claim_id} AND status = 'streaming'`;
         return;
       }
     }
 
-    // The only write of the reply: the finished text, or the text generated before the user stopped it.
+    // The only write of the reply: the finished text, or the text generated before the user stopped it. It matches
+    // nothing if the user retried the reply in the meantime, which a newer claim now owns.
     const [saved] = await pg<{ status: string }[]>`
       UPDATE messages
       SET content = ${live.text}, write_count = write_count + 1,
         status = CASE status WHEN 'stopped' THEN 'stopped' ELSE 'done' END
-      WHERE id = ${reply.id} AND status IN ('streaming', 'stopped')
+      WHERE id = ${reply.id} AND claim_id = ${reply.claim_id} AND status IN ('streaming', 'stopped')
       RETURNING status`;
     console.log(
-      saved?.status === 'stopped'
-        ? `Reply ${reply.id}: stopped by the user, saved in 1 write`
-        : `Reply ${reply.id}: ${live.text.length} characters over SSE, saved in 1 write after ${Date.now() - startedAt} ms`
+      !saved
+        ? `Reply ${reply.id}: not saved, because it was retried or deleted`
+        : saved.status === 'stopped'
+          ? `Reply ${reply.id}: stopped by the user, saved in 1 write`
+          : `Reply ${reply.id}: ${live.text.length} characters over SSE, saved in 1 write after ${Date.now() - startedAt} ms`
     );
   } finally {
     // Clients keep showing the streamed text until the saved reply syncs to them.

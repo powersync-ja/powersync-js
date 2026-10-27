@@ -19,6 +19,9 @@ CREATE TABLE public.messages (
   status TEXT NOT NULL DEFAULT 'done' CHECK (status IN ('pending', 'streaming', 'done', 'stopped', 'error')),
   -- How many times the worker wrote the reply. Each write syncs to clients as one update.
   write_count INTEGER NOT NULL DEFAULT 0,
+  -- Set by the AI worker each time it claims a reply. Its later writes check it, so when a reply is stopped and retried
+  -- before the old attempt notices, the old attempt can't overwrite the new one.
+  claim_id UUID,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 

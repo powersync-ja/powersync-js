@@ -3,6 +3,7 @@ import { google } from '@ai-sdk/google';
 import { openai } from '@ai-sdk/openai';
 import { APICallError, createProviderRegistry, generateText, type ModelMessage, streamText } from 'ai';
 import { setTimeout } from 'node:timers/promises';
+import { throttle } from './throttle.ts';
 
 const SYSTEM_PROMPT =
   'You are a helpful assistant in a chat app. Answer clearly and concisely, and use Markdown when it helps.';
@@ -31,14 +32,15 @@ export { modelId };
 const model = registry.languageModel(modelId as Parameters<typeof registry.languageModel>[0]);
 
 /**
- * Generates the next assistant reply for a conversation, yielding text as it arrives.
+ * Generates the next assistant reply for a conversation, yielding text as it arrives, at up to
+ * STREAM_CHARS_PER_SECOND (see throttle.ts).
  */
-export async function* generateReply(history: ModelMessage[], signal: AbortSignal): AsyncGenerator<string> {
-  if (missingApiKey) {
-    yield* simulateReply(signal);
-    return;
-  }
+export function generateReply(history: ModelMessage[], signal: AbortSignal): AsyncGenerator<string> {
+  return throttle(missingApiKey ? simulateReply(signal) : streamModelReply(history, signal), signal);
+}
 
+/** Streams the model's reply to a conversation, as fast as the model generates it. */
+async function* streamModelReply(history: ModelMessage[], signal: AbortSignal): AsyncGenerator<string> {
   const result = streamText({
     model,
     instructions: SYSTEM_PROMPT,

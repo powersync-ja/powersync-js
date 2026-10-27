@@ -62,7 +62,7 @@ Everything else is shared:
 
 ### Postgres mode
 
-Writing on an interval instead of once per token keeps each reply to at most 10 writes per second, however fast the model produces tokens. The app shows the write count under each reply, and the worker logs it, for example `1601 characters in 9 writes over 2041 ms`. Each write syncs the whole row, so very long replies or many viewers per chat add up.
+Writing on an interval instead of once per token keeps each reply to at most 10 writes per second, however fast the model produces tokens. The app shows the write count under each reply, and the worker logs it, for example `1601 characters in 9 writes over 2041 ms` with `STREAM_CHARS_PER_SECOND=0`. The default throttle (see below) spreads that reply over about 16 seconds, so about 160 writes. Each write syncs the whole row, so very long replies or many viewers per chat add up.
 
 ### SSE mode
 
@@ -72,7 +72,9 @@ When the reply is finished, the worker writes it once and ends the SSE connectio
 
 ### In both modes
 
-Each synced write or SSE event adds a step of text, and some models (Gemini included) send text in a few large chunks. To keep replies readable, `useSmoothText` in `src/components/chat/` reveals new text at a steady pace. Set `VITE_SMOOTH_TEXT=false` to see the steps as they arrive.
+Some models (Gemini included) send text in a few large chunks. The worker evens this out: it sends each reply on at up to `STREAM_CHARS_PER_SECOND` (100 by default) and holds the rest until its turn, so a reply can finish a few seconds after the model does. Set it to `0` to send text as soon as the model generates it.
+
+Each synced write or SSE event still adds a step of text, so `useSmoothText` in `src/components/chat/` reveals new text at a steady pace. Set `VITE_SMOOTH_TEXT=false` to see the steps as they arrive.
 
 The first reply in a chat also names it: the worker asks the model for a short title and writes it to `chats.title`, and the sidebar updates through the `chats` stream.
 
@@ -161,16 +163,17 @@ Open [http://localhost:5173](http://localhost:5173).
 
 The worker reads these settings from `.env.local`. Vite only exposes `VITE_` variables to the browser, so API keys stay on the server.
 
-| Variable                       | Default                           | Description                                                     |
-| ------------------------------ | --------------------------------- | --------------------------------------------------------------- |
-| `AI_MODEL`                     | `google/gemini-flash-lite-latest` | Model used for replies, as `provider/model`.                    |
-| `GOOGLE_GENERATIVE_AI_API_KEY` | (empty)                           | Google Gemini API key.                                          |
-| `ANTHROPIC_API_KEY`            | (empty)                           | Anthropic API key, for `anthropic/...` models.                  |
-| `OPENAI_API_KEY`               | (empty)                           | OpenAI API key, for `openai/...` models.                        |
-| `VITE_STREAM_MODE`             | `postgres`                        | How replies stream: `postgres` or `sse` (see above).            |
-| `VITE_SMOOTH_TEXT`             | `true`                            | Reveal reply text at a steady pace (see above).                 |
-| `STREAM_FLUSH_INTERVAL_MS`     | `100`                             | Postgres mode: how often the reply is written while it streams. |
-| `DATABASE_URL`                 | Local Supabase                    | Postgres connection the worker listens on and writes to.        |
+| Variable                       | Default                           | Description                                                                               |
+| ------------------------------ | --------------------------------- | ----------------------------------------------------------------------------------------- |
+| `AI_MODEL`                     | `google/gemini-flash-lite-latest` | Model used for replies, as `provider/model`.                                              |
+| `GOOGLE_GENERATIVE_AI_API_KEY` | (empty)                           | Google Gemini API key.                                                                    |
+| `ANTHROPIC_API_KEY`            | (empty)                           | Anthropic API key, for `anthropic/...` models.                                            |
+| `OPENAI_API_KEY`               | (empty)                           | OpenAI API key, for `openai/...` models.                                                  |
+| `VITE_STREAM_MODE`             | `postgres`                        | How replies stream: `postgres` or `sse` (see above).                                      |
+| `VITE_SMOOTH_TEXT`             | `true`                            | Reveal reply text at a steady pace (see above).                                           |
+| `STREAM_FLUSH_INTERVAL_MS`     | `100`                             | Postgres mode: how often the reply is written while it streams.                           |
+| `STREAM_CHARS_PER_SECOND`      | `100`                             | The most characters per second the worker sends a reply at (see above). `0` turns it off. |
+| `DATABASE_URL`                 | Local Supabase                    | Postgres connection the worker listens on and writes to.                                  |
 
 To use Claude, for example, set `AI_MODEL=anthropic/claude-opus-5-5` and `ANTHROPIC_API_KEY`. To add another provider, install its [AI SDK provider package](https://ai-sdk.dev/providers/ai-sdk-providers) and register it in `worker/model.ts`.
 

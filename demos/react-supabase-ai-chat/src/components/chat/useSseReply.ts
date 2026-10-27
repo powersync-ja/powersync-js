@@ -1,17 +1,20 @@
 import { useSupabase } from '@/components/providers/SystemProvider';
 import React from 'react';
 
-/** How long to wait before reconnecting after the connection drops. */
+/** How long to wait before connecting again after the connection drops or the worker can't serve the reply yet. */
 const RECONNECT_MS = 1000;
 
 /**
  * SSE mode: the text of a reply as the AI worker streams it over Server-Sent Events (see worker/stream-sse.ts), or
  * `null` when `enabled` is false. Each connection starts with everything generated so far, so the reply catches up
- * after a refresh or a dropped connection.
+ * after a refresh or a dropped connection. While `streaming` is true, the reply's synced row says it's still
+ * generating, so the hook keeps trying when the worker can't serve it, e.g. while the worker restarts.
  */
-export function useSseReply(messageId: string, enabled: boolean): string | null {
+export function useSseReply(messageId: string, enabled: boolean, streaming: boolean): string | null {
   const connector = useSupabase();
   const [text, setText] = React.useState('');
+  // Read when the worker can't serve the reply, so that a change to `streaming` doesn't reconnect.
+  const isStreaming = React.useEffectEvent(() => streaming);
 
   React.useEffect(() => {
     if (!enabled || !connector) return;
@@ -25,17 +28,18 @@ export function useSseReply(messageId: string, enabled: boolean): string | null 
             headers: { Authorization: `Bearer ${data.session?.access_token}` },
             signal: abort.signal
           });
-          // The worker isn't generating this reply (any more). Its row will say what happened.
-          if (!response.ok) return;
-
-          setText('');
-          await readEvents(response, (chunk) => setText((text) => text + chunk));
-          // The worker ended the stream because the reply is finished. The saved reply syncs next.
-          return;
+          if (response.ok) {
+            setText('');
+            await readEvents(response, (chunk) => setText((text) => text + chunk));
+            // The worker ended the stream because the reply is finished. The saved reply syncs next.
+            return;
+          }
+          // Not this user's reply, or the worker isn't generating it any more. Its row will say what happened.
+          if (response.status === 403 || !isStreaming()) return;
         } catch {
           if (abort.signal.aborted) return;
-          await new Promise((resolve) => setTimeout(resolve, RECONNECT_MS));
         }
+        await new Promise((resolve) => setTimeout(resolve, RECONNECT_MS));
       }
     };
 
