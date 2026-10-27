@@ -486,6 +486,12 @@ importers:
       drizzle-orm:
         specifier: 'catalog:'
         version: 0.44.7(@op-engineering/op-sqlite@18.2.0(react-native@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native-community/cli@20.2.0(supports-color@10.2.2)(typescript@6.0.3))(@react-native/metro-config@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2))(react@19.3.0))(@types/better-sqlite3@9.6.0)(@types/sql.js@1.4.9)(better-sqlite3@13.0.3)(kysely@0.29.4)(sql.js@1.14.0)
+      rsocket-core:
+        specifier: 1.0.0-alpha.3
+        version: 1.0.0-alpha.3
+      rsocket-websocket-server:
+        specifier: 1.0.0-alpha.3
+        version: 1.0.0-alpha.3
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
@@ -15963,6 +15969,9 @@ packages:
   rsocket-websocket-client@1.0.0-alpha.3:
     resolution: {integrity: sha512-CwTwTNMGa8BKvrWde/kM3q8IHuzO8RCIfzuj25BsVe9y8eehDQHt4fXk0g1i/wpsxTm+RY6DxE6Vr5snozKVOg==}
 
+  rsocket-websocket-server@1.0.0-alpha.3:
+    resolution: {integrity: sha512-x1Z4lZTEO+Fjt3xDfEDLPrP76Lmw2AW50UZynHEsB9PX1uDhTG5QDzPATiGbNoT7ihJVtb7YQftRIGUG8cC1aQ==}
+
   rtlcss@4.3.0:
     resolution: {integrity: sha512-FI+pHEn7Wc4NqKXMXFM+VAYKEj/mRIcW4h24YVwVtyjI+EqGrLc2Hx/Ny0lrZ21cBWU2goLy36eqMcNj3AQJig==}
     engines: {node: '>=12.0.0'}
@@ -18238,6 +18247,18 @@ packages:
   ws@7.5.11:
     resolution: {integrity: sha512-zS54Oen9bITtp7kp2XM3AydrCIq1D+HwJOuH+c+e4LfpL/lotP5osijd+UoMnxwAam1GN8R4KtLAyIrIcBNpiA==}
     engines: {node: '>=8.3.0'}
+    peerDependencies:
+      bufferutil: ^4.0.1
+      utf-8-validate: ^5.0.2
+    peerDependenciesMeta:
+      bufferutil:
+        optional: true
+      utf-8-validate:
+        optional: true
+
+  ws@8.2.3:
+    resolution: {integrity: sha512-wBuoj1BDpC6ZQ1B7DWQBYVLphPWkm8i9Y0/3YdHjHKHiohOJ1ws+3OccDWtH+PoC9DZD5WOTrJvNbWvjS6JWaA==}
+    engines: {node: '>=10.0.0'}
     peerDependencies:
       bufferutil: ^4.0.1
       utf-8-validate: ^5.0.2
@@ -23487,7 +23508,7 @@ snapshots:
       eventsource-parser: 3.1.1
       jose: 6.2.12
       pkce-challenge: 5.0.1
-      zod: 4.3.6
+      zod: 4.6.5
 
   '@modelcontextprotocol/core@2.3.1':
     dependencies:
@@ -23496,7 +23517,7 @@ snapshots:
   '@modelcontextprotocol/server@2.3.1':
     dependencies:
       '@modelcontextprotocol/core': 2.3.1
-      zod: 4.3.6
+      zod: 4.6.5
 
   '@module-federation/error-codes@0.22.0': {}
 
@@ -38752,6 +38773,14 @@ snapshots:
     dependencies:
       rsocket-core: 1.0.0-alpha.3
 
+  rsocket-websocket-server@1.0.0-alpha.3:
+    dependencies:
+      rsocket-core: 1.0.0-alpha.3
+      ws: 8.2.3
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+
   rtlcss@4.3.0:
     dependencies:
       escalade: 3.2.0
@@ -41306,6 +41335,8 @@ snapshots:
       async-limiter: 1.0.1
 
   ws@7.5.11: {}
+
+  ws@8.2.3: {}
 
   ws@8.21.2: {}
 

@@ -70,6 +70,8 @@
     "@types/better-sqlite3": "catalog:",
     "bson": "catalog:",
     "drizzle-orm": "catalog:",
+    "rsocket-core": "1.0.0-alpha.3",
+    "rsocket-websocket-server": "1.0.0-alpha.3",
     "typescript": "catalog:",
     "vitest": "catalog:",
     "@microsoft/api-extractor": "catalog:"
