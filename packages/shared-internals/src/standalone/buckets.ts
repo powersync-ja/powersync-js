@@ -62,7 +62,7 @@ export class DownloadClientState {
 
     return {
       buckets: buckets.toArray(),
-      include_checksum: false,
+      include_checksum: true,
       raw_data: true,
       client_id: clientId,
       parameters,
@@ -228,6 +228,14 @@ export class DownloadClientState {
     };
 
     for (const bucket of affectedBuckets ?? []) {
+      const expectedChecksum = this.#checkpoint!.buckets.get(bucket.name)?.checksum ?? 0 | 0;
+      if (bucket.checksum != expectedChecksum) {
+        throw new RestartSyncError(
+          `Checksum error on ${bucket.name}, expected ${expectedChecksum} but oplog is at ${bucket.checksum}`,
+          true
+        );
+      }
+
       for (const key of bucket.dirtyKeys) {
         handleKey(key.row);
       }
@@ -278,6 +286,8 @@ class TrackedCheckpoint {
 class Bucket {
   priority: number = 3;
 
+  checksum = 0;
+
   lastEntry: bigint = -1n;
   readonly appliedChanges = new Map<string, OplogEntry>(); // indexed by partial row key
   readonly #allChanges = new Map<string, OplogEntry>(); // indexed by full row key (including subkeys)
@@ -293,6 +303,11 @@ class Bucket {
     this.#dirtyKeys.set(key.formatted, { row: key, full: fullKey });
   }
 
+  #addToChecksum(value: number) {
+    // Checksums are u32 values, they should wrap around.
+    this.checksum = (this.checksum + value) | 0;
+  }
+
   pushLine(raw: OplogEntryJSON, data: OplogEntry) {
     if (this.lastEntry >= data.id) {
       // To simplify the sync client, we only support a linear bucket history. This works for compacting buckets, but
@@ -300,6 +315,8 @@ class Bucket {
       // allows not tracking checksums.
       throw new RestartSyncError('already tracked entry', true);
     }
+
+    const opChecksum = raw.checksum | 0;
 
     switch (raw.op) {
       case 'CLEAR': {
@@ -311,13 +328,17 @@ class Bucket {
             value.id = data.id;
           }
         }
+
+        // The checksum of a clear operation is the sum of all put operations we've just replaced.
+        this.checksum = opChecksum;
         break;
       }
       case 'MOVE':
-        // MOVE only affects checksums, which we don't compute here.
+        this.#addToChecksum(opChecksum);
         break;
       case 'PUT':
       case 'REMOVE':
+        this.#addToChecksum(opChecksum);
         this.#allChanges.set(data.fullKey, data);
         this.#markDirty(data.key, data.fullKey);
         break;

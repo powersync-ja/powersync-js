@@ -1,6 +1,6 @@
 export interface StreamingSyncRequest {
   buckets: BucketRequest[];
-  include_checksum: false;
+  include_checksum: boolean;
   raw_data: true;
   client_id: string;
   parameters: Record<string, unknown>;

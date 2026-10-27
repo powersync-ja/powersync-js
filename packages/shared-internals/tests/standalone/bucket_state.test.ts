@@ -285,6 +285,18 @@ describe('errors', () => {
     client.putRow('a', 'row-0', { col: 'hi' });
     expect(client.pushCheckpointComplete()).toStrictEqual([updatedRows({ items: { 'row-0': { col: 'hi' } } })]);
   });
+
+  downloadClientTest('checksum mismatch', ({ client }) => {
+    client.pushCheckpoint(1n, [{ name: 'a', checksum: 1234, priority: 3 }]);
+    client.pushData({
+      bucket: 'a',
+      rowId: '1',
+      op: 'PUT',
+      data: { col: 'a' }
+    });
+
+    expect(() => client.pushCheckpointComplete()).toThrow();
+  });
 });
 
 const priorityBuckets: Bucket[] = [0, 1, 2, 3].map((priority) => ({ name: `prio${priority}`, priority }));
@@ -311,7 +323,7 @@ class TestClient {
       checkpoint: {
         last_op_id: String(lastOpId),
         write_checkpoint: checkpointRequest == null ? undefined : String(checkpointRequest),
-        buckets: buckets.map((b) => ({ bucket: b.name, priority: b.priority ?? 3, checksum: 0 }))
+        buckets: buckets.map((b) => ({ bucket: b.name, priority: b.priority ?? 3, checksum: b.checksum ?? 0 }))
       }
     });
     expect(result).toStrictEqual([]);
@@ -329,7 +341,7 @@ class TestClient {
             op: data.op,
             object_type: data.objectType ?? 'items',
             object_id: data.objectId,
-            checksum: 0,
+            checksum: data.checksum ?? 0,
             data: JSON.stringify(data.data)
           }
         ]
@@ -363,9 +375,11 @@ interface TestData {
   data: unknown | undefined;
   objectId?: string;
   objectType?: string;
+  checksum?: number;
 }
 
 interface Bucket {
   name: string;
   priority?: number;
+  checksum?: number;
 }
