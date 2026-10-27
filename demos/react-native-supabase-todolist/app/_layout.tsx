@@ -5,6 +5,7 @@ import { PowerSyncContext } from '@powersync/react-native';
 import { Pressable } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { PromptProvider } from '../library/utils/prompt';
+import { usePowerSyncDevTools } from '@powersync/diagnostics/react-native';
 
 /**
  * This App uses a nested navigation stack.
@@ -25,6 +26,8 @@ const HomeLayout = () => {
   const db = useMemo(() => {
     return system.powersync;
   }, []);
+  // PowerSync panel in React Native DevTools (development builds only).
+  usePowerSyncDevTools(db);
   return (
     <PowerSyncContext.Provider value={db}>
       <PromptProvider>
