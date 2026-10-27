@@ -33,11 +33,16 @@
     "./agent": {
       "types": "./lib/src/agent.d.ts",
       "default": "./lib/src/agent.js"
+    },
+    "./react-native": {
+      "types": "./lib/src/react-native.d.ts",
+      "default": "./lib/src/react-native.js"
     }
   },
   "author": "PowerSync",
   "license": "Apache-2.0",
   "files": [
+    "dist",
     "lib",
     "src"
   ],
@@ -51,15 +56,19 @@
   },
   "homepage": "https://docs.powersync.com",
   "scripts": {
-    "build": "tsc -b",
-    "build:prod": "tsc -b",
-    "clean": "rm -rf lib tsconfig.tsbuildinfo",
+    "build": "tsc -b && pnpm build:rozenite",
+    "build:prod": "tsc -b && pnpm build:rozenite",
+    "build:rozenite": "tsc -p tsconfig.rozenite.json && vite build --config vite.rozenite.config.ts",
+    "clean": "rm -rf dist lib tsconfig.tsbuildinfo",
     "watch": "tsc --build -w"
   },
   "peerDependencies": {
     "@powersync/common": "workspace:^2.4.0",
     "@powersync/web": "workspace:^2.5.0",
+    "@rozenite/agent-bridge": "^2.5.0",
+    "@rozenite/plugin-bridge": "^2.5.0",
     "@vitejs/devtools-kit": ">=0.7.5",
+    "react": ">=18",
     "vite": ">=7.0.0"
   },
   "peerDependenciesMeta": {
@@ -67,6 +76,15 @@
       "optional": true
     },
     "@powersync/web": {
+      "optional": true
+    },
+    "@rozenite/agent-bridge": {
+      "optional": true
+    },
+    "@rozenite/plugin-bridge": {
+      "optional": true
+    },
+    "react": {
       "optional": true
     },
     "@vitejs/devtools-kit": {
@@ -87,9 +105,14 @@
     "@devframes/hub": "1.0.0",
     "@powersync/common": "workspace:*",
     "@powersync/web": "workspace:*",
+    "@rozenite/agent-bridge": "^2.5.0",
+    "@rozenite/plugin-bridge": "^2.5.0",
     "@types/node": "catalog:",
+    "@types/react": "19.2.14",
     "@vitejs/devtools-kit": "^0.7.5",
+    "react": "19.3.0",
     "typescript": "catalog:",
-    "vite": "catalog:"
+    "vite": "catalog:",
+    "vue": "3.5.43"
   }
 }

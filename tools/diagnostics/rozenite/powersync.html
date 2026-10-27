@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PowerSync</title>
+    <style>
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+      }
+    </style>
+    <!-- Tells the Rozenite client it runs in a panel, not in the app. -->
+    <script>
+      var __ROZENITE_PANEL__ = true;
+    </script>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="./panel.ts"></script>
+  </body>
+</html>
