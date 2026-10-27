@@ -100,6 +100,21 @@ export default defineNuxtConfig({
 }`,
     link: { href: 'https://docs.powersync.com/tools/devtools/node', label: 'Node.js setup guide' }
   },
+  'react-native': {
+    label: 'React Native',
+    lang: 'javascript',
+    code: `// metro.config.js: enable Rozenite (React Native DevTools plugins).
+const { withRozenite } = require('@rozenite/metro');
+module.exports = withRozenite(config, { enabled: process.env.WITH_ROZENITE === 'true' });
+
+// App root: dev only, a no-op in production builds.
+import { usePowerSyncDevTools } from '@powersync/diagnostics/react-native';
+usePowerSyncDevTools(db);
+
+// Optional: per-bucket totals from the SQLite core.
+await db.connect(connector, { diagnostics: true });`,
+    link: { href: 'https://docs.powersync.com/tools/devtools-overview', label: 'DevTools guide' }
+  },
   dart: {
     label: 'Dart',
     note: 'Diagnostics are on in debug builds and off in release builds. Run the app and open the PowerSync tab in Flutter DevTools.',
@@ -122,6 +137,7 @@ const attachHintBySdk: Record<SetupSdk, string> = {
   web: 'Open your app in a browser tab that DevTools trusts.',
   nuxt: 'Open your app in a browser tab that DevTools trusts.',
   node: 'Call enablePowerSyncDiagnostics() in your node app.',
+  'react-native': 'Run the app with usePowerSyncDevTools(db) in a mounted component.',
   dart: 'Run your app in debug mode.'
 };
 const noSourceDescription = computed(() => {
