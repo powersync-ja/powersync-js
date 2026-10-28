@@ -64,11 +64,6 @@ type StoredConnectionOptions = {
   connector: InternalConnector;
   options: ResolvedSyncOptions;
   schema: any;
-  /**
-   * Set when creating the sync implementation for these options failed, so that the `connect` call which supplied them
-   * can report the error.
-   */
-  initFailure?: { error: unknown };
 };
 
 /**
@@ -193,10 +188,10 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
       if (this.pendingConnectionOptions) {
         // Pending options have been placed while connecting.
         // Need to reconnect.
-        this.connectingPromise = this.connectInternal()
-          .catch(() => {})
-          .finally(checkConnection);
-        return this.connectingPromise;
+        const reconnect = this.connectInternal().finally(checkConnection);
+
+        this.connectingPromise = reconnect.catch(() => {});
+        return reconnect;
       } else {
         // Clear the connecting promise, done.
         this.connectingPromise = null;
@@ -204,16 +199,10 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
       }
     };
 
-    this.connectingPromise ??= this.connectInternal()
-      .catch(() => {})
-      .finally(checkConnection);
-    await this.connectingPromise;
+    const connecting = this.connectInternal().finally(checkConnection);
 
-    // Options superseded by a later connect call are never used, so this only reports errors for options we've
-    // actually tried to connect with.
-    if (pendingOptions.initFailure) {
-      throw pendingOptions.initFailure.error;
-    }
+    this.connectingPromise ??= connecting.catch(() => {});
+    return connecting;
   }
 
   protected async connectInternal() {
@@ -270,10 +259,6 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
         }
         resolve();
       } catch (error) {
-        if (consumedOptions) {
-          consumedOptions.initFailure = { error };
-        }
-        await this.disposeFailedSyncImplementation();
         reject(error);
       }
     });
@@ -331,8 +316,7 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
   protected async performDisconnect() {
     // Wait if a sync stream implementation is being created before closing it
     // (syncStreamImplementation must be assigned before we can properly dispose it)
-    // If that fails, the failed implementation has already been disposed and the error is reported by connect().
-    await this.syncStreamInitPromise?.catch(() => {});
+    await this.syncStreamInitPromise;
 
     // Keep reference to the sync stream implementation and disposer
     // The class members will be cleared before we trigger the disconnect
@@ -345,30 +329,6 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
     await sync?.disconnect();
     await sync?.dispose();
     await disposer?.();
-  }
-
-  /**
-   * Releases a sync implementation that failed to become ready, so that it doesn't block later disconnect or close
-   * calls.
-   */
-  private async disposeFailedSyncImplementation() {
-    const sync = this.syncStreamImplementation;
-    const disposer = this.syncDisposer;
-    this.syncStreamImplementation = null;
-    this.syncDisposer = null;
-    this.currentOptions = null;
-    this.currentConnector = null;
-
-    try {
-      await sync?.dispose();
-      await disposer?.();
-    } catch (error) {
-      this.logger.log({
-        level: LogLevels.warn,
-        message: 'Could not dispose sync implementation that failed to initialize',
-        error
-      });
-    }
   }
 
   stream(adapter: InternalSubscriptionAdapter, name: string, parameters: Record<string, any> | null): SyncStream {
