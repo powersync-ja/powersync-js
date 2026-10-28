@@ -30,7 +30,7 @@ import {
 } from '../../../utils/stream_transform.js';
 import { asyncNotifier, runWithTimeout } from '../../../utils/async.js';
 import { JavaScriptSyncState, SyncStatusSnapshot } from '../../../db/crud/SyncStatus.js';
-import { DEFAULT_CHECKPOINT_REQUEST_TIMEOUT_MS, ResolvedSyncOptions } from '../options.js';
+import { DEFAULT_CONNECT_TIMEOUT_MS, ResolvedSyncOptions } from '../options.js';
 import { CheckpointStateSignals, isCheckpointRequestApplied } from './CheckpointState.js';
 
 /**
@@ -141,7 +141,7 @@ export abstract class AbstractStreamingSyncImplementation
   private connectionMayHaveChanged = false;
   private crudUploadNotifier = asyncNotifier();
   private checkpoints = new CheckpointStateSignals();
-  private checkpointRequestTimeoutMs = DEFAULT_CHECKPOINT_REQUEST_TIMEOUT_MS;
+  private connectTimeoutMs = DEFAULT_CONNECT_TIMEOUT_MS;
 
   private notifyCompletedUploads?: () => void;
   private handleActiveStreamsChange?: () => void;
@@ -219,7 +219,7 @@ export abstract class AbstractStreamingSyncImplementation
   }
 
   private requestCheckpointFromService(abort: AbortSignal, request: CheckpointRequestPayload): Promise<string> {
-    return runWithTimeout(abort, this.checkpointRequestTimeoutMs, 'Checkpoint request', async (signal) => {
+    return runWithTimeout(abort, this.connectTimeoutMs, 'Checkpoint request', async (signal) => {
       // First, check if we can use a custom checkpoint request implementation.
       {
         const customResponse = await this.options.postCheckpointRequest(
@@ -246,11 +246,8 @@ export abstract class AbstractStreamingSyncImplementation
   private async getLegacyWriteCheckpoint(abort: AbortSignal): Promise<string> {
     const clientId = await this.options.adapter.getClientId();
     let path = `/write-checkpoint2.json?client_id=${clientId}`;
-    const response = await runWithTimeout(
-      abort,
-      this.checkpointRequestTimeoutMs,
-      'Write checkpoint request',
-      (signal) => this.options.remote.fetchAndDecodeJson({ path, signal })
+    const response = await runWithTimeout(abort, this.connectTimeoutMs, 'Write checkpoint request', (signal) =>
+      this.options.remote.fetchAndDecodeJson({ path, signal })
     );
     const checkpoint = response['data']['write_checkpoint'] as string;
     this.logger.log({ level: LogLevels.debug, message: `Created write checkpoint: ${checkpoint}` });
@@ -348,7 +345,7 @@ The next upload iteration will be delayed.`
 
     const controller = new AbortController();
     this.abortController = controller;
-    this.checkpointRequestTimeoutMs = options.checkpointRequestTimeoutMs;
+    this.connectTimeoutMs = options.connectTimeoutMs;
     const signal = controller.signal;
     this.streamingSyncPromise = Promise.all([
       this.crudUploadLoop(signal, options).catch((error) => {
@@ -621,7 +618,7 @@ The next upload iteration will be delayed.`
 
     const openInner = async () => {
       if (connection.connectionMethod == SyncStreamConnectionMethod.HTTP) {
-        return await remote.fetchStream(options);
+        return await remote.fetchStream({ ...options, connectTimeoutMs: connection.connectTimeoutMs });
       } else {
         return await this.options.remote.socketStreamRaw({
           ...options,

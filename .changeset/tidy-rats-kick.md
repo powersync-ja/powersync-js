@@ -3,4 +3,4 @@
 '@powersync/shared-internals': patch
 ---
 
-Time out checkpoint requests after `checkpointRequestTimeoutMs` (default 40s) and cancel them on disconnect, so an unresponsive service no longer stalls uploads.
+Add `connectTimeoutMs` (default 30s) to time out checkpoint requests and HTTP sync stream connections, and cancel checkpoint requests on disconnect.

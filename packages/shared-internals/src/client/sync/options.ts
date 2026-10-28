@@ -8,7 +8,7 @@ export type ResolvedSyncOptions = Required<SyncOptions>;
 /**
  * @internal
  */
-export const DEFAULT_CHECKPOINT_REQUEST_TIMEOUT_MS = 40_000;
+export const DEFAULT_CONNECT_TIMEOUT_MS = 30_000;
 
 /**
  * @internal
@@ -26,7 +26,7 @@ export function resolveSyncOptions(
     retryDelayMs: options.retryDelayMs ?? 5000,
     crudUploadThrottleMs: options.crudUploadThrottleMs ?? 1000,
     checkpointMode: options.checkpointMode ?? 'legacy',
-    checkpointRequestTimeoutMs: options.checkpointRequestTimeoutMs ?? DEFAULT_CHECKPOINT_REQUEST_TIMEOUT_MS,
+    connectTimeoutMs: options.connectTimeoutMs ?? DEFAULT_CONNECT_TIMEOUT_MS,
     diagnostics: options.diagnostics ?? false
   };
 }

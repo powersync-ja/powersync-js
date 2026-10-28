@@ -372,7 +372,7 @@ describe('Sync', () => {
 
       mockSyncServiceTest('times out when the service does not respond', async ({ syncService }) => {
         const db = await syncService.createDatabase();
-        await db.connect(new TestConnector(), { checkpointMode: 'requests', checkpointRequestTimeoutMs: 100 });
+        await db.connect(new TestConnector(), { checkpointMode: 'requests', connectTimeoutMs: 100 });
         await vi.waitFor(() => expect(syncService.checkpointRequests).toHaveLength(1));
 
         syncService.installRequestInterceptor(async (request) => {
@@ -386,7 +386,7 @@ describe('Sync', () => {
     });
   });
 
-  describe('checkpoint request timeouts', () => {
+  describe('connect timeouts', () => {
     mockSyncServiceTest('retries a write checkpoint request that times out', async ({ syncService }) => {
       let writeCheckpointRequests = 0;
       syncService.installRequestInterceptor(async (request) => {
@@ -398,7 +398,7 @@ describe('Sync', () => {
 
       const db = await syncService.createDatabase();
       const connector = new TestConnector();
-      await db.connect(connector, { ...defaultConnectOptions, checkpointRequestTimeoutMs: 100 });
+      await db.connect(connector, { ...defaultConnectOptions, connectTimeoutMs: 100 });
       await db.execute('INSERT INTO lists (id, name) VALUES (uuid(), ?)', ['local write']);
 
       await vi.waitFor(() => expect(writeCheckpointRequests).toBe(2), { timeout: 2000 });
@@ -426,6 +426,26 @@ describe('Sync', () => {
 
       await db.disconnect();
       expect(pendingRequest!.signal.aborted).toBeTruthy();
+    });
+
+    mockSyncServiceTest('reconnects when the sync stream does not respond', async ({ syncService }) => {
+      let streamRequests = 0;
+      syncService.installRequestInterceptor(async (request) => {
+        if (request.url.endsWith('/sync/stream') && streamRequests++ == 0) {
+          return respondNever(request);
+        }
+        return undefined;
+      });
+
+      const db = await syncService.createDatabase();
+      db.connect(new TestConnector(), {
+        ...defaultConnectOptions,
+        connectionMethod: SyncStreamConnectionMethod.HTTP,
+        connectTimeoutMs: 100
+      });
+
+      await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1), { timeout: 2000 });
+      expect(streamRequests).toBe(2);
     });
   });
 
