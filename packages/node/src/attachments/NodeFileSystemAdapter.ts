@@ -110,6 +110,6 @@ export class NodeFileSystemAdapter implements StreamingLocalStorageAdapter {
   }
 
   async rmDir(path: string): Promise<void> {
-    await fs.rmdir(path, { recursive: true });
+    await fs.rm(path, { recursive: true, force: true });
   }
 }
