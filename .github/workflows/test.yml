@@ -36,16 +36,16 @@ jobs:
       - name: Test
         run: pnpm test
 
-      # Also test Node.js packages on the previous LTS release, reusing the build from above.
-      - name: Setup Node.js 24
+      # Also test oldest Node version we still support (we support everything that isn't EOL).
+      - name: Setup Node.js 22
         uses: actions/setup-node@v6
         with:
-          node-version: 24
+          node-version: 22
 
-      - name: Rebuild native modules for Node.js 24
+      - name: Rebuild native modules for Node.js 22
         run: pnpm --recursive rebuild better-sqlite3
 
-      - name: Test (Node.js 24)
+      - name: Test (Node.js 22)
         run: |
           node --version
           pnpm --filter @powersync/common --filter @powersync/shared-internals --filter @powersync/node test
