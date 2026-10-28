@@ -44,7 +44,7 @@ export interface JsAgentOptions {
   /** A label for the SDK behind this agent, e.g. `@powersync/web`. */
   sdk?: string;
   /** If known, the path to the database */
-  path?: string;
+  databasePath?: string;
   /** Debounce for re-reading bucket stats after internal-table changes. */
   bucketThrottleMs?: number;
   /** Core diagnostics events (per-bucket `target_count`). Omit when core diagnostics are off. */
@@ -126,7 +126,7 @@ export class JsAgent implements SdkIntegration {
       connected: this.db.currentStatus?.connected ?? false,
       sqliteCoreVersion,
       sdk: this.options.sdk ?? null,
-      path: this.options.path ?? null
+      databasePath: this.options.databasePath ?? null
     };
   }
 

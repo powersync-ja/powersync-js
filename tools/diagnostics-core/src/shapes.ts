@@ -130,7 +130,7 @@ export interface ProtocolInfo {
   /** A label for the SDK behind the integration (e.g. `@powersync/web`, `powersync` (Dart)); null when unknown. */
   sdk: string | null;
   /** Full path to the database on the device the app is running on. */
-  path: string | null;
+  databasePath: string | null;
 }
 
 // --- schema ---
