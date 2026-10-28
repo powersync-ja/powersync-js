@@ -8,6 +8,9 @@ catalog:
   # We must depend on an exact version of wa-sqlite, as we want to update the core extension
   # (which can be breaking for SDKs) without a major revision.
   '@journeyapps/wa-sqlite': 2.0.10
+  '@devframes/agentic': ^1.2.6
+  '@devframes/hub': ^1.2.6
+  devframe: ^1.2.6
   '@microsoft/api-extractor': ^7.59.0
   '@nuxt/devtools-kit': ^3.2.3
   '@nuxt/devtools-ui-kit': ^3.2.3

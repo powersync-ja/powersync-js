@@ -129,6 +129,8 @@ export interface ProtocolInfo {
   sqliteCoreVersion: string | null;
   /** A label for the SDK behind the integration (e.g. `@powersync/web`, `powersync` (Dart)); null when unknown. */
   sdk: string | null;
+  /** Full path to the database on the device the app is running on. */
+  databasePath: string | null;
 }
 
 // --- schema ---
@@ -210,7 +212,12 @@ export type CoreDiagnosticsEvent =
  * | `unsubscribeStream` | `{ name, params? }`        | Release a subscription created with `subscribeStream`.                 |
  */
 export type ActionName =
-  'reconnect' | 'disconnect' | 'clearData' | 'requestCheckpoint' | 'subscribeStream' | 'unsubscribeStream';
+  | 'reconnect'
+  | 'disconnect'
+  | 'clearData'
+  | 'requestCheckpoint'
+  | 'subscribeStream'
+  | 'unsubscribeStream';
 
 /** Arguments for `subscribeStream` / `unsubscribeStream`. */
 export interface StreamActionArgs {
