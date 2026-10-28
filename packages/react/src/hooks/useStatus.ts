@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useSyncExternalStore } from 'react';
 import { usePowerSync, usePowerSyncOrNull } from './PowerSyncContext.js';
-import { SyncStatus } from '@powersync/common';
+import { CommonPowerSyncDatabase, SyncStatus } from '@powersync/common';
 
 /**
  * Custom hook that provides access to the current status of PowerSync.
@@ -17,31 +17,29 @@ import { SyncStatus } from '@powersync/common';
  * };
  */
 export function useStatus(): SyncStatus {
-  return useStatusOrNull(false);
+  return useStatusOf(usePowerSync())!;
 }
 
 /**
- * @internal
+ * A variant of {@link useStatus} that returns null when no PowerSync database is in context (instead of throwing).
+ *
+ * @returns The current sync status of the PowerSync database, or null.
  */
-export function useStatusOrNull(allowNull?: boolean): SyncStatus | null;
-export function useStatusOrNull(allowNull: false): SyncStatus;
+export function useStatusOrNull(): SyncStatus | null {
+  return useStatusOf(usePowerSyncOrNull());
+}
 
-export function useStatusOrNull(allowNull: boolean = true): SyncStatus | null {
-  // Conditional hook is okay, this is an internal hook and allowNull is a constant on each call site.
-  const powerSync = allowNull ? usePowerSyncOrNull() : usePowerSync();
-  const [syncStatus, setSyncStatus] = useState(powerSync?.currentStatus);
+function useStatusOf(powerSync: CommonPowerSyncDatabase | null): SyncStatus | null {
+  const subscribe = useCallback(
+    (listener: () => void) => {
+      const dispose = powerSync?.registerListener({ statusChanged: listener });
+      return dispose ?? function () {};
+    },
+    // Ensure React treats changed databases as new stores
+    [powerSync]
+  );
 
-  useEffect(() => {
-    setSyncStatus(powerSync?.currentStatus);
+  const getSnapshot = () => powerSync?.currentStatus ?? null;
 
-    const listener = powerSync?.registerListener({
-      statusChanged: (status) => {
-        setSyncStatus(status);
-      }
-    });
-
-    return () => listener?.();
-  }, [powerSync]);
-
-  return syncStatus ?? null;
+  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }
