@@ -1,5 +1,5 @@
 import { DownloadChanges, DownloadEvent, LocalWriteState } from '../../src/standalone';
-import { DownloadClientState } from '../../src/standalone/buckets';
+import { DownloadClientState, RowKey } from '../../src/standalone/buckets';
 import { OpTypeJSON as OpType } from '../../src/standalone/sync_protocol';
 
 import { describe, expect, test } from 'vitest';
@@ -66,6 +66,48 @@ downloadClientTest('can delete buckets with checkpoint diff', ({ client }) => {
       checkpoint_diff: { last_op_id: '1', updated_buckets: [], removed_buckets: ['a'] }
     })
   ).toStrictEqual([]);
+  expect(client.pushCheckpointComplete()).toStrictEqual([updatedRows({ items: { 'row-0': null } })]);
+});
+
+downloadClientTest('does not use unapplied data from removed buckets', ({ client }) => {
+  client.pushCheckpoint(1n, [{ name: 'a' }, { name: 'b' }]);
+  client.putRow('b', 'row-0', { col: 'b' });
+  expect(client.pushCheckpointComplete()).toStrictEqual([updatedRows({ items: { 'row-0': { col: 'b' } } })]);
+
+  client.pushCheckpoint(3n, [{ name: 'a' }, { name: 'b' }]);
+  client.putRow('a', 'row-0', { col: 'a' });
+  expect(
+    client.state.push({
+      checkpoint_diff: { last_op_id: '2', updated_buckets: [], removed_buckets: ['a'] }
+    })
+  ).toStrictEqual([]);
+  client.state.addToUpdatedRows(new RowKey('items', 'row-0'));
+  expect(client.pushCheckpointComplete()).toStrictEqual([updatedRows({ items: { 'row-0': { col: 'b' } } })]);
+});
+
+downloadClientTest('resolves rows across subkeys', ({ client }) => {
+  client.pushCheckpoint(3n, [{ name: 'a' }]);
+  client.pushData({ bucket: 'a', rowId: 'row', op: 'PUT', objectId: 'row', subkey: 's1', data: { from: 's1' } });
+  client.pushData({ bucket: 'a', rowId: 'row', op: 'PUT', objectId: 'row', subkey: 's2', data: { from: 's2' } });
+  client.pushData({ bucket: 'a', rowId: 'row', op: 'REMOVE', objectId: 'row', subkey: 's2', data: undefined });
+  expect(client.pushCheckpointComplete()).toStrictEqual([updatedRows({ items: { row: { from: 's1' } } })]);
+});
+
+downloadClientTest('accepts checksums above 2^31', ({ client }) => {
+  client.pushCheckpoint(1n, [{ name: 'a', checksum: 3_000_000_000 }]);
+  client.pushData({ bucket: 'a', rowId: 'row', op: 'PUT', objectId: 'row', checksum: 3_000_000_000, data: { a: 1 } });
+  expect(client.pushCheckpointComplete()).toStrictEqual([updatedRows({ items: { row: { a: 1 } } })]);
+});
+
+downloadClientTest('does not track rows for CLEAR operations', ({ client }) => {
+  client.pushCheckpoint(2n, [{ name: 'a' }]);
+  client.putRow('a', 'row-0', { col: 'hi' });
+  client.pushData({ bucket: 'a', rowId: '', op: 'CLEAR', objectId: undefined, objectType: '', data: undefined });
+  expect(client.pushCheckpointComplete()).toStrictEqual([updatedRows({ items: { 'row-0': null } })]);
+
+  // Restarting marks all known rows as updated, which must not include a row for the CLEAR operation.
+  client.state = new DownloadClientState(client.localWrites, client.state);
+  client.pushCheckpoint(2n, []);
   expect(client.pushCheckpointComplete()).toStrictEqual([updatedRows({ items: { 'row-0': null } })]);
 });
 
@@ -292,6 +334,8 @@ describe('errors', () => {
       bucket: 'a',
       rowId: '1',
       op: 'PUT',
+      objectId: '1',
+      objectType: 'tbl',
       data: { col: 'a' }
     });
 
@@ -341,6 +385,7 @@ class TestClient {
             op: data.op,
             object_type: data.objectType ?? 'items',
             object_id: data.objectId,
+            subkey: data.subkey,
             checksum: data.checksum ?? 0,
             data: JSON.stringify(data.data)
           }
@@ -375,6 +420,7 @@ interface TestData {
   data: unknown | undefined;
   objectId?: string;
   objectType?: string;
+  subkey?: string;
   checksum?: number;
 }
 

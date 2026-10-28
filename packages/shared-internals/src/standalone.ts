@@ -38,7 +38,8 @@ export class PowerSyncClient {
   }
 
   #resolveUri(request: ServiceRequest, path: string): URL {
-    const url = URL.parse(path, request.endpoint);
+    const base = request.endpoint.endsWith('/') ? request.endpoint : request.endpoint + '/';
+    const url = URL.parse(path, base);
     if (url == null) throw new Error(`Invalid service endpoint: ${request.endpoint}`);
     return url;
   }
@@ -80,7 +81,7 @@ export class PowerSyncClient {
    * Posts a checkpoint request to the PowerSync service, returning the created checkpoint id.
    */
   async requestCheckpoint(request: CheckpointRequest): Promise<bigint> {
-    const response = await this.#fetch(this.#resolveUri(request, '/sync/checkpoint-request'), {
+    const response = await this.#fetch(this.#resolveUri(request, 'sync/checkpoint-request'), {
       method: 'POST',
       signal: request.signal,
       body: JSON.stringify({
@@ -104,7 +105,7 @@ export class PowerSyncClient {
 
     const state = (this.#state ??= new DownloadClientState(this.#localWrites));
 
-    const response = await this.#fetch(this.#resolveUri(request, '/sync/stream'), {
+    const response = await this.#fetch(this.#resolveUri(request, 'sync/stream'), {
       method: 'POST',
       signal,
       body: JSON.stringify(
@@ -135,6 +136,19 @@ export class PowerSyncClient {
     };
     this.#notifyUploadComplete.add(requestRetry);
 
+    const resetOnError = (apply: () => DownloadEvent[]): DownloadEvent[] => {
+      try {
+        return apply();
+      } catch (e) {
+        if (e instanceof RestartSyncError && e.clearLocal) {
+          // Start from scratch
+          this.#state = new DownloadClientState(this.#localWrites, state);
+        }
+
+        throw e;
+      }
+    };
+
     let nextLine: Promise<IteratorResult<string>> | undefined;
     let idleTimeout: ReturnType<typeof setTimeout> | undefined;
 
@@ -142,7 +156,7 @@ export class PowerSyncClient {
       while (true) {
         if (checkpointRetryRequested) {
           checkpointRetryRequested = false;
-          yield* state.retryCheckpoint();
+          yield* resetOnError(() => state.retryCheckpoint());
         }
 
         nextLine ??= lines.next();
@@ -161,20 +175,7 @@ export class PowerSyncClient {
         if ('token_expires_in' in line) {
           yield { type: 'keepalive', keepalive: line };
         } else {
-          let events: DownloadEvent[];
-
-          try {
-            events = state.push(line);
-          } catch (e) {
-            if (e instanceof RestartSyncError && e.clearLocal) {
-              // Start from scratch
-              this.#state = new DownloadClientState(this.#localWrites, state);
-            }
-
-            throw e;
-          }
-
-          yield* events;
+          yield* resetOnError(() => state.push(line));
         }
       }
     } finally {
@@ -182,8 +183,15 @@ export class PowerSyncClient {
       this.#notifyUploadComplete.delete(requestRetry);
       abort.abort();
 
-      while (!(await lines.next()).done) {
-        // Wait for the response to complete after aborting.
+      // Reading from the aborted response fails, which must not replace the original error. A pending line (e.g. after
+      // the idle timeout) would also reject without being awaited.
+      nextLine?.catch(() => {});
+      try {
+        while (!(await lines.next()).done) {
+          // Wait for the response to complete or throw after aborting.
+        }
+      } catch {
+        // Expected after aborting the request.
       }
     }
   }

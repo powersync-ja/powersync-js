@@ -1,1 +1,1 @@
-export type * from '../src/standalone/sync_protocol.d.ts';
+export type * from '../lib/standalone/sync_protocol.js';
