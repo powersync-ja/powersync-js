@@ -260,8 +260,13 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
       }
     });
 
-    await this.syncStreamInitPromise;
-    this.syncStreamInitPromise = null;
+    try {
+      await this.syncStreamInitPromise;
+    } finally {
+      // Also cleared when the creation fails: performDisconnect() awaits this promise, so a rejected one
+      // left behind would fail every later disconnect.
+      this.syncStreamInitPromise = null;
+    }
 
     if (!appliedOptions) {
       // A disconnect could have cleared the options which did not create a syncStreamImplementation
@@ -297,8 +302,12 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
 
     this.disconnectingPromise = this.performDisconnect();
 
-    await this.disconnectingPromise;
-    this.disconnectingPromise = null;
+    try {
+      await this.disconnectingPromise;
+    } finally {
+      // Also cleared when the disconnect fails, so the next one runs instead of returning this rejection.
+      this.disconnectingPromise = null;
+    }
   }
 
   protected async performDisconnect() {
