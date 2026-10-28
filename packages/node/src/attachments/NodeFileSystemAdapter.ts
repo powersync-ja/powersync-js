@@ -36,7 +36,7 @@ export class NodeFileSystemAdapter implements StreamingLocalStorageAdapter {
 
   async clear(): Promise<void> {
     const dir = path.resolve(this.storageDirectory);
-    await fs.rmdir(dir, { recursive: true });
+    await fs.rm(dir, { recursive: true, force: true });
   }
 
   getLocalUri(filename: string): string {

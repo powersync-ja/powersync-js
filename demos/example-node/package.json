@@ -15,7 +15,7 @@
     "better-sqlite3": "^12.10.0",
     "better-sqlite3-multiple-ciphers": "^12.9.0",
     "dotenv": "^16.4.7",
-    "undici": "^7.11.0"
+    "undici": "^8.12.3"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13",
