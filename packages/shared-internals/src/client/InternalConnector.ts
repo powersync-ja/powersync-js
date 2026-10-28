@@ -51,6 +51,11 @@ export function normalizeConnectCall(
       if (customCheckpoints) {
         internalConnector.postCheckpointRequest = customCheckpoints.bind(auth);
       }
+
+      const invalidateCredentials = auth.invalidateCredentials;
+      if (invalidateCredentials) {
+        internalConnector.invalidateCredentials = invalidateCredentials.bind(auth);
+      }
     }
     if ('upload' in connector) {
       internalConnector.uploadCrud = (signal) => {

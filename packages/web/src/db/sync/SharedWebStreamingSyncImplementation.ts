@@ -184,7 +184,6 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
     // Awaiting here ensures the worker is waiting for the lock
     await this.syncManager.initialize(closeSignal, {
       hasFetchCredentials: !!connector.fetchCredentials,
-      hasInvalidateCredentials: !!connector.invalidateCredentials,
       hasPostCheckpointRequest: !!connector.postCheckpointRequest,
       hasUploadCrud: !!connector.uploadCrud
     });

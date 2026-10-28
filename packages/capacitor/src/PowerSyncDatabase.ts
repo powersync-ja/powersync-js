@@ -37,25 +37,23 @@ class CapacitorPowerSyncDatabase extends WebPowerSyncDatabase {
   ): Promise<void> {
     const isUsingCapacitorDriver = this.database instanceof CapacitorSQLiteAdapter;
     const defaultConnectionMethod = isUsingCapacitorDriver ? SyncStreamConnectionMethod.HTTP : undefined;
-    if (options?.connectionMethod == SyncStreamConnectionMethod.WEB_SOCKET && isUsingCapacitorDriver) {
+    const isLegacyConnector = 'fetchCredentials' in connector;
+    const syncOptions: SyncOptions | undefined = isLegacyConnector ? options : connector;
+
+    if (syncOptions?.connectionMethod == SyncStreamConnectionMethod.WEB_SOCKET && isUsingCapacitorDriver) {
       this.logger.log({
         level: LogLevels.warn,
         message: `Connecting via 'SyncStreamConnectionMethod.WEB_SOCKET' when using the 'CapacitorSQLiteAdapter' will result in poor sync performance. Use 'SyncStreamConnectionMethod.HTTP' (the default for native) instead.`
       });
     }
 
-    if ('fetchCredentials' in connector) {
+    const connectionMethod = syncOptions?.connectionMethod ?? defaultConnectionMethod;
+    if (isLegacyConnector) {
       // (PowerSyncBackendConnector, SyncOptions) signature
-      return super.connect(connector, {
-        ...(options ?? {}),
-        connectionMethod: options?.connectionMethod ?? defaultConnectionMethod
-      });
+      return super.connect(connector, { ...(options ?? {}), connectionMethod });
     } else {
       // (SyncOptions & (DownloadOptions | UploadOptions)) signature
-      return super.connect({
-        ...connector,
-        connectionMethod: options?.connectionMethod ?? defaultConnectionMethod
-      });
+      return super.connect({ ...connector, connectionMethod });
     }
   }
 

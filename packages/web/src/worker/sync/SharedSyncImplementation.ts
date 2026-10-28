@@ -69,7 +69,6 @@ export type SharedSyncInitOptions = {
 
 export interface ClientConnectorCapabilities {
   hasFetchCredentials: boolean;
-  hasInvalidateCredentials: boolean;
   hasPostCheckpointRequest: boolean;
   hasUploadCrud: boolean;
 }
@@ -389,11 +388,16 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
   protected generateStreamingImplementation() {
     // This should only be called after initialization has completed
     const syncParams = this.syncParams!;
-    const capabilities: ClientConnectorCapabilities | undefined = this.ports[0].clientCapabilities;
+    const capabilities = this.ports[0]?.clientCapabilities;
+    if (!capabilities) {
+      throw new Error('Cannot create a sync implementation without connected clients');
+    }
 
     const connector: InternalConnector = {};
 
-    if (capabilities?.hasInvalidateCredentials) {
+    if (capabilities.hasFetchCredentials) {
+      // Always forward invalidations to the tab, since it has its own credentials cache (and potentially a
+      // connector-level invalidateCredentials callback).
       connector.invalidateCredentials = async () => {
         const lastPort = await this.getLastWrappedPort();
         if (!lastPort) {
@@ -410,7 +414,7 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
         }
       };
     }
-    if (capabilities?.hasFetchCredentials) {
+    if (capabilities.hasFetchCredentials) {
       connector.fetchCredentials = (signal?: AbortSignal) => {
         return this.#useConnector(
           (port) => {
@@ -706,9 +710,13 @@ function withAbort<T>(options: {
 }
 
 function checkCapabilitiesCompatible(a: ClientConnectorCapabilities, b: ClientConnectorCapabilities) {
-  if (a.hasFetchCredentials != b.hasFetchCredentials || a.hasUploadCrud != b.hasUploadCrud) {
+  if (
+    a.hasFetchCredentials != b.hasFetchCredentials ||
+    a.hasUploadCrud != b.hasUploadCrud ||
+    a.hasPostCheckpointRequest != b.hasPostCheckpointRequest
+  ) {
     throw new Error(
-      'Different tabs connecting in different modes (download-only / upload-only / full) is not supported'
+      'Different tabs connecting in different modes (download-only / upload-only / full, or with and without custom checkpoint requests) is not supported'
     );
   }
 }

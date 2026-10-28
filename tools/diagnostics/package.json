@@ -88,7 +88,6 @@
     "@powersync/common": "workspace:*",
     "@powersync/shared-internals": "workspace:*",
     "@powersync/web": "workspace:*",
-    "@powersync/shared-internals": "workspace:*",
     "@types/node": "catalog:",
     "@vitejs/devtools-kit": "^0.7.5",
     "typescript": "catalog:",
