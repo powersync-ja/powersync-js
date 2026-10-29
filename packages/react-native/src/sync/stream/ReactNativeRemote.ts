@@ -1,5 +1,5 @@
 import { LogLevels, PowerSyncLogger } from '@powersync/common';
-import { AbstractRemote, FetchOptions, RemoteConnector } from '@powersync/shared-internals';
+import { AbstractRemote, FetchOptions, InternalConnector } from '@powersync/shared-internals';
 import { Platform } from 'react-native';
 import { WebSocketSupport, WebSocketSyncStreamPlatform } from '@powersync/shared-internals/websockets';
 import { defaultFetchImplementation, PowerSyncFetchImplementation } from './fetch';
@@ -12,7 +12,7 @@ export interface ReactNativeRemoteOptions {
 
 export class ReactNativeRemote extends AbstractRemote {
   constructor(
-    protected connector: RemoteConnector,
+    protected connector: InternalConnector,
     logger: PowerSyncLogger,
     readonly options?: ReactNativeRemoteOptions
   ) {

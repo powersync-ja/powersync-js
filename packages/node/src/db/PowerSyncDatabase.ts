@@ -10,7 +10,8 @@ import {
   BasePowerSyncDatabase,
   AbstractStreamingSyncImplementation,
   CreateSyncImplementationOptions,
-  openDatabase
+  openDatabase,
+  InternalConnector
 } from '@powersync/shared-internals';
 
 import { NodeRemote, NodeRemoteOptions } from '../sync/stream/NodeRemote.js';
@@ -48,7 +49,7 @@ class NodePowerSyncDatabase extends BasePowerSyncDatabase<NodePowerSyncDatabaseO
   }
 
   protected generateSyncStreamImplementation(
-    connector: PowerSyncBackendConnector,
+    connector: InternalConnector,
     options: CreateSyncImplementationOptions
   ): AbstractStreamingSyncImplementation {
     const logger = this.logger;

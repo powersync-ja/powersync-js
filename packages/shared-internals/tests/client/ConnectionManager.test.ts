@@ -46,8 +46,8 @@ class MockStreamingSyncImplementation
     this.isConnected = false;
   }
 
-  async getWriteCheckpoint() {
-    return '1';
+  async requestCheckpoint() {
+    return 1n;
   }
 
   triggerCrudUpload() {}
@@ -144,7 +144,9 @@ describe('ConnectionManager', () => {
       const harness = managerWithCreateHook();
       await harness.manager.stream(adapter, 'stream_a', null).subscribe();
 
-      harness.duringCreate(() => harness.manager.stream(adapter, 'stream_b', null).subscribe());
+      harness.duringCreate(async () => {
+        await harness.manager.stream(adapter, 'stream_b', null).subscribe();
+      });
       await harness.manager.connect(connector, {}, {});
 
       expect(names(harness.sync.snapshot)).toEqual(['stream_a']);
@@ -208,7 +210,7 @@ describe('ConnectionManager', () => {
       });
 
       // This connect() does not report the failure: its chain swallows connection errors.
-      await harness.manager.connect(connector, {}, {});
+      await expect(harness.manager.connect(connector, {}, {})).rejects.toThrow();
       expect(harness.syncs).toHaveLength(0);
 
       await expect(harness.manager.disconnect()).resolves.toBeUndefined();
@@ -232,7 +234,7 @@ describe('ConnectionManager', () => {
         );
       });
 
-      const connecting = harness.manager.connect(connector, {}, {});
+      const connecting = expect(harness.manager.connect(connector, {}, {})).rejects.toThrow();
       await creationStarted;
       const waiting = harness.manager.disconnect();
       failCreation(new Error('creation failed'));
