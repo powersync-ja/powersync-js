@@ -17,17 +17,18 @@ jobs:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
+          persist-credentials: false
       - name: Check for changes
         id: check
         run: |
-          git fetch origin ${{ github.base_ref }}
-          if git diff --quiet origin/${{ github.base_ref }} -- packages/common packages/powersync-op-sqlite tools/powersynctests; then
+          git fetch origin ${GITHUB_BASE_REF}
+          if git diff --quiet origin/${GITHUB_BASE_REF} -- packages/common packages/powersync-op-sqlite tools/powersynctests; then
             echo "react_native_simulator_should_run=false" >> $GITHUB_OUTPUT
           else
             echo "react_native_simulator_should_run=true" >> $GITHUB_OUTPUT
           fi
 
-          if git diff --quiet origin/${{ github.base_ref }} -- packages/capacitor pnpm-lock.yaml .github/workflows/test-simulators.yaml; then
+          if git diff --quiet origin/${GITHUB_BASE_REF} -- packages/capacitor pnpm-lock.yaml .github/workflows/test-simulators.yaml; then
             echo "capacitor_should_run=false" >> $GITHUB_OUTPUT
           else
             echo "capacitor_should_run=true" >> $GITHUB_OUTPUT
@@ -47,7 +48,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup Android emulator
-        uses: ./.github/actions/setup-android-emulator
+        uses: $/.github/actions/setup-android-emulator
         with:
           avd-name: ${{ env.AVD_NAME }}
           cache-key: avd-31
@@ -76,7 +77,7 @@ jobs:
         run: pnpx detox build --configuration android.emu.release
 
       - name: Run connected Android tests
-        uses: ReactiveCircus/android-emulator-runner@v2.28.0
+        uses: ReactiveCircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
         with:
           api-level: 31
           target: google_apis
@@ -103,7 +104,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup Android emulator
-        uses: ./.github/actions/setup-android-emulator
+        uses: $/.github/actions/setup-android-emulator
         with:
           avd-name: ${{ env.AVD_NAME }}
           cache-key: capacitor-avd-35
@@ -143,7 +144,7 @@ jobs:
           ./gradlew assembleDebug
 
       - name: Run Capacitor Android browser tests
-        uses: reactivecircus/android-emulator-runner@v2.28.0
+        uses: ReactiveCircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
         with:
           api-level: 35
           target: google_apis
@@ -169,10 +170,9 @@ jobs:
           persist-credentials: false
 
       - name: Set up XCode
-        uses: maxim-lobanov/setup-xcode@v1
+        uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1.7.0
         with:
-          # TODO: Update to latest-stable once GH installs iOS 26 simulators
-          xcode-version: '^16.4.0'
+          xcode-version: latest-stable
 
       - name: CocoaPods Cache
         uses: actions/cache@v3

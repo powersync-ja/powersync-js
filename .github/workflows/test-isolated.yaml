@@ -3,10 +3,19 @@ name: Test Isolated Demos
 
 on:
   push:
+  pull_request:
+
+concurrency:
+  group: demos-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
   test:
     name: Test Isolated Demos
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository)
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -29,7 +38,7 @@ jobs:
           distribution: "temurin"
 
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
 
       - name: Install
         run: pnpm install
@@ -58,7 +67,7 @@ jobs:
       # No actual auth is ever supplied to this action.
       # It should never be able to publish to NPMJS
       - name: Test publish
-        run: pnpm -r publish --no-git-checks
+        run: pnpm -r publish --no-git-checks # zizmor: ignore[use-trusted-publishing] publishes to local verdaccio
 
       - name: Test Demos
         run: npx tsx scripts/isolated-demo-test.ts
