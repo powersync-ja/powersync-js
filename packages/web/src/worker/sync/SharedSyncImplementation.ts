@@ -17,7 +17,8 @@ import {
   type StreamingSyncImplementationListener,
   Mutex,
   ResolvedSyncOptions,
-  SyncStatusSnapshot
+  SyncStatusSnapshot,
+  InternalConnector
 } from '@powersync/shared-internals';
 import * as Comlink from 'comlink';
 import { WebRemote } from '../../db/sync/WebRemote.js';
@@ -60,11 +61,17 @@ export type ManualSharedSyncPayload = {
 export type SharedSyncInitOptions = {
   streamOptions: Omit<
     WebStreamingSyncImplementationOptions,
-    'adapter' | 'uploadCrud' | 'postCheckpointRequest' | 'remote' | 'subscriptions' | 'logger'
+    'connector' | 'adapter' | 'remote' | 'subscriptions' | 'logger'
   >;
   dbParams: ResolvedWebSQLOpenOptions;
   enableBroadcastLogs: boolean;
 };
+
+export interface ClientConnectorCapabilities {
+  hasFetchCredentials: boolean;
+  hasPostCheckpointRequest: boolean;
+  hasUploadCrud: boolean;
+}
 
 /**
  * @internal
@@ -82,6 +89,7 @@ export type WrappedSyncPort = {
   db?: DBAdapter;
   currentSubscriptions: SubscribedStream[];
   closeListeners: (() => void | Promise<void>)[];
+  clientCapabilities: ClientConnectorCapabilities;
   isClosing: boolean;
 };
 
@@ -136,7 +144,7 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
       createSyncImplementation: async () => {
         await this.waitForReady();
 
-        const sync = this.generateStreamingImplementation();
+        const sync = await this.generateStreamingImplementation();
         const removeStatusListener = sync.registerListener({
           statusChanged: (snapshot) => {
             this.syncStatus = snapshot;
@@ -283,14 +291,22 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
   /**
    * Adds a new client tab's message port to the list of connected ports
    */
-  async addPort(port: MessagePort) {
-    return await this.portMutex.runExclusive(() => {
+  addPort(port: MessagePort, capabilities: ClientConnectorCapabilities) {
+    return this.portMutex.runExclusive(() => {
+      if (this.ports.length) {
+        // If we're already tracking a port, the added port must connect in the same mode (download or upload only, or
+        // both).
+        const anyPort = this.ports[0];
+        checkCapabilitiesCompatible(anyPort.clientCapabilities, capabilities);
+      }
+
       const portProvider = {
         port,
         clientProvider: Comlink.wrap<AbstractSharedSyncClientProvider>(port),
         currentSubscriptions: [],
         closeListeners: [],
-        isClosing: false
+        isClosing: false,
+        clientCapabilities: capabilities
       } satisfies WrappedSyncPort;
       this.ports.push(portProvider);
 
@@ -372,55 +388,68 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
   protected generateStreamingImplementation() {
     // This should only be called after initialization has completed
     const syncParams = this.syncParams!;
-    // Create a new StreamingSyncImplementation for each connect call. This is usually done is all SDKs.
-    return new WebStreamingSyncImplementation({
-      adapter: new SqliteBucketStorage(this.database, this.logger),
-      remote: new WebRemote(
-        {
-          invalidateCredentials: async () => {
-            const lastPort = await this.getLastWrappedPort();
-            if (!lastPort) {
-              throw new Error('No client port found to invalidate credentials');
-            }
-            try {
-              this.logger.log({
-                level: LogLevels.info,
-                message: 'calling the last port client provider to invalidate credentials'
-              });
-              lastPort.clientProvider.invalidateCredentials();
-            } catch (error) {
-              this.logger.log({ level: LogLevels.error, message: 'error invalidating credentials', error });
-            }
-          },
-          fetchCredentials: (
-              signal?: AbortSignal
-          ) => {
-            return this.#useConnector(
-              (port) => {
-                this.logger.log({
-                  level: LogLevels.info,
-                  message: 'calling the last port client provider for credentials'
-                });
+    const capabilities = this.ports[0]?.clientCapabilities;
+    if (!capabilities) {
+      throw new Error('Cannot create a sync implementation without connected clients');
+    }
 
-                return port.clientProvider.fetchCredentials();
-              },
-              'fetchCredentials',
-                signal
-            );
-          }
-        },
-        this.logger
-      ),
-      uploadCrud: (signal) => {
+    const connector: InternalConnector = {};
+
+    if (capabilities.hasFetchCredentials) {
+      // Always forward invalidations to the tab, since it has its own credentials cache (and potentially a
+      // connector-level invalidateCredentials callback).
+      connector.invalidateCredentials = async () => {
+        const lastPort = await this.getLastWrappedPort();
+        if (!lastPort) {
+          throw new Error('No client port found to invalidate credentials');
+        }
+        try {
+          this.logger.log({
+            level: LogLevels.info,
+            message: 'calling the last port client provider to invalidate credentials'
+          });
+          lastPort.clientProvider.invalidateCredentials();
+        } catch (error) {
+          this.logger.log({ level: LogLevels.error, message: 'error invalidating credentials', error });
+        }
+      };
+    }
+    if (capabilities.hasFetchCredentials) {
+      connector.fetchCredentials = (signal?: AbortSignal) => {
+        return this.#useConnector(
+          (port) => {
+            this.logger.log({
+              level: LogLevels.info,
+              message: 'calling the last port client provider for credentials'
+            });
+
+            return port.clientProvider.fetchCredentials();
+          },
+          'fetchCredentials',
+          signal
+        );
+      };
+    }
+    if (capabilities.hasUploadCrud) {
+      connector.uploadCrud = (signal) => {
         return this.#useConnector((port) => port.clientProvider.uploadCrud(), 'uploadCrud', signal);
-      },
-      postCheckpointRequest: (clientId, requestId, signal) => {
+      };
+    }
+    if (capabilities.hasPostCheckpointRequest) {
+      connector.postCheckpointRequest = (clientId, requestId, signal) => {
         return this.#useConnector(
           (port) => port.clientProvider.postCheckpointRequest(clientId, requestId),
           'postCheckpointRequest',
           signal
         );
-      },
+      };
+    }
+
+    // Create a new StreamingSyncImplementation for each connect call. This is usually done is all SDKs.
+    return new WebStreamingSyncImplementation({
+      adapter: new SqliteBucketStorage(this.database, this.logger),
+      connector,
+      remote: new WebRemote(connector, this.logger),
       ...syncParams.streamOptions,
       subscriptions: this.subscriptions,
       // Logger cannot be transferred just yet
@@ -678,4 +707,16 @@ function withAbort<T>(options: {
       })
       .catch((e) => completePromise(() => reject(e)));
   });
+}
+
+function checkCapabilitiesCompatible(a: ClientConnectorCapabilities, b: ClientConnectorCapabilities) {
+  if (
+    a.hasFetchCredentials != b.hasFetchCredentials ||
+    a.hasUploadCrud != b.hasUploadCrud ||
+    a.hasPostCheckpointRequest != b.hasPostCheckpointRequest
+  ) {
+    throw new Error(
+      'Different tabs connecting in different modes (download-only / upload-only / full, or with and without custom checkpoint requests) is not supported'
+    );
+  }
 }

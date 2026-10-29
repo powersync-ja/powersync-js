@@ -17,6 +17,7 @@ export type NonInterruptingInstruction =
   | { FetchCredentials: FetchCredentials }
   | { FlushFileSystem: any }
   | { DidCompleteSync: any }
+  | { CheckpointDelayedDueToLocalData: any }
   | { HandleDiagnostics: DiagnosticsEvent };
 
 /**

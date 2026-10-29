@@ -41,10 +41,6 @@ export function createIntegration(database: CommonPowerSyncDatabase, sdk: string
   const db = database as BasePowerSyncDatabase;
   return new JsAgent(db, {
     sdk,
-    coreEvents: typeof BroadcastChannel === 'function' ? new BroadcastCoreEvents() : undefined,
-    connection: {
-      getConnector: () => db.connector ?? null,
-      getConnectionOptions: () => db.connectionOptions ?? null
-    }
+    coreEvents: typeof BroadcastChannel === 'function' ? new BroadcastCoreEvents() : undefined
   });
 }
