@@ -25,6 +25,7 @@ const CORE_EVENTS_CHANNEL = 'powersync-diagnostics-events';
 export function databaseSdk(database: CommonPowerSyncDatabase, fallback: string): string {
   return (database as Partial<BasePowerSyncDatabase>).sdkName ?? fallback;
 }
+
 /** Consumes the core diagnostics events the sync client broadcasts (from a worker or in-process). */
 class BroadcastCoreEvents implements CoreEventSource {
   private channel = new BroadcastChannel(CORE_EVENTS_CHANNEL);
