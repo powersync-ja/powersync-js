@@ -1064,6 +1064,7 @@ export interface SyncOptions {
     appMetadata?: Record<string, string>;
     checkpointMode?: CheckpointMode;
     connectionMethod?: SyncStreamConnectionMethod;
+    connectTimeoutMs?: number;
     crudUploadThrottleMs?: number;
     diagnostics?: boolean;
     // (undocumented)

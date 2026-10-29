@@ -56,7 +56,7 @@
     "@tailwindcss/cli": "^4.3.3",
     "@tailwindcss/vite": "^4.3.3",
     "@vitejs/plugin-vue": "^6.0.8",
-    "devframe": "1.0.0",
+    "devframe": "catalog:",
     "tailwindcss": "^4.3.3",
     "unplugin-icons": "^23.0.1",
     "vite": "catalog:",

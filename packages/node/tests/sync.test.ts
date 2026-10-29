@@ -369,6 +369,83 @@ describe('Sync', () => {
         controller.abort('custom abort reason');
         await failureExpectation;
       });
+
+      mockSyncServiceTest('times out when the service does not respond', async ({ syncService }) => {
+        const db = await syncService.createDatabase();
+        await db.connect(new TestConnector(), { checkpointMode: 'requests', connectTimeoutMs: 100 });
+        await vi.waitFor(() => expect(syncService.checkpointRequests).toHaveLength(1));
+
+        syncService.installRequestInterceptor(async (request) => {
+          if (request.url.includes('/sync/checkpoint-request')) {
+            return respondNever(request);
+          }
+          return undefined;
+        });
+        await expect(db.requestCheckpoint()).rejects.toThrow(/timed out/);
+      });
+    });
+  });
+
+  describe('connect timeouts', () => {
+    mockSyncServiceTest('retries a write checkpoint request that times out', async ({ syncService }) => {
+      let writeCheckpointRequests = 0;
+      syncService.installRequestInterceptor(async (request) => {
+        if (request.url.includes('/write-checkpoint2.json') && writeCheckpointRequests++ == 0) {
+          return respondNever(request);
+        }
+        return undefined;
+      });
+
+      const db = await syncService.createDatabase();
+      const connector = new TestConnector();
+      await db.connect(connector, { ...defaultConnectOptions, connectTimeoutMs: 100 });
+      await db.execute('INSERT INTO lists (id, name) VALUES (uuid(), ?)', ['local write']);
+
+      await vi.waitFor(() => expect(writeCheckpointRequests).toBe(2), { timeout: 2000 });
+      expect(connector.uploadDataInvocations).toBe(1);
+
+      // The upload loop recovered, so new local writes are uploaded again.
+      await db.execute('INSERT INTO lists (id, name) VALUES (uuid(), ?)', ['second write']);
+      await vi.waitFor(() => expect(connector.uploadDataInvocations).toBe(2), { timeout: 2000 });
+    });
+
+    mockSyncServiceTest('disconnect cancels a pending write checkpoint request', async ({ syncService }) => {
+      let pendingRequest: Request | undefined;
+      syncService.installRequestInterceptor(async (request) => {
+        if (request.url.includes('/write-checkpoint2.json')) {
+          pendingRequest = request;
+          return respondNever(request);
+        }
+        return undefined;
+      });
+
+      const db = await syncService.createDatabase();
+      await db.connect(new TestConnector(), defaultConnectOptions);
+      await db.execute('INSERT INTO lists (id, name) VALUES (uuid(), ?)', ['local write']);
+      await vi.waitFor(() => expect(pendingRequest).toBeDefined(), { timeout: 2000 });
+
+      await db.disconnect();
+      expect(pendingRequest!.signal.aborted).toBeTruthy();
+    });
+
+    mockSyncServiceTest('reconnects when the sync stream does not respond', async ({ syncService }) => {
+      let streamRequests = 0;
+      syncService.installRequestInterceptor(async (request) => {
+        if (request.url.endsWith('/sync/stream') && streamRequests++ == 0) {
+          return respondNever(request);
+        }
+        return undefined;
+      });
+
+      const db = await syncService.createDatabase();
+      db.connect(new TestConnector(), {
+        ...defaultConnectOptions,
+        connectionMethod: SyncStreamConnectionMethod.HTTP,
+        connectTimeoutMs: 100
+      });
+
+      await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1), { timeout: 2000 });
+      expect(streamRequests).toBe(2);
     });
   });
 
@@ -1613,5 +1690,15 @@ async function waitForProgress(
     }
 
     return true;
+  });
+}
+
+/**
+ * Simulates a service that accepts a request but never responds. Like a real `fetch`, the request only fails once its
+ * signal aborts.
+ */
+function respondNever(request: Request): Promise<Response> {
+  return new Promise((_, reject) => {
+    request.signal.addEventListener('abort', () => reject(request.signal.reason), { once: true });
   });
 }

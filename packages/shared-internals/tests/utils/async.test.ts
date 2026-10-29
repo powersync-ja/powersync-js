@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { asyncNotifier, EventQueue } from '../../src/utils/async.js';
+import { asyncNotifier, EventQueue, runWithTimeout } from '../../src/utils/async.js';
 
 const neverAbort = new AbortController().signal;
 
@@ -195,6 +195,45 @@ describe('event queue', () => {
       externalAbort.abort();
 
       expect(capturedSignal.aborted).toBe(true);
+    });
+  });
+});
+
+describe('runWithTimeout', () => {
+  /**
+   * Never completes on its own, but rejects with a generic error once the signal aborts (like React Native's fetch).
+   */
+  function hangUntilAborted(signal: AbortSignal): Promise<never> {
+    return new Promise((_, reject) => {
+      signal.addEventListener('abort', () => reject(new Error('Aborted')), { once: true });
+    });
+  }
+
+  test('returns the result', async () => {
+    expect(await runWithTimeout(neverAbort, 1000, 'Operation', async () => 'result')).toBe('result');
+  });
+
+  test('throws a timeout error when the action does not complete', async () => {
+    await expect(runWithTimeout(neverAbort, 10, 'Operation', hangUntilAborted)).rejects.toThrow(
+      'Operation timed out after 10ms'
+    );
+  });
+
+  test('aborts the action when the outer signal aborts', async () => {
+    const controller = new AbortController();
+    const result = runWithTimeout(controller.signal, 60_000, 'Operation', hangUntilAborted);
+
+    controller.abort();
+    await expect(result).rejects.toThrow('Aborted');
+  });
+
+  test('aborts immediately when the outer signal has already aborted', async () => {
+    const controller = new AbortController();
+    controller.abort('reason');
+
+    await runWithTimeout(controller.signal, 60_000, 'Operation', async (signal) => {
+      expect(signal.aborted).toBe(true);
+      expect(signal.reason).toBe('reason');
     });
   });
 });

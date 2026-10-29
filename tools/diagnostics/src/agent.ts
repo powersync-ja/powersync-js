@@ -3,9 +3,10 @@
  * package's `./agent` entry, for a host that opens the database and embeds the DevTools page itself;
  * the dock and node entries build their agents here too.
  */
-import type { CommonPowerSyncDatabase, PowerSyncBackendConnector, SyncOptions } from '@powersync/common';
+import type { CommonPowerSyncDatabase } from '@powersync/common';
 import type { CoreDiagnosticsEvent, SdkIntegration, Unsubscribe } from '@powersync/diagnostics-core';
 import { JsAgent, type CoreEventSource } from './js-agent.js';
+import type { BasePowerSyncDatabase } from '@powersync/shared-internals';
 
 // The iframe hand-off and the protocol types an embedding host needs, so the host never imports the protocol package.
 export { attachIframe } from '@powersync/diagnostics-core';
@@ -20,22 +21,10 @@ export type {
 /** The sync client broadcasts core diagnostics events on this channel (see `emitDiagnostics`). */
 const CORE_EVENTS_CHANNEL = 'powersync-diagnostics-events';
 
-/**
- * The connection accessors every SDK's database class has. They are not on the public
- * `CommonPowerSyncDatabase` interface, so the agent reads them through this internal view.
- */
-interface DiagnosableDatabase extends CommonPowerSyncDatabase {
-  readonly connector: PowerSyncBackendConnector | null | undefined;
-  readonly connectionOptions: SyncOptions | null | undefined;
-  /** Missing on SDK releases older than the getter. */
-  readonly sdkName?: string;
-}
-
 /** The SDK label for the database, or `fallback` on SDK releases that do not report it. */
 export function databaseSdk(database: CommonPowerSyncDatabase, fallback: string): string {
-  return (database as DiagnosableDatabase).sdkName ?? fallback;
+  return (database as Partial<BasePowerSyncDatabase>).sdkName ?? fallback;
 }
-
 /** Consumes the core diagnostics events the sync client broadcasts (from a worker or in-process). */
 class BroadcastCoreEvents implements CoreEventSource {
   private channel = new BroadcastChannel(CORE_EVENTS_CHANNEL);
@@ -53,7 +42,7 @@ class BroadcastCoreEvents implements CoreEventSource {
 
 /** Builds the JavaScript integration over a live database. The agent reads the connection from the database itself. */
 export function createIntegration(database: CommonPowerSyncDatabase, sdk: string): SdkIntegration {
-  const db = database as DiagnosableDatabase;
+  const db = database as BasePowerSyncDatabase;
   return new JsAgent(db, {
     sdk,
     coreEvents: typeof BroadcastChannel === 'function' ? new BroadcastCoreEvents() : undefined,

@@ -69,6 +69,9 @@ export class WebSocketSupport {
     // While we're connecting (a process that can't be aborted in RSocket), the WebSocket instance to close if we wanted
     // to abort the connection.
     let pendingSocket: WebSocket | null = null;
+    // The transport's connect() only settles on `open` or `error`, but a socket that closes while it's still opening fires
+    // only `close` on React Native iOS and no event at all on Android. So we fail it ourselves.
+    let failPendingConnect: ((error: Error) => void) | null = null;
     let keepAliveTimeout: any;
     let rsocket: RSocket | null = null;
     let paused = false;
@@ -96,6 +99,7 @@ export class WebSocketSupport {
       if (pendingSocket) {
         pendingSocket.close();
       }
+      failPendingConnect?.(new Error('WebSocket connection closed while opening'));
 
       if (rsocket) {
         rsocket.close();
@@ -149,6 +153,9 @@ export class WebSocketSupport {
           socket.addEventListener('message', () => {
             resetTimeout();
           });
+          socket.addEventListener('close', () => {
+            failPendingConnect?.(new Error('WebSocket connection closed while opening'));
+          });
           return socket;
         }
       }),
@@ -168,9 +175,20 @@ export class WebSocketSupport {
     });
 
     try {
-      rsocket = await connector.connect();
+      rsocket = await new Promise<RSocket>((resolve, reject) => {
+        failPendingConnect = reject;
+        connector.connect().then((socket) => {
+          if (didClose) {
+            // We already gave up on this connection, don't leave it open.
+            socket.close();
+          } else {
+            resolve(socket);
+          }
+        }, reject);
+      });
       // The connection is established, we no longer need to monitor the initial timeout
       pendingSocket = null;
+      failPendingConnect = null;
     } catch (ex) {
       remote.logger.log({ level: this.#platform.LogLevels.error, message: `Failed to connect WebSocket`, error: ex });
       abortRequest();
@@ -184,6 +202,8 @@ export class WebSocketSupport {
     rsocket.onClose(() => (rsocket = null));
 
     return await new Promise((resolve, reject) => {
+      failPendingConnect = reject;
+
       const queueAsIterator: SimpleAsyncIterator<Uint8Array> = {
         next: async () => {
           if (didClose) return doneResult;
@@ -222,8 +242,11 @@ export class WebSocketSupport {
             if (e.message !== 'Closed. ') {
               remote.logger.log({ level: this.#platform.LogLevels.error, message: 'RSocket error', error: e });
             }
+            failPendingConnect = null; // We'll fail this ourselves
+
             // RSocket will close the RSocket stream automatically
             // Close the downstream stream as well - this will close the RSocket connection and WebSocket
+
             abortRequest();
             // Handles cases where the connection failed e.g. auth error or connection error
             if (!connectionEstablished) {
@@ -232,6 +255,7 @@ export class WebSocketSupport {
           },
           onNext: (payload) => {
             // The connection is active
+            failPendingConnect = null;
             if (!connectionEstablished) {
               connectionEstablished = true;
               resolve(queueAsIterator);
@@ -249,7 +273,14 @@ export class WebSocketSupport {
             requestMore();
           },
           onComplete: () => {
+            failPendingConnect = null; // We'll fail this ourselves
             abortRequest(); // this will also emit a done event
+
+            if (!connectionEstablished) {
+              // Closed without ever emitting an event? Still emit an empty queue.
+              connectionEstablished = true;
+              resolve(queueAsIterator);
+            }
           },
           onExtension: () => {}
         }

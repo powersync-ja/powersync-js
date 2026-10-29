@@ -1,4 +1,5 @@
 import * as diagnostics_channel from 'node:diagnostics_channel';
+import type { IncomingHttpHeaders } from 'node:http';
 import type { DiagnosticsChannel } from 'undici';
 
 /**
@@ -134,8 +135,12 @@ class UndiciDiagnostics {
   }
 }
 
-function formatHeaders(headers: any[] | string | undefined) {
+function formatHeaders(headers: any[] | string | IncomingHttpHeaders | undefined) {
   if (typeof headers === 'string') {
+    return headers;
+  }
+
+  if (headers != null && !Array.isArray(headers)) {
     return headers;
   }
 

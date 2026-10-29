@@ -60,7 +60,7 @@
     "@powersync/common": "workspace:*",
     "@powersync/shared-internals": "workspace:*",
     "comlink": "catalog:",
-    "undici": "^7.11.0"
+    "undici": ">=7.11.0 <9.0.0"
   },
   "devDependencies": {
     "@powersync/adapter-sql-js": "workspace:*",
@@ -70,6 +70,8 @@
     "@types/better-sqlite3": "catalog:",
     "bson": "catalog:",
     "drizzle-orm": "catalog:",
+    "rsocket-core": "1.0.0-alpha.3",
+    "rsocket-websocket-server": "1.0.0-alpha.3",
     "typescript": "catalog:",
     "vitest": "catalog:",
     "@microsoft/api-extractor": "catalog:"
