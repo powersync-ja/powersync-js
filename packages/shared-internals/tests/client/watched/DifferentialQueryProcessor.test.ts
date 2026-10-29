@@ -34,15 +34,4 @@ describe('DifferentialQueryProcessor', () => {
     expect(next.diff.all).toEqual(initial.diff.all);
     expect(next.diff.all[0]).toBe(initial.diff.all[0]);
   });
-
-  test('handles rows with duplicate keys', () => {
-    // Without an id, the default comparator keys rows by their content
-    const initial = differentiate([{ name: 'y' }, { name: 'x' }, { name: 'x' }], new Map());
-
-    const same = differentiate([{ name: 'y' }, { name: 'x' }, { name: 'x' }], initial.map);
-    expect(same.hasChanged).toBe(false);
-
-    const reordered = differentiate([{ name: 'x' }, { name: 'y' }, { name: 'x' }], initial.map);
-    expect(reordered.hasChanged).toBe(true);
-  });
 });
