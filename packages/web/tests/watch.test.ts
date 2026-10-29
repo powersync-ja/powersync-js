@@ -1203,4 +1203,74 @@ describe('Watch Tests', { sequential: true }, () => {
       { timeout: 1000 }
     );
   });
+
+  it('should report differential query results when the order changes', async () => {
+    await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['a', uuid()]);
+    await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['b', uuid()]);
+    await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['c', uuid()]);
+
+    const watch = powersync
+      .query<{ id: string; make: string }>({ sql: 'SELECT id, make FROM assets ORDER BY make ASC' })
+      .differentialWatch();
+    onTestFinished(() => watch.close());
+
+    const diffs: WatchedQueryDifferential<{ id: string; make: string }>[] = [];
+    watch.registerListener({
+      onDiff: (diff) => {
+        diffs.push(diff);
+      }
+    });
+
+    await vi.waitFor(
+      () => {
+        expect(watch.state.data.map((row) => row.make)).toEqual(['a', 'b', 'c']);
+      },
+      { timeout: 1000 }
+    );
+
+    // Same rows, different order
+    await watch.updateSettings({
+      query: new GetAllQuery<{ id: string; make: string }>({ sql: 'SELECT id, make FROM assets ORDER BY make DESC' })
+    });
+
+    await vi.waitFor(
+      () => {
+        expect(watch.state.data.map((row) => row.make)).toEqual(['c', 'b', 'a']);
+      },
+      { timeout: 1000 }
+    );
+
+    const lastDiff = diffs[diffs.length - 1];
+    expect(lastDiff.added).toHaveLength(0);
+    expect(lastDiff.removed).toHaveLength(0);
+    expect(lastDiff.updated).toHaveLength(0);
+    expect(lastDiff.unchanged).toHaveLength(3);
+  });
+
+  it('should report differential query results when rows are sorted by an unselected column', async () => {
+    await powersync.execute('INSERT INTO assets(id, make, quantity) VALUES (?, ?, ?)', ['1', 'first', 1]);
+    await powersync.execute('INSERT INTO assets(id, make, quantity) VALUES (?, ?, ?)', ['2', 'second', 2]);
+
+    // quantity isn't selected, so changing it reorders the rows without changing them
+    const watch = powersync
+      .query<{ id: string; make: string }>({ sql: 'SELECT id, make FROM assets ORDER BY quantity' })
+      .differentialWatch();
+    onTestFinished(() => watch.close());
+
+    await vi.waitFor(
+      () => {
+        expect(watch.state.data.map((row) => row.id)).toEqual(['1', '2']);
+      },
+      { timeout: 1000 }
+    );
+
+    await powersync.execute('UPDATE assets SET quantity = 3 WHERE id = ?', ['1']);
+
+    await vi.waitFor(
+      () => {
+        expect(watch.state.data.map((row) => row.id)).toEqual(['2', '1']);
+      },
+      { timeout: 1000 }
+    );
+  });
 });

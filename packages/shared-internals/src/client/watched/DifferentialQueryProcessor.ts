@@ -83,6 +83,7 @@ export class DifferentialQueryProcessor<RowType>
     let hasChanged = false;
     const currentMap = new Map<string, { hash: string; item: RowType }>();
     const removedTracker = new Set(previousMap.keys());
+    const previousKeys = previousMap.keys();
 
     // Allow mutating to populate the data temporarily.
     const diff = {
@@ -100,6 +101,10 @@ export class DifferentialQueryProcessor<RowType>
      */
     for (const item of current) {
       const key = keyBy(item);
+      // Maps preserve insertion order, so compare the keys pairwise.
+      if (!hasChanged && previousKeys.next().value !== key) {
+        hasChanged = true;
+      }
       const hash = compareBy(item);
       currentMap.set(key, { hash, item });
 
