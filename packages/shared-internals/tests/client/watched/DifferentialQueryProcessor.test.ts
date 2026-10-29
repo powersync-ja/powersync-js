@@ -1,60 +1,48 @@
-import { expect, test } from 'vitest';
-import { DifferentialQueryProcessor } from '../../../src/client/watched/DifferentialQueryProcessor.js';
+import { describe, expect, test } from 'vitest';
+import {
+  DEFAULT_ROW_COMPARATOR,
+  DifferentialQueryProcessor
+} from '../../../src/client/watched/DifferentialQueryProcessor.js';
 
-type Row = { id: string; label: string };
-type Entry = { hash: string; item: Row };
-type Result = {
-  diff: {
-    all: Row[];
-    added: Row[];
-    removed: Row[];
-    unchanged: Row[];
-    updated: { current: Row; previous: Row }[];
-  };
-  map: Map<string, Entry>;
-  hasChanged: boolean;
-};
-type Processor = {
-  comparator: { keyBy: (row: Row) => string; compareBy: (row: Row) => string };
-};
-
-const comparator = {
-  keyBy: (row: Row) => row.id,
-  compareBy: (row: Row) => row.label
-};
-
-const differentiate = Reflect.get(DifferentialQueryProcessor.prototype, 'differentiate') as (
-  this: Processor,
-  current: Row[],
-  previousMap: Map<string, Entry>
-) => Result;
-
-function run(current: Row[], previousMap: Map<string, Entry>): Result {
-  return differentiate.call({ comparator }, current, previousMap);
+// Constructing a processor requires a database, so we call differentiate directly.
+function differentiate(rows: any[], previous: Map<string, any>, comparator = DEFAULT_ROW_COMPARATOR) {
+  return (DifferentialQueryProcessor.prototype as any).differentiate.call({ comparator }, rows, previous);
 }
 
-test('emits a differential update when unchanged rows are returned in a new order', () => {
-  const a = { id: 'a', label: 'A' };
-  const b = { id: 'b', label: 'B' };
-  const initial = run([a, b], new Map());
+describe('DifferentialQueryProcessor', () => {
+  test('reports reordered rows as a change', () => {
+    const initial = differentiate([{ id: 'a' }, { id: 'b' }], new Map());
+    const reordered = differentiate([{ id: 'b' }, { id: 'a' }], initial.map);
 
-  expect(initial.hasChanged).toBe(true);
+    expect(reordered.hasChanged).toBe(true);
+    expect(reordered.diff.all.map((row) => row.id)).toEqual(['b', 'a']);
+    expect(reordered.diff.added).toHaveLength(0);
+    expect(reordered.diff.removed).toHaveLength(0);
+    expect(reordered.diff.updated).toHaveLength(0);
 
-  const reordered = run([b, a], initial.map);
+    // The new order is used for subsequent comparisons
+    const again = differentiate([{ id: 'b' }, { id: 'a' }], reordered.map);
+    expect(again.hasChanged).toBe(false);
+  });
 
-  expect(reordered.hasChanged).toBe(true);
-  expect(reordered.diff.all.map((row) => row.id)).toEqual(['b', 'a']);
-  expect(reordered.diff.unchanged).toEqual([b, a]);
-});
+  test('does not report a change for the same rows in the same order', () => {
+    const initial = differentiate([{ id: 'a' }, { id: 'b' }], new Map());
+    const next = differentiate([{ id: 'a' }, { id: 'b' }], initial.map);
 
-test('does not emit when unchanged rows retain their order', () => {
-  const a = { id: 'a', label: 'A' };
-  const b = { id: 'b', label: 'B' };
-  const initial = run([a, b], new Map());
+    expect(next.hasChanged).toBe(false);
+    // Unchanged rows keep their previous object references
+    expect(next.diff.all).toEqual(initial.diff.all);
+    expect(next.diff.all[0]).toBe(initial.diff.all[0]);
+  });
 
-  const unchanged = run([{ ...a }, { ...b }], initial.map);
+  test('handles rows with duplicate keys', () => {
+    // Without an id, the default comparator keys rows by their content
+    const initial = differentiate([{ name: 'y' }, { name: 'x' }, { name: 'x' }], new Map());
 
-  expect(unchanged.hasChanged).toBe(false);
-  expect(unchanged.diff.all[0]).toBe(a);
-  expect(unchanged.diff.all[1]).toBe(b);
+    const same = differentiate([{ name: 'y' }, { name: 'x' }, { name: 'x' }], initial.map);
+    expect(same.hasChanged).toBe(false);
+
+    const reordered = differentiate([{ name: 'x' }, { name: 'y' }, { name: 'x' }], initial.map);
+    expect(reordered.hasChanged).toBe(true);
+  });
 });

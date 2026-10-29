@@ -845,6 +845,41 @@ describe('useQuery', () => {
         );
       });
 
+      it('should emit reordered data when the sort order changes with a rowComparator', async () => {
+        const db = await openPowerSync();
+        await db.execute('INSERT INTO lists(id, name) VALUES (?, ?), (?, ?)', ['1', 'a', '2', 'b']);
+
+        const { result, rerender } = renderHook(
+          ({ order }) =>
+            useQuery<{ id: string; name: string }>(`SELECT id, name FROM lists ORDER BY name ${order}`, [], {
+              rowComparator: {
+                keyBy: (item) => item.id,
+                compareBy: (item) => JSON.stringify(item)
+              }
+            }),
+          {
+            wrapper: ({ children }) => testWrapper({ children, db }),
+            initialProps: { order: 'ASC' }
+          }
+        );
+
+        await waitFor(
+          () => {
+            expect(result.current.data.map((row) => row.name)).toEqual(['a', 'b']);
+          },
+          { timeout: 500, interval: 100 }
+        );
+
+        rerender({ order: 'DESC' });
+
+        await waitFor(
+          () => {
+            expect(result.current.data.map((row) => row.name)).toEqual(['b', 'a']);
+          },
+          { timeout: 500, interval: 100 }
+        );
+      });
+
       it('should emit result data when query changes', async () => {
         const db = await openPowerSync();
         const { result } = renderHook(

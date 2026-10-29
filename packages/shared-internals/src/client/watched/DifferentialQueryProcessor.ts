@@ -83,7 +83,6 @@ export class DifferentialQueryProcessor<RowType>
     let hasChanged = false;
     const currentMap = new Map<string, { hash: string; item: RowType }>();
     const removedTracker = new Set(previousMap.keys());
-    const previousKeys = previousMap.keys();
 
     // Allow mutating to populate the data temporarily.
     const diff = {
@@ -103,13 +102,6 @@ export class DifferentialQueryProcessor<RowType>
       const key = keyBy(item);
       const hash = compareBy(item);
       currentMap.set(key, { hash, item });
-
-      // Map iteration preserves the previous result order. A pure reorder must emit
-      // the new diff.all order even when every row's key and content are unchanged.
-      const previousKey = previousKeys.next().value;
-      if (current.length === previousMap.size && previousKey !== key) {
-        hasChanged = true;
-      }
 
       const previousItem = previousMap.get(key);
       if (!previousItem) {
@@ -138,6 +130,18 @@ export class DifferentialQueryProcessor<RowType>
 
     diff.removed = Array.from(removedTracker).map((key) => previousMap.get(key)!.item);
     hasChanged = hasChanged || diff.removed.length > 0;
+
+    if (!hasChanged) {
+      // Same rows as before, but they could be in a different order.
+      // Maps preserve insertion order, so we can compare the keys pairwise.
+      const previousKeys = previousMap.keys();
+      for (const key of currentMap.keys()) {
+        if (previousKeys.next().value !== key) {
+          hasChanged = true;
+          break;
+        }
+      }
+    }
 
     return {
       diff,
