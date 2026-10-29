@@ -527,7 +527,6 @@ export interface DifferentialWatchedQueryComparator<RowType> {
 
 // @public (undocumented)
 export interface DifferentialWatchedQueryListener<RowType> extends WatchedQueryListener<ReadonlyArray<Readonly<RowType>>> {
-    // (undocumented)
     onDiff?: (diff: WatchedQueryDifferential<RowType>) => void | Promise<void>;
 }
 
