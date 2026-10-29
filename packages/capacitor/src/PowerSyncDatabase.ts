@@ -44,6 +44,10 @@ class CapacitorPowerSyncDatabase extends WebPowerSyncDatabase {
     });
   }
 
+  get sdkName(): string {
+    return '@powersync/capacitor';
+  }
+
   protected get isNativeCapacitorPlatform(): boolean {
     const platform = Capacitor.getPlatform();
     return platform == 'ios' || platform == 'android';

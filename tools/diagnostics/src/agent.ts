@@ -27,6 +27,13 @@ const CORE_EVENTS_CHANNEL = 'powersync-diagnostics-events';
 interface DiagnosableDatabase extends CommonPowerSyncDatabase {
   readonly connector: PowerSyncBackendConnector | null | undefined;
   readonly connectionOptions: SyncOptions | null | undefined;
+  /** Missing on SDK releases older than the getter. */
+  readonly sdkName?: string;
+}
+
+/** The SDK label for the database, or `fallback` on SDK releases that do not report it. */
+export function databaseSdk(database: CommonPowerSyncDatabase, fallback: string): string {
+  return (database as DiagnosableDatabase).sdkName ?? fallback;
 }
 
 /** Consumes the core diagnostics events the sync client broadcasts (from a worker or in-process). */

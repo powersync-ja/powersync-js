@@ -220,6 +220,14 @@ export abstract class BasePowerSyncDatabase<Options extends BasePowerSyncDatabas
     return SyncStreamConnectionMethod.HTTP;
   }
 
+  /**
+   * The name of the SDK package this database belongs to, e.g. `@powersync/web`. Development tooling
+   * shows it to identify the app. SDKs override it with their package name.
+   */
+  get sdkName(): string {
+    return 'powersync-js';
+  }
+
   get schema() {
     return this._schema;
   }

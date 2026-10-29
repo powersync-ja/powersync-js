@@ -37,6 +37,10 @@ class NodePowerSyncDatabase extends BasePowerSyncDatabase<NodePowerSyncDatabaseO
     super(options);
   }
 
+  get sdkName(): string {
+    return '@powersync/node';
+  }
+
   async _initialize(): Promise<void> {
     if ('initialize' in this.database) {
       await (this.database as WorkerConnectionPool).initialize();

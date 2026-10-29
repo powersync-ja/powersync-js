@@ -5,14 +5,11 @@
  */
 import type { DockClientScriptContext } from '@devframes/hub/client';
 import { observeRegisteredDatabases } from '@powersync/web/devtools';
-import { createIntegration } from './agent.js';
+import { createIntegration, databaseSdk } from './agent.js';
 import { createAgentServer } from './agent-server.js';
-import { pageSdk } from './page-sdk.js';
 
 export default function setup(context: DockClientScriptContext): void {
   const server = createAgentServer(context.rpc);
-  const sdk = pageSdk();
-  const idPrefix = sdk === '@powersync/capacitor' ? 'capacitor' : 'web';
   let counter = 0;
   let currentId: string | null = null;
 
@@ -32,7 +29,8 @@ export default function setup(context: DockClientScriptContext): void {
       return;
     }
     if (currentId) return;
-    currentId = `${idPrefix}-${++counter}`;
+    const sdk = databaseSdk(database, '@powersync/web');
+    currentId = `${sdk.replace(/^@powersync\//, '')}-${++counter}`;
     void server.serve(currentId, createIntegration(database, sdk), sdk);
   });
 }
