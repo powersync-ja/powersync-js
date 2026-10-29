@@ -56,6 +56,16 @@ export interface SyncOptions {
   checkpointMode?: CheckpointMode;
 
   /**
+   * How long to wait for the PowerSync Service to respond, in milliseconds. This defaults to 30 seconds.
+   *
+   * For checkpoint requests, this limits the whole request. For the sync stream over HTTP, this limits the time until
+   * the response starts, not how long the stream stays open. WebSocket connections use their own timeouts.
+   *
+   * A request that takes longer fails and is retried after {@link SyncOptions.retryDelayMs}.
+   */
+  connectTimeoutMs?: number;
+
+  /**
    * Enables the core extension's diagnostics event stream: detailed per-bucket download stats,
    * including each bucket's `target_count`, and inferred column types. Off by default.
    *

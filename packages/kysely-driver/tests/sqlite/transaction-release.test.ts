@@ -66,4 +66,26 @@ describe('transaction lock release', () => {
 
     await expect(writeWithTimeout(powerSyncDb)).resolves.toBeDefined();
   });
+
+  it('should roll back when COMMIT fails with the transaction still open', async () => {
+    // A deferred foreign key violation makes COMMIT fail while leaving the transaction open.
+    await powerSyncDb.writeLock((tx) => tx.execute('PRAGMA foreign_keys = ON'));
+    await powerSyncDb.execute('CREATE TABLE parent (id TEXT PRIMARY KEY)');
+    await powerSyncDb.execute('CREATE TABLE child (id TEXT REFERENCES parent(id) DEFERRABLE INITIALLY DEFERRED)');
+
+    await expect(
+      db.transaction().execute(async (trx) => {
+        await sql`
+          INSERT INTO
+            child
+          VALUES
+            ('missing')
+        `.execute(trx);
+      })
+    ).rejects.toThrow(/FOREIGN KEY/);
+
+    // The transaction should have been rolled back, so the row should not exist.
+    expect(await powerSyncDb.writeLock((tx) => tx.getAll('SELECT * FROM child'))).toHaveLength(0);
+    await expect(writeWithTimeout(powerSyncDb)).resolves.toBeDefined();
+  });
 });

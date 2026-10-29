@@ -107,6 +107,27 @@ export interface WebSpecificOpenOptions {
    * Defaults to 0 (disabling the cache).
    */
   preparedStatementsCache?: number;
+
+  /**
+   * The name of a [Storage Bucket](https://wicg.github.io/storage-buckets/) to keep the database files in,
+   * instead of the default bucket of the origin private file system.
+   *
+   * Only supported by the OPFS-based VFS implementations: {@link WASQLiteVFS.OPFSCoopSyncVFS},
+   * {@link WASQLiteVFS.OPFSWriteAheadVFS} and {@link WASQLiteVFS.AccessHandlePoolVFS}. Opening the database fails in
+   * a browser without the Storage Buckets API, so set this option only when `'storageBuckets' in navigator`.
+   *
+   * The SDK forwards the name to `navigator.storageBuckets.open()` unchanged, so the browser reports a name it does not
+   * accept. The bucket is opened by name, with the browser's default options. To configure options for the bucket,
+   * call and await `navigator.storageBuckets.open()` before opening a PowerSync database.
+   *
+   * A database in a bucket is a different database from one of the same name in the default bucket: setting this
+   * option for an existing database starts with an empty database, and the files in the default bucket are not
+   * moved. The SDK groups database resources by database name, without taking the storage bucket into account. To
+   * avoid lock contention and wrong update notifications, use unique database names even across buckets.
+   *
+   * Uses the default bucket when no option is given.
+   */
+  storageBucket?: string;
 }
 
 export interface ResolvedWebSQLOpenOptions extends SQLOpenOptions, WebSpecificOpenOptions {}

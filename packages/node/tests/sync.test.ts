@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, vi } from 'vitest';
 
 import {
+  column,
   CommonPowerSyncDatabase,
   LogRecord,
   PowerSyncLogger,
@@ -8,7 +9,8 @@ import {
   Schema,
   SyncOptions,
   SyncStatus,
-  SyncStreamConnectionMethod
+  SyncStreamConnectionMethod,
+  Table
 } from '@powersync/common';
 import {
   bucket,
@@ -367,6 +369,83 @@ describe('Sync', () => {
         controller.abort('custom abort reason');
         await failureExpectation;
       });
+
+      mockSyncServiceTest('times out when the service does not respond', async ({ syncService }) => {
+        const db = await syncService.createDatabase();
+        await db.connect(new TestConnector(), { checkpointMode: 'requests', connectTimeoutMs: 100 });
+        await vi.waitFor(() => expect(syncService.checkpointRequests).toHaveLength(1));
+
+        syncService.installRequestInterceptor(async (request) => {
+          if (request.url.includes('/sync/checkpoint-request')) {
+            return respondNever(request);
+          }
+          return undefined;
+        });
+        await expect(db.requestCheckpoint()).rejects.toThrow(/timed out/);
+      });
+    });
+  });
+
+  describe('connect timeouts', () => {
+    mockSyncServiceTest('retries a write checkpoint request that times out', async ({ syncService }) => {
+      let writeCheckpointRequests = 0;
+      syncService.installRequestInterceptor(async (request) => {
+        if (request.url.includes('/write-checkpoint2.json') && writeCheckpointRequests++ == 0) {
+          return respondNever(request);
+        }
+        return undefined;
+      });
+
+      const db = await syncService.createDatabase();
+      const connector = new TestConnector();
+      await db.connect(connector, { ...defaultConnectOptions, connectTimeoutMs: 100 });
+      await db.execute('INSERT INTO lists (id, name) VALUES (uuid(), ?)', ['local write']);
+
+      await vi.waitFor(() => expect(writeCheckpointRequests).toBe(2), { timeout: 2000 });
+      expect(connector.uploadDataInvocations).toBe(1);
+
+      // The upload loop recovered, so new local writes are uploaded again.
+      await db.execute('INSERT INTO lists (id, name) VALUES (uuid(), ?)', ['second write']);
+      await vi.waitFor(() => expect(connector.uploadDataInvocations).toBe(2), { timeout: 2000 });
+    });
+
+    mockSyncServiceTest('disconnect cancels a pending write checkpoint request', async ({ syncService }) => {
+      let pendingRequest: Request | undefined;
+      syncService.installRequestInterceptor(async (request) => {
+        if (request.url.includes('/write-checkpoint2.json')) {
+          pendingRequest = request;
+          return respondNever(request);
+        }
+        return undefined;
+      });
+
+      const db = await syncService.createDatabase();
+      await db.connect(new TestConnector(), defaultConnectOptions);
+      await db.execute('INSERT INTO lists (id, name) VALUES (uuid(), ?)', ['local write']);
+      await vi.waitFor(() => expect(pendingRequest).toBeDefined(), { timeout: 2000 });
+
+      await db.disconnect();
+      expect(pendingRequest!.signal.aborted).toBeTruthy();
+    });
+
+    mockSyncServiceTest('reconnects when the sync stream does not respond', async ({ syncService }) => {
+      let streamRequests = 0;
+      syncService.installRequestInterceptor(async (request) => {
+        if (request.url.endsWith('/sync/stream') && streamRequests++ == 0) {
+          return respondNever(request);
+        }
+        return undefined;
+      });
+
+      const db = await syncService.createDatabase();
+      db.connect(new TestConnector(), {
+        ...defaultConnectOptions,
+        connectionMethod: SyncStreamConnectionMethod.HTTP,
+        connectTimeoutMs: 100
+      });
+
+      await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1), { timeout: 2000 });
+      expect(streamRequests).toBe(2);
     });
   });
 
@@ -1426,6 +1505,56 @@ function defineSyncTests(bson: boolean) {
     expect((await query.next()).value.rows._array).toStrictEqual([]);
   });
 
+  mockSyncServiceTest('direct tables', async ({ syncService }) => {
+    // This is mostly a smoke test, the core extension manages direct tables and covers things like migrations.
+    const customSchema = new Schema({
+      users: new Table({ name: column.text }, { direct: true })
+    });
+
+    const powersync = await syncService.createDatabase({ schema: customSchema });
+    const { type } = await powersync.get<{ type: string }>('pragma table_list(users)');
+    expect(type).toBe('table');
+
+    powersync.connect(new TestConnector(), options);
+    await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
+
+    syncService.pushLine({
+      checkpoint: {
+        last_op_id: '1',
+        buckets: [bucket('a', 1)]
+      }
+    });
+    syncService.pushLine({
+      data: {
+        bucket: 'a',
+        data: [
+          {
+            checksum: 0,
+            op_id: '1',
+            op: 'PUT',
+            object_id: 'user',
+            object_type: 'users',
+            data: '{"name": "synced user"}'
+          }
+        ]
+      }
+    });
+    syncService.pushLine({ checkpoint_complete: { last_op_id: '1' } });
+    await powersync.waitForFirstSync();
+
+    expect(await powersync.getAll('SELECT id, name FROM users')).toStrictEqual([{ id: 'user', name: 'synced user' }]);
+    await powersync.disconnect();
+
+    await powersync.execute('UPDATE users SET name = ?', ['local user']);
+    expect(await powersync.getAll('SELECT id, name FROM users')).toStrictEqual([{ id: 'user', name: 'local user' }]);
+
+    const tx = await powersync.getNextCrudTransaction();
+    expect(tx?.crud).toHaveLength(1);
+    const entry = tx!.crud[0];
+    expect(entry.table).toBe('users');
+    expect(entry.opData).toStrictEqual({ name: 'local user' });
+  });
+
   mockSyncServiceTest('can reconnect based on query changes', async ({ syncService }) => {
     // Test for https://discord.com/channels/1138230179878154300/1399340612435710034/1399340612435710034
     const logMessages: string[] = [];
@@ -1561,5 +1690,15 @@ async function waitForProgress(
     }
 
     return true;
+  });
+}
+
+/**
+ * Simulates a service that accepts a request but never responds. Like a real `fetch`, the request only fails once its
+ * signal aborts.
+ */
+function respondNever(request: Request): Promise<Response> {
+  return new Promise((_, reject) => {
+    request.signal.addEventListener('abort', () => reject(request.signal.reason), { once: true });
   });
 }

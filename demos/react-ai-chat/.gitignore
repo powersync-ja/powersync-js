@@ -1,0 +1,19 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+
+# local env files
+.env*.local
+.env
+# The local Docker settings (well-known defaults, not secrets)
+!powersync/docker/.env
+
+# typescript
+*.tsbuildinfo
+
+# IDE
+.vscode
+.fleet
+.idea

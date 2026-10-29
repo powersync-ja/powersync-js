@@ -30,6 +30,10 @@ export interface RawWaSqliteDatabaseOptions {
    */
   preparedStatementsCache: number;
   additionalInitializationFunctions?: readonly string[];
+  /**
+   * The name of a Storage Bucket to keep the database files in, for the OPFS-based VFS implementations.
+   */
+  storageBucket?: string;
 }
 
 /**

@@ -338,6 +338,23 @@ databaseTest('soft clear', async ({ database }) => {
   expect(await database.getAll('SELECT name FROM ps_buckets')).toStrictEqual([]);
 });
 
+databaseTest('rolls back failing transactions', async ({ database }) => {
+  // Regression test for https://github.com/powersync-ja/powersync-js/issues/1176.
+  await database.writeLock((tx) => tx.execute('PRAGMA foreign_keys = ON'));
+  await database.execute('CREATE TABLE parent (id TEXT PRIMARY KEY)');
+  await database.execute('CREATE TABLE child (id TEXT REFERENCES parent(id) DEFERRABLE INITIALLY DEFERRED)');
+
+  await expect(() =>
+    database.writeTransaction((tx) => tx.execute("INSERT INTO child VALUES ('missing')"))
+  ).rejects.toThrow();
+
+  // Transaction should have been rolled back, so the row should not exist.
+  expect(await database.writeLock((tx) => tx.getAll('SELECT * FROM child'))).toHaveLength(0);
+
+  // We should still be able to issue transactions.
+  await database.writeTransaction((tx) => tx.execute('SELECT 1'));
+});
+
 describe('onChangeWithAsyncGenerator', () => {
   databaseTest('receives change events', async ({ database }) => {
     const changes: WatchOnChangeEvent[] = [];
