@@ -1,5 +1,30 @@
 # @powersync/react-native
 
+## 2.4.0
+
+### Minor Changes
+
+- 109de2c: Add `Authenticator` and `MutationUploader` types, and overloads of `connect()` allowing to connect in download-only and upload-only mode.
+
+### Patch Changes
+
+- 325cb95: Add an `sdkName` getter to the database that names the SDK package, for development tooling.
+- 7d5255f: Update PowerSync SQLite core extension version to 0.5.4 ([release notes](https://github.com/powersync-ja/powersync-sqlite-core/releases/tag/v0.5.4)).
+- Updated dependencies [325cb95]
+- Updated dependencies [109de2c]
+- Updated dependencies [7600425]
+- Updated dependencies [d1cec54]
+- Updated dependencies [9be90b3]
+- Updated dependencies [8327200]
+- Updated dependencies [11a6bf3]
+- Updated dependencies [7d5255f]
+- Updated dependencies [d6a9cb4]
+- Updated dependencies [59f1618]
+- Updated dependencies [9fe7e5f]
+  - @powersync/shared-internals@1.5.0
+  - @powersync/common@2.5.0
+  - @powersync/react@2.2.0
+
 ## 2.3.3
 
 ### Patch Changes
