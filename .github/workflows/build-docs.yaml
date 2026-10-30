@@ -3,6 +3,9 @@ name: Build docs
 on:
   push:
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -13,6 +16,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          persist-credentials: false
       - name: Enable Corepack
         run: corepack enable
       - name: Setup Node.js

@@ -3,10 +3,19 @@ name: Build Packages
 
 on:
   push:
+  pull_request:
+
+concurrency:
+  group: build-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
   build:
     timeout-minutes: 10
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository)
     name: Build Packages
     runs-on: ubuntu-latest
     steps:

@@ -2,6 +2,9 @@ name: Tauri Integration tests
 on:
   pull_request: # triggered for any PR updates (including new pushes to PR branch)
 
+permissions:
+  contents: read
+
 jobs:
   check-changes:
     name: Check for relevant changes
@@ -12,11 +15,12 @@ jobs:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
+          persist-credentials: false
       - name: Check for changes
         id: check
         run: |
-          git fetch origin ${{ github.base_ref }}
-          if git diff --quiet origin/${{ github.base_ref }} -- packages/common packages/tauri; then
+          git fetch origin ${GITHUB_BASE_REF}
+          if git diff --quiet origin/${GITHUB_BASE_REF} -- packages/common packages/tauri; then
             echo "should_run=false" >> $GITHUB_OUTPUT
           else
             echo "should_run=true" >> $GITHUB_OUTPUT
@@ -31,6 +35,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
       - name: Enable Corepack
         run: corepack enable
       - name: Setup Node.js

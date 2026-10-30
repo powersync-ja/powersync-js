@@ -1,0 +1,17 @@
+# Configuration for https://zizmor.sh/, a static analysis tool for GitHub actions.
+rules:
+  unpinned-uses:
+    config:
+      policies:
+        "actions/*": ref-pin
+        "github/*": ref-pin
+        "rust-lang/*": ref-pin
+        "docker/*": ref-pin
+  anonymous-definition:
+    disable: true
+  adhoc-packages:
+    ignore:
+      # This install verdaccio. Should potentially be something we depend on properly?
+      - test-isolated.yaml:54
+      # This install detox-cli. Should potentially be something we depend on properly?
+      - test-simulators.yaml:210
