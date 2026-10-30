@@ -38,6 +38,9 @@
             "path": "./packages/shared-internals"
         },
         {
+            "path": "./packages/standalone"
+        },
+        {
             "path": "./packages/tanstack-react-query"
         },
         {

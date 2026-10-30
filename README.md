@@ -30,6 +30,10 @@ _[PowerSync](https://www.powersync.com) keeps a client-side SQLite database in s
 
   - Vue composables for PowerSync.
 
+- [packages/standalone](./packages/standalone/README.md)
+
+  - A lightweight, SQLite-free PowerSync client. Mainly intended for integration into state management packages.
+
 - [packages/tanstack-query](./packages/tanstack-react-query/README.md)
 
   - [TanStack Query](https://tanstack.com/query/) integration for React.
