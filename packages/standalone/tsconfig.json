@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.base",
+  "compilerOptions": {
+    "types": ["node"],
+    "jsx": "react",
+    "rootDir": "src",
+    "outDir": "./lib",
+    "lib": ["esnext", "DOM"],
+    "declaration": true,
+    "module": "NodeNext",
+    "moduleResolution": "nodenext",
+    "strict": true
+  },
+  "include": ["src/**/*"],
+  "references": [{ "path": "../shared-internals" }]
+}
