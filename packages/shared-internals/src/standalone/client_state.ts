@@ -1,35 +1,26 @@
 import { DownloadChanges, DownloadEvent, RestartSyncError } from './api.js';
+import { Bucket, OplogEntry, OplogState, RowKey, RowState } from './oplog.js';
 import { BucketRequest, StreamingSyncRequest, StreamSubscriptionRequest } from './requests.js';
-import type {
-  BucketChecksum,
-  BucketLine,
-  Checkpoint,
-  OplogEntryJSON,
-  StreamingSyncCheckpointDiff
-} from './sync_protocol.js';
-
-export class LocalWriteState {
-  hasLocalWrites: boolean = false;
-  targetCheckpoint?: bigint;
-}
+import type { BucketChecksum, BucketLine, Checkpoint, StreamingSyncCheckpointDiff } from './sync_protocol.js';
 
 /**
  * A JavaScript sync client.
  *
  * This tracks the equivalent of `ps_oplog`, `ps_buckets` and `ps_updated_rows` from the core extension and can update
  * its state for sync lines, emitting changed rows.
+ *
+ * Instead of storing the full oplog of each bucket, state is tracked per row (table and id): For each row, we store
+ * the latest operation for each bucket and subkey. Once every bucket has removed a row and that removal has been
+ * applied, the row's state is dropped entirely.
  */
 export class DownloadClientState {
-  readonly #buckets = new Map<string, Bucket>();
+  readonly #oplog = new OplogState();
   #bucketsByPriority: Map<number, Bucket[]> | undefined;
   #checkpoint: TrackedCheckpoint | undefined;
   // Whether all data for #checkpoint has been received.
   #checkpointComplete = false;
 
   #writeState: LocalWriteState;
-  // For each row (table + id pair), all buckets referencing that row in their oplog history. This is used to find the
-  // latest oplog entry for a specific row.
-  readonly #rowKeyToBuckets = new Map<string, { key: RowKey; buckets: Set<Bucket> }>();
   // Rows that need to be updated on the next complete sync, e.g. because there was a local mutation for which we need
   // to check whether it synced back down.
   readonly #updatedRows: Map<string, RowKey>;
@@ -41,8 +32,8 @@ export class DownloadClientState {
       this.#updatedRows = previous.#updatedRows;
       // This replaces a previous client state. Mark all rows tracked by that state as updated, so that we can emit a
       // delete event if they're removed.
-      for (const [formattedKey, { key }] of previous.#rowKeyToBuckets) {
-        this.#updatedRows.set(formattedKey, key);
+      for (const row of previous.#oplog.rows.values()) {
+        this.#updatedRows.set(row.key.formatted, row.key);
       }
     } else {
       this.#updatedRows = new Map();
@@ -55,7 +46,7 @@ export class DownloadClientState {
     streams: StreamSubscriptionRequest,
     metadata?: Record<string, string>
   ): StreamingSyncRequest {
-    const buckets = this.#buckets
+    const buckets = this.#oplog.buckets
       .values()
       .filter((f) => f.lastEntry >= 0n)
       .map((bkt) => ({ name: bkt.name, after: String(bkt.lastEntry) }) satisfies BucketRequest);
@@ -86,19 +77,14 @@ export class DownloadClientState {
       this.#reconcileBuckets(existing);
     } else if ('data' in line) {
       const { bucket, data } = line.data;
-      const resolvedBucket = this.#buckets.get(bucket)!;
+      const resolvedBucket = this.#oplog.buckets.get(bucket)!;
       for (const raw of data) {
         const parsed = OplogEntry.fromJson(raw);
         if (parsed.id > this.#checkpoint!.last_op) {
           throw new RestartSyncError('Checkpoint id out of bounds', true);
         }
 
-        resolvedBucket.pushLine(raw, parsed);
-        if (parsed.key != null) {
-          this.#rowKeyToBuckets
-            .getOrInsertComputed(parsed.key.formatted, () => ({ key: parsed.key!, buckets: new Set() }))
-            .buckets.add(resolvedBucket);
-        }
+        resolvedBucket.pushLine(this.#oplog, raw, parsed);
       }
     } else if ('checkpoint_complete' in line) {
       this.#checkpointComplete = true;
@@ -124,32 +110,24 @@ export class DownloadClientState {
 
   #reconcileBuckets(checkpoint: TrackedCheckpoint) {
     this.#checkpoint = checkpoint;
+    const buckets = this.#oplog.buckets;
 
-    const bucketsToDelete = new Set(this.#buckets.keys());
+    const bucketsToDelete = new Set(buckets.keys());
     for (const [bucket, entry] of checkpoint.buckets.entries()) {
       bucketsToDelete.delete(bucket);
 
-      const resolvedBucket = this.#buckets.getOrInsertComputed(bucket, () => new Bucket(bucket));
+      const resolvedBucket = buckets.getOrInsertComputed(bucket, () => new Bucket(bucket));
       if (entry.priority != null) resolvedBucket.priority = entry.priority;
     }
 
     for (const remaining of bucketsToDelete) {
-      const bucket = this.#buckets.get(remaining);
-      if (bucket) {
-        // All data visible because of this bucket needs to be rechecked at the next full checkpoint.
-        for (const applied of bucket.appliedChanges.values()) {
-          this.addToUpdatedRows(applied.key!);
-        }
-        // Also unlink rows that have been received but not applied, so that we don't resolve them from this bucket.
-        for (const row of bucket.rows()) {
-          this.#rowKeyToBuckets.get(row.formatted)?.buckets.delete(bucket);
-        }
+      // All data visible because of this bucket needs to be rechecked at the next full checkpoint.
+      for (const key of this.#oplog.removeBucket(buckets.get(remaining)!)) {
+        this.addToUpdatedRows(key);
       }
-
-      this.#buckets.delete(remaining);
     }
 
-    this.#bucketsByPriority = Map.groupBy(this.#buckets.values(), (b) => b.priority);
+    this.#bucketsByPriority = Map.groupBy(buckets.values(), (b) => b.priority);
   }
 
   #syncLocal(targetPriority?: number): DownloadEvent[] {
@@ -159,7 +137,7 @@ export class DownloadClientState {
         // If all buckets in a full checkpoint have priority 0, we can still apply them as a partial checkpoint. The
         // sync service doesn't send a partial_checkpoint_complete line when all buckets have the same priority, so this
         // emulates that line.
-        const buckets = [...this.#buckets.values()];
+        const buckets = [...this.#oplog.buckets.values()];
         if (targetPriority == null && buckets.length != 0 && buckets.every((b) => b.priority == 0)) {
           return [{ type: 'rows', changes: this.#applyChanges(0), priority: 0 }, blocked];
         }
@@ -194,43 +172,27 @@ export class DownloadClientState {
   #applyChanges(targetPriority?: number): DownloadChanges {
     let affectedBuckets =
       targetPriority == null
-        ? this.#buckets.values()
+        ? this.#oplog.buckets.values()
         : this.#bucketsByPriority
             ?.entries()
             .flatMap(([priority, buckets]) => (priority > targetPriority ? [] : buckets));
 
     const handledKeys = new Set<string>();
+    const handledRows: RowState[] = [];
     const changes = new Map<string, Map<string, Record<string, unknown> | null>>();
 
     const handleKey = (key: RowKey) => {
       // We always search for the latest oplog entry across all buckets, so if a key was handled we don't need to handle
       // it again (in case it was updated in two buckets).
       if (handledKeys.has(key.formatted)) return;
+      handledKeys.add(key.formatted);
 
-      // Find the latest oplog entry for this key in all buckets. Unlike the core extension (which doesn't store REMOVE
-      // operations), a REMOVE in one bucket also hides older PUTs from other buckets.
-      let latestEntry: OplogEntry | undefined;
-      const buckets = this.#rowKeyToBuckets.get(key.formatted)?.buckets;
-      if (buckets) {
-        for (const bucket of buckets) {
-          const entry = bucket.entryFor(
-            key.formatted,
-            // Include pending changed when bucket is in affectedBuckets
-            targetPriority == null || bucket.priority <= targetPriority
-          );
-
-          if (entry) {
-            if (latestEntry != null && latestEntry.id > entry.id) continue;
-
-            latestEntry = entry;
-          }
-        }
-      }
+      const row = this.#oplog.rows.get(key.formatted);
+      const latestEntry = row?.resolve(targetPriority);
+      if (row) handledRows.push(row);
 
       const tableEntries = changes.getOrInsertComputed(key.table, () => new Map());
       tableEntries.set(key.rowid, latestEntry?.data?.parsed() ?? null);
-
-      handledKeys.add(key.formatted);
     };
 
     for (const bucket of affectedBuckets ?? []) {
@@ -242,8 +204,8 @@ export class DownloadClientState {
         );
       }
 
-      for (const key of bucket.dirtyKeys) {
-        handleKey(key);
+      for (const row of bucket.dirtyRows) {
+        handleKey(row.key);
       }
 
       bucket.markApplied();
@@ -256,8 +218,17 @@ export class DownloadClientState {
       this.#updatedRows.clear();
     }
 
+    for (const row of handledRows) {
+      this.#oplog.collectGarbage(row);
+    }
+
     return { updatedRows: changes };
   }
+}
+
+export class LocalWriteState {
+  hasLocalWrites: boolean = false;
+  targetCheckpoint?: bigint;
 }
 
 class TrackedCheckpoint {
@@ -286,166 +257,5 @@ class TrackedCheckpoint {
     for (const removed of checkpoint_diff.removed_buckets) {
       this.buckets.delete(removed);
     }
-  }
-}
-
-class Bucket {
-  priority: number = 3;
-
-  checksum = 0;
-
-  lastEntry: bigint = -1n;
-  readonly appliedChanges = new Map<string, OplogEntry>(); // indexed by row key
-  // Latest operation for each row key and subkey.
-  readonly #allChanges = new Map<string, { row: RowKey; bySubkey: Map<string, OplogEntry> }>();
-  readonly #dirtyKeys = new Map<string, RowKey>();
-
-  constructor(readonly name: string) {}
-
-  get dirtyKeys() {
-    return this.#dirtyKeys.values();
-  }
-
-  /**
-   * All rows that have ever been referenced by this bucket.
-   */
-  rows() {
-    return this.#allChanges.values().map((e) => e.row);
-  }
-
-  #markDirty(key: RowKey) {
-    this.#dirtyKeys.set(key.formatted, key);
-  }
-
-  #addToChecksum(value: number) {
-    // Checksums are u32 values, they should wrap around.
-    this.checksum = (this.checksum + value) | 0;
-  }
-
-  pushLine(raw: OplogEntryJSON, data: OplogEntry) {
-    if (this.lastEntry >= data.id) {
-      // To simplify the sync client, we only support a linear bucket history. This works for compacting buckets, but
-      // breaks for full defrag if that doesn't generate new bucket names. We just delete everything and restart. This
-      // allows not tracking checksums.
-      throw new RestartSyncError('already tracked entry', true);
-    }
-
-    const opChecksum = raw.checksum | 0;
-
-    switch (raw.op) {
-      case 'CLEAR': {
-        // All prior put operations have turned into remove operations.
-        for (const { row, bySubkey } of this.#allChanges.values()) {
-          this.#markDirty(row);
-          bySubkey.clear();
-          bySubkey.set('', new OplogEntry(data.id, row, '', undefined));
-        }
-
-        // The checksum of a clear operation is the sum of all put operations we've just replaced.
-        this.checksum = opChecksum;
-        break;
-      }
-      case 'MOVE':
-        this.#addToChecksum(opChecksum);
-        break;
-      case 'PUT':
-      case 'REMOVE':
-        this.#addToChecksum(opChecksum);
-        const key = data.key;
-        if (key == null) {
-          throw new RestartSyncError('Expected row key');
-        }
-
-        this.#allChanges
-          .getOrInsertComputed(key.formatted, () => ({ row: key, bySubkey: new Map() }))
-          .bySubkey.set(data.subkey, data);
-        this.#markDirty(key);
-        break;
-    }
-
-    this.lastEntry = data.id;
-  }
-
-  /**
-   * Resolves the current state of a row in this bucket across all subkeys.
-   */
-  #resolveLatest(key: string): OplogEntry | undefined {
-    let latestPut: OplogEntry | undefined;
-    let latestRemove: OplogEntry | undefined;
-
-    for (const entry of this.#allChanges.get(key)?.bySubkey.values() ?? []) {
-      if (entry.data != null) {
-        if (latestPut == null || entry.id > latestPut.id) latestPut = entry;
-      } else {
-        if (latestRemove == null || entry.id > latestRemove.id) latestRemove = entry;
-      }
-    }
-
-    // Within a bucket, the row exists if any subkey has a PUT (the operation is only removed once we see a REMOVE for
-    // every subkey).
-    return latestPut ?? latestRemove;
-  }
-
-  entryFor(key: string, includeUnapplied: boolean) {
-    if (includeUnapplied && this.#dirtyKeys.has(key)) {
-      return this.#resolveLatest(key);
-    }
-
-    return this.appliedChanges.get(key);
-  }
-
-  markApplied() {
-    for (const key of this.dirtyKeys) {
-      const oplogEntry = this.#resolveLatest(key.formatted);
-      if (oplogEntry == null) {
-        this.appliedChanges.delete(key.formatted);
-      } else {
-        this.appliedChanges.set(key.formatted, oplogEntry);
-      }
-    }
-
-    this.#dirtyKeys.clear();
-  }
-}
-
-class OplogEntry {
-  constructor(
-    readonly id: bigint,
-    readonly key: RowKey | null,
-    readonly subkey: string,
-    readonly data: OplogData | undefined
-  ) {}
-
-  static fromJson(source: OplogEntryJSON): OplogEntry {
-    const id = BigInt(source.op_id);
-    const data = source.data ? new OplogData(source.data) : undefined;
-    const key = source.object_type && source.object_id ? new RowKey(source.object_type, source.object_id) : null;
-
-    return new OplogEntry(id, key, source.subkey ?? '', data);
-  }
-}
-
-export class RowKey {
-  readonly formatted: string;
-
-  constructor(
-    readonly table: string,
-    readonly rowid: string
-  ) {
-    this.formatted = `${table}/${rowid}`;
-  }
-}
-
-class OplogData {
-  #parsedData?: Record<string, unknown>;
-
-  constructor(readonly data: string) {}
-
-  parsed(): Record<string, unknown> {
-    if (this.#parsedData) {
-      return this.#parsedData;
-    }
-
-    return (this.#parsedData = JSON.parse(this.data));
   }
 }

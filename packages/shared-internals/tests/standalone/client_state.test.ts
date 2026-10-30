@@ -1,5 +1,6 @@
 import { DownloadChanges, DownloadEvent, LocalWriteState } from '../../src/standalone';
-import { DownloadClientState, RowKey } from '../../src/standalone/buckets';
+import { DownloadClientState } from '../../src/standalone/client_state';
+import { RowKey } from '../../src/standalone/oplog';
 import { OpTypeJSON as OpType } from '../../src/standalone/sync_protocol';
 
 import { describe, expect, test } from 'vitest';
@@ -105,10 +106,60 @@ downloadClientTest('does not track rows for CLEAR operations', ({ client }) => {
   client.pushData({ bucket: 'a', rowId: '', op: 'CLEAR', objectId: undefined, objectType: '', data: undefined });
   expect(client.pushCheckpointComplete()).toStrictEqual([updatedRows({ items: { 'row-0': null } })]);
 
-  // Restarting marks all known rows as updated, which must not include a row for the CLEAR operation.
+  // Restarting marks all known rows as updated, which must not include a row for the CLEAR operation. row-0 has been
+  // removed by the CLEAR, so it's no longer tracked either.
   client.state = new DownloadClientState(client.localWrites, client.state);
   client.pushCheckpoint(2n, []);
-  expect(client.pushCheckpointComplete()).toStrictEqual([updatedRows({ items: { 'row-0': null } })]);
+  expect(client.pushCheckpointComplete()).toStrictEqual([updatedRows({})]);
+});
+
+describe('row state', () => {
+  downloadClientTest('is dropped once removed in all buckets', ({ client }) => {
+    client.pushCheckpoint(4n, [{ name: 'a' }, { name: 'b' }]);
+    client.putRow('a', 'row-0', { col: 'a' });
+    client.putRow('b', 'row-0', { col: 'b' });
+    client.pushData({ bucket: 'a', rowId: 'row-0', op: 'REMOVE', objectId: 'row-0', data: undefined });
+    expect(client.pushCheckpointComplete()).toStrictEqual([updatedRows({ items: { 'row-0': null } })]);
+
+    // Still referenced by a PUT in b, so a restart marks it as updated.
+    client.state = new DownloadClientState(client.localWrites, client.state);
+    client.pushCheckpoint(4n, [{ name: 'a' }, { name: 'b' }]);
+    client.pushData({ bucket: 'b', rowId: 'row-0', op: 'REMOVE', objectId: 'row-0', data: undefined });
+    expect(client.pushCheckpointComplete()).toStrictEqual([updatedRows({ items: { 'row-0': null } })]);
+
+    // Now removed everywhere, so no longer tracked.
+    client.state = new DownloadClientState(client.localWrites, client.state);
+    client.pushCheckpoint(4n, []);
+    expect(client.pushCheckpointComplete()).toStrictEqual([updatedRows({})]);
+  });
+
+  downloadClientTest('is kept while removal is pending in other priority', ({ client }) => {
+    client.pushCheckpoint(4n, priorityBuckets);
+    client.putRow('prio1', 'row-0', { col: 'hi' });
+    client.putRow('prio2', 'row-0', { col: 'hi' });
+    expect(client.pushCheckpointComplete()).toStrictEqual([updatedRows({ items: { 'row-0': { col: 'hi' } } })]);
+
+    client.pushCheckpoint(6n, priorityBuckets);
+    client.pushData({ bucket: 'prio1', rowId: 'row-0', op: 'REMOVE', objectId: 'row-0', data: undefined });
+    client.pushData({ bucket: 'prio2', rowId: 'row-0', op: 'REMOVE', objectId: 'row-0', data: undefined });
+    expect(client.pushCheckpointComplete(1)).toStrictEqual([updatedRows({ items: { 'row-0': null } }, 1)]);
+    // The row is still referenced by prio2, so the full checkpoint resolves it again.
+    expect(client.pushCheckpointComplete()).toStrictEqual([updatedRows({ items: { 'row-0': null } })]);
+
+    client.state = new DownloadClientState(client.localWrites, client.state);
+    client.pushCheckpoint(6n, []);
+    expect(client.pushCheckpointComplete()).toStrictEqual([updatedRows({})]);
+  });
+
+  downloadClientTest('can be tracked again after being dropped', ({ client }) => {
+    client.pushCheckpoint(3n, [{ name: 'a' }]);
+    client.putRow('a', 'row-0', { col: 'a' });
+    client.pushData({ bucket: 'a', rowId: 'row-0', op: 'REMOVE', objectId: 'row-0', data: undefined });
+    expect(client.pushCheckpointComplete()).toStrictEqual([updatedRows({ items: { 'row-0': null } })]);
+
+    client.putRow('a', 'row-0', { col: 'again' });
+    expect(client.pushCheckpointComplete()).toStrictEqual([updatedRows({ items: { 'row-0': { col: 'again' } } })]);
+  });
 });
 
 downloadClientTest('does not publish until reaching checkpoint', ({ client }) => {
