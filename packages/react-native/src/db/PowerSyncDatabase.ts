@@ -34,6 +34,10 @@ class ReactNativePowerSyncDatabase extends BasePowerSyncDatabase<ReactNativeData
     super(options);
   }
 
+  get sdkName(): string {
+    return '@powersync/react-native';
+  }
+
   async _initialize(): Promise<void> {}
 
   protected override openDBAdapter(): DBAdapter {

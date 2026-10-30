@@ -118,13 +118,13 @@ async function unsubscribe(s: StreamState) {
     <div v-else class="space-y-1.5">
       <div v-for="s in results" :key="streamKey(s)" class="rounded-lg border bg-card px-2.5 py-1.5">
         <!-- Top row: name · params · kind · active/inactive · TTL · unsubscribe -->
-        <div class="flex items-center gap-2 text-xs">
+        <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
           <IconStream class="size-3.5 shrink-0 text-muted-foreground" />
           <span class="max-w-[11rem] shrink-0 truncate font-mono font-medium" :title="s.name ?? undefined">{{
             s.name
           }}</span>
           <span
-            class="min-w-0 flex-1 truncate font-mono text-muted-foreground"
+            class="min-w-0 flex-1 truncate font-mono text-muted-foreground @max-md:basis-full @max-md:order-last"
             :title="s.params ? formatParams(s.params) : undefined"
             >{{ s.params ? formatParams(s.params) : '' }}</span
           >
@@ -150,7 +150,7 @@ async function unsubscribe(s: StreamState) {
         </div>
 
         <!-- Second level: priority · synced · progress -->
-        <div class="mt-1 flex items-center gap-3 text-[11px] text-muted-foreground">
+        <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
           <span class="shrink-0 rounded bg-muted px-1.5 py-0.5 font-medium tabular-nums">P{{ s.priority ?? '—' }}</span>
           <span class="shrink-0"
             >Synced
@@ -158,7 +158,7 @@ async function unsubscribe(s: StreamState) {
               s.hasSynced ? formatPrecise(s.lastSyncedAt) : 'pending'
             }}</span></span
           >
-          <div v-if="s.progress" class="flex min-w-0 flex-1 items-center gap-2">
+          <div v-if="s.progress" class="flex min-w-32 flex-1 items-center gap-2">
             <div class="h-1 min-w-0 flex-1 overflow-hidden rounded-full bg-muted">
               <div
                 class="h-full rounded-full bg-primary"
@@ -181,7 +181,12 @@ async function unsubscribe(s: StreamState) {
       </header>
       <div class="space-y-2 p-3">
         <div class="flex flex-wrap items-center gap-2">
-          <AutocompleteInput v-model="name" :options="streamNames" placeholder="stream name" class="w-40" />
+          <AutocompleteInput
+            v-model="name"
+            :options="streamNames"
+            placeholder="stream name"
+            class="w-40 @max-md:w-full"
+          />
           <input
             v-model="paramsText"
             placeholder='params JSON e.g. {"id":1}'

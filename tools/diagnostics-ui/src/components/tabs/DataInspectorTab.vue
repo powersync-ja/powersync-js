@@ -54,6 +54,13 @@ async function run() {
   }
 }
 
+// Narrow panels pick a table from a menu instead of the side list.
+function onPickObject(event: Event) {
+  const select = event.target as HTMLSelectElement;
+  if (select.value) selectObject(select.value);
+  select.value = '';
+}
+
 function selectObject(name: string) {
   sql.value = `SELECT * FROM "${name}" LIMIT 100;`;
   run();
@@ -68,7 +75,7 @@ onMounted(() => {
 <template>
   <div class="flex h-full min-h-0">
     <!-- Object tree: views + tables -->
-    <aside class="flex w-52 shrink-0 flex-col border-r">
+    <aside class="hidden w-52 shrink-0 flex-col border-r @xl:flex">
       <div class="p-2"><SearchInput v-model="query" placeholder="Search tables & views…" /></div>
       <div class="min-h-0 flex-1 overflow-auto px-1 pb-2 text-xs">
         <template v-if="views.length">
@@ -108,12 +115,25 @@ onMounted(() => {
       <div class="space-y-2 border-b p-2">
         <SqlEditor v-model="sql" placeholder="Enter SQL — ⌘/Ctrl+Enter to run" @run="run" />
         <div class="flex items-center gap-3 text-xs">
+          <select
+            class="h-7 min-w-0 max-w-44 rounded-md border bg-background px-1.5 text-xs text-foreground @xl:hidden"
+            aria-label="Browse a table or view"
+            @change="onPickObject"
+          >
+            <option value="">Browse…</option>
+            <optgroup v-if="views.length" label="Views">
+              <option v-for="o in views" :key="o.name" :value="o.name">{{ o.name }}</option>
+            </optgroup>
+            <optgroup v-if="tables.length" label="Tables">
+              <option v-for="o in tables" :key="o.name" :value="o.name">{{ o.name }}</option>
+            </optgroup>
+          </select>
           <Button size="sm" :disabled="running" @click="run">
             <component :is="running ? IconLoading : IconRun" :class="['size-3.5', running && 'animate-spin']" />
             {{ running ? 'Running…' : 'Run' }}
           </Button>
-          <span class="text-muted-foreground">⌘/Ctrl+Enter</span>
-          <span v-if="result && !error" class="tabular-nums text-muted-foreground">{{ result.rows.length }} rows</span>
+          <span class="hidden text-muted-foreground @xl:inline">⌘/Ctrl+Enter</span>
+          <span v-if="result && !error" class="whitespace-nowrap tabular-nums text-muted-foreground">{{ result.rows.length }} rows</span>
           <span v-if="error" class="truncate text-destructive" :title="error">{{ error }}</span>
         </div>
       </div>

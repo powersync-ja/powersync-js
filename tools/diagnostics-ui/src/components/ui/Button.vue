@@ -29,7 +29,7 @@ const sizeClass = computed(() => ({ sm: 'h-7 px-2 text-xs', md: 'h-9 px-3 text-s
     :disabled="disabled"
     :class="
       cn(
-        'inline-flex items-center justify-center gap-1.5 rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50',
+        'inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50',
         variantClass,
         sizeClass
       )

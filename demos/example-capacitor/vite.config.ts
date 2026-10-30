@@ -1,4 +1,6 @@
+import { fileURLToPath, URL } from 'url';
 import { defineConfig } from 'vite';
+import powersyncDevtools from '@powersync/diagnostics/vite';
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -6,7 +8,7 @@ export default defineConfig({
   build: {
     outDir: '../dist',
     rollupOptions: {
-      input: 'src/index.html'
+      input: fileURLToPath(new URL('./src/index.html', import.meta.url))
     },
     emptyOutDir: true
   },
@@ -18,5 +20,16 @@ export default defineConfig({
   },
   worker: {
     format: 'es'
-  }
+  },
+  server: {
+    // Reachable from a device or emulator during live reload.
+    host: true,
+    port: 5174,
+    strictPort: true,
+    // The local backend sends no CORS headers, so the app reaches it through the dev server.
+    proxy: { '/api': 'http://localhost:6060' }
+  },
+  // Vite DevTools with the PowerSync dock, on the dev server only.
+  devtools: { apply: 'serve' },
+  plugins: [powersyncDevtools()]
 });

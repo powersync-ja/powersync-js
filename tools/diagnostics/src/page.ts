@@ -11,9 +11,7 @@ import {
   type SdkIntegration
 } from '@powersync/diagnostics-core';
 import { observeRegisteredDatabases } from '@powersync/web/devtools';
-import { createIntegration } from './agent.js';
-
-const SDK = '@powersync/web';
+import { createIntegration, databaseSdk } from './agent.js';
 
 /**
  * Serves the app's first live database to any iframe that asks. Call once per page.
@@ -29,7 +27,7 @@ export function serveDiagnostics(): () => void {
     for (const stop of stops) stop();
     stops.clear();
     void integration?.close();
-    integration = next ? createIntegration(next, SDK) : null;
+    integration = next ? createIntegration(next, databaseSdk(next, '@powersync/web')) : null;
   });
 
   const onMessage = (event: MessageEvent) => {

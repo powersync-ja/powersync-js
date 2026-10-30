@@ -6,7 +6,7 @@ import type { McpSetting } from 'devframe';
 import { createDevServer } from 'devframe/adapters/dev';
 import { buildOtpAuthUrl } from 'devframe/node/auth';
 import type { CommonPowerSyncDatabase } from '@powersync/common';
-import { createIntegration } from './agent.js';
+import { createIntegration, databaseSdk } from './agent.js';
 import { definition, registerIntegration, setSetupSdks } from './definition.js';
 
 export interface EnableDiagnosticsOptions {
@@ -24,7 +24,7 @@ export interface EnableDiagnosticsOptions {
   auth?: boolean;
   /** Open the browser once the server is up. @default false */
   open?: boolean;
-  /** A label for the SDK, shown in the UI. @default '@powersync/node' */
+  /** A label for the SDK, shown in the UI. @default the database's SDK name */
   sdk?: string;
   /** The source id shown in the UI. @default 'node-1' */
   id?: string;
@@ -67,7 +67,7 @@ export async function enablePowerSyncDiagnostics(
   db: CommonPowerSyncDatabase,
   options: EnableDiagnosticsOptions = {}
 ): Promise<DiagnosticsServer> {
-  const sdk = options.sdk ?? '@powersync/node';
+  const sdk = options.sdk ?? databaseSdk(db, '@powersync/node');
   const detach = await registerIntegration(options.id ?? 'node-1', createIntegration(db, sdk), sdk);
   setSetupSdks(['node']);
   const auth = options.auth ?? true;

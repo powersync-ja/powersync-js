@@ -2,7 +2,7 @@
 
 interface ImportMetaEnv {
   readonly VITE_POWERSYNC_URL: string;
-  readonly VITE_PUBLIC_POWERSYNC_TOKEN: string;
+  readonly VITE_BACKEND_URL?: string;
 }
 
 interface ImportMeta {

@@ -81,6 +81,10 @@ export class WebPowerSyncDatabase extends BasePowerSyncDatabase<WebPowerSyncData
     registerDatabase(this);
   }
 
+  get sdkName(): string {
+    return '@powersync/web';
+  }
+
   async _initialize(): Promise<void> {
     if (this.database instanceof AsyncDbAdapter) {
       /**

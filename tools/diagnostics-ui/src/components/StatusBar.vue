@@ -65,7 +65,9 @@ const lastSynced = computed(() =>
 </script>
 
 <template>
-  <div class="flex items-center gap-3 border-b bg-card/40 px-3 py-1 text-xs tabular-nums text-muted-foreground">
+  <div
+    class="flex flex-wrap items-center gap-x-3 gap-y-0.5 whitespace-nowrap border-b bg-card/40 px-3 py-1 text-xs tabular-nums text-muted-foreground"
+  >
     <!-- Primary connection state -->
     <span :class="['inline-flex items-center gap-1.5 font-medium', toneClass[primary.tone]]">
       <component :is="primary.icon" :class="['size-3.5 shrink-0', primary.spin && 'animate-spin']" />
@@ -81,12 +83,13 @@ const lastSynced = computed(() =>
       {{ activity.label }}
     </span>
 
-    <span class="mx-0.5 h-3.5 w-px bg-border" aria-hidden="true" />
+    <span class="mx-0.5 hidden h-3.5 w-px bg-border @sm:inline-block" aria-hidden="true" />
 
     <!-- Aggregate stats -->
     <span class="inline-flex items-center gap-1" title="Buckets · total downloaded operations">
       <IconBuckets class="size-3.5" />
-      {{ formatCompact(bucketCount) }} buckets · {{ formatCompact(totalOps) }} ops
+      {{ formatCompact(bucketCount) }}<span class="hidden @md:inline">&nbsp;buckets</span> ·
+      {{ formatCompact(totalOps) }} ops
     </span>
     <span
       class="inline-flex items-center gap-1"
@@ -94,9 +97,9 @@ const lastSynced = computed(() =>
       title="Local changes waiting to upload (pending CRUD queue)"
     >
       <IconQueue class="size-3.5" />
-      {{ formatCompact(pending) }} to upload
+      {{ formatCompact(pending) }}<span class="hidden @md:inline">&nbsp;to upload</span>
     </span>
-    <span v-if="lastSynced" class="inline-flex items-center gap-1" title="Last synced">
+    <span v-if="lastSynced" class="hidden items-center gap-1 @md:inline-flex" title="Last synced">
       <IconTime class="size-3.5" />
       synced {{ lastSynced }}
     </span>
@@ -104,7 +107,7 @@ const lastSynced = computed(() =>
     <!-- Error detail, pushed right -->
     <span
       v-if="errorText"
-      class="ml-auto inline-flex max-w-[45%] items-center gap-1 truncate text-destructive"
+      class="ml-auto inline-flex max-w-full items-center gap-1 truncate text-destructive @md:max-w-[45%]"
       :title="errorText"
     >
       <IconError class="size-3.5 shrink-0" />
