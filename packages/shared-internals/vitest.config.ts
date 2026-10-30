@@ -1,4 +1,11 @@
-import { defineConfig } from 'vitest/config';
+import { configDefaults, defineConfig } from 'vitest/config';
 
-// Empty config to be part of the vitest workspace
-export default defineConfig({});
+// The standalone client uses recent JavaScript APIs that aren't available on old Node versions. We intentionally target
+// modern runtimes to reduce code size, end users can polyfill if needed.
+const supportsStandaloneClient = Number(process.versions.node.split('.')[0]) >= 26;
+
+export default defineConfig({
+  test: {
+    exclude: supportsStandaloneClient ? configDefaults.exclude : [...configDefaults.exclude, 'tests/standalone/**']
+  }
+});
