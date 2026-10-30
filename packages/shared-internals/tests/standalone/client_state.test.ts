@@ -25,6 +25,13 @@ downloadClientTest('applies changes', ({ client }) => {
 
 downloadClientTest('uses latest row', ({ client }) => {
   client.pushCheckpoint(2n, [{ name: 'a' }, { name: 'b' }]);
+  client.putRow('a', 'first', { foo: 'a' });
+  client.putRow('b', 'first', { foo: 'b' });
+  expect(client.pushCheckpointComplete()).toStrictEqual([updatedRows({ items: { first: { foo: 'b' } } })]);
+});
+
+downloadClientTest('remove in one bucket does not hide put from another', ({ client }) => {
+  client.pushCheckpoint(2n, [{ name: 'a' }, { name: 'b' }]);
   client.pushData({
     bucket: 'a',
     rowId: 'rowid',
@@ -39,7 +46,7 @@ downloadClientTest('uses latest row', ({ client }) => {
     objectId: 'first',
     data: undefined
   });
-  expect(client.pushCheckpointComplete()).toStrictEqual([updatedRows({ items: { first: null } })]);
+  expect(client.pushCheckpointComplete()).toStrictEqual([updatedRows({ items: { first: { foo: 'bar' } } })]);
 });
 
 downloadClientTest('can delete buckets', ({ client }) => {
@@ -119,7 +126,7 @@ describe('row state', () => {
     client.putRow('a', 'row-0', { col: 'a' });
     client.putRow('b', 'row-0', { col: 'b' });
     client.pushData({ bucket: 'a', rowId: 'row-0', op: 'REMOVE', objectId: 'row-0', data: undefined });
-    expect(client.pushCheckpointComplete()).toStrictEqual([updatedRows({ items: { 'row-0': null } })]);
+    expect(client.pushCheckpointComplete()).toStrictEqual([updatedRows({ items: { 'row-0': { col: 'b' } } })]);
 
     // Still referenced by a PUT in b, so a restart marks it as updated.
     client.state = new DownloadClientState(client.localWrites, client.state);
@@ -142,8 +149,8 @@ describe('row state', () => {
     client.pushCheckpoint(6n, priorityBuckets);
     client.pushData({ bucket: 'prio1', rowId: 'row-0', op: 'REMOVE', objectId: 'row-0', data: undefined });
     client.pushData({ bucket: 'prio2', rowId: 'row-0', op: 'REMOVE', objectId: 'row-0', data: undefined });
-    expect(client.pushCheckpointComplete(1)).toStrictEqual([updatedRows({ items: { 'row-0': null } }, 1)]);
-    // The row is still referenced by prio2, so the full checkpoint resolves it again.
+    // The removal in prio2 is still pending, so the row is kept until the full checkpoint.
+    expect(client.pushCheckpointComplete(1)).toStrictEqual([updatedRows({ items: { 'row-0': { col: 'hi' } } }, 1)]);
     expect(client.pushCheckpointComplete()).toStrictEqual([updatedRows({ items: { 'row-0': null } })]);
 
     client.state = new DownloadClientState(client.localWrites, client.state);

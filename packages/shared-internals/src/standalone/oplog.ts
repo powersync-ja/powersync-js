@@ -94,12 +94,12 @@ export class Bucket {
         break;
       case 'PUT':
       case 'REMOVE':
-        this.#addToChecksum(opChecksum);
         const key = data.key;
         if (key == null) {
           throw new RestartSyncError('Expected row key');
         }
 
+        this.#addToChecksum(opChecksum);
         const row = oplog.rowState(key);
         row.bucketState(this).bySubkey.set(data.subkey, data);
         this.rows.add(row);
@@ -136,20 +136,24 @@ export class RowState {
    * Finds the latest oplog entry for this row across all buckets.
    *
    * Pending changes are only considered for buckets included in the target priority, other buckets use their applied
-   * state. Unlike the core extension (which doesn't store REMOVE operations), a REMOVE in one bucket also hides older
-   * PUTs from other buckets.
+   * state. Like the core extension, the row exists as long as any bucket has a PUT for it: A REMOVE in one bucket
+   * doesn't hide PUTs from other buckets.
    */
   resolve(targetPriority?: number): OplogEntry | undefined {
-    let latestEntry: OplogEntry | undefined;
+    let latestPut: OplogEntry | undefined;
+    let latestRemove: OplogEntry | undefined;
     for (const [bucket, state] of this.buckets) {
       const entry = targetPriority == null || bucket.priority <= targetPriority ? state.resolveLatest() : state.applied;
+      if (entry == null) continue;
 
-      if (entry && (latestEntry == null || entry.id > latestEntry.id)) {
-        latestEntry = entry;
+      if (entry.data != null) {
+        if (latestPut == null || entry.id > latestPut.id) latestPut = entry;
+      } else {
+        if (latestRemove == null || entry.id > latestRemove.id) latestRemove = entry;
       }
     }
 
-    return latestEntry;
+    return latestPut ?? latestRemove;
   }
 
   /**

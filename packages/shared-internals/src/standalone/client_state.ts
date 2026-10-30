@@ -89,8 +89,10 @@ export class DownloadClientState {
     } else if ('checkpoint_complete' in line) {
       this.#checkpointComplete = true;
       return this.#syncLocal();
-    } else {
+    } else if ('partial_checkpoint_complete' in line) {
       return this.#syncLocal(line.partial_checkpoint_complete.priority);
+    } else {
+      // Ignore unknown sync line.
     }
 
     return [];
@@ -117,7 +119,7 @@ export class DownloadClientState {
       bucketsToDelete.delete(bucket);
 
       const resolvedBucket = buckets.getOrInsertComputed(bucket, () => new Bucket(bucket));
-      if (entry.priority != null) resolvedBucket.priority = entry.priority;
+      resolvedBucket.priority = entry.priority ?? 3;
     }
 
     for (const remaining of bucketsToDelete) {

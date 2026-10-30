@@ -22,13 +22,14 @@ import { POWERSYNC_JS_VERSION } from '../version.js';
  * state management framework like TanStack DB.
  */
 export class PowerSyncClient {
-  #state: DownloadClientState | null = null;
+  #state: DownloadClientState;
   #localWrites: LocalWriteState;
   #fetch: typeof fetch;
   readonly #notifyUploadComplete = new Set<() => void>();
 
   constructor({ localWrites, fetch = globalThis.fetch.bind(globalThis) }: ClientOptions) {
     this.#localWrites = localWrites;
+    this.#state = new DownloadClientState(localWrites);
     this.#fetch = fetch;
   }
 
@@ -69,7 +70,7 @@ export class PowerSyncClient {
   }
 
   markUpdated(table: string, id: string) {
-    this.#state?.addToUpdatedRows(new RowKey(table, id));
+    this.#state.addToUpdatedRows(new RowKey(table, id));
   }
 
   /**
@@ -98,28 +99,9 @@ export class PowerSyncClient {
     const abort = new AbortController();
     const signal = request.signal != null ? AbortSignal.any([request.signal, abort.signal]) : abort.signal;
 
-    const state = (this.#state ??= new DownloadClientState(this.#localWrites));
+    const state = this.#state;
 
-    const response = await this.#fetch(this.#resolveUri(request, 'sync/stream'), {
-      method: 'POST',
-      signal,
-      body: JSON.stringify(
-        this.#state.prepareConnectRequest(
-          request.clientId,
-          request.parameters ?? {},
-          request.streams ?? { include_defaults: true, subscriptions: [] },
-          request.metadata
-        )
-      ),
-      headers: {
-        ...this.#defaultHeaders(request),
-        Accept: 'application/x-ndjson'
-      }
-    });
-    await this.#checkResponse(response);
-    yield { type: 'headersReceived' };
-
-    const lines = extractJsonLines(response.body![Symbol.asyncIterator](), new TextDecoder());
+    let lines: ReturnType<typeof extractJsonLines> | undefined;
 
     // Whether we've received a signal to retry applying the last checkpoint, sent after uploads are completed.
     let checkpointRetryRequested = false;
@@ -148,6 +130,27 @@ export class PowerSyncClient {
     let idleTimeout: ReturnType<typeof setTimeout> | undefined;
 
     try {
+      const response = await this.#fetch(this.#resolveUri(request, 'sync/stream'), {
+        method: 'POST',
+        signal,
+        body: JSON.stringify(
+          state.prepareConnectRequest(
+            request.clientId,
+            request.parameters ?? {},
+            request.streams ?? { include_defaults: true, subscriptions: [] },
+            request.metadata
+          )
+        ),
+        headers: {
+          ...this.#defaultHeaders(request),
+          Accept: 'application/x-ndjson'
+        }
+      });
+      await this.#checkResponse(response);
+
+      lines = extractJsonLines(response.body![Symbol.asyncIterator](), new TextDecoder());
+      yield { type: 'headersReceived' };
+
       while (true) {
         if (checkpointRetryRequested) {
           checkpointRetryRequested = false;
@@ -182,7 +185,7 @@ export class PowerSyncClient {
       // the idle timeout) would also reject without being awaited.
       nextLine?.catch(() => {});
       try {
-        while (!(await lines.next()).done) {
+        while (lines != null && !(await lines.next()).done) {
           // Wait for the response to complete or throw after aborting.
         }
       } catch {
