@@ -1,5 +1,35 @@
 # @powersync/nuxt
 
+## 2.1.0
+
+### Minor Changes
+
+- 109de2c: Add `Authenticator` and `MutationUploader` types, and overloads of `connect()` allowing to connect in download-only and upload-only mode.
+
+### Patch Changes
+
+- Updated dependencies [bf54805]
+- Updated dependencies [325cb95]
+- Updated dependencies [109de2c]
+- Updated dependencies [7600425]
+- Updated dependencies [d1cec54]
+- Updated dependencies [6f05fc7]
+- Updated dependencies [9be90b3]
+- Updated dependencies [7bb0f27]
+- Updated dependencies [11a6bf3]
+- Updated dependencies [7d5255f]
+- Updated dependencies [d6a9cb4]
+- Updated dependencies [d30ad72]
+- Updated dependencies [7d5255f]
+- Updated dependencies [325cb95]
+- Updated dependencies [59f1618]
+- Updated dependencies [9fe7e5f]
+  - @powersync/web@2.6.0
+  - @powersync/shared-internals@1.5.0
+  - @powersync/diagnostics@0.0.3
+  - @powersync/kysely-driver@2.0.3
+  - @powersync/vue@0.7.0
+
 ## 2.0.0
 
 ### Major Changes

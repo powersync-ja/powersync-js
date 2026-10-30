@@ -1,5 +1,17 @@
 # @powersync/common
 
+## 2.5.0
+
+### Minor Changes
+
+- 109de2c: Add `Authenticator` and `MutationUploader` types, and overloads of `connect()` allowing to connect in download-only and upload-only mode.
+- d6a9cb4: Support [direct tables](https://docs.powersync.com/client-sdks/advanced/performance-optimization#managed-views-vs-managed-tables).
+- 59f1618: Add `connectTimeoutMs` (default 30s) to time out checkpoint requests and HTTP sync stream connections, and cancel checkpoint requests on disconnect.
+
+### Patch Changes
+
+- 9be90b3: Fix recovery from failing commits.
+
 ## 2.4.0
 
 ### Minor Changes

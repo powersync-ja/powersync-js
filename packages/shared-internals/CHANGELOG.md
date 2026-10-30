@@ -1,5 +1,26 @@
 # @powersync/shared-internals
 
+## 1.5.0
+
+### Minor Changes
+
+- d6a9cb4: Support [direct tables](https://docs.powersync.com/client-sdks/advanced/performance-optimization#managed-views-vs-managed-tables).
+
+### Patch Changes
+
+- 325cb95: Add an `sdkName` getter to the database that names the SDK package, for development tooling.
+- 7600425: Fix differential watched queries (and `useQuery` with a `rowComparator`) not emitting results when the same rows are returned in a different order.
+- d1cec54: Clear `ConnectionManager`'s pending sync implementation creation and disconnect when they fail, so later `disconnect()` and `connect()` calls run again instead of failing on the earlier error.
+- 11a6bf3: Keep the sync loop retrying when an iteration rejects with `undefined` or `null` after a connection change, instead of stopping with a `TypeError`.
+- 7d5255f: Support version 0.5.4 of the PowerSync SQLite core extension.
+- 59f1618: Add `connectTimeoutMs` (default 30s) to time out checkpoint requests and HTTP sync stream connections, and cancel checkpoint requests on disconnect.
+- 9fe7e5f: Fix `connect()` and `disconnect()` hanging on React Native when a WebSocket sync connection is closed or aborted before it has opened.
+- Updated dependencies [109de2c]
+- Updated dependencies [9be90b3]
+- Updated dependencies [d6a9cb4]
+- Updated dependencies [59f1618]
+  - @powersync/common@2.5.0
+
 ## 1.4.0
 
 ### Minor Changes
