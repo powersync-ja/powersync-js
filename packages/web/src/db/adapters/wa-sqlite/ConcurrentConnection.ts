@@ -14,16 +14,19 @@ import { requestNavigatorLock } from '../../../shared/locks.js';
  */
 export class ConcurrentSqliteConnection {
   /**
-   * @param needsNavigatorLocks Whether access to the database needs an additional navigator lock guard.
-   *
-   * While {@link ConcurrentSqliteConnection} prevents concurrent access to a database _connection_, it's possible we
-   * might have multiple connections to the same physical database (e.g. if multiple tabs use dedicated workers).
-   * In those setups, we use navigator locks instead of an internal mutex to guard access..
+   * The {@link SimpleOpfsFileSystem} used by the inner connection, if any. SQLite closing its files doesn't close the
+   * sync access handles of that file system, so we do that after closing the connection.
    */
+  simpleOpfsVfs: SimpleOpfsFileSystem | null = null;
+
   constructor(
     private readonly inner: RawSqliteConnection,
     /**
      * A mutex ensuring at most one {@link ConnectionLeaseToken} can exist for this connection at a time.
+     *
+     * While {@link ConcurrentSqliteConnection} prevents concurrent access to a database _connection_, it's possible we
+     * might have multiple connections to the same physical database (e.g. if multiple tabs use dedicated workers).
+     * In those setups, we use navigator locks instead of an internal mutex to guard access.
      */
     private readonly mutex: ConnectionMutex
   ) {}
@@ -66,12 +69,21 @@ export class ConcurrentSqliteConnection {
     return token;
   }
 
-  async close(): Promise<void> {
-    const returnMutex = await this.acquireMutex();
+  /**
+   * @param returnMutex If the caller already holds the mutex (from {@link acquireMutex}), the function returning it.
+   */
+  async close(returnMutex?: UnlockFn): Promise<void> {
+    returnMutex ??= await this.acquireMutex();
     try {
       await this.inner.close();
     } finally {
+      this.simpleOpfsVfs?.close();
       returnMutex();
+    }
+
+    if (this.mutex instanceof LazyNavigatorMutex) {
+      // We won't use this connection again, so don't wait for another tab to steal the navigator locks.
+      await this.mutex.releaseNavigatorLocks();
     }
   }
 }

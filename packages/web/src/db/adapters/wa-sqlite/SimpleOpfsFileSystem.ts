@@ -49,9 +49,17 @@ export class SimpleOpfsFileSystem extends FacadeVFS {
 
   jOpen(zName: string | null, fileId: number, flags: number, pOutFlags: DataView): number {
     if (flags & VFS.SQLITE_OPEN_MAIN_DB) {
+      if (zName != '/database') {
+        return VFS.SQLITE_CANTOPEN;
+      }
+
       this.#openedFiles.set(fileId, database);
       return VFS.SQLITE_OK;
     } else if (flags & VFS.SQLITE_OPEN_MAIN_JOURNAL) {
+      if (zName != '/database-journal') {
+        return VFS.SQLITE_CANTOPEN;
+      }
+
       this.#openedFiles.set(fileId, databaseJournal);
       return VFS.SQLITE_OK;
     } else {
@@ -179,7 +187,7 @@ export class SimpleOpfsFileSystem extends FacadeVFS {
     readWriteUnsafe: boolean,
     getRoot?: () => Promise<FileSystemDirectoryHandle>
   ): DirectoryResolver {
-    const url = new URL(`file:/${name}`);
+    const url = new URL(name, 'file://');
 
     return async () => {
       let dir = await (getRoot ? getRoot() : navigator.storage.getDirectory());

@@ -39,7 +39,7 @@ const exposedDatabaseFunctions: OpenWorkerConnection = {
 };
 
 function trySpawningNestedWorker(): Promise<Comlink.Remote<OpenWorkerConnection>> {
-  const fork = new Worker(location.href);
+  const fork = new Worker(location.href, { type: 'module' });
 
   return new Promise((resolve, reject) => {
     let done = false;

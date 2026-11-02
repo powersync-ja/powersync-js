@@ -9,7 +9,7 @@ import { generateTabCloseSignal } from '../../../shared/locks.js';
 import { AsyncDbAdapter, PoolConnection } from '../AsyncWebAdapter.js';
 import { RawWaSqliteDatabaseOptions, SimpleOpfsMode } from './RawSqliteConnection.js';
 import { maxPathNameLength, resolveAndValidateOptions } from '../resolveAndValidateOptions.js';
-import { connectToExistingWorker, connectToWorker, WorkerConnection } from '../../../worker/client.js';
+import { connectToExistingWorker, connectToWorker, isSharedWorker, WorkerConnection } from '../../../worker/client.js';
 
 export interface WASQLiteOpenFactoryOptions {
   open: WebSQLOpenOptions;
@@ -138,7 +138,7 @@ export class WASQLiteOpenFactory implements SQLOpenFactory {
 
       const openRawWorker = async (shared: boolean) => {
         if (typeof optionsDbWorker == 'function') {
-          const worker = optionsDbWorker(this.options);
+          const worker = optionsDbWorker({ ...this.options, shared });
           return connectToExistingWorker(worker, this.logger, 'database');
         } else {
           return connectToWorker({
@@ -162,6 +162,13 @@ export class WASQLiteOpenFactory implements SQLOpenFactory {
 
       const tryOpenSimpleShared = async (): Promise<DatabaseClient | null> => {
         const shared = await openRawWorker(true);
+        if (!isSharedWorker(shared.worker)) {
+          // A custom worker factory might not respect the `shared` option, and dedicated workers can't share the
+          // database across tabs. Fall back to the modes relying on navigator locks.
+          shared.close();
+          return null;
+        }
+
         const sharedSource = Comlink.wrap<OpenWorkerConnection>(shared.endpoint);
         const sharedFeatures = await sharedSource.featureDetection();
 

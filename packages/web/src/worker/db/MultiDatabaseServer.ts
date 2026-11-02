@@ -83,6 +83,7 @@ export class MultiDatabaseServer {
     const { filename, readonly, vfs } = options;
 
     let locks: ConnectionMutex;
+    let needsNavigatorLocks;
     if (
       isSharedWorker ||
       readonly ||
@@ -94,15 +95,17 @@ export class MultiDatabaseServer {
       // fine). In-memory databases either run in a shared worker or aren't shared across tabs at all, so the internal
       // lock is enough.
       locks = new Mutex();
+      needsNavigatorLocks = false;
     } else if (vfs == WASQLiteVFS.SimpleOpfsVFS && options.simpleMode != 'rw-unsafe') {
       // Use navigator locks that also release sync access handles when there's contention.
       locks = new LazyNavigatorMutex(`db-lock-${options.filename}`);
+      needsNavigatorLocks = true;
     } else {
       // We need navigator locks, but these don't need to coordinate with the file system.
       locks = new NavigatorMutex(`db-lock-${options.filename}`);
+      needsNavigatorLocks = true;
     }
 
-    const needsNavigatorLocks = !(isSharedWorker || readonly || vfs == WASQLiteVFS.InMemoryVfs);
     const activeDatabases = this.#activeDatabases;
 
     async function openDatabase() {
@@ -117,14 +120,17 @@ export class MultiDatabaseServer {
         const returnLease = await withSafeConcurrency.acquireMutex();
         try {
           const { module, vfs } = await loadModuleAndVfs(options);
-          if (locks instanceof LazyNavigatorMutex) {
-            locks.linkedVfs = vfs as unknown as SimpleOpfsFileSystem;
+          if (options.vfs == WASQLiteVFS.SimpleOpfsVFS) {
+            withSafeConcurrency.simpleOpfsVfs = vfs as unknown as SimpleOpfsFileSystem;
+            if (locks instanceof LazyNavigatorMutex) {
+              locks.linkedVfs = withSafeConcurrency.simpleOpfsVfs;
+            }
           }
 
           await connection.initWithModule(module, vfs);
         } catch (e) {
-          returnLease();
-          await connection.close();
+          // Close the connection and its file handles while we still have exclusive access.
+          await withSafeConcurrency.close(returnLease);
           throw e;
         }
         returnLease();

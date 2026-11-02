@@ -78,6 +78,20 @@ describe('Simple OPFS', () => {
         await db.execute('INSERT INTO foo VALUES (?)', [data]);
       }
     });
+
+    it('can re-open closed database', async () => {
+      // Keep another database open, so that a shared worker (and its nested worker) stays alive when closing the first
+      // database. This path is not tested on Chrome.
+      await openDatabase(crypto.randomUUID()).init();
+
+      const name = crypto.randomUUID();
+      let db = openDatabase(name);
+      await db.execute('INSERT INTO customers (id, name, email) VALUES (uuid(), ?, ?)', ['test', 'test@example.org']);
+      await db.close();
+
+      db = openDatabase(name);
+      expect(await db.getAll('SELECT name FROM customers')).toEqual([{ name: 'test' }]);
+    });
   });
 });
 

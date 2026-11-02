@@ -52,9 +52,6 @@ export enum WASQLiteVFS {
    * 3. Close and open fallback: On other browsers, file handles are kept open until another tab signals that it needs
    *    access to them. At that point, queued local transactions are awaited before closing the file handles. At the
    *    next database query, the same signal is sent to the other tab before re-opening files locally.
-   *
-   * This VFS comes in three configurations, which the PowerSync SDK selects automatically depending on browser
-   * features.
    */
   SimpleOpfsVFS = 'SimpleOpfsVFS'
 }
