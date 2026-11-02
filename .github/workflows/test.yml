@@ -32,14 +32,14 @@ jobs:
     runs-on: ubuntu-xl
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
       - name: Enable Corepack
         run: corepack enable
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version-file: '.nvmrc'
           cache: pnpm
@@ -60,7 +60,7 @@ jobs:
 
       # Also test oldest Node version we still support (we support everything that isn't EOL).
       - name: Setup Node.js 22
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: 22
 

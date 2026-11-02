@@ -14,7 +14,7 @@ jobs:
       react_native_simulator_should_run: ${{ steps.check.outputs.react_native_simulator_should_run }}
       capacitor_should_run: ${{ steps.check.outputs.capacitor_should_run }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -43,7 +43,7 @@ jobs:
     env:
       AVD_NAME: ubuntu-avd-x86_64-31
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -56,7 +56,7 @@ jobs:
       - name: Enable Corepack
         run: corepack enable
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version-file: '.nvmrc'
           cache: pnpm
@@ -99,7 +99,7 @@ jobs:
       TEST_PLATFORM: android
       TEST_TARGET: emulator-5554
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -115,7 +115,7 @@ jobs:
         run: corepack enable
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version-file: '.nvmrc'
           cache: pnpm
@@ -165,7 +165,7 @@ jobs:
     timeout-minutes: 30
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -175,7 +175,7 @@ jobs:
           xcode-version: latest-stable
 
       - name: CocoaPods Cache
-        uses: actions/cache@v3
+        uses: actions/cache@v6
         id: cocoapods-cache
         with:
           path: |
@@ -183,7 +183,7 @@ jobs:
           key: ${{ runner.os }}-${{ hashFiles('tools/powersynctests/ios/Podfile.lock') }}
 
       - name: Cache Xcode Derived Data
-        uses: actions/cache@v3
+        uses: actions/cache@v6
         with:
           path: |
             tools/powersynctests/ios/build/*
@@ -194,7 +194,7 @@ jobs:
       - name: Enable Corepack
         run: corepack enable
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version-file: '.nvmrc'
           cache: pnpm
