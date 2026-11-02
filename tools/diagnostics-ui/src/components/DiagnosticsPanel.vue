@@ -105,7 +105,10 @@ export default defineNuxtConfig({
     lang: 'javascript',
     code: `// metro.config.js: enable Rozenite (React Native DevTools plugins).
 const { withRozenite } = require('@rozenite/metro');
-module.exports = withRozenite(config, { enabled: process.env.WITH_ROZENITE === 'true' });
+module.exports = withRozenite(config, {
+  enabled: process.env.WITH_ROZENITE === 'true',
+  projectType: 'expo' // Expo apps with app.config.ts or app.config.js
+});
 
 // App root: dev only, a no-op in production builds.
 import { usePowerSyncDevTools } from '@powersync/diagnostics/react-native';
