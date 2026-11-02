@@ -46,6 +46,41 @@ describe(
   )
 );
 
+describe('Simple OPFS', () => {
+  describe.for([[undefined], ['fallback']])('mode %s', ([mode]) => {
+    function openDatabase(name: string) {
+      return generateTestDb({
+        factory: new WASQLiteOpenFactory({
+          logger: defaultTestLogger,
+          open: {
+            dbFilename: name,
+            vfs: WASQLiteVFS.SimpleOpfsVFS,
+            databaseWorkerLogLevel: defaultLogLevel,
+            simpleMode: mode
+          }
+        }),
+        schema: TEST_SCHEMA
+      });
+    }
+
+    describeBasicTests(() => openDatabase('opfs-simple.db'))();
+
+    it('can use temporary data', async () => {
+      // Provoke SQLite to access temporary files by creating a large temporary table. We want to make sure that the
+      // VFS can forward those as in-memory stubs.
+      const db = openDatabase(crypto.randomUUID());
+
+      await db.execute('PRAGMA temp_store = 1');
+      await db.execute('CREATE TEMP TABLE foo (bar TEXT)');
+      const data = 'new row'.repeat(100);
+
+      for (let i = 0; i < 10_000; i++) {
+        await db.execute('INSERT INTO foo VALUES (?)', [data]);
+      }
+    });
+  });
+});
+
 describe('Basic - with in-memory', () => {
   const defaultOptions = {
     dbFilename: 'in-memory.db',

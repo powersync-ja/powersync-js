@@ -128,6 +128,9 @@ export interface WebSpecificOpenOptions {
    * Uses the default bucket when no option is given.
    */
   storageBucket?: string;
+
+  /** @internal Only used internally for testing */
+  simpleMode?: unknown;
 }
 
 export interface ResolvedWebSQLOpenOptions extends SQLOpenOptions, WebSpecificOpenOptions {}

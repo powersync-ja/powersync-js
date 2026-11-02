@@ -19,6 +19,9 @@ import { ConnectionClosedError } from '@powersync/shared-internals';
 export interface OpenWorkerConnection {
   connect(config: ConnectToMultiDatabaseServerOptions): Promise<ClientConnectionView>;
   connectToExisting(options: { identifier: string; lockName: string }): Promise<ClientConnectionView>;
+
+  featureDetection(): FeatureDetectionResult;
+  spawnNested(): Promise<MessagePort>;
 }
 
 export interface ClientOptions {
@@ -38,6 +41,13 @@ export interface ClientOptions {
    */
   remoteCanCloseUnexpectedly: boolean;
   onClose?: () => void;
+}
+
+export interface FeatureDetectionResult {
+  /** Whether this context can spawn dedicated workers. */
+  readonly worker: boolean;
+  /** Whether the browser supports the `mode:` parameter when opening file handles. */
+  readonly openWithMode: boolean;
 }
 
 /**

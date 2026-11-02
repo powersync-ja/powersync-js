@@ -8,11 +8,28 @@ import { SharedWorkerConnectionRequest } from './SharedWorkerConnectionRequest.j
 import { WorkerClient } from './sync/WorkerClient.js';
 
 const server = new MultiDatabaseServer(createConsoleLogger({ prefix: 'db-worker', minLevel: LogLevels.trace }));
+let nestedWorker: Comlink.Remote<OpenWorkerConnection> | null = null;
 
 const exposedDatabaseFunctions: OpenWorkerConnection = {
   connect: (config) => server.handleConnection(config),
-  connectToExisting: ({ identifier, lockName }) => server.connectToExisting(identifier, lockName)
+  connectToExisting: ({ identifier, lockName }) => server.connectToExisting(identifier, lockName),
+  featureDetection: () => {
+    return {
+      worker: 'Worker' in globalThis,
+      openWithMode: fileSystemSupportsOpenMode()
+    };
+  },
+  spawnNested: async () => {
+    const worker = (nestedWorker ??= Comlink.wrap(new Worker('')));
+    const port = await worker[Comlink.createEndpoint]();
+    return Comlink.transfer(port, [port]);
+  }
 };
+
+function fileSystemSupportsOpenMode(): boolean {
+  // Credits: https://github.com/whatwg/fs/issues/34#issuecomment-1780168010
+  return 'FileSystemSyncAccessHandle' in globalThis && FileSystemSyncAccessHandle.prototype.hasOwnProperty('mode');
+}
 
 if (isSharedWorker) {
   const sharedSyncImplementation = new SharedSyncImplementation();

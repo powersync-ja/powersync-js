@@ -28,7 +28,12 @@ async function bucketDirectory(): Promise<FileSystemDirectoryHandle> {
 }
 
 describe('storageBucket', { sequential: true }, () => {
-  const supportedVfs = [WASQLiteVFS.AccessHandlePoolVFS, WASQLiteVFS.OPFSCoopSyncVFS, WASQLiteVFS.OPFSWriteAheadVFS];
+  const supportedVfs = [
+    WASQLiteVFS.AccessHandlePoolVFS,
+    WASQLiteVFS.OPFSCoopSyncVFS,
+    WASQLiteVFS.OPFSWriteAheadVFS,
+    WASQLiteVFS.SimpleOpfsVFS
+  ];
 
   for (const vfs of supportedVfs) {
     describe.skipIf(!('storageBuckets' in navigator))(vfs, () => {
@@ -42,8 +47,15 @@ describe('storageBucket', { sequential: true }, () => {
         await db.execute('INSERT INTO assets(id, description) VALUES(uuid(), ?)', ['in the bucket']);
         expect(await descriptions(db)).toEqual([{ description: 'in the bucket' }]);
 
+        // Most VFS implementations keep their files in a directory named after the database. SimpleOpfsVFS uses a
+        // powersync/ prefix instead.
+        let expectedRoot = await bucketDirectory();
+        if (vfs == WASQLiteVFS.SimpleOpfsVFS) {
+          expectedRoot = await expectedRoot.getDirectoryHandle('powersync');
+        }
+
         // AccessHandlePoolVFS keeps its files in a directory named after the database.
-        expect(await namesIn(await bucketDirectory())).toContain(dbFilename);
+        expect(await namesIn(expectedRoot)).toContain(dbFilename);
         expect(await namesIn(await navigator.storage.getDirectory())).not.toContain(dbFilename);
       });
 

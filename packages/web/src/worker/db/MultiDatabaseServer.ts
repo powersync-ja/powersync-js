@@ -1,11 +1,17 @@
 import { LogLevels, PowerSyncLogger } from '@powersync/common';
 import * as Comlink from 'comlink';
 import { ClientConnectionView, DatabaseServer } from '../../db/adapters/wa-sqlite/DatabaseServer.js';
-import { getNavigatorLocks } from '../../shared/navigator.js';
+import { getNavigatorLocks } from '../../shared/locks.js';
 import { RawSqliteConnection, RawWaSqliteDatabaseOptions } from '../../db/adapters/wa-sqlite/RawSqliteConnection.js';
-import { ConcurrentSqliteConnection } from '../../db/adapters/wa-sqlite/ConcurrentConnection.js';
-import { WASQLiteVFS } from '../../db/adapters/wa-sqlite/vfs.js';
+import {
+  ConcurrentSqliteConnection,
+  ConnectionMutex,
+  LazyNavigatorMutex,
+  NavigatorMutex
+} from '../../db/adapters/wa-sqlite/ConcurrentConnection.js';
+import { loadModuleAndVfs, WASQLiteVFS } from '../../db/adapters/wa-sqlite/vfs.js';
 import { Mutex } from '@powersync/shared-internals';
+import type { SimpleOpfsFileSystem } from '../../db/adapters/wa-sqlite/SimpleOpfsFileSystem.js';
 
 const OPEN_DB_LOCK = 'open-wasqlite-db';
 
@@ -75,10 +81,27 @@ export class MultiDatabaseServer {
 
   async #databaseOpenAttempt(logger: PowerSyncLogger, options: RawWaSqliteDatabaseOptions): Promise<DatabaseServer> {
     const { filename, readonly, vfs } = options;
-    // We don't need navigator locks for shared workers because all queries run in this shared worker exclusively.
-    // For read-only connections, we use a VFS that supports concurrent reads (so a single lock on the connection is
-    // fine). In-memory databases either run in a shared worker or aren't shared across tabs at all, so the internal
-    // lock is enough.
+
+    let locks: ConnectionMutex;
+    if (
+      isSharedWorker ||
+      readonly ||
+      vfs == WASQLiteVFS.InMemoryVfs ||
+      (vfs == WASQLiteVFS.SimpleOpfsVFS && options.simpleMode == 'shared')
+    ) {
+      // We don't need navigator locks for shared workers because all queries run in this shared worker exclusively.
+      // For read-only connections, we use a VFS that supports concurrent reads (so a single lock on the connection is
+      // fine). In-memory databases either run in a shared worker or aren't shared across tabs at all, so the internal
+      // lock is enough.
+      locks = new Mutex();
+    } else if (vfs == WASQLiteVFS.SimpleOpfsVFS && options.simpleMode != 'rw-unsafe') {
+      // Use navigator locks that also release sync access handles when there's contention.
+      locks = new LazyNavigatorMutex(`db-lock-${options.filename}`);
+    } else {
+      // We need navigator locks, but these don't need to coordinate with the file system.
+      locks = new NavigatorMutex(`db-lock-${options.filename}`);
+    }
+
     const needsNavigatorLocks = !(isSharedWorker || readonly || vfs == WASQLiteVFS.InMemoryVfs);
     const activeDatabases = this.#activeDatabases;
 
@@ -86,14 +109,19 @@ export class MultiDatabaseServer {
       let server: DatabaseServer | undefined = activeDatabases.get(filename);
       if (server == null) {
         const connection = new RawSqliteConnection(options);
-        const withSafeConcurrency = new ConcurrentSqliteConnection(connection, needsNavigatorLocks);
+        const withSafeConcurrency = new ConcurrentSqliteConnection(connection, locks);
 
         // Initializing the RawSqliteConnection will run some pragmas that might write to the database file, so we want
         // to do that in an exclusive lock. Note that OPEN_DB_LOCK is not enough for that, as another tab might have
         // already created a connection (and is thus outside of OPEN_DB_LOCK) while currently writing to it.
         const returnLease = await withSafeConcurrency.acquireMutex();
         try {
-          await connection.init();
+          const { module, vfs } = await loadModuleAndVfs(options);
+          if (locks instanceof LazyNavigatorMutex) {
+            locks.linkedVfs = vfs as unknown as SimpleOpfsFileSystem;
+          }
+
+          await connection.initWithModule(module, vfs);
         } catch (e) {
           returnLease();
           await connection.close();

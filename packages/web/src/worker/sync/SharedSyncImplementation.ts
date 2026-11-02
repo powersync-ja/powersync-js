@@ -30,7 +30,7 @@ import {
 import { AbstractSharedSyncClientProvider } from './AbstractSharedSyncClientProvider.js';
 import { BroadcastLogger } from './BroadcastLogger.js';
 import { DatabaseClient, OpenWorkerConnection } from '../../db/adapters/wa-sqlite/DatabaseClient.js';
-import { generateTabCloseSignal } from '../../shared/tab_close_signal.js';
+import { generateTabCloseSignal } from '../../shared/locks.js';
 import { ResolvedWebSQLOpenOptions } from '../../db/adapters/options.js';
 
 /**

@@ -15,6 +15,8 @@ export interface RawResultSet {
   rawRows: SqliteValue[][];
 }
 
+export type SimpleOpfsMode = 'shared' | 'rw-unsafe' | 'fallback';
+
 /**
  * @internal
  */
@@ -34,6 +36,7 @@ export interface RawWaSqliteDatabaseOptions {
    * The name of a Storage Bucket to keep the database files in, for the OPFS-based VFS implementations.
    */
   storageBucket?: string;
+  simpleMode?: SimpleOpfsMode;
 }
 
 /**
@@ -61,15 +64,17 @@ export class RawSqliteConnection {
     return this.db != 0;
   }
 
-  async init() {
-    const { module, vfs } = await loadModuleAndVfs(this.options);
-    await this.initWithModule(module, vfs);
-  }
-
   async initWithModule(module: any, vfs: any) {
     const api = (this._sqliteAPI = await this.openSQLiteAPI(module, vfs));
+    let fileName = this.options.filename;
+    const isSimpleOpfsVfs = this.options.vfs == WASQLiteVFS.SimpleOpfsVFS;
+    if (isSimpleOpfsVfs) {
+      // The simple VFS doesn't support flexible file names, we use a nested OPFS directory instead.
+      fileName = '/database';
+    }
+
     this.db = await api.open_v2(
-      this.options.filename,
+      fileName,
       this.options.readonly ? 1 /* SQLITE_OPEN_READONLY */ : 6 /* SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE */
     );
     await this.executeRaw(`PRAGMA temp_store = ${this.options.temporaryStorage};`);
@@ -78,6 +83,10 @@ export class RawSqliteConnection {
       await this.executeRaw(`PRAGMA key = '${escapedKey}';`);
     }
     await this.executeRaw(`PRAGMA cache_size = -${this.options.cacheSizeKb};`);
+    if (isSimpleOpfsVfs) {
+      // This VFS does not support deleting files, so we use the TRUNCATE journaling mode instead.
+      await this.executeRaw(`PRAGMA journal_mode = TRUNCATE`);
+    }
 
     await this.executeRaw(`SELECT powersync_update_hooks('install');`);
   }
