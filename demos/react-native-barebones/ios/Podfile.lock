@@ -14,7 +14,7 @@ PODS:
   - hermes-engine (250829098.0.16):
     - hermes-engine/Pre-built (= 250829098.0.16)
   - hermes-engine/Pre-built (250829098.0.16)
-  - op-sqlite (18.1.1):
+  - op-sqlite (18.2.5):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -36,9 +36,9 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - powersync-react-native (2.1.0):
+  - powersync-react-native (2.3.3):
     - hermes-engine
-    - powersync-sqlite-core (~> 0.5.2)
+    - powersync-sqlite-core (~> 0.5.4)
     - RCTRequired
     - RCTTypeSafety
     - React
@@ -61,7 +61,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - powersync-sqlite-core (0.5.2)
+  - powersync-sqlite-core (0.5.4)
   - RCT-Folly (2024.11.18.00):
     - RCT-Folly/Default (= 2024.11.18.00)
     - ReactNativeDependencies
@@ -1294,7 +1294,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - react-native-safe-area-context (5.9.1):
+  - react-native-safe-area-context (5.11.0):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -1307,8 +1307,8 @@ PODS:
     - React-graphics
     - React-ImageManager
     - React-jsi
-    - react-native-safe-area-context/common (= 5.9.1)
-    - react-native-safe-area-context/fabric (= 5.9.1)
+    - react-native-safe-area-context/common (= 5.11.0)
+    - react-native-safe-area-context/fabric (= 5.11.0)
     - React-NativeModulesApple
     - React-RCTFabric
     - React-renderercss
@@ -1318,7 +1318,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - react-native-safe-area-context/common (5.9.1):
+  - react-native-safe-area-context/common (5.11.0):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -1340,7 +1340,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - react-native-safe-area-context/fabric (5.9.1):
+  - react-native-safe-area-context/fabric (5.11.0):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2007,10 +2007,10 @@ SPEC CHECKSUMS:
   FBLazyVector: 732df79fea96f10cc14477969cea05707026d2fd
   fmt: ba0886e864ebb21d14c98b2e12e164b8002f5b93
   glog: 3cf7cb46f743c4bc758ae3e6d9c15bd1b4cfd6d4
-  hermes-engine: a55f2e238444914d84d86bce7065f92fb9364c4d
-  op-sqlite: 6c653c1e122b7b777bc0892839fd09a4bb0e264f
-  powersync-react-native: c3019795f286a11f015b47fcc39282490913cd15
-  powersync-sqlite-core: bc08b93d58df5a012e99cd3795ceb2d1bc97e5a3
+  hermes-engine: 6a26e94b4a974cbadc751eed9caa12624c38f226
+  op-sqlite: 70098be822743ace5edcb8894d6ff7c1b746ee1f
+  powersync-react-native: 3de1fa137dc3e48c06dae3dfc6a91daa18c1e1ce
+  powersync-sqlite-core: 4234a7db4877f8baf3f60fdf59f640fd10742d0f
   RCT-Folly: 82921e585c0400eda46fac1068297aa9dfb035e4
   RCTDeprecation: 6d66040b74f4be203495adda55b49c1a25190291
   RCTRequired: ebf172e0b04196922ba4640458f9926c1bb34012
@@ -2051,7 +2051,7 @@ SPEC CHECKSUMS:
   React-Mapbuffer: acf4ac61f163f15ced7dfad7308957816b2d7abd
   React-microtasksnativemodule: 512d9f7c6b66574d90832a6b10b6102d4a8fdf30
   React-mutationobservernativemodule: 2c5abeb9a4ae316ba6d9420ef8d9baa81faa9d56
-  react-native-safe-area-context: f17f4ec987ecdd130820a4a850498b874fb70388
+  react-native-safe-area-context: ee60c762255675a60ff0b36c6b56e69557c171ab
   React-NativeModulesApple: 22b2f3e1538ceb1aab1ab182ccb0666ea2ec36ad
   React-networking: b58b3098d4a626f88bbaeaf6bf5e67b18ff39089
   React-oscompat: 72573ceb65b6c6c6bc34e51e0df8f44c91081a6d
@@ -2085,7 +2085,7 @@ SPEC CHECKSUMS:
   React-viewtransitionnativemodule: e49acd8b47e151107ff00f704604ea45c19aefff
   React-webperformancenativemodule: 5980edf76ca86ca218acff067891358e671934bc
   ReactAppDependencyProvider: ed5609dc8e30eeade35ba8e43128781ee8fdf4de
-  ReactCodegen: 347419be1bd79d5311e93213d1367bc7e07eb057
+  ReactCodegen: dca6757feb1e977c5cf6708872d7fe48b5a45528
   ReactCommon: 5f5a302748322015f2e3334869cdd9b4d0395846
   ReactNativeDependencies: ec5530432d8191b38e278117d498aaff05ea9d6f
   SocketRocket: 37aec555668fb852ec12e3c0de59a86ca58f0871

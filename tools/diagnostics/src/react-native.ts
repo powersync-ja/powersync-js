@@ -5,7 +5,7 @@
  */
 import type { CommonPowerSyncDatabase } from '@powersync/common';
 
-export let usePowerSyncDevTools: (database: CommonPowerSyncDatabase) => void;
+export let usePowerSyncDevTools: (database: CommonPowerSyncDatabase | null) => void;
 
 if (process.env.NODE_ENV !== 'production') {
   usePowerSyncDevTools = require('./react-native/usePowerSyncDevTools.js').usePowerSyncDevTools;

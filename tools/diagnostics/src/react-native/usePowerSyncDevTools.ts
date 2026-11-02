@@ -15,12 +15,14 @@ ensureBroadcastChannel();
 /**
  * Serves `database` to the PowerSync panel in React Native DevTools (through Rozenite), and to coding
  * agents as Rozenite agent tools. Call it in a component that stays mounted, such as the app root.
+ * Pass `null` while the database is not created yet; DevTools attach once it is.
  */
-export function usePowerSyncDevTools(database: CommonPowerSyncDatabase): void {
+export function usePowerSyncDevTools(database: CommonPowerSyncDatabase | null): void {
   const client = useRozeniteDevToolsClient<DevToolsEventMap>({ pluginId: PLUGIN_ID });
   const [integration, setIntegration] = useState<SdkIntegration | null>(null);
 
   useEffect(() => {
+    if (!database) return;
     const created = createIntegration(database, SDK);
     setIntegration(created);
     return () => {
