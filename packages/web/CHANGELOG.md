@@ -1,5 +1,30 @@
 # @powersync/web
 
+## 2.6.0
+
+### Minor Changes
+
+- bf54805: Add `additionalInitializationFunctions` to web database open options. Custom wa-sqlite builds can export no-argument initialization functions for statically linked extensions, which are called after the PowerSync core initializer and before opening SQLite connections. A nonzero result aborts initialization.
+- 109de2c: Add `Authenticator` and `MutationUploader` types, and overloads of `connect()` allowing to connect in download-only and upload-only mode.
+- d30ad72: Add the `storageBucket` option, to keep an OPFS database in a Storage Bucket instead of the default bucket of the origin private file system.
+
+### Patch Changes
+
+- 325cb95: Add an `sdkName` getter to the database that names the SDK package, for development tooling.
+- 7d5255f: Update PowerSync SQLite core extension version to 0.5.4 ([release notes](https://github.com/powersync-ja/powersync-sqlite-core/releases/tag/v0.5.4)).
+- Updated dependencies [325cb95]
+- Updated dependencies [109de2c]
+- Updated dependencies [7600425]
+- Updated dependencies [d1cec54]
+- Updated dependencies [9be90b3]
+- Updated dependencies [11a6bf3]
+- Updated dependencies [7d5255f]
+- Updated dependencies [d6a9cb4]
+- Updated dependencies [59f1618]
+- Updated dependencies [9fe7e5f]
+  - @powersync/shared-internals@1.5.0
+  - @powersync/common@2.5.0
+
 ## 2.5.0
 
 ### Minor Changes

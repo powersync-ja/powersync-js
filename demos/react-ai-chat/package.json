@@ -22,8 +22,8 @@
     "@ai-sdk/openai": "^4.0.95",
     "@fontsource-variable/figtree": "^5.3.0",
     "@fontsource-variable/jetbrains-mono": "^5.3.0",
-    "@powersync/react": "^2.1.0",
-    "@powersync/web": "^2.5.0",
+    "@powersync/react": "^2.2.0",
+    "@powersync/web": "^2.6.0",
     "ai": "^7.0.142",
     "express": "^5.3.0",
     "jose": "^6.2.12",
@@ -36,7 +36,7 @@
     "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
-    "@powersync/diagnostics": "^0.0.2",
+    "@powersync/diagnostics": "^0.0.3",
     "@tailwindcss/typography": "^0.5.20",
     "@tailwindcss/vite": "^4.3.3",
     "@types/express": "^5.0.6",
