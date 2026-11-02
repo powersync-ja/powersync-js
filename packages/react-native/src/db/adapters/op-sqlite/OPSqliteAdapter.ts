@@ -74,14 +74,15 @@ export class OPSQLiteDBAdapter extends DBAdapter {
       }
     }
 
-    const underlyingReadConnections = [];
-    for (let i = 0; i < READ_CONNECTIONS; i++) {
-      const conn = await this.openConnection(true, dbFilename);
-      for (let statement of baseStatements) {
-        await conn.execute(statement);
-      }
-      underlyingReadConnections.push(conn);
-    }
+    const underlyingReadConnections = await Promise.all(
+      Array.from({ length: READ_CONNECTIONS }, async () => {
+        const conn = await this.openConnection(true, dbFilename);
+        for (const statement of baseStatements) {
+          await conn.execute(statement);
+        }
+        return conn;
+      })
+    );
 
     this.writeConnection = new Semaphore([underlyingWriteConnection]);
     this.readConnections = new Semaphore(underlyingReadConnections);
