@@ -38,19 +38,23 @@ export enum WASQLiteVFS {
    *
    * It is worth noting that this design has fundamental drawbacks: It doesn't support `ATTACH`ing additional databases,
    * and temporary data (e.g. for materialized CTEs) is always stored in memory. This is not relevant for most setups
-   * though.
+   * though, and not supporting this is what enables the simple design.
    *
    * Synchronous file handles in OPFS are only available in dedicated workers, and two tabs can't open the same file
    * at the same time. To enable multi-tab support, this VFS comes in three possible configurations, the PowerSync SDK
    * selects the best one based on browser features:
    *
-   * 1. __Shared workers__: While we need shared workers somewhere
+   * 1. __Shared workers__: While we need dedicated workers to access files synchronously, the web standard allows
+   *   shared workers to spawn their own dedicated workers. This is not supported by all browsers, but highly efficient
+   *   option when available as we don't need to rely on navigator locks.
+   * 2. `readwrite-unsafe`: On Chromium browsers, this flag allows multiple tabs to access the same files (the PowerSync
+   *    SDK additionally uses navigator locks to avoid corruption from concurrent writes).
+   * 3. Close and open fallback: On other browsers, file handles are kept open until another tab signals that it needs
+   *    access to them. At that point, queued local transactions are awaited before closing the file handles. At the
+   *    next database query, the same signal is sent to the other tab before re-opening files locally.
    *
    * This VFS comes in three configurations, which the PowerSync SDK selects automatically depending on browser
    * features.
-   *
-   *  and is supported across all major browsers. Where available, this VFS
-   * uses shared workers. Otherise, file access is coordinated with navigator locks.
    */
   SimpleOpfsVFS = 'SimpleOpfsVFS'
 }
