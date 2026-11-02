@@ -166,6 +166,8 @@ export function extractJsonLines(
 
         const { done, value } = await source.next();
         if (done) {
+          // Flush bytes the decoder may still be buffering, e.g. if the stream ended in the middle of a character.
+          buffer += decoder.decode();
           const remaining = buffer.trim();
           if (remaining.length != 0) {
             isFinalEvent = true;
