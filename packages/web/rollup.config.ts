@@ -38,7 +38,9 @@ function bundledModuleForReactNativeWeb(): RollupOptions {
     output: {
       file: 'dist/index.react_native_web.js',
       format: 'esm',
-      sourcemap: true
+      sourcemap: true,
+      // To inline the SimpleOpfsFileSystem lazy import
+      inlineDynamicImports: true
     },
     external: ['@powersync/common', '@powersync/shared-internals', 'comlink'],
     plugins: disableDefaultWorkers()
