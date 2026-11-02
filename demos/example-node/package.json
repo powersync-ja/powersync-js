@@ -10,8 +10,8 @@
     "start": "node --import ./register.mjs src/main.ts"
   },
   "dependencies": {
-    "@powersync/diagnostics": "^0.0.2",
-    "@powersync/node": "^1.2.0",
+    "@powersync/diagnostics": "^0.0.3",
+    "@powersync/node": "^1.3.0",
     "better-sqlite3": "^12.10.0",
     "better-sqlite3-multiple-ciphers": "^12.9.0",
     "dotenv": "^16.4.7",

@@ -1,5 +1,19 @@
 # @powersync/react
 
+## 2.2.0
+
+### Minor Changes
+
+- 8327200: Add `usePowerSyncOrNull()` and `useStatusOrNull()` hooks returning null instead of throwing when no database is in context.
+
+### Patch Changes
+
+- Updated dependencies [109de2c]
+- Updated dependencies [9be90b3]
+- Updated dependencies [d6a9cb4]
+- Updated dependencies [59f1618]
+  - @powersync/common@2.5.0
+
 ## 2.1.0
 
 ### Minor Changes

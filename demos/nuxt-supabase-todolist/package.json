@@ -11,10 +11,10 @@
   "dependencies": {
     "@nuxt/ui": "^4.0.0",
     "@nuxtjs/supabase": "2.0.1",
-    "@powersync/kysely-driver": "^2.0.2",
-    "@powersync/nuxt": "^2.0.0",
+    "@powersync/kysely-driver": "^2.0.3",
+    "@powersync/nuxt": "^2.1.0",
     "@powersync/vue": "^0.7.0",
-    "@powersync/web": "^2.5.0",
+    "@powersync/web": "^2.6.0",
     "@supabase/supabase-js": "2.75.0",
     "tailwindcss": "^4.1.18"
   },
