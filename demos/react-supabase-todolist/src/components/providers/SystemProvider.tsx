@@ -24,7 +24,7 @@ export const db = new PowerSyncDatabase({
   schema: AppSchema,
   database: {
     dbFilename: 'example.db',
-    vfs: WASQLiteVFS.OPFSCoopSyncVFS,
+    vfs: WASQLiteVFS.SimpleOpfsVFS,
     databaseWorkerLogLevel: LogLevels.debug,
     enableMultiTabs: typeof SharedWorker !== 'undefined'
   },

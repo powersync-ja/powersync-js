@@ -17,10 +17,12 @@ import type { ConnectToMultiDatabaseServerOptions } from '../../../worker/db/Mul
 import { ConnectionClosedError } from '@powersync/shared-internals';
 
 export interface OpenWorkerConnection {
+  ping(): Promise<void>;
+
   connect(config: ConnectToMultiDatabaseServerOptions): Promise<ClientConnectionView>;
   connectToExisting(options: { identifier: string; lockName: string }): Promise<ClientConnectionView>;
 
-  featureDetection(): FeatureDetectionResult;
+  featureDetection(): Promise<FeatureDetectionResult>;
   spawnNested(): Promise<MessagePort>;
 }
 
