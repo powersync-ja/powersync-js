@@ -193,8 +193,12 @@ export class WASQLiteOpenFactory implements SQLOpenFactory {
           // efficient than the fallback of closing and re-opening files on contention.
           const worker = await openRawWorker(false);
           const source = Comlink.wrap<OpenWorkerConnection>(worker.endpoint);
-          const features = await source.featureDetection();
-          simpleMode = features.openWithMode ? 'rw-unsafe' : 'fallback';
+
+          simpleMode = this.options.simpleMode as SimpleOpfsMode | undefined;
+          if (!simpleMode) {
+            const features = await source.featureDetection();
+            simpleMode = features.openWithMode ? 'rw-unsafe' : 'fallback';
+          }
 
           client = await connect(source, worker, false);
         }
