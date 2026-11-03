@@ -162,6 +162,7 @@ export class PowerSyncClient {
   /**
    * Invokes the listener every time the status changes.
    */
+  // Note: This is a field instead of a method to allow tearing it off for usePowerSyncStatus
   readonly subscribeStatus = (listener: () => void): (() => void) => {
     this.#statusListeners.add(listener);
     return () => {
@@ -172,6 +173,7 @@ export class PowerSyncClient {
   /**
    * Returns {@link PowerSyncClient.status}, exposed as a function for e.g. `useSyncExternalStore` in React.
    */
+  // Note: This is a field instead of a method to allow tearing it off for usePowerSyncStatus
   readonly getStatus = () => {
     return this.status;
   };
@@ -254,7 +256,7 @@ export class PowerSyncClient {
    *
    * This is independent of {@link confirmWrites}, which resolves only after all local writes have been released.
    */
-  markLocalWrite = (): LocalWrite => {
+  markLocalWrite(): LocalWrite {
     let pending = true;
     this.#pendingWrites++;
     this.#localWrites.hasLocalWrites = true;
@@ -270,7 +272,7 @@ export class PowerSyncClient {
         }
       }
     };
-  };
+  }
 
   /**
    * Call after the app's backend write commits.
@@ -282,7 +284,7 @@ export class PowerSyncClient {
    * also requires all writes registered with {@link markLocalWrite} to be released. Awaiting this in an `onInsert`,
    * `onUpdate` or `onDelete` callback ensures the optimistic state is replaced with confirmed data without flickering.
    */
-  confirmWrites = async ({ signal }: ConfirmWritesOptions = {}): Promise<void> => {
+  async confirmWrites({ signal }: ConfirmWritesOptions = {}): Promise<void> {
     if (!this.#active) {
       throw new Error('PowerSync client is not syncing. Start a live query (or preload a collection) first.');
     }
@@ -308,7 +310,7 @@ export class PowerSyncClient {
     // might not be another checkpoint. So re-check the last one against the new target.
     this.#client.retryCheckpoint();
     await applied;
-  };
+  }
 
   #waitForSync(lease: Lease, signal?: AbortSignal): Promise<void> {
     if (!this.#leases.has(lease)) return Promise.reject(stoppedError());
