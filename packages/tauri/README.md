@@ -32,6 +32,22 @@ pub fn run() {
 }
 ```
 
+### Customizing the HTTP client
+
+By default, the plugin uses a default `reqwest::Client` to connect to the PowerSync Service. To configure TLS, timeouts, proxies or a user agent for the sync connection, pass your own client with `init_with_client`:
+
+```Rust
+let client = reqwest::Client::builder()
+    .user_agent("my-app")
+    .build()
+    .expect("could not build HTTP client");
+
+tauri::Builder::default()
+    .plugin(tauri_plugin_powersync::init_with_client(client))
+```
+
+This is also useful on Android, where the default TLS verifier (`rustls-platform-verifier`) rejects certificates without an OCSP responder ([rustls/rustls-platform-verifier#221](https://github.com/rustls/rustls-platform-verifier/issues/221)), a common setup since Let's Encrypt stopped issuing them. In that case, build a client with a bundled root store (e.g. via `reqwest`'s `tls_certs_only` and the `webpki-root-certs` crate) and pass it to `init_with_client`.
+
 Once your native code is ready, create a new `PowerSyncTauriDatabase` with a schema to start using PowerSync:
 
 ```TypeScript
