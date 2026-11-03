@@ -19,18 +19,18 @@ const exposedDatabaseFunctions: OpenWorkerConnection = {
   connect: (config) => server.handleConnection(config),
   connectToExisting: ({ identifier, lockName }) => server.connectToExisting(identifier, lockName),
   sharedFeatureDetection: async () => {
-    let supportsOpfsInNestedWorkers = false;
+    let nestedWorkerSupport: DedicatedFeatureDetectionResult | null = null;
     if ('Worker' in globalThis) {
       try {
         const worker = await (nestedWorker ??= trySpawningNestedWorker());
-        supportsOpfsInNestedWorkers = worker.features.opfs;
+        nestedWorkerSupport = worker.features;
       } catch (e) {
         // We don't support nested workers.
       }
     }
 
     return {
-      nestedOpfs: supportsOpfsInNestedWorkers
+      worker: nestedWorkerSupport
     };
   },
   dedicatedFeatureDetection: async () => {
@@ -49,7 +49,7 @@ const exposedDatabaseFunctions: OpenWorkerConnection = {
 
 async function checkOpfsSupport(): Promise<boolean> {
   const storage = navigator.storage;
-  if (storage == null) return false;
+  if (storage == null || !('FileSystemSyncAccessHandle' in globalThis)) return false;
 
   try {
     await storage.getDirectory();

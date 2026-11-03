@@ -4,7 +4,7 @@ import { ResolvedWebSQLOpenOptions, WebSQLOpenOptions } from '../options.js';
 import { SSRDBAdapter } from '../SSRDBAdapter.js';
 import { vfsRequiresDedicatedWorkers, WASQLiteVFS } from './vfs.js';
 import { MultiDatabaseServer } from '../../../worker/db/MultiDatabaseServer.js';
-import { DatabaseClient, DedicatedFeatureDetectionResult, OpenWorkerConnection } from './DatabaseClient.js';
+import { DatabaseClient, OpenWorkerConnection, SharedFeatureDetectionResult } from './DatabaseClient.js';
 import { generateTabCloseSignal } from '../../../shared/locks.js';
 import { AsyncDbAdapter, PoolConnection } from '../AsyncWebAdapter.js';
 import { RawWaSqliteDatabaseOptions, SimpleOpfsMode } from './RawSqliteConnection.js';
@@ -79,9 +79,9 @@ export class WASQLiteOpenFactory implements SQLOpenFactory {
 
     switch (vfs) {
       case 'auto':
-        return { writer: await this.#openAuto(), additionalReaders: [] };
+        return { writer: await this.#openSimpleOpfs(true), additionalReaders: [] };
       case WASQLiteVFS.SimpleOpfsVFS:
-        return { writer: await this.#openSimpleOpfs(), additionalReaders: [] };
+        return { writer: await this.#openSimpleOpfs(false), additionalReaders: [] };
       case WASQLiteVFS.OPFSWriteAheadVFS: {
         // This VFS supports concurrent reads, so we can open additional workers to host read-only connections for
         // concurrent reads / writes.
@@ -98,96 +98,82 @@ export class WASQLiteOpenFactory implements SQLOpenFactory {
   }
 
   /**
-   * Picks the best available storage for the `'auto'` VFS option. In order of preference, that is:
+   * Opens a {@link WASQLiteVFS.SimpleOpfsVFS} database, or picks the best available storage for the `'auto'` VFS
+   * option if `fallbackToMemory` is set.
+   *
+   * This VFS has three different modes (shared workers, readwrite-unsafe, re-open fallback), see the doc comment on it.
+   * We start a feature detection to check what the current browser supports. In order of preference, we use:
    *
    *  1. {@link WASQLiteVFS.SimpleOpfsVFS} through a shared worker spawning a nested dedicated worker.
    *  2. {@link WASQLiteVFS.SimpleOpfsVFS} in a dedicated worker.
-   *  3. {@link WASQLiteVFS.InMemoryVfs} in a shared worker.
-   *  4. {@link WASQLiteVFS.InMemoryVfs} in a dedicated worker.
+   *  3. {@link WASQLiteVFS.InMemoryVfs} in a shared worker (only with `fallbackToMemory`).
+   *  4. {@link WASQLiteVFS.InMemoryVfs} in a dedicated worker (only with `fallbackToMemory`).
    */
-  async #openAuto(): Promise<DatabaseClient> {
+  async #openSimpleOpfs(fallbackToMemory: boolean): Promise<DatabaseClient> {
     const shared = this.options.enableMultiTabs ? await this.#openSharedWorker() : null;
-    if (shared) {
-      // This doens't close the shared worker if it fails, so we can still use it for an in-memory fallback.
-      const client = await this.#tryOpenSimpleOpfsNested(shared);
-      if (client) return client;
-    }
+    let nested: Comlink.Remote<OpenWorkerConnection> | null = null;
+    let dedicated: OpenedWorker | null = null;
+    // The worker hosting the opened database, which is then owned by the returned client. We close all other workers.
+    let used: OpenedWorker | null = null;
 
-    const dedicated = this.#openWorker(false);
-    const features = await dedicated.source.dedicatedFeatureDetection();
-    if (features.opfs) {
-      if (shared) closeWorker(shared);
-      return this.#openSimpleOpfsDedicated(dedicated, features);
-    }
+    const connect = async (worker: OpenedWorker, options: ResolvedDatabaseOptions) => {
+      const client = await this.#connect(worker, options);
+      used = worker;
+      return client;
+    };
+    const connectInMemory = (worker: OpenedWorker) => {
+      this.logger.log({ level: LogLevels.warn, message: 'Falling back to in-memory because OPFS is unavailable.' });
+      return connect(worker, { vfs: WASQLiteVFS.InMemoryVfs, readonly: false });
+    };
 
-    this.logger.log({ level: LogLevels.debug, message: `Falling back to in-memory because OPFS is unavailable.` });
-
-    if (shared) {
-      closeWorker(dedicated);
-      return this.#connect(shared, { vfs: WASQLiteVFS.InMemoryVfs, readonly: false });
-    }
-    return this.#connect(dedicated, { vfs: WASQLiteVFS.InMemoryVfs, readonly: false });
-  }
-
-  /**
-   * Opens a {@link WASQLiteVFS.SimpleOpfsVFS} database.
-   *
-   * This VFS has three different modes (shared workers, readwrite-unsafe, re-open fallback), see the doc comment on it.
-   * We start a feature detection to check what the current browser supports.
-   */
-  async #openSimpleOpfs(): Promise<DatabaseClient> {
-    if (this.options.enableMultiTabs) {
-      const shared = await this.#openSharedWorker();
+    try {
       if (shared) {
-        const client = await this.#tryOpenSimpleOpfsNested(shared);
-        if (client) {
-          return client;
-        } else {
-          closeWorker(shared);
+        const features = await this.#detectNestedFeatures(shared);
+        if (features?.worker) {
+          if (features.worker.opfs) {
+            // Shared workers can open dedicated workers. Perfect, we'll have the shared worker spawn a nested worker
+            // and connect to that.
+            nested = Comlink.wrap<OpenWorkerConnection>(await shared.source.spawnNested());
+            return await connect(
+              { source: nested, connection: shared.connection },
+              { vfs: WASQLiteVFS.SimpleOpfsVFS, readonly: false, simpleMode: 'shared' }
+            );
+          } else if (fallbackToMemory) {
+            // The nested worker doesn't have OPFS access, so a dedicated worker started by us won't have that either.
+            return await connectInMemory(shared);
+          }
         }
       }
-    }
 
-    // We'll have to use a dedicated worker directly.
-    const dedicated = this.#openWorker(false);
-    return this.#openSimpleOpfsDedicated(dedicated, await dedicated.source.dedicatedFeatureDetection());
-  }
+      // We'll have to use a dedicated worker directly.
+      dedicated = this.#openWorker(false);
+      const features = await dedicated.source.dedicatedFeatureDetection();
+      if (features.opfs || !fallbackToMemory) {
+        // See if we can at least use readwrite-unsafe, as that is more efficient than the fallback of closing and
+        // re-opening files on contention.
+        const simpleMode =
+          (this.options.simpleMode as SimpleOpfsMode | undefined) ?? (features.openWithMode ? 'rw-unsafe' : 'fallback');
 
-  /**
-   * Attempts to open a {@link WASQLiteVFS.SimpleOpfsVFS} database in a dedicated worker spawned by the shared worker.
-   *
-   * Returns `null` if the shared worker can't spawn nested workers with OPFS access. The shared worker is not closed in
-   * that case.
-   */
-  async #tryOpenSimpleOpfsNested(shared: OpenedWorker): Promise<DatabaseClient | null> {
-    try {
-      const sharedFeatures = await shared.source.sharedFeatureDetection();
-      if (sharedFeatures.nestedOpfs) {
-        // Shared workers can open dedicated workers. Perfect, we'll have the shared worker spawn a nested worker and
-        // connect to that.
-        const inner = Comlink.wrap<OpenWorkerConnection>(await shared.source.spawnNested());
-        return await this.#connect(
-          { source: inner, connection: shared.connection },
-          { vfs: WASQLiteVFS.SimpleOpfsVFS, readonly: false, simpleMode: 'shared' }
-        );
+        return await connect(dedicated, { vfs: WASQLiteVFS.SimpleOpfsVFS, readonly: false, simpleMode });
       }
-    } catch (error) {
-      this.logger.log({ level: LogLevels.error, error, message: 'Could not connect to nested worker' });
-    }
 
-    return null;
+      return await connectInMemory(shared ?? dedicated);
+    } finally {
+      const usedWorker = used as OpenedWorker | null;
+      if (nested && usedWorker?.source !== nested) nested[Comlink.releaseProxy]();
+      if (shared && usedWorker?.connection !== shared.connection) closeWorker(shared);
+      if (dedicated && usedWorker !== dedicated) closeWorker(dedicated);
+    }
   }
 
-  #openSimpleOpfsDedicated(
-    dedicated: OpenedWorker,
-    features: DedicatedFeatureDetectionResult
-  ): Promise<DatabaseClient> {
-    // See if we can at least use readwrite-unsafe, as that is more efficient than the fallback of closing and
-    // re-opening files on contention.
-    const simpleMode =
-      (this.options.simpleMode as SimpleOpfsMode | undefined) ?? (features.openWithMode ? 'rw-unsafe' : 'fallback');
-
-    return this.#connect(dedicated, { vfs: WASQLiteVFS.SimpleOpfsVFS, readonly: false, simpleMode });
+  /** Asks a shared worker whether it can spawn nested workers with OPFS access, or returns null if that fails. */
+  async #detectNestedFeatures(shared: OpenedWorker): Promise<SharedFeatureDetectionResult | null> {
+    try {
+      return await shared.source.sharedFeatureDetection();
+    } catch (error) {
+      this.logger.log({ level: LogLevels.error, error, message: 'Could not detect features of shared worker' });
+      return null;
+    }
   }
 
   /**
@@ -205,7 +191,11 @@ export class WASQLiteOpenFactory implements SQLOpenFactory {
    * Without workers, the only storage the `'auto'` option can pick is an in-memory database.
    */
   async #openInCurrentContext(): Promise<DatabaseClient> {
-    const vfs = this.options.vfs == 'auto' ? WASQLiteVFS.InMemoryVfs : this.options.vfs;
+    let vfs = this.options.vfs;
+    if (vfs == 'auto') {
+      this.logger.log({ level: LogLevels.warn, message: 'Using in-memory database because web workers are disabled.' });
+      vfs = WASQLiteVFS.InMemoryVfs;
+    }
     const localServer = new MultiDatabaseServer(this.logger);
     const connection = await localServer.openConnectionLocally(
       this.logger,

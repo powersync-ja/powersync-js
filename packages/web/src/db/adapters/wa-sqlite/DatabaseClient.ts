@@ -45,8 +45,8 @@ export interface ClientOptions {
 }
 
 export interface SharedFeatureDetectionResult {
-  /** Whether this shared worker can spawn dedicated workers to open OPFS handles. */
-  readonly nestedOpfs: boolean;
+  /** When this shared worker can spawn nested dedicated workers, features available in that worker. */
+  readonly worker: DedicatedFeatureDetectionResult | null;
 }
 
 export interface DedicatedFeatureDetectionResult {
