@@ -1,5 +1,5 @@
 import * as Comlink from 'comlink';
-import { getNavigatorLocks } from '../../shared/navigator.js';
+import { getNavigatorLocks } from '../../shared/locks.js';
 import {
   ClientConnectorCapabilities,
   ManualSharedSyncPayload,

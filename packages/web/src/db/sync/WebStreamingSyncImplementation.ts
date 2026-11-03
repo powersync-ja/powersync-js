@@ -6,7 +6,7 @@ import {
   LockOptions,
   LockType
 } from '@powersync/shared-internals';
-import { getNavigatorLocks } from '../../shared/navigator.js';
+import { getNavigatorLocks } from '../../shared/locks.js';
 
 export interface WebStreamingSyncImplementationOptions extends AbstractStreamingSyncImplementationOptions {
   sync?: {

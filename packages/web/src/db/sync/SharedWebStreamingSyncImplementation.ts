@@ -8,7 +8,7 @@ import {
   WebStreamingSyncImplementation,
   WebStreamingSyncImplementationOptions
 } from './WebStreamingSyncImplementation.js';
-import { generateTabCloseSignal } from '../../shared/tab_close_signal.js';
+import { generateTabCloseSignal } from '../../shared/locks.js';
 import {
   SubscribedStream,
   SyncStatusJson,

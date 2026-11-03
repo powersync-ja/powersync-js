@@ -17,7 +17,7 @@ import {
   TriggerManagerConfig,
   openDatabase
 } from '@powersync/shared-internals';
-import { getNavigatorLocks } from '../shared/navigator.js';
+import { getNavigatorLocks } from '../shared/locks.js';
 import { NAVIGATOR_TRIGGER_CLAIM_MANAGER } from './NavigatorTriggerClaimManager.js';
 import { WebDBAdapter } from './adapters/WebDBAdapter.js';
 import { WASQLiteOpenFactory } from './adapters/wa-sqlite/WASQLiteOpenFactory.js';

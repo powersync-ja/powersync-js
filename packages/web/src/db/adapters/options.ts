@@ -92,7 +92,7 @@ export interface WebSpecificOpenOptions {
    * You can either provide a path to the worker script
    * or a factory method that returns a worker.
    */
-  worker?: string | URL | ((options: ResolvedWebSQLOpenOptions) => Worker | SharedWorker);
+  worker?: string | URL | ((options: CustomWorkerOptions) => Worker | SharedWorker);
 
   /**
    * Use an existing port to an initialized worker.
@@ -128,6 +128,16 @@ export interface WebSpecificOpenOptions {
    * Uses the default bucket when no option is given.
    */
   storageBucket?: string;
+
+  /** @internal Only used internally for testing */
+  simpleMode?: unknown;
+}
+
+export interface CustomWorkerOptions extends ResolvedWebSQLOpenOptions {
+  /**
+   * Whether the SDK intends to spawn a shared worker for this call.
+   */
+  readonly shared: boolean;
 }
 
 export interface ResolvedWebSQLOpenOptions extends SQLOpenOptions, WebSpecificOpenOptions {}

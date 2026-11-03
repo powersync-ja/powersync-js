@@ -7,7 +7,7 @@ import { TEST_SCHEMA } from './utils/test-schema.js';
 import { generateTestDb } from './utils/testDb.js';
 import { DatabaseClient, OpenWorkerConnection } from '../src/db/adapters/wa-sqlite/DatabaseClient.js';
 import { ClientConnectionView } from '../src/db/adapters/wa-sqlite/DatabaseServer.js';
-import { generateTabCloseSignal } from '../src/shared/tab_close_signal.js';
+import { generateTabCloseSignal } from '../src/shared/locks.js';
 import { PowerSyncDatabase } from '../src/index.js';
 import { MockSyncService } from './utils/MockSyncServiceWorker.js';
 
