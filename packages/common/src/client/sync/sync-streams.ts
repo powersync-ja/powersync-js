@@ -93,6 +93,9 @@ export interface SyncStream extends SyncStreamDescription {
    * stream. As soon as {@link SyncStreamSubscription.unsubscribe} is called for all subscriptions on this stream
    * (including subscriptions created on other tabs), the {@link SyncStreamSubscribeOptions.ttl} starts ticking and will
    * eventually evict the stream (unless {@link SyncStream.subscribe} is called again).
+   *
+   * Subscriptions do not survive {@link CommonPowerSyncDatabase.disconnectAndClear}. After a clear, call `subscribe()`
+   * again for streams that should keep syncing, before calling `connect()`.
    */
   subscribe(options?: SyncStreamSubscribeOptions): Promise<SyncStreamSubscription>;
 
