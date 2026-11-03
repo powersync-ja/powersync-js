@@ -247,6 +247,13 @@ export interface CommonPowerSyncDatabase extends BaseObserverInterface<PowerSync
    *  would be empty.
    *
    * To preserve data in local-only tables, set clearLocal to false.
+   *
+   * This also clears all Sync Stream subscriptions. `SyncStreamSubscription` instances created before a clear
+   * are no longer requested when connecting again, even if they haven't been unsubscribed. To keep syncing a stream,
+   * call {@link SyncStream.subscribe} again after the clear and before calling `connect()`.
+   *
+   * The same applies to checkpoint requests. {@link CheckpointRequest} instances created before a clear should be
+   * discarded and requested again.
    */
   disconnectAndClear(options?: DisconnectAndClearOptions): Promise<void>;
 
