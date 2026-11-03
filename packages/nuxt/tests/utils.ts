@@ -1,10 +1,16 @@
 import type { App } from 'vue';
 import { createApp } from 'vue';
-import { Schema, Table, column, type AbstractPowerSyncDatabase, type PowerSyncBackendConnector, type PowerSyncCredentials } from '@powersync/web';
+import {
+  PowerSyncDatabase,
+  Schema,
+  Table,
+  column,
+  type AbstractPowerSyncDatabase,
+  type PowerSyncBackendConnector,
+  type PowerSyncCredentials
+} from '@powersync/web';
 import { onTestFinished } from 'vitest';
 import { createPowerSyncPlugin } from '@powersync/vue';
-import { NuxtPowerSyncDatabase } from '../src/runtime/utils/NuxtPowerSyncDatabase';
-import { setUseDiagnostics } from './mocks/nuxt-app';
 
 // Note: #app is mocked via vitest.config.ts alias to tests/mocks/nuxt-app.ts
 
@@ -39,14 +45,11 @@ export const createMockConnector = (): PowerSyncBackendConnector => {
 };
 
 /**
- * Creates a NuxtPowerSyncDatabase with diagnostics enabled or disabled
+ * Opens a PowerSync database for a test and closes it when the test finishes.
  */
-export const openPowerSync = (useDiagnostics: boolean = false) => {
-  // Set diagnostics flag in mock before creating database
-  setUseDiagnostics(useDiagnostics);
-
-  const db = new NuxtPowerSyncDatabase({
-    database: { dbFilename: `test-${useDiagnostics ? 'diagnostics' : 'normal'}.db` },
+export const openPowerSync = () => {
+  const db = new PowerSyncDatabase({
+    database: { dbFilename: 'test.db' },
     schema: new Schema({
       lists: new Table({
         name: column.text
@@ -57,22 +60,14 @@ export const openPowerSync = (useDiagnostics: boolean = false) => {
   onTestFinished(async () => {
     await db.disconnectAndClear();
     await db.close();
-    // Reset diagnostics flag after test
-    setUseDiagnostics(false);
   });
 
   return db;
 };
 
-export const withPowerSyncSetup = <Result>(
-  callback: () => Result,
-  powersync: AbstractPowerSyncDatabase
-) => {
+export const withPowerSyncSetup = <Result>(callback: () => Result, powersync: AbstractPowerSyncDatabase) => {
   return withSetup(callback, (app) => {
     const { install } = createPowerSyncPlugin({ database: powersync });
     install(app);
   });
 };
-
-// Re-export setUseDiagnostics for convenience
-export { setUseDiagnostics } from './mocks/nuxt-app';

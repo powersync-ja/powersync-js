@@ -10,3 +10,4 @@ export type {
   NodeDownloadRequest,
   NodeFileSystemTransportAdapterOptions
 } from './attachments/NodeFileSystemTransportAdapter.js';
+export type { NodeRemoteOptions } from './sync/stream/NodeRemote.js';

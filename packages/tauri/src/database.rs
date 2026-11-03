@@ -1,9 +1,10 @@
 use powersync::error::PowerSyncError;
-use powersync::{PowerSyncDatabase, SyncStatusData};
-use serde::ser::SerializeStruct;
+use powersync::{PowerSyncDatabase, PriorityStatus, SyncStatusData};
+use serde::ser::{SerializeSeq, SerializeStruct};
 use serde::{Serialize, Serializer};
 use std::collections::HashMap;
 use std::sync::Arc;
+use std::time::UNIX_EPOCH;
 use tauri::{AppHandle, Emitter, Runtime};
 use tokio::task::JoinHandle;
 use tokio_stream::StreamExt;
@@ -116,8 +117,12 @@ impl Serialize for SerializableCoreSyncStatus<'_> {
         inner.serialize_field("connected", &status.is_connected())?;
         inner.serialize_field("connecting", &&status.is_connecting())?;
 
-        // Note: Priority status and download progress is not available outside of streams.
-        inner.serialize_field::<[()]>("priority_status", &[])?;
+        inner.serialize_field(
+            "priority_status",
+            &SerializablePriorityStatuses(status.priority_status()),
+        )?;
+
+        // Note: Download progress is not available outside of streams.
         if status.is_downloading() {
             let progress = Some(EmptyDownloadProgress::default());
             inner.serialize_field("downloading", &progress)
@@ -126,6 +131,46 @@ impl Serialize for SerializableCoreSyncStatus<'_> {
         }?;
 
         inner.serialize_field("streams", status.internal_streams())?;
+
+        inner.end()
+    }
+}
+
+struct SerializablePriorityStatuses<'a>(&'a [PriorityStatus]);
+
+impl Serialize for SerializablePriorityStatuses<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut seq = serializer.serialize_seq(Some(self.0.len()))?;
+        for status in self.0 {
+            seq.serialize_element(&SerializablePriorityStatus(status))?;
+        }
+
+        seq.end()
+    }
+}
+
+struct SerializablePriorityStatus<'a>(&'a PriorityStatus);
+
+impl Serialize for SerializablePriorityStatus<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let status = self.0;
+        // Like the core extension, report timestamps as microseconds since the epoch.
+        let last_synced_at = status
+            .last_synced_at()
+            .and_then(|time| time.duration_since(UNIX_EPOCH).ok())
+            .and_then(|duration| i64::try_from(duration.as_micros()).ok());
+
+        // Note: This must match SyncPriorityStatus in shared-internals/src/client/sync/stream/core-instruction.ts
+        let mut inner = serializer.serialize_struct("SyncPriorityStatus", 3)?;
+        inner.serialize_field("priority", &status.priority)?;
+        inner.serialize_field("last_synced_at", &last_synced_at)?;
+        inner.serialize_field("has_synced", &status.has_synced())?;
 
         inner.end()
     }

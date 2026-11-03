@@ -18,7 +18,9 @@ describe('useQuery', () => {
     cleanup(); // Cleanup the DOM after each test
   });
 
-  const baseWrapper = ({ children, db }) => (
+  type WrapperArgs = { children: React.ReactNode; db: commonSdk.CommonPowerSyncDatabase };
+
+  const baseWrapper = ({ children, db }: WrapperArgs) => (
     <PowerSyncContext.Provider value={db}>{children}</PowerSyncContext.Provider>
   );
 
@@ -70,16 +72,14 @@ describe('useQuery', () => {
     },
     {
       mode: 'StrictMode',
-      wrapper: ({ children, db }) => <React.StrictMode>{baseWrapper({ children, db })}</React.StrictMode>
+      wrapper: ({ children, db }: WrapperArgs) => <React.StrictMode>{baseWrapper({ children, db })}</React.StrictMode>
     }
   ];
 
   testCases.forEach(({ mode, wrapper: testWrapper }) => {
-    const isStrictMode = mode === 'StrictMode';
-
     describe(`in ${mode}`, () => {
       it('should set isLoading to true on initial load', async () => {
-        const db = openPowerSync();
+        const db = await openPowerSync();
         const { result } = renderHook(() => useQuery('SELECT * from lists'), {
           wrapper: ({ children }) => testWrapper({ children, db })
         });
@@ -87,8 +87,44 @@ describe('useQuery', () => {
         expect(currentResult.isLoading).toEqual(true);
       });
 
+      it('does not leak a watched query when unmounted', async () => {
+        const db = await openPowerSync();
+
+        function countUpdateListeners() {
+          let found = 0;
+          db.database.iterateListeners((l) => {
+            if (l.tablesUpdated) {
+              found++;
+            }
+          });
+          return found;
+        }
+
+        const baseline = countUpdateListeners();
+
+        const { result, unmount } = renderHook(() => useQuery('SELECT * from lists'), {
+          wrapper: ({ children }) => testWrapper({ children, db })
+        });
+
+        await waitFor(() => {
+          expect(result.current.isLoading).toEqual(false);
+        });
+
+        // Only a single active watched query should be subscribed, even though effects
+        // (and, in older/buggy versions, render-body side effects) may run twice in Strict Mode.
+        await waitFor(() => {
+          expect(countUpdateListeners()).toStrictEqual(baseline + 1);
+        });
+
+        unmount();
+
+        await waitFor(() => {
+          expect(countUpdateListeners()).toStrictEqual(baseline);
+        });
+      });
+
       it('should set error when error occurs and runQueryOnce flag is set', async () => {
-        const db = openPowerSync();
+        const db = await openPowerSync();
 
         const { result } = renderHook(() => useQuery('SELECT * from faketable', [], { runQueryOnce: true }), {
           wrapper: ({ children }) => testWrapper({ children, db })
@@ -103,7 +139,7 @@ describe('useQuery', () => {
       });
 
       it('should set error when error occurs with watched query', async () => {
-        const db = openPowerSync();
+        const db = await openPowerSync();
 
         const { result } = renderHook(() => useQuery('SELECT * from faketable', []), {
           wrapper: ({ children }) => testWrapper({ children, db })
@@ -118,7 +154,7 @@ describe('useQuery', () => {
       });
 
       it('should log the error when a watched query fails to resolve its tables', async () => {
-        const db = openPowerSync();
+        const db = await openPowerSync();
         const spies = spyOnErrorLogs(db);
 
         renderHook(() => useQuery('SELECT * from faketable', []), {
@@ -132,7 +168,7 @@ describe('useQuery', () => {
       });
 
       it('should log the error when a watched query fails while executing', async () => {
-        const db = openPowerSync();
+        const db = await openPowerSync();
         const spies = spyOnErrorLogs(db);
 
         // The tables of this query resolve successfully, the failure only happens once the query is
@@ -169,7 +205,7 @@ describe('useQuery', () => {
       });
 
       it('should log the error when a query with the runQueryOnce flag fails', async () => {
-        const db = openPowerSync();
+        const db = await openPowerSync();
         const spies = spyOnErrorLogs(db);
 
         renderHook(() => useQuery('SELECT * from faketable', [], { runQueryOnce: true }), {
@@ -183,7 +219,7 @@ describe('useQuery', () => {
       });
 
       it('should rerun the query when refresh is used', async () => {
-        const db = openPowerSync();
+        const db = await openPowerSync();
         const getAllSpy = vi.spyOn(db, 'getAll');
 
         const { result } = renderHook(() => useQuery('SELECT * from lists', [], { runQueryOnce: true }), {
@@ -192,25 +228,43 @@ describe('useQuery', () => {
 
         expect(result.current.isLoading).toEqual(true);
 
-        let refresh;
+        let refresh: undefined | (() => Promise<void>);
 
         await waitFor(
           () => {
             const currentResult = result.current;
             refresh = currentResult.refresh;
             expect(currentResult.isLoading).toEqual(false);
-            expect(getAllSpy).toHaveBeenCalledTimes(isStrictMode ? 2 : 1);
+            expect(getAllSpy).toHaveBeenCalledTimes(1);
           },
           { timeout: 500, interval: 100 }
         );
 
-        await act(() => refresh());
+        // Keep the refreshed query pending so that we can observe the state while it runs.
+        const pendingQuery = pDefer<void>();
+        getAllSpy.mockImplementationOnce(async () => {
+          await pendingQuery.promise;
+          return [];
+        });
 
-        expect(getAllSpy).toHaveBeenCalledTimes(isStrictMode ? 3 : 2);
+        let refreshDone: Promise<void>;
+        act(() => {
+          refreshDone = refresh!();
+        });
+
+        // isLoading only describes the initial load, refreshing should only report isFetching.
+        expect(result.current.isFetching).toEqual(true);
+        expect(result.current.isLoading).toEqual(false);
+
+        pendingQuery.resolve();
+        await act(() => refreshDone);
+
+        expect(getAllSpy).toHaveBeenCalledTimes(2);
+        expect(result.current.isFetching).toEqual(false);
       });
 
       it('should accept compilable queries', async () => {
-        const db = openPowerSync();
+        const db = await openPowerSync();
 
         const { result } = renderHook(
           () => useQuery({ execute: () => [] as any, compile: () => ({ sql: 'SELECT * from lists', parameters: [] }) }),
@@ -221,7 +275,7 @@ describe('useQuery', () => {
       });
 
       it('should react to updated queries (simple update)', async () => {
-        const db = openPowerSync();
+        const db = await openPowerSync();
 
         let updateParameters = (params: string[]): void => {};
         const newParametersPromise = new Promise<string[]>((resolve) => {
@@ -291,10 +345,17 @@ describe('useQuery', () => {
         expect(secondFetchingEvent).toBeDefined();
         // We should immediately report that we are fetching once we detect new params
         expect(secondFetchingEvent?.hookResults.isFetching).true;
+        // and why: the rows still returned belong to the previous parameters
+        expect(secondFetchingEvent?.hookResults.fetchReason).toEqual('settings-changed');
+        expect(secondFetchingEvent?.hookResults.data[0]?.name).toEqual('first');
+        // The first load reports 'initial', settled results report no reason
+        expect(hookEvents[0]?.hookResults.fetchReason).toEqual('initial');
+        expect(firstResultEvent?.hookResults.fetchReason).toBeUndefined();
+        expect(result.current.fetchReason).toBeUndefined();
       });
 
       it('should react to updated queries (many updates)', async () => {
-        const db = openPowerSync();
+        const db = await openPowerSync();
 
         await db.execute(/* sql */ `
           INSERT INTO
@@ -425,7 +486,7 @@ describe('useQuery', () => {
         await vi.waitFor(
           () => {
             expect(result.current.data[0]?.name).toEqual('second');
-            expect(result.current.error).null;
+            expect(result.current.error).toBeUndefined();
             expect(result.current.isFetching).false;
             expect(result.current.isLoading).false;
           },
@@ -442,13 +503,13 @@ describe('useQuery', () => {
             (event) =>
               event.parameters[0] == 'second' &&
               event.hookResults.data[0]?.name != 'second' &&
-              (event.hookResults.isFetching == false || event.hookResults.isLoading == false)
+              event.hookResults.isFetching == false
           )
-        );
+        ).toBeUndefined();
       });
 
       it('should react to updated queries (immediate updates)', async () => {
-        const db = openPowerSync();
+        const db = await openPowerSync();
 
         await db.execute(/* sql */ `
           INSERT INTO
@@ -550,7 +611,7 @@ describe('useQuery', () => {
       });
 
       it('should execute compatible queries', async () => {
-        const db = openPowerSync();
+        const db = await openPowerSync();
 
         const query = () =>
           useQuery({
@@ -568,7 +629,7 @@ describe('useQuery', () => {
       });
 
       it('should react to updated queries (Explicit Drizzle DB)', async () => {
-        const db = openPowerSync();
+        const db = await openPowerSync();
 
         const lists = sqliteTable('lists', {
           id: text('id'),
@@ -629,7 +690,7 @@ describe('useQuery', () => {
       });
 
       it('should react to updated queries', async () => {
-        const db = openPowerSync();
+        const db = await openPowerSync();
 
         let updateParameters = (params: string[]): void => {};
         const newParametersPromise = new Promise<string[]>((resolve) => {
@@ -685,7 +746,7 @@ describe('useQuery', () => {
       });
 
       it('sohuld allow changing parameter array size', async () => {
-        const db = openPowerSync();
+        const db = await openPowerSync();
 
         let currentQuery = { sql: 'SELECT ? AS a', params: ['foo'] };
         let listeners: (() => void)[] = [];
@@ -728,7 +789,7 @@ describe('useQuery', () => {
       });
 
       it('should show an error if parsing the query results in an error', async () => {
-        const db = openPowerSync();
+        const db = await openPowerSync();
 
         const { result } = renderHook(
           () =>
@@ -753,8 +814,56 @@ describe('useQuery', () => {
         );
       });
 
+      it.for([[false], [true]])(
+        `should report compile errors and recover (runQueryOnce: %s)`,
+        async ([runQueryOnce]) => {
+          const db = await openPowerSync();
+          await db.execute(`INSERT INTO lists (id, name) VALUES (uuid(), 'list')`);
+
+          const execute = vi.fn(async () => [] as { name: string }[]);
+          const failingQuery: commonSdk.CompilableQuery<{ name: string }> = {
+            execute,
+            compile: () => {
+              throw new Error('compile failed');
+            }
+          };
+          const validQuery: commonSdk.CompilableQuery<{ name: string }> = {
+            execute: () => db.getAll<{ name: string }>('SELECT name FROM lists'),
+            compile: () => ({ sql: 'SELECT name FROM lists', parameters: [] })
+          };
+
+          const { result, rerender } = renderHook(({ query }) => useQuery(query, [], { runQueryOnce }), {
+            wrapper: ({ children }) => testWrapper({ children, db }),
+            initialProps: { query: failingQuery }
+          });
+
+          // The error is reported synchronously, without having to wait for any query to run.
+          const errorResult = result.current;
+          expect(errorResult.isLoading).toEqual(false);
+          expect(errorResult.isFetching).toEqual(false);
+          expect(errorResult.data).toEqual([]);
+          expect(errorResult.error?.message).toEqual('compile failed');
+
+          // Re-rendering with the same failing query should keep a stable result.
+          rerender({ query: failingQuery });
+          expect(result.current).toBe(errorResult);
+          expect(execute).not.toHaveBeenCalled();
+
+          // Switching to a valid query should clear the error and load results.
+          rerender({ query: validQuery });
+          await waitFor(
+            () => {
+              expect(result.current.error).toBeUndefined();
+              expect(result.current.isLoading).toEqual(false);
+              expect(result.current.data).toEqual([{ name: 'list' }]);
+            },
+            { timeout: 500, interval: 100 }
+          );
+        }
+      );
+
       it('should use an existing WatchedQuery instance', async () => {
-        const db = openPowerSync();
+        const db = await openPowerSync();
 
         // This query can be instantiated once and reused.
         // The query retains it's state and will not re-fetch the data unless the result changes.
@@ -797,7 +906,7 @@ describe('useQuery', () => {
       });
 
       it('should be able to switch between single and watched query', async () => {
-        const db = openPowerSync();
+        const db = await openPowerSync();
 
         let changeRunOnce: React.Dispatch<React.SetStateAction<boolean>>;
         const { result } = renderHook(
@@ -842,8 +951,43 @@ describe('useQuery', () => {
         );
       });
 
+      it('should emit reordered data when the sort order changes with a rowComparator', async () => {
+        const db = await openPowerSync();
+        await db.execute('INSERT INTO lists(id, name) VALUES (?, ?), (?, ?)', ['1', 'a', '2', 'b']);
+
+        const { result, rerender } = renderHook(
+          ({ order }) =>
+            useQuery<{ id: string; name: string }>(`SELECT id, name FROM lists ORDER BY name ${order}`, [], {
+              rowComparator: {
+                keyBy: (item) => item.id,
+                compareBy: (item) => JSON.stringify(item)
+              }
+            }),
+          {
+            wrapper: ({ children }) => testWrapper({ children, db }),
+            initialProps: { order: 'ASC' }
+          }
+        );
+
+        await waitFor(
+          () => {
+            expect(result.current.data.map((row) => row.name)).toEqual(['a', 'b']);
+          },
+          { timeout: 500, interval: 100 }
+        );
+
+        rerender({ order: 'DESC' });
+
+        await waitFor(
+          () => {
+            expect(result.current.data.map((row) => row.name)).toEqual(['b', 'a']);
+          },
+          { timeout: 500, interval: 100 }
+        );
+      });
+
       it('should emit result data when query changes', async () => {
-        const db = openPowerSync();
+        const db = await openPowerSync();
         const { result } = renderHook(
           () =>
             useQuery('SELECT * FROM lists WHERE name = ?', ['aname'], {
@@ -916,10 +1060,19 @@ describe('useQuery', () => {
 
       // Verifies backwards compatibility with the previous implementation (no comparison)
       it('should emit result data when data changes when not using rowComparator', async () => {
-        const db = openPowerSync();
-        const { result } = renderHook(() => useQuery('SELECT * FROM lists WHERE name = ?', ['aname']), {
-          wrapper: ({ children }) => testWrapper({ children, db })
-        });
+        const db = await openPowerSync();
+        // Refetches after the initial load are caused by table changes here
+        const refetchReasons = new Set<string | undefined>();
+        const { result } = renderHook(
+          () => {
+            const hookResult = useQuery('SELECT * FROM lists WHERE name = ?', ['aname']);
+            if (hookResult.isFetching && !hookResult.isLoading) {
+              refetchReasons.add(hookResult.fetchReason);
+            }
+            return hookResult;
+          },
+          { wrapper: ({ children }) => testWrapper({ children, db }) }
+        );
 
         expect(result.current.isLoading).toEqual(true);
 
@@ -953,10 +1106,11 @@ describe('useQuery', () => {
 
         // It should be the same data array reference, no update should have happened
         expect(result.current.data == previousData).false;
+        expect([...refetchReasons]).toEqual(['tables-changed']);
       });
 
       it('should handle dependent query parameter changes with correct state transitions', async () => {
-        const db = openPowerSync();
+        const db = await openPowerSync();
 
         await db.execute(/* sql */ `
           INSERT INTO
@@ -1008,36 +1162,107 @@ describe('useQuery', () => {
           { timeout: 500, interval: 100 }
         );
 
-        // Find the index where param changes from 0 to 1
-        let beforeParamChangeIndex = 0;
-        for (const transition of stateTransitions) {
-          if (transition.param === 1) {
-            beforeParamChangeIndex = stateTransitions.indexOf(transition) - 1;
-            break;
-          }
-        }
+        // Find the first transition where param changed from 0 to 1
+        const paramChangedIndex = stateTransitions.findIndex((transition) => transition.param === 1);
+        expect(paramChangedIndex).toBeGreaterThan(0);
 
-        const indexMultiplier = isStrictMode ? 2 : 1; // StrictMode causes 1 extra render per state
-        const initialState = stateTransitions[beforeParamChangeIndex];
+        // The very first render, before either query has had a chance to resolve.
+        const initialState = stateTransitions[0];
         expect(initialState).toBeDefined();
         expect(initialState?.param).toEqual(0);
         expect(initialState?.dataLength).toEqual(0);
         expect(initialState?.isFetching).toEqual(true);
         expect(initialState?.isLoading).toEqual(true);
 
-        const paramChangedState = stateTransitions[beforeParamChangeIndex + 1 * indexMultiplier];
+        // The transition where the param has changed, but the dependent query hasn't resolved yet.
+        const paramChangedState = stateTransitions[paramChangedIndex];
         expect(paramChangedState).toBeDefined();
         expect(paramChangedState?.param).toEqual(1);
         expect(paramChangedState?.dataLength).toEqual(0);
         expect(paramChangedState?.isFetching).toEqual(true);
-        expect(paramChangedState?.isLoading).toEqual(true);
 
-        const finalState = stateTransitions[beforeParamChangeIndex + 2 * indexMultiplier];
+        // The final, settled state is guaranteed to be the last recorded transition, since the
+        // `waitFor` above only resolves once `result.current` (the latest render) matches it.
+        const finalState = stateTransitions[stateTransitions.length - 1];
         expect(finalState).toBeDefined();
         expect(finalState.param).toEqual(1);
         expect(finalState.dataLength).toEqual(1);
         expect(finalState.isFetching).toEqual(false);
         expect(finalState.isLoading).toEqual(false);
+      });
+
+      it('should forward throttleMs to the watched query', async () => {
+        const db = await openPowerSync();
+        const throttleMs = 1234;
+
+        // Spy on the watched query construction to assert the option reaches it.
+        // Asserting on the received option avoids depending on wall clock throttle windows.
+        const baseCustomQuery = db.customQuery;
+        let watchOptions: commonSdk.WatchedQueryOptions | undefined;
+
+        vi.spyOn(db, 'customQuery').mockImplementation((query) => {
+          const builder = baseCustomQuery.call(db, query);
+          const baseWatch = builder.watch;
+
+          // The hooks use the `watch` method if no rowComparator is set
+          vi.spyOn(builder, 'watch').mockImplementation((buildOptions) => {
+            watchOptions = buildOptions;
+            return baseWatch.call(builder, buildOptions);
+          });
+
+          return builder;
+        });
+
+        renderHook(() => useQuery('SELECT * from lists', [], { throttleMs }), {
+          wrapper: ({ children }) => testWrapper({ children, db })
+        });
+
+        await waitFor(
+          async () => {
+            expect(watchOptions?.throttleMs).toEqual(throttleMs);
+          },
+          { timeout: 500, interval: 100 }
+        );
+      });
+
+      it('should forward throttleMs to the differential watched query', async () => {
+        const db = await openPowerSync();
+        const throttleMs = 1234;
+
+        const baseCustomQuery = db.customQuery;
+        let watchOptions: commonSdk.WatchedQueryOptions | undefined;
+
+        vi.spyOn(db, 'customQuery').mockImplementation((query) => {
+          const builder = baseCustomQuery.call(db, query);
+          const baseDifferentialWatch = builder.differentialWatch;
+
+          // The hooks use the `differentialWatch` method if a rowComparator is set
+          vi.spyOn(builder, 'differentialWatch').mockImplementation((buildOptions) => {
+            watchOptions = buildOptions;
+            return baseDifferentialWatch.call(builder, buildOptions);
+          });
+
+          return builder;
+        });
+
+        renderHook(
+          () =>
+            useQuery('SELECT * from lists', [], {
+              throttleMs,
+              rowComparator: {
+                keyBy: (item: { id: string }) => item.id,
+                compareBy: (item: unknown) => JSON.stringify(item)
+              }
+            }),
+          { wrapper: ({ children }) => testWrapper({ children, db }) }
+        );
+
+        await waitFor(
+          async () => {
+            expect(watchOptions?.throttleMs).toEqual(throttleMs);
+          },
+          { timeout: 500, interval: 100 }
+        );
       });
     });
   });

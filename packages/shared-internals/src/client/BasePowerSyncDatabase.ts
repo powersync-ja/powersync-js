@@ -33,7 +33,9 @@ import {
   BaseObserver,
   SqliteRecord,
   SyncStreamConnectionMethod,
-  CheckpointRequest
+  CheckpointRequest,
+  DownloadOptions,
+  UploadOptions
 } from '@powersync/common';
 import { BucketStorageAdapter, PSInternalTable } from './sync/bucket/BucketStorageAdapter.js';
 import { SyncStatusSnapshot } from '../db/crud/SyncStatus.js';
@@ -57,18 +59,19 @@ import { DEFAULT_WATCH_THROTTLE_MS } from './watched/WatchedQuery.js';
 import { CustomQuery } from './CustomQuery.js';
 import { MEMORY_TRIGGER_CLAIM_MANAGER } from './triggers/MemoryTriggerClaimManager.js';
 import { symbolAsyncIterator } from '../utils/compatibility.js';
-import { MAX_OP_ID } from '../constants.js';
 import { SqliteBucketStorage } from './sync/bucket/SqliteBucketStorage.js';
 import {
   cannotRequestDueToDisconnectedError,
   checkpointRequestsNotEnabledError
 } from './sync/stream/CheckpointState.js';
 import { CheckpointRequestImpl } from './sync/CheckpointRequestImpl.js';
+import { InternalConnector, normalizeConnectCall } from './InternalConnector.js';
 
 const POWERSYNC_TABLE_MATCH = /(^ps_data__|^ps_data_local__)/;
 
 const DEFAULT_DISCONNECT_CLEAR_OPTIONS: DisconnectAndClearOptions = {
-  clearLocal: true
+  clearLocal: true,
+  soft: false
 };
 
 /**
@@ -219,6 +222,14 @@ export abstract class BasePowerSyncDatabase<Options extends BasePowerSyncDatabas
     return SyncStreamConnectionMethod.HTTP;
   }
 
+  /**
+   * The name of the SDK package this database belongs to, e.g. `@powersync/web`. Development tooling
+   * shows it to identify the app. SDKs override it with their package name.
+   */
+  get sdkName(): string {
+    return 'powersync-js';
+  }
+
   get schema() {
     return this._schema;
   }
@@ -259,25 +270,15 @@ export abstract class BasePowerSyncDatabase<Options extends BasePowerSyncDatabas
   }
 
   protected abstract generateSyncStreamImplementation(
-    connector: PowerSyncBackendConnector,
+    connector: InternalConnector,
     options: CreateSyncImplementationOptions
   ): StreamingSyncImplementation;
 
-  protected commonSyncOptions(connector: PowerSyncBackendConnector, options: CreateSyncImplementationOptions) {
+  protected commonSyncOptions(connector: InternalConnector, options: CreateSyncImplementationOptions) {
     return {
       ...options,
       adapter: this.bucketStorageAdapter,
-      uploadCrud: async () => {
-        await this.waitForReady();
-        await connector.uploadData(this);
-      },
-      postCheckpointRequest: (clientId, requestId) => {
-        if (connector.postCheckpointRequest) {
-          return this.waitForReady().then((_) => connector.postCheckpointRequest!(clientId, requestId));
-        } else {
-          return null;
-        }
-      },
+      connector,
       identifier: this.database.name,
       logger: this.logger
     } satisfies Partial<AbstractStreamingSyncImplementationOptions>;
@@ -440,8 +441,15 @@ export abstract class BasePowerSyncDatabase<Options extends BasePowerSyncDatabas
     return this.runExclusiveMutex.runExclusive(callback);
   }
 
-  async connect(connector: PowerSyncBackendConnector, options?: SyncOptions) {
-    return this.connectionManager.connect(connector, options ?? {}, this.schema.toJSON());
+  connect(connector: PowerSyncBackendConnector, options?: SyncOptions): Promise<void>;
+  connect(options: SyncOptions & (DownloadOptions | UploadOptions)): Promise<void>;
+
+  async connect(
+    connector: PowerSyncBackendConnector | (SyncOptions & (DownloadOptions | UploadOptions)),
+    options?: SyncOptions
+  ) {
+    const [resolvedConnector, resolvedOptions] = normalizeConnectCall(this, connector, options);
+    return this.connectionManager.connect(resolvedConnector, resolvedOptions, this.schema.toJSON());
   }
 
   async disconnect() {
@@ -452,10 +460,12 @@ export abstract class BasePowerSyncDatabase<Options extends BasePowerSyncDatabas
     await this.disconnect();
     await this.waitForReady();
 
-    const { clearLocal } = options;
+    let flags = 0;
+    if (options.clearLocal) flags |= 1;
+    if (options.soft) flags |= 2;
 
     await this.database.writeTransaction(async (tx) => {
-      await tx.execute('SELECT powersync_clear(?)', [clearLocal ? 1 : 0]);
+      await tx.execute('SELECT powersync_clear(?)', [flags]);
     });
 
     // The data has been deleted - reset the sync status
@@ -710,7 +720,8 @@ SELECT * FROM crud_entries;
     if (!onResult) {
       throw new Error('onResult is required');
     }
-    const { comparator } = options ?? {};
+    const { comparator, signal } = options ?? {};
+    if (signal?.aborted) return;
 
     // This API yields a QueryResult type.
     // This is not a standard Array result, which makes it incompatible with the .query API.
@@ -743,7 +754,7 @@ SELECT * FROM crud_entries;
       onError
     });
 
-    options?.signal?.addEventListener('abort', () => {
+    signal?.addEventListener('abort', () => {
       dispose();
       watchedQuery.close();
     });
@@ -807,20 +818,20 @@ SELECT * FROM crud_entries;
       throw new Error('onChange is required');
     }
 
-    const resolvedOptions = options ?? {};
+    const { signal, tables, throttleMs = DEFAULT_WATCH_THROTTLE_MS } = options ?? {};
+    if (signal?.aborted) return () => {};
+
     const watchedTables = new Set<string>(
-      (resolvedOptions?.tables ?? []).flatMap((table) => [table, `ps_data__${table}`, `ps_data_local__${table}`])
+      (tables ?? []).flatMap((table) => [table, `ps_data__${table}`, `ps_data_local__${table}`])
     );
 
     const changedTables = new Set<string>();
-    const throttleMs = resolvedOptions.throttleMs ?? DEFAULT_WATCH_THROTTLE_MS;
-
     const executor = new ControlledExecutor(onChange);
 
     const flushTableUpdates = throttleTrailing(
       () =>
         this.handleTableChanges(changedTables, watchedTables, (intersection) => {
-          if (resolvedOptions?.signal?.aborted) return;
+          if (signal?.aborted) return;
           executor.schedule({ changedTables: intersection });
         }),
       throttleMs
@@ -830,19 +841,21 @@ SELECT * FROM crud_entries;
       executor.schedule({ changedTables: [] });
     }
 
-    const dispose = this.database.registerListener({
+    const disposeUpdateListener = this.database.registerListener({
       tablesUpdated: async (update) => {
         this.processTableUpdates(update, changedTables);
         flushTableUpdates();
       }
     });
 
-    resolvedOptions.signal?.addEventListener('abort', () => {
+    const dispose = () => {
       executor.dispose();
-      dispose();
-    });
+      disposeUpdateListener();
+      signal?.removeEventListener('abort', dispose);
+    };
+    signal?.addEventListener('abort', dispose);
 
-    return () => dispose();
+    return dispose;
   }
 
   // Note: do not declare this as `async *onChange` as it will not work in React Native.

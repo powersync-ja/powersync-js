@@ -1,0 +1,8 @@
+config:
+  edition: 3
+
+streams:
+  customers:
+    auto_subscribe: true
+    queries:
+      - SELECT * FROM customers

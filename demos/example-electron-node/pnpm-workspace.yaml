@@ -7,8 +7,17 @@ overrides:
   "@electron/rebuild": ^4.0.4
 
 allowBuilds:
-  better-sqlite3: true
   electron: true
   electron-winstaller: false
   esbuild: false
   lzma-native: false
+
+
+nodeLinker: hoisted
+minimumReleaseAgeExclude:
+  - 'electron@44.4.3'
+trustPolicyExclude:
+  - 'rollup@2.80.0' # Backport release published from trusted tag
+  - 'chokidar@4.0.3'
+  - 'semver@6.3.1||5.7.2'
+  - 'undici-types@6.21.0'

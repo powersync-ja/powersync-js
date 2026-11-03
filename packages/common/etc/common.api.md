@@ -176,6 +176,12 @@ export interface AttachmentTransportAdapter {
     upload(attachment: LocatedAttachmentRecord): Promise<void>;
 }
 
+// @public
+export interface Authenticator extends PostCustomCheckpoints {
+    invalidateCredentials?(): void;
+    resolveCredentials(options: ResolveCredentialsOptions): Promise<string>;
+}
+
 // @alpha
 export interface BaseAttachmentQueueOptions<TLocal extends LocalStorageAdapter = LocalStorageAdapter> {
     archivedCacheLimit?: number;
@@ -321,6 +327,7 @@ export interface CommonPowerSyncDatabase extends BaseObserverInterface<PowerSync
     close(options?: PowerSyncCloseOptions): Promise<void>;
     readonly closed: boolean;
     connect(connector: PowerSyncBackendConnector, options?: SyncOptions): Promise<void>;
+    connect(options: SyncOptions & (DownloadOptions | UploadOptions)): Promise<void>;
     get connected(): boolean;
     // (undocumented)
     get connecting(): boolean;
@@ -520,7 +527,6 @@ export interface DifferentialWatchedQueryComparator<RowType> {
 
 // @public (undocumented)
 export interface DifferentialWatchedQueryListener<RowType> extends WatchedQueryListener<ReadonlyArray<Readonly<RowType>>> {
-    // (undocumented)
     onDiff?: (diff: WatchedQueryDifferential<RowType>) => void | Promise<void>;
 }
 
@@ -545,9 +551,10 @@ export enum DiffTriggerOperation {
     UPDATE = "UPDATE"
 }
 
-// @public (undocumented)
+// @public
 export interface DisconnectAndClearOptions {
     clearLocal?: boolean;
+    soft?: boolean;
 }
 
 // @public (undocumented)
@@ -556,6 +563,12 @@ interface Disposable_2 {
     dispose: () => Promise<void> | void;
 }
 export { Disposable_2 as Disposable }
+
+// @public
+export interface DownloadOptions {
+    authenticator: Authenticator;
+    powerSyncEndpoint: string;
+}
 
 // @alpha (undocumented)
 export enum EncodingType {
@@ -603,6 +616,11 @@ export type GetAllQueryOptions<RowType = unknown> = {
     parameters?: ReadonlyArray<unknown>;
     mapper?: (rawRow: Record<string, unknown>) => RowType;
 };
+
+// @public
+export interface HasAbortSignal {
+    abort?: AbortSignal;
+}
 
 // @public (undocumented)
 export class Index {
@@ -737,6 +755,9 @@ export interface MetaListener<ParentListener extends BaseListener> extends BaseL
     listenersChanged?: (counts: ListenerCounts<ParentListener>) => void;
 }
 
+// @public
+export type MutationUploader = (options: UploadMutationsOptions) => Promise<void>;
+
 // Warning: (ae-internal-missing-underscore) The name "Mutex" should be prefixed with an underscore because the declaration is marked as @internal
 //
 // @internal
@@ -760,9 +781,13 @@ export type PendingStatementParameter = 'Id' | {
 } | 'Rest';
 
 // @public (undocumented)
-export interface PowerSyncBackendConnector {
+export interface PostCustomCheckpoints {
+    postCheckpointRequest?(clientId: string, requestId: string, signal?: AbortSignal): Promise<string>;
+}
+
+// @public (undocumented)
+export interface PowerSyncBackendConnector extends PostCustomCheckpoints {
     fetchCredentials: () => Promise<PowerSyncCredentials | null>;
-    postCheckpointRequest?(clientId: string, requestId: string): Promise<string>;
     uploadData: (database: CommonPowerSyncDatabase) => Promise<void>;
 }
 
@@ -776,7 +801,7 @@ export interface PowerSyncCredentials {
     // (undocumented)
     endpoint: string;
     // (undocumented)
-    expiresAt?: Date;
+    expiresAt?: Date | undefined;
     // (undocumented)
     token: string;
 }
@@ -861,10 +886,16 @@ export interface RemoteStorageAdapter {
 }
 
 // @public
+export interface ResolveCredentialsOptions extends HasAbortSignal {
+}
+
+// @public
 export class ResolvedTable {
     constructor(options: ResolvedTableOptions);
     // (undocumented)
     get columns(): Column[];
+    // (undocumented)
+    get direct(): boolean | undefined;
     // (undocumented)
     get ignoreEmptyUpdates(): boolean;
     // (undocumented)
@@ -888,7 +919,7 @@ export class ResolvedTable {
         include_metadata: boolean | undefined;
         ignore_empty_update: boolean | undefined;
         name: string;
-        view_name: string;
+        view_name: string | undefined;
         columns: {
             name: string;
             type: ColumnType | undefined;
@@ -901,6 +932,7 @@ export class ResolvedTable {
                 type: ColumnType;
             }[];
         }[];
+        direct: boolean | undefined;
     };
     // (undocumented)
     get trackMetadata(): boolean;
@@ -1060,7 +1092,9 @@ export interface SyncOptions {
     appMetadata?: Record<string, string>;
     checkpointMode?: CheckpointMode;
     connectionMethod?: SyncStreamConnectionMethod;
+    connectTimeoutMs?: number;
     crudUploadThrottleMs?: number;
+    diagnostics?: boolean;
     // (undocumented)
     fetchStrategy?: FetchStrategy;
     includeDefaultStreams?: boolean;
@@ -1267,6 +1301,16 @@ export enum UpdateType {
     DELETE = "DELETE",
     PATCH = "PATCH",
     PUT = "PUT"
+}
+
+// @public
+export interface UploadMutationsOptions extends HasAbortSignal {
+    database: CommonPowerSyncDatabase;
+}
+
+// @public
+export interface UploadOptions {
+    upload: MutationUploader;
 }
 
 // @public (undocumented)

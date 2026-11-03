@@ -1,0 +1,38 @@
+# yaml-language-server: $schema=https://unpkg.com/@powersync/cli-schemas@latest/json-schema/service-config.json
+_type: self-hosted
+
+telemetry:
+  disable_telemetry_sharing: true
+
+# The local Postgres (pg-db) is the replication source, and a second Postgres (pg-storage) holds PowerSync's bucket
+# storage. The connection strings are set in docker/.env.
+replication:
+  connections:
+    - type: postgresql
+      uri: !env PS_DATA_SOURCE_URI
+      sslmode: disable
+
+storage:
+  type: postgresql
+  uri: !env PS_STORAGE_SOURCE_URI
+  sslmode: disable
+
+sync_config:
+  path: sync-config.yaml
+
+# Verify the tokens the backend API issues (see server/auth.ts).
+client_auth:
+  audience:
+    - powersync
+  jwks:
+    keys:
+      # A development-only shared secret. It must match JWT_SECRET in .env.local (base64url-encoded).
+      - kty: oct
+        alg: HS256
+        kid: ai-chat-dev
+        k: PuPCx7PnBb2PqeMJCbjmudLDl4QICVw_C-2AkB3apqk
+
+# Lets the PowerSync CLI talk to the local service (see cli.yaml).
+api:
+  tokens:
+    - dev-token-do-not-use-in-production

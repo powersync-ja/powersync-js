@@ -86,7 +86,8 @@ const user = asyncComputed(async () => await client.auth.getUser().then(res => r
 const toast = useToast()
 
 const db = usePowerSyncKysely<Database>()
-const { clearData } = usePowerSyncInspectorDiagnostics()
+const powerSync = usePowerSync()
+const clearData = () => powerSync.value.disconnectAndClear()
 
 const taskQuery = computed(() => db.selectFrom('tasks')
   .where('user_id', '=', user.value?.id ?? '')

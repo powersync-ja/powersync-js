@@ -1,12 +1,26 @@
 import * as os from 'node:os';
 
-import { AbstractRemote, FetchOptions, RemoteConnector } from '@powersync/shared-internals';
-import { Dispatcher, EnvHttpProxyAgent, getGlobalDispatcher, ProxyAgent, WebSocket as UndiciWebSocket } from 'undici';
+import { AbstractRemote, FetchOptions, InternalConnector } from '@powersync/shared-internals';
+import {
+  Dispatcher,
+  EnvHttpProxyAgent,
+  getGlobalDispatcher,
+  ProxyAgent,
+  WebSocket as UndiciWebSocket,
+  fetch as undiciFetch,
+  RequestInfo as UndiciRequestInfo,
+  RequestInit as UndiciRequestInit
+} from 'undici';
 import { PowerSyncLogger } from '@powersync/common';
 import type { WebSocketSyncStreamPlatform, WebSocketSupport } from '@powersync/shared-internals/websockets';
 
 export const STREAMING_POST_TIMEOUT_MS = 30_000;
 
+/**
+ * Options configuring how the client issues HTTP requests.
+ *
+ * @public
+ */
 export interface NodeRemoteOptions {
   /**
    * @internal Only meant to be used for tests.
@@ -16,8 +30,10 @@ export interface NodeRemoteOptions {
   /**
    * Optional custom dispatcher for HTTP or WEB_SOCKET connections.
    *
-   * This can be used to customize proxy usage (using undici ProxyAgent),
-   * or other connection options.
+   * By default, the SDK uses an {@link https://undici.nodejs.org/api/EnvHttpProxyAgent | EnvHttpProxyAgent} to respect
+   * HTTP_PROXY, HTTPS_PROXY and NO_PROXY environment variables.
+   *
+   * This can be used to customize proxy usage (using undici ProxyAgent), or other connection options.
    */
   dispatcher?: Dispatcher;
 }
@@ -27,7 +43,7 @@ export class NodeRemote extends AbstractRemote {
   private fetchImpl: typeof fetch;
 
   constructor(
-    protected connector: RemoteConnector,
+    protected connector: InternalConnector,
     logger: PowerSyncLogger,
     options?: NodeRemoteOptions
   ) {
@@ -38,11 +54,13 @@ export class NodeRemote extends AbstractRemote {
       ((resource, init) => {
         const dispatcher = options?.dispatcher ?? defaultFetchDispatcher();
 
-        return fetch(resource, {
-          // @ts-expect-error
-          dispatcher,
-          ...init
-        });
+        return undiciFetch(
+          resource as UndiciRequestInfo,
+          {
+            dispatcher,
+            ...init
+          } as UndiciRequestInit
+        ) as unknown as Promise<Response>;
       });
 
     this.wsDispatcher = options?.dispatcher;

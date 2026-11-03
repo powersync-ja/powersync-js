@@ -1,6 +1,6 @@
 {
   "name": "@powersync/node",
-  "version": "0.21.0",
+  "version": "1.3.0",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
@@ -20,7 +20,8 @@
     "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
     "watch": "tsc -b -w",
     "test": " pnpm prepare:core && vitest",
-    "test:exports": "attw --pack . --ignore-rules no-resolution cjs-resolves-to-esm"
+    "test:exports": "attw --pack . --ignore-rules no-resolution cjs-resolves-to-esm",
+    "api-diff": "api-extractor run --verbose"
   },
   "type": "module",
   "exports": {
@@ -47,8 +48,8 @@
   },
   "homepage": "https://docs.powersync.com/",
   "peerDependencies": {
-    "@powersync/common": "workspace:^2.1.0",
-    "better-sqlite3": "12.x"
+    "@powersync/common": "workspace:^2.5.0",
+    "better-sqlite3": "12.x || 13.x"
   },
   "peerDependenciesMeta": {
     "better-sqlite3": {
@@ -59,17 +60,21 @@
     "@powersync/common": "workspace:*",
     "@powersync/shared-internals": "workspace:*",
     "comlink": "catalog:",
-    "undici": "^7.11.0"
+    "undici": ">=7.11.0 <9.0.0"
   },
   "devDependencies": {
+    "@powersync/adapter-sql-js": "workspace:*",
     "@powersync/drizzle-driver": "workspace:*",
     "@types/node": "catalog:",
-    "better-sqlite3": "^12.10.0",
-    "@types/better-sqlite3": "^7.6.13",
+    "better-sqlite3": "catalog:",
+    "@types/better-sqlite3": "catalog:",
     "bson": "catalog:",
     "drizzle-orm": "catalog:",
+    "rsocket-core": "1.0.0-alpha.3",
+    "rsocket-websocket-server": "1.0.0-alpha.3",
     "typescript": "catalog:",
-    "vitest": "catalog:"
+    "vitest": "catalog:",
+    "@microsoft/api-extractor": "catalog:"
   },
   "keywords": [
     "data sync",

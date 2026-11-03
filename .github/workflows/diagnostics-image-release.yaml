@@ -10,6 +10,9 @@ on:
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
+permissions:
+  contents: read
+
 jobs:
   release-docker-image:
     name: Build and Release diagnostics-app Docker Image
@@ -17,15 +20,17 @@ jobs:
     if: github.ref == 'refs/heads/main'
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Login to Docker Hub
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -36,7 +41,7 @@ jobs:
         run: echo "IMAGE_VERSION=$(node -p "require('./tools/diagnostics-app/package.json').version")" >> $GITHUB_OUTPUT
 
       - name: Build Image and Push
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           platforms: linux/arm64,linux/amd64
           cache-from: type=registry,ref=${{vars.DIAGNOSTICS_DOCKER_REGISTRY}}:latest
@@ -49,7 +54,7 @@ jobs:
       - name: Update repo description
         #  Note that this 3rd party extention is recommended in the DockerHub docs:
         #  https://docs.docker.com/build/ci/github-actions/update-dockerhub-desc/
-        uses: peter-evans/dockerhub-description@e98e4d1628a5f3be2be7c231e50981aee98723ae # v4.0.0
+        uses: peter-evans/dockerhub-description@1b9a80c056b620d92cedb9d9b5a223409c68ddfa # v5.0.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}

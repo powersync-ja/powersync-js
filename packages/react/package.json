@@ -1,6 +1,6 @@
 {
   "name": "@powersync/react",
-  "version": "2.0.0",
+  "version": "2.2.0",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
@@ -33,22 +33,24 @@
   },
   "homepage": "https://docs.powersync.com",
   "peerDependencies": {
-    "@powersync/common": "workspace:^2.1.0",
+    "@powersync/common": "workspace:^2.5.0",
     "react": "*"
   },
   "devDependencies": {
     "@powersync/common": "workspace:*",
     "@powersync/drizzle-driver": "workspace:*",
-    "@powersync/web": "workspace:*",
+    "@powersync/node": "workspace:*",
     "@testing-library/react": "^16.0.0",
+    "@types/node": "catalog:",
+    "better-sqlite3": "catalog:",
     "drizzle-orm": "catalog:",
     "p-defer": "catalog:",
-    "@types/react": "^18.3.1",
-    "@types/react-dom": "^18.3.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "chart.js": "^4.5.0",
     "jsdom": "catalog:",
-    "react": "18.3.1",
-    "react-dom": "18.3.1",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
     "react-error-boundary": "^4.1.0",
     "@powersync/shared-internals": "workspace:"
   }

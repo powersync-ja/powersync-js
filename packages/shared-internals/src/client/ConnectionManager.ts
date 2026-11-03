@@ -4,7 +4,6 @@ import {
   PowerSyncLogger,
   SyncStatus,
   BaseListener,
-  PowerSyncBackendConnector,
   SyncStream,
   SyncStreamDescription,
   SyncStreamSubscribeOptions,
@@ -15,6 +14,7 @@ import {
 
 import { StreamingSyncImplementation, SubscribedStream } from './sync/stream/AbstractStreamingSyncImplementation.js';
 import { ResolvedSyncOptions, resolveSyncOptions } from './sync/options.js';
+import { InternalConnector } from './InternalConnector.js';
 
 /**
  * @internal
@@ -52,7 +52,7 @@ export interface InternalSubscriptionAdapter {
  */
 export interface ConnectionManagerOptions {
   createSyncImplementation(
-    connector: PowerSyncBackendConnector,
+    connector: InternalConnector,
     options: CreateSyncImplementationOptions
   ): Promise<ConnectionManagerSyncImplementationResult>;
   readonly defaultConnectionMethod: SyncStreamConnectionMethod;
@@ -61,7 +61,7 @@ export interface ConnectionManagerOptions {
 }
 
 type StoredConnectionOptions = {
-  connector: PowerSyncBackendConnector;
+  connector: InternalConnector;
   options: ResolvedSyncOptions;
   schema: any;
 };
@@ -102,6 +102,10 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
 
   private currentOptions: ResolvedSyncOptions | null;
 
+  // The connector of the active connection. Retained alongside currentOptions so `connector` reflects
+  // the live connection, not just the brief pending-options window before connecting starts.
+  private currentConnector: InternalConnector | null;
+
   syncStreamImplementation: StreamingSyncImplementation | null;
 
   /**
@@ -125,11 +129,12 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
     this.pendingConnectionOptions = null;
     this.syncStreamImplementation = null;
     this.currentOptions = null;
+    this.currentConnector = null;
     this.syncDisposer = null;
   }
 
   get connector() {
-    return this.pendingConnectionOptions?.connector ?? null;
+    return this.currentConnector ?? this.pendingConnectionOptions?.connector ?? null;
   }
 
   get connectionOptions() {
@@ -145,17 +150,18 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
     await this.syncDisposer?.();
   }
 
-  async connect(connector: PowerSyncBackendConnector, options: SyncOptions, serializedSchema: any) {
+  async connect(connector: InternalConnector, options: SyncOptions, serializedSchema: any) {
     // Keep track if there were pending operations before this call
     const hadPendingOptions = !!this.pendingConnectionOptions;
 
     // Update pending options to the latest values
     const resolvedOptions = resolveSyncOptions(options, this.options.defaultConnectionMethod);
-    this.pendingConnectionOptions = {
+    const pendingOptions: StoredConnectionOptions = {
       connector,
       options: resolvedOptions,
       schema: serializedSchema
     };
+    this.pendingConnectionOptions = pendingOptions;
 
     if (connector.postCheckpointRequest && resolvedOptions.checkpointMode == 'legacy') {
       this.logger.log({
@@ -182,10 +188,7 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
       if (this.pendingConnectionOptions) {
         // Pending options have been placed while connecting.
         // Need to reconnect.
-        this.connectingPromise = this.connectInternal()
-          .catch(() => {})
-          .finally(checkConnection);
-        return this.connectingPromise;
+        return (this.connectingPromise = this.connectInternal().finally(checkConnection));
       } else {
         // Clear the connecting promise, done.
         this.connectingPromise = null;
@@ -193,10 +196,7 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
       }
     };
 
-    this.connectingPromise ??= this.connectInternal()
-      .catch(() => {})
-      .finally(checkConnection);
-    return this.connectingPromise;
+    return (this.connectingPromise ??= this.connectInternal().finally(checkConnection));
   }
 
   protected async connectInternal() {
@@ -212,6 +212,7 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
      * The promise tracks the creation which is used to synchronize disconnect attempts.
      */
     this.syncStreamInitPromise = new Promise(async (resolve, reject) => {
+      let consumedOptions: StoredConnectionOptions | null = null;
       try {
         if (!this.pendingConnectionOptions) {
           this.logger.log({
@@ -228,9 +229,11 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
           return;
         }
 
-        const { connector, options, schema } = this.pendingConnectionOptions;
+        consumedOptions = this.pendingConnectionOptions;
+        const { connector, options, schema } = consumedOptions;
         appliedOptions = options;
         this.currentOptions = options;
+        this.currentConnector = connector;
 
         this.pendingConnectionOptions = null;
 
@@ -254,8 +257,13 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
       }
     });
 
-    await this.syncStreamInitPromise;
-    this.syncStreamInitPromise = null;
+    try {
+      await this.syncStreamInitPromise;
+    } finally {
+      // Also cleared when the creation fails: performDisconnect() awaits this promise, so a rejected one
+      // left behind would fail every later disconnect.
+      this.syncStreamInitPromise = null;
+    }
 
     if (!appliedOptions) {
       // A disconnect could have cleared the options which did not create a syncStreamImplementation
@@ -279,6 +287,7 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
     // This will help abort pending connects
     this.pendingConnectionOptions = null;
     this.currentOptions = null;
+    this.currentConnector = null;
     await this.disconnectInternal();
   }
 
@@ -290,8 +299,12 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
 
     this.disconnectingPromise = this.performDisconnect();
 
-    await this.disconnectingPromise;
-    this.disconnectingPromise = null;
+    try {
+      await this.disconnectingPromise;
+    } finally {
+      // Also cleared when the disconnect fails, so the next one runs instead of returning this rejection.
+      this.disconnectingPromise = null;
+    }
   }
 
   protected async performDisconnect() {

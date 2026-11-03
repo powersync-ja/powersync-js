@@ -1,6 +1,7 @@
 packages:
   - .
 allowBuilds:
+  '@parcel/watcher': true
   '@swc/core': true
   esbuild: true
   supabase: true

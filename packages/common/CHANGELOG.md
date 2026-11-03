@@ -1,5 +1,56 @@
 # @powersync/common
 
+## 2.5.0
+
+### Minor Changes
+
+- 109de2c: Add `Authenticator` and `MutationUploader` types, and overloads of `connect()` allowing to connect in download-only and upload-only mode.
+- d6a9cb4: Support [direct tables](https://docs.powersync.com/client-sdks/advanced/performance-optimization#managed-views-vs-managed-tables).
+- 59f1618: Add `connectTimeoutMs` (default 30s) to time out checkpoint requests and HTTP sync stream connections, and cancel checkpoint requests on disconnect.
+
+### Patch Changes
+
+- 9be90b3: Fix recovery from failing commits.
+
+## 2.4.0
+
+### Minor Changes
+
+- fe8ad22: Add a `diagnostics` sync option that enables the SQLite core's diagnostics event stream.
+
+## 2.3.1
+
+### Patch Changes
+
+- 3d0d5c4: Allow `PowerSyncCredentials.expiresAt` to be explicitly set to `undefined`.
+
+  `fetchCredentials` implementations compiled with `exactOptionalPropertyTypes` can now return
+  `{ endpoint, token, expiresAt: undefined }` without a type error.
+
+- 7bae50c: Fix `onChangeWithCallback`, `watchWithCallback`, `compilableQueryWatch`, `AbstractQueryProcessor` and `AttachmentQueue.startSync` leaking listeners when aborted or stopped early (closes #1056, closes #1127).
+
+## 2.3.0
+
+### Minor Changes
+
+- 9c8f1e3: Add `DisconnectAndClearOptions.soft` to clear data from public tables while keeping an internal sync for a faster next sync.
+
+## 2.2.1
+
+### Patch Changes
+
+- 7223ab2: Fix `AttachmentQueue.expireCache()` never returning when there is nothing to delete.
+
+## 2.2.0
+
+### Minor Changes
+
+- a07998d: Add `requestCheckpoint()` to `PowerSyncDatabase` to request an explicit sync acknowledgement.
+  This feature requires a new `checkpointMode: 'requests'` option on `ConnectOptions` switching to a more
+  efficient way to request checkpoints from the PowerSync service.
+
+  For more details on this feature, see [Sync Catch-Up](https://docs.powersync.com/client-sdks/advanced/checkpoint-requests).
+
 ## 2.1.0
 
 ### Minor Changes

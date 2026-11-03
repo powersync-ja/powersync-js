@@ -1,12 +1,12 @@
 import * as commonSdk from '@powersync/common';
-import { PowerSyncDatabase } from '@powersync/web';
 import { Chart } from 'chart.js/auto';
 import React, { Profiler } from 'react';
 import ReactDOM from 'react-dom/client';
-import { beforeEach, describe, it, Mock, onTestFinished, vi } from 'vitest';
+import { beforeEach, describe, it, Mock, onTestFinished, vi, expect } from 'vitest';
 import { PowerSyncContext } from '../src/hooks/PowerSyncContext';
 import { useQuery } from '../src/hooks/watched/useQuery';
 import { useWatchedQuerySubscription } from '../src/hooks/watched/useWatchedQuerySubscription';
+import { createDatabase } from './utils';
 
 let skipTests = true;
 /**
@@ -41,19 +41,7 @@ const AppSchema = new commonSdk.Schema({
 
 type List = (typeof AppSchema)['types']['lists'];
 
-export const openPowerSync = () => {
-  const db = new PowerSyncDatabase({
-    database: { dbFilename: 'test.db' },
-    schema: AppSchema
-  });
-
-  onTestFinished(async () => {
-    await db.disconnectAndClear();
-    await db.close();
-  });
-
-  return db;
-};
+export const openPowerSync = () => createDatabase(AppSchema);
 
 const TestWidget: React.FC<{
   getData: () => ReadonlyArray<List>;
@@ -363,7 +351,7 @@ describe.skipIf(skipTests)('Performance', { timeout: Infinity }, () => {
   });
 
   it('Benchmark', async () => {
-    const db = openPowerSync();
+    const db = await openPowerSync();
     // const initialDataCount = 10;
     const initialDataVolumeSteps = new Array(10).fill(0).map((_, i) => (i + 1) * 10);
     const incrementalInsertsCount = 10;

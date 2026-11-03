@@ -75,7 +75,7 @@ class CapacitorBrowserProvider implements BrowserProvider {
     console.log(`Opening Capacitor app with Vitest URL: ${serverUrl}`);
 
     // Ensure the target app spawning webviews is up-to-date with the current Vitest server URL.
-    const buildResult = spawnSync('npx', ['cap', 'sync', environment.platform], {
+    const buildResult = spawnSync('pnpm', ['exec', 'cap', 'sync', environment.platform], {
       stdio: 'inherit',
       cwd: EXAMPLE_APP_DIR,
       env: {
@@ -90,15 +90,19 @@ class CapacitorBrowserProvider implements BrowserProvider {
     }
     console.log(`Launching ${environment.platform} Capacitor app on ${environment.target}`);
 
-    const app = spawn('npx', ['cap', 'run', environment.platform, '--target', environment.target, '--no-sync'], {
-      cwd: EXAMPLE_APP_DIR,
-      env: {
-        ...process.env,
-        // The Capacitor App will load this URL on boot. Android emulators use 10.0.2.2 to reach the host.
-        CAPACITOR_VITEST_SERVER_URL: serverUrl
-      },
-      stdio: 'inherit'
-    });
+    const app = spawn(
+      'pnpm',
+      ['exec', 'cap', 'run', environment.platform, '--target', environment.target, '--no-sync'],
+      {
+        cwd: EXAMPLE_APP_DIR,
+        env: {
+          ...process.env,
+          // The Capacitor App will load this URL on boot. Android emulators use 10.0.2.2 to reach the host.
+          CAPACITOR_VITEST_SERVER_URL: serverUrl
+        },
+        stdio: 'inherit'
+      }
+    );
 
     // The process to run the Capacitor app will end once the app starts,
     // we don't keep track of it, but we do fail if the command failed.

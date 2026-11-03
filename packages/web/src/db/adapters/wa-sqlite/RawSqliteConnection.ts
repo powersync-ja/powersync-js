@@ -15,6 +15,8 @@ export interface RawResultSet {
   rawRows: SqliteValue[][];
 }
 
+export type SimpleOpfsMode = 'shared' | 'rw-unsafe' | 'fallback';
+
 /**
  * @internal
  */
@@ -29,6 +31,12 @@ export interface RawWaSqliteDatabaseOptions {
    * The amount of prepared statements to cache, or 0 to disable caching.
    */
   preparedStatementsCache: number;
+  additionalInitializationFunctions?: readonly string[];
+  /**
+   * The name of a Storage Bucket to keep the database files in, for the OPFS-based VFS implementations.
+   */
+  storageBucket?: string;
+  simpleMode?: SimpleOpfsMode;
 }
 
 /**
@@ -56,15 +64,17 @@ export class RawSqliteConnection {
     return this.db != 0;
   }
 
-  async init() {
-    const { module, vfs } = await loadModuleAndVfs(this.options);
-    await this.initWithModule(module, vfs);
-  }
-
   async initWithModule(module: any, vfs: any) {
     const api = (this._sqliteAPI = await this.openSQLiteAPI(module, vfs));
+    let fileName = this.options.filename;
+    const isSimpleOpfsVfs = this.options.vfs == WASQLiteVFS.SimpleOpfsVFS;
+    if (isSimpleOpfsVfs) {
+      // The simple VFS doesn't support flexible file names, we use a nested OPFS directory instead.
+      fileName = '/database';
+    }
+
     this.db = await api.open_v2(
-      this.options.filename,
+      fileName,
       this.options.readonly ? 1 /* SQLITE_OPEN_READONLY */ : 6 /* SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE */
     );
     await this.executeRaw(`PRAGMA temp_store = ${this.options.temporaryStorage};`);
@@ -73,6 +83,10 @@ export class RawSqliteConnection {
       await this.executeRaw(`PRAGMA key = '${escapedKey}';`);
     }
     await this.executeRaw(`PRAGMA cache_size = -${this.options.cacheSizeKb};`);
+    if (isSimpleOpfsVfs) {
+      // This VFS does not support deleting files, so we use the TRUNCATE journaling mode instead.
+      await this.executeRaw(`PRAGMA journal_mode = TRUNCATE`);
+    }
 
     await this.executeRaw(`SELECT powersync_update_hooks('install');`);
   }
@@ -84,9 +98,14 @@ export class RawSqliteConnection {
     const sqlite3 = WaSqliteFactory(module);
     sqlite3.vfs_register(vfs, true);
     /**
-     * Register the PowerSync core SQLite extension
+     * Register the PowerSync core and additional statically linked extensions
      */
-    module.ccall('powersync_init_static', 'int', []);
+    for (const name of ['powersync_init_static', ...(this.options.additionalInitializationFunctions ?? [])]) {
+      const result = module.ccall(name, 'int', []);
+      if (result !== 0) {
+        throw new Error(`SQLite extension initializer ${name} failed with code ${result}`);
+      }
+    }
 
     /**
      * Create the multiple cipher vfs if an encryption key is provided

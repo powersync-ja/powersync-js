@@ -1,5 +1,112 @@
 # @powersync/react-native
 
+## 2.4.0
+
+### Minor Changes
+
+- 109de2c: Add `Authenticator` and `MutationUploader` types, and overloads of `connect()` allowing to connect in download-only and upload-only mode.
+
+### Patch Changes
+
+- 325cb95: Add an `sdkName` getter to the database that names the SDK package, for development tooling.
+- 7d5255f: Update PowerSync SQLite core extension version to 0.5.4 ([release notes](https://github.com/powersync-ja/powersync-sqlite-core/releases/tag/v0.5.4)).
+- Updated dependencies [325cb95]
+- Updated dependencies [109de2c]
+- Updated dependencies [7600425]
+- Updated dependencies [d1cec54]
+- Updated dependencies [9be90b3]
+- Updated dependencies [8327200]
+- Updated dependencies [11a6bf3]
+- Updated dependencies [7d5255f]
+- Updated dependencies [d6a9cb4]
+- Updated dependencies [59f1618]
+- Updated dependencies [9fe7e5f]
+  - @powersync/shared-internals@1.5.0
+  - @powersync/common@2.5.0
+  - @powersync/react@2.2.0
+
+## 2.3.3
+
+### Patch Changes
+
+- f6a7dd3: Send a `User-Agent` header on the WebSocket handshake used for sync connections, matching the Node.js SDK. This fixes connections to self-hosted PowerSync service deployments behind proxies or WAF rules that reject requests without a `User-Agent` header.
+
+## 2.3.2
+
+### Patch Changes
+
+- 4aae81d: Load `@op-engineering/op-sqlite` lazily to avoid importing it on incompatible platforms like Expo Go.
+- Updated dependencies [582babe]
+- Updated dependencies [774ecf9]
+- Updated dependencies [20ea996]
+- Updated dependencies [fe8ad22]
+- Updated dependencies [fe8ad22]
+- Updated dependencies [5a8ed5e]
+- Updated dependencies [582babe]
+- Updated dependencies [2a62930]
+- Updated dependencies [1a209a0]
+  - @powersync/react@2.1.0
+  - @powersync/shared-internals@1.4.0
+  - @powersync/common@2.4.0
+
+## 2.3.1
+
+### Patch Changes
+
+- Updated dependencies [7bae50c]
+- Updated dependencies [3d0d5c4]
+- Updated dependencies [7bae50c]
+  - @powersync/react@2.0.2
+  - @powersync/common@2.3.1
+  - @powersync/shared-internals@1.3.1
+
+## 2.3.0
+
+### Minor Changes
+
+- 9c8f1e3: Add `DisconnectAndClearOptions.soft` to clear data from public tables while keeping an internal sync for a faster next sync.
+
+### Patch Changes
+
+- Updated dependencies [9c8f1e3]
+- Updated dependencies [7c80576]
+- Updated dependencies [7c80576]
+- Updated dependencies [7c80576]
+  - @powersync/shared-internals@1.3.0
+  - @powersync/common@2.3.0
+  - @powersync/react@2.0.1
+
+## 2.2.1
+
+### Patch Changes
+
+- eaeb6a4: Update PowerSync SQLite core extension to version 0.5.3.
+- 70e292b: Android: Support `android.builtInKotlin=true` with Android Gradle Plugin version 9 or later.
+- Updated dependencies [7223ab2]
+  - @powersync/common@2.2.1
+  - @powersync/react@2.0.1
+  - @powersync/shared-internals@1.2.0
+
+## 2.2.0
+
+### Minor Changes
+
+- c6e7343: Add experimental support for Swift Package Manager builds (requires React Native version 0.87.0 or later).
+- a07998d: Add `requestCheckpoint()` to `PowerSyncDatabase` to request an explicit sync acknowledgement.
+  This feature requires a new `checkpointMode: 'requests'` option on `ConnectOptions` switching to a more
+  efficient way to request checkpoints from the PowerSync service.
+
+  For more details on this feature, see [Sync Catch-Up](https://docs.powersync.com/client-sdks/advanced/checkpoint-requests).
+
+### Patch Changes
+
+- Updated dependencies [aa1f171]
+- Updated dependencies [a07998d]
+- Updated dependencies [3d0e2a3]
+  - @powersync/shared-internals@1.2.0
+  - @powersync/common@2.2.0
+  - @powersync/react@2.0.1
+
 ## 2.1.0
 
 ### Minor Changes

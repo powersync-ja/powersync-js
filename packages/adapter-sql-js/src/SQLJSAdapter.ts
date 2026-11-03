@@ -23,6 +23,11 @@ export interface SQLJSPersister {
 }
 
 export interface SQLJSOpenOptions extends SQLOpenOptions {
+  /**
+   * @deprecated Persistence with `@powersync/adapter-sql-js` is unreliable and not recommended.
+   *
+   * For persistence support, use `@powersync/react-native` (incompatible with Expo Go) instead.
+   */
   persister?: SQLJSPersister;
   logger?: PowerSyncLogger;
 }
@@ -49,6 +54,10 @@ export class SQLJSDBAdapter extends DBAdapter {
 
   protected mutex: Mutex;
 
+  // Whether it looks like a sync iteration is active (from intercepted powersync_control) invocations.
+  // We don't persist writes in this case, as calling export() re-opens the connection and resets the sync state.
+  private syncIterationActive = false;
+
   protected getDB(): Promise<SQLJs.Database> {
     return this.initPromise;
   }
@@ -67,7 +76,7 @@ export class SQLJSDBAdapter extends DBAdapter {
 
     this.writeScheduler = new ControlledExecutor(async (db: SQLJs.Database) => {
       const persister = this.options.persister;
-      if (!persister) {
+      if (!persister || this.syncIterationActive) {
         return;
       }
 
@@ -118,13 +127,22 @@ export class SQLJSDBAdapter extends DBAdapter {
    * We're not using separate read/write locks here because we can't implement connection pools on top of SQL.js.
    */
   readLock<T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions): Promise<T> {
-    return this.writeLock(fn, options);
+    return this.lock(false, fn, options);
   }
 
   writeLock<T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions): Promise<T> {
+    return this.lock(true, fn, options);
+  }
+
+  private lock<T>(isWrite: boolean, fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions): Promise<T> {
     return this.mutex.runExclusive(async () => {
       const db = await this.getDB();
-      const context = new SqlJsLockContext(db);
+      const context = new SqlJsLockContext(db, (query, params) => {
+        if (!!params && query === 'SELECT CAST(powersync_control(?, ?) AS TEXT)') {
+          const command = params[0];
+          this.handleControlCommand(command);
+        }
+      });
       const result = await fn(context);
 
       const { rawRows: rawUpdates } = await context.executeRaw("SELECT powersync_update_hooks('get')");
@@ -138,12 +156,20 @@ export class SQLJSDBAdapter extends DBAdapter {
       }
 
       // No point to schedule a write if there's no persister.
-      if (this.options.persister) {
+      if (isWrite && this.options.persister) {
         this.writeScheduler.schedule(db);
       }
 
       return result;
     }, timeoutSignal(options?.timeoutMs));
+  }
+
+  private handleControlCommand(command: unknown) {
+    if (command === 'start') {
+      this.syncIterationActive = true;
+    } else if (command === 'stop') {
+      this.syncIterationActive = false;
+    }
   }
 
   async refreshSchema(): Promise<void> {
@@ -152,11 +178,15 @@ export class SQLJSDBAdapter extends DBAdapter {
 }
 
 class SqlJsLockContext extends LockContext {
-  constructor(readonly db: SQLJs.Database) {
+  constructor(
+    readonly db: SQLJs.Database,
+    private readonly interceptQuery: (sql: string, params?: any[]) => void
+  ) {
     super();
   }
 
   async executeRaw(query: string, params?: any[]): Promise<RawQueryResult> {
+    this.interceptQuery(query, params);
     const db = this.db;
     const statement = db.prepare(query);
     const rawResults: SqliteValue[][] = [];

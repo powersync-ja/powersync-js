@@ -1,5 +1,104 @@
 # diagnostics-app
 
+## 0.13.25
+
+### Patch Changes
+
+- Updated dependencies [bf54805]
+- Updated dependencies [325cb95]
+- Updated dependencies [109de2c]
+- Updated dependencies [7600425]
+- Updated dependencies [d1cec54]
+- Updated dependencies [9be90b3]
+- Updated dependencies [8327200]
+- Updated dependencies [11a6bf3]
+- Updated dependencies [7d5255f]
+- Updated dependencies [d6a9cb4]
+- Updated dependencies [d30ad72]
+- Updated dependencies [7d5255f]
+- Updated dependencies [59f1618]
+- Updated dependencies [9fe7e5f]
+  - @powersync/web@2.6.0
+  - @powersync/shared-internals@1.5.0
+  - @powersync/common@2.5.0
+  - @powersync/react@2.2.0
+
+## 0.13.24
+
+### Patch Changes
+
+- Updated dependencies [544c9ba]
+- Updated dependencies [582babe]
+- Updated dependencies [fe8ad22]
+- Updated dependencies [774ecf9]
+- Updated dependencies [20ea996]
+- Updated dependencies [fe8ad22]
+- Updated dependencies [fe8ad22]
+- Updated dependencies [5a8ed5e]
+- Updated dependencies [582babe]
+- Updated dependencies [2a62930]
+- Updated dependencies [1a209a0]
+  - @powersync/web@2.5.0
+  - @powersync/react@2.1.0
+  - @powersync/shared-internals@1.4.0
+  - @powersync/common@2.4.0
+
+## 0.13.23
+
+### Patch Changes
+
+- Updated dependencies [7bae50c]
+- Updated dependencies [3d0d5c4]
+- Updated dependencies [7bae50c]
+  - @powersync/react@2.0.2
+  - @powersync/common@2.3.1
+  - @powersync/shared-internals@1.3.1
+  - @powersync/web@2.4.2
+
+## 0.13.22
+
+### Patch Changes
+
+- Updated dependencies [a5c3959]
+  - @powersync/web@2.4.1
+
+## 0.13.21
+
+### Patch Changes
+
+- Updated dependencies [9c8f1e3]
+- Updated dependencies [7c80576]
+- Updated dependencies [59212f1]
+- Updated dependencies [7c80576]
+- Updated dependencies [7c80576]
+  - @powersync/shared-internals@1.3.0
+  - @powersync/common@2.3.0
+  - @powersync/web@2.4.0
+  - @powersync/react@2.0.1
+
+## 0.13.20
+
+### Patch Changes
+
+- Updated dependencies [7223ab2]
+- Updated dependencies [eaeb6a4]
+  - @powersync/common@2.2.1
+  - @powersync/web@2.3.1
+  - @powersync/react@2.0.1
+  - @powersync/shared-internals@1.2.0
+
+## 0.13.19
+
+### Patch Changes
+
+- Updated dependencies [aa1f171]
+- Updated dependencies [a07998d]
+- Updated dependencies [3d0e2a3]
+  - @powersync/shared-internals@1.2.0
+  - @powersync/common@2.2.0
+  - @powersync/web@2.3.0
+  - @powersync/react@2.0.1
+
 ## 0.13.18
 
 ### Patch Changes

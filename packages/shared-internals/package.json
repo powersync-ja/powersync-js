@@ -1,6 +1,6 @@
 {
   "name": "@powersync/shared-internals",
-  "version": "1.1.1",
+  "version": "1.5.0",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
@@ -11,6 +11,10 @@
     ".": {
       "types": "./lib/index.d.ts",
       "default": "./lib/index.js"
+    },
+    "./standalone": {
+      "types": "./lib/standalone.d.ts",
+      "default": "./lib/standalone.js"
     },
     "./websockets": {
       "types": "./lib/client/sync/stream/WebSocketSupport.d.ts",
@@ -46,7 +50,12 @@
     "postversion": "node tool/update_version.js"
   },
   "peerDependencies": {
-    "@powersync/common": "workspace:^2.1.0"
+    "@powersync/common": "workspace:^2.5.0"
+  },
+  "peerDependenciesMeta": {
+    "@powersync/common": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "catalog:",

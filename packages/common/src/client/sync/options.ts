@@ -1,3 +1,4 @@
+import { Authenticator, MutationUploader } from '../connection/PowerSyncBackendConnector.js';
 import { StreamingSyncRequestParameterType } from './stream/JsonValue.js';
 
 /**
@@ -54,6 +55,53 @@ export interface SyncOptions {
    * The mode used to request checkpoints from the service (used after uploading local data).
    */
   checkpointMode?: CheckpointMode;
+
+  /**
+   * How long to wait for the PowerSync Service to respond, in milliseconds. This defaults to 30 seconds.
+   *
+   * For checkpoint requests, this limits the whole request. For the sync stream over HTTP, this limits the time until
+   * the response starts, not how long the stream stays open. WebSocket connections use their own timeouts.
+   *
+   * A request that takes longer fails and is retried after {@link SyncOptions.retryDelayMs}.
+   */
+  connectTimeoutMs?: number;
+
+  /**
+   * Enables the core extension's diagnostics event stream: detailed per-bucket download stats,
+   * including each bucket's `target_count`, and inferred column types. Off by default.
+   *
+   * The events are internal. No public API exposes them; only PowerSync DevTools reads them, to show
+   * per-bucket totals. See https://docs.powersync.com/tools/devtools-overview.
+   */
+  diagnostics?: boolean;
+}
+
+/**
+ * Options required when connecting a PowerSync database for downloads.
+ *
+ * @public
+ */
+export interface DownloadOptions {
+  /**
+   * The hostname of the PowerSync service to connect to.
+   */
+  powerSyncEndpoint: string;
+  /**
+   * The authenticator responsible for providing authentication tokens to the PowerSync service.
+   */
+  authenticator: Authenticator;
+}
+
+/**
+ * Options required when connecting a PowerSync database for uploads.
+ *
+ * @public
+ */
+export interface UploadOptions {
+  /**
+   * The function responsible for uploading local mutations.
+   */
+  upload: MutationUploader;
 }
 
 /**

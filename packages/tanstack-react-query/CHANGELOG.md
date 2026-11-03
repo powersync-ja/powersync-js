@@ -1,5 +1,84 @@
 # @powersync/tanstack-react-query
 
+## 0.3.7
+
+### Patch Changes
+
+- Updated dependencies [325cb95]
+- Updated dependencies [109de2c]
+- Updated dependencies [7600425]
+- Updated dependencies [d1cec54]
+- Updated dependencies [9be90b3]
+- Updated dependencies [8327200]
+- Updated dependencies [11a6bf3]
+- Updated dependencies [7d5255f]
+- Updated dependencies [d6a9cb4]
+- Updated dependencies [59f1618]
+- Updated dependencies [9fe7e5f]
+  - @powersync/shared-internals@1.5.0
+  - @powersync/common@2.5.0
+  - @powersync/react@2.2.0
+
+## 0.3.6
+
+### Patch Changes
+
+- Updated dependencies [582babe]
+- Updated dependencies [774ecf9]
+- Updated dependencies [20ea996]
+- Updated dependencies [fe8ad22]
+- Updated dependencies [fe8ad22]
+- Updated dependencies [5a8ed5e]
+- Updated dependencies [582babe]
+- Updated dependencies [2a62930]
+- Updated dependencies [1a209a0]
+  - @powersync/react@2.1.0
+  - @powersync/shared-internals@1.4.0
+  - @powersync/common@2.4.0
+
+## 0.3.5
+
+### Patch Changes
+
+- Updated dependencies [7bae50c]
+- Updated dependencies [3d0d5c4]
+- Updated dependencies [7bae50c]
+  - @powersync/react@2.0.2
+  - @powersync/common@2.3.1
+  - @powersync/shared-internals@1.3.1
+
+## 0.3.4
+
+### Patch Changes
+
+- Updated dependencies [9c8f1e3]
+- Updated dependencies [7c80576]
+- Updated dependencies [7c80576]
+- Updated dependencies [7c80576]
+  - @powersync/shared-internals@1.3.0
+  - @powersync/common@2.3.0
+  - @powersync/react@2.0.1
+
+## 0.3.3
+
+### Patch Changes
+
+- Updated dependencies [7223ab2]
+  - @powersync/common@2.2.1
+  - @powersync/react@2.0.1
+  - @powersync/shared-internals@1.2.0
+
+## 0.3.2
+
+### Patch Changes
+
+- Updated dependencies [aa1f171]
+- Updated dependencies [a07998d]
+- Updated dependencies [3d0e2a3]
+  - @powersync/shared-internals@1.2.0
+  - @powersync/common@2.2.0
+  - @powersync/react@2.0.1
+
 ## 0.3.1
 
 ### Patch Changes

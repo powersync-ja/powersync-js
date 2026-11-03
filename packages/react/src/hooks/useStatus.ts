@@ -1,5 +1,6 @@
-import { useContext, useEffect, useState } from 'react';
-import { PowerSyncContext } from './PowerSyncContext.js';
+import { useCallback, useSyncExternalStore } from 'react';
+import { usePowerSync, usePowerSyncOrNull } from './PowerSyncContext.js';
+import { CommonPowerSyncDatabase, SyncStatus } from '@powersync/common';
 
 /**
  * Custom hook that provides access to the current status of PowerSync.
@@ -15,19 +16,30 @@ import { PowerSyncContext } from './PowerSyncContext.js';
  *   </div>
  * };
  */
-export function useStatus() {
-  const powerSync = useContext(PowerSyncContext);
-  const [syncStatus, setSyncStatus] = useState(powerSync.currentStatus);
+export function useStatus(): SyncStatus {
+  return useStatusOf(usePowerSync())!;
+}
 
-  useEffect(() => {
-    const listener = powerSync.registerListener({
-      statusChanged: (status) => {
-        setSyncStatus(status);
-      }
-    });
+/**
+ * A variant of {@link useStatus} that returns null when no PowerSync database is in context (instead of throwing).
+ *
+ * @returns The current sync status of the PowerSync database, or null.
+ */
+export function useStatusOrNull(): SyncStatus | null {
+  return useStatusOf(usePowerSyncOrNull());
+}
 
-    return () => listener?.();
-  }, [powerSync]);
+function useStatusOf(powerSync: CommonPowerSyncDatabase | null): SyncStatus | null {
+  const subscribe = useCallback(
+    (listener: () => void) => {
+      const dispose = powerSync?.registerListener({ statusChanged: listener });
+      return dispose ?? function () {};
+    },
+    // Ensure React treats changed databases as new stores
+    [powerSync]
+  );
 
-  return syncStatus;
+  const getSnapshot = () => powerSync?.currentStatus ?? null;
+
+  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }

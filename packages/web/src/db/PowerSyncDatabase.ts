@@ -10,15 +10,14 @@ import {
 } from '@powersync/common';
 import {
   BasePowerSyncDatabase,
-  BucketStorageAdapter,
   CreateSyncImplementationOptions,
+  InternalConnector,
   Mutex,
-  SqliteBucketStorage,
   StreamingSyncImplementation,
   TriggerManagerConfig,
   openDatabase
 } from '@powersync/shared-internals';
-import { getNavigatorLocks } from '../shared/navigator.js';
+import { getNavigatorLocks } from '../shared/locks.js';
 import { NAVIGATOR_TRIGGER_CLAIM_MANAGER } from './NavigatorTriggerClaimManager.js';
 import { WebDBAdapter } from './adapters/WebDBAdapter.js';
 import { WASQLiteOpenFactory } from './adapters/wa-sqlite/WASQLiteOpenFactory.js';
@@ -30,6 +29,7 @@ import { WebStreamingSyncImplementationOptions } from './sync/WebStreamingSyncIm
 import { AsyncDbAdapter } from './adapters/AsyncWebAdapter.js';
 import { resolveAndValidateOptions } from './adapters/resolveAndValidateOptions.js';
 import { TabLocalStreamingSyncImplementation } from './sync/TabLocalStreamingSyncImplementation.js';
+import { registerDatabase, unregisterDatabase } from '../devtools/registry.js';
 
 export type WebPowerSyncDatabaseOptions = BasePowerSyncDatabaseOptions &
   DatabaseSource<WebSQLOpenOptions> &
@@ -77,6 +77,12 @@ export class WebPowerSyncDatabase extends BasePowerSyncDatabase<WebPowerSyncData
     super(options);
     this.resolvedOpenOptions = resolvedOpenOptions;
     this.enableBroadcastLogs = options.broadcastLogs ?? true;
+    // Lets development tooling in this page find the live databases.
+    registerDatabase(this);
+  }
+
+  get sdkName(): string {
+    return '@powersync/web';
   }
 
   async _initialize(): Promise<void> {
@@ -122,11 +128,12 @@ export class WebPowerSyncDatabase extends BasePowerSyncDatabase<WebPowerSyncData
    * By default the sync stream client is only disconnected if
    * multiple tabs are not enabled.
    */
-  close(options?: PowerSyncCloseOptions): Promise<void> {
-    return super.close({
+  async close(options?: PowerSyncCloseOptions): Promise<void> {
+    await super.close({
       // Don't disconnect by default if multiple tabs are enabled
       disconnect: options?.disconnect ?? !this.resolvedOpenOptions.enableMultiTabs
     });
+    unregisterDatabase(this);
   }
 
   protected async loadVersion(): Promise<void> {
@@ -151,7 +158,7 @@ export class WebPowerSyncDatabase extends BasePowerSyncDatabase<WebPowerSyncData
   }
 
   protected generateSyncStreamImplementation(
-    connector: PowerSyncBackendConnector,
+    connector: InternalConnector,
     options: CreateSyncImplementationOptions
   ): StreamingSyncImplementation {
     const remote = new WebRemote(connector, this.logger);

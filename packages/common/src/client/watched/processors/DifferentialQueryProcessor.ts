@@ -92,6 +92,10 @@ export interface DifferentialWatchedQuerySettings<RowType> extends DifferentialW
 export interface DifferentialWatchedQueryListener<RowType> extends WatchedQueryListener<
   ReadonlyArray<Readonly<RowType>>
 > {
+  /**
+   * Called when the result set has changed.
+   * This also fires if rows have only been reordered, in which case `added`, `removed` and `updated` are empty.
+   */
   onDiff?: (diff: WatchedQueryDifferential<RowType>) => void | Promise<void>;
 }
 

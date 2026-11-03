@@ -46,8 +46,8 @@ class MockStreamingSyncImplementation
     this.isConnected = false;
   }
 
-  async getWriteCheckpoint() {
-    return '1';
+  async requestCheckpoint() {
+    return 1n;
   }
 
   triggerCrudUpload() {}
@@ -144,7 +144,9 @@ describe('ConnectionManager', () => {
       const harness = managerWithCreateHook();
       await harness.manager.stream(adapter, 'stream_a', null).subscribe();
 
-      harness.duringCreate(() => harness.manager.stream(adapter, 'stream_b', null).subscribe());
+      harness.duringCreate(async () => {
+        await harness.manager.stream(adapter, 'stream_b', null).subscribe();
+      });
       await harness.manager.connect(connector, {}, {});
 
       expect(names(harness.sync.snapshot)).toEqual(['stream_a']);
@@ -195,6 +197,74 @@ describe('ConnectionManager', () => {
       expect(harness.syncs).toHaveLength(2);
       expect(names(harness.sync.snapshot)).toEqual(['stream_a']);
       expect(names(harness.sync.effectiveSubscriptions)).toEqual([]);
+
+      await harness.manager.disconnect();
+    });
+  });
+
+  describe('a sync implementation that fails to be created', () => {
+    test('does not fail later disconnects or prevent a reconnect', async () => {
+      const harness = managerWithCreateHook();
+      harness.duringCreate(() => {
+        throw new Error('creation failed');
+      });
+
+      // This connect() does not report the failure: its chain swallows connection errors.
+      await expect(harness.manager.connect(connector, {}, {})).rejects.toThrow();
+      expect(harness.syncs).toHaveLength(0);
+
+      await expect(harness.manager.disconnect()).resolves.toBeUndefined();
+      await harness.manager.connect(connector, {}, {});
+      expect(harness.syncs).toHaveLength(1);
+      expect(harness.sync.isConnected).toBe(true);
+
+      await harness.manager.disconnect();
+    });
+
+    test('does not fail later disconnects after one that was waiting on it', async () => {
+      const harness = managerWithCreateHook();
+      let failCreation!: (error: Error) => void;
+      const creationStarted = new Promise<void>((started) => {
+        harness.duringCreate(
+          () =>
+            new Promise<void>((_, reject) => {
+              failCreation = reject;
+              started();
+            })
+        );
+      });
+
+      const connecting = expect(harness.manager.connect(connector, {}, {})).rejects.toThrow();
+      await creationStarted;
+      const waiting = harness.manager.disconnect();
+      failCreation(new Error('creation failed'));
+
+      // This disconnect awaited the creation, so it shares its failure.
+      await expect(waiting).rejects.toThrow('creation failed');
+      await connecting;
+
+      await expect(harness.manager.disconnect()).resolves.toBeUndefined();
+      await harness.manager.connect(connector, {}, {});
+      expect(harness.syncs).toHaveLength(1);
+      expect(harness.sync.isConnected).toBe(true);
+
+      await harness.manager.disconnect();
+    });
+  });
+
+  describe('a sync implementation that fails to disconnect', () => {
+    test('does not fail later disconnects or prevent a reconnect', async () => {
+      const harness = managerWithCreateHook();
+      await harness.manager.connect(connector, {}, {});
+      harness.sync.disconnect = async () => {
+        throw new Error('disconnect failed');
+      };
+
+      await expect(harness.manager.disconnect()).rejects.toThrow('disconnect failed');
+      await expect(harness.manager.disconnect()).resolves.toBeUndefined();
+      await harness.manager.connect(connector, {}, {});
+      expect(harness.syncs).toHaveLength(2);
+      expect(harness.sync.isConnected).toBe(true);
 
       await harness.manager.disconnect();
     });

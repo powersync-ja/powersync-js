@@ -12,12 +12,13 @@ import {
   AbstractStreamingSyncImplementation,
   BucketStorageAdapter,
   CreateSyncImplementationOptions,
-  openDatabase
+  openDatabase,
+  InternalConnector
 } from '@powersync/shared-internals';
 import { ReactNativeRemote, ReactNativeRemoteOptions } from '../sync/stream/ReactNativeRemote';
 import { ReactNativeStreamingSyncImplementation } from '../sync/stream/ReactNativeStreamingSyncImplementation';
 import { ReactNativeBucketStorageAdapter } from './../sync/bucket/ReactNativeBucketStorageAdapter';
-import { OPSqliteOpenFactory, OPSQLiteOpenFactoryOptions } from './adapters/op-sqlite/OPSqliteDBOpenFactory';
+import type { OPSQLiteOpenFactoryOptions } from './adapters/op-sqlite/OPSqliteDBOpenFactory';
 import { defaultFetchImplementation } from '../sync/stream/fetch';
 
 export type ReactNativeDatabaseOptions = BasePowerSyncDatabaseOptions &
@@ -33,10 +34,19 @@ class ReactNativePowerSyncDatabase extends BasePowerSyncDatabase<ReactNativeData
     super(options);
   }
 
+  get sdkName(): string {
+    return '@powersync/react-native';
+  }
+
   async _initialize(): Promise<void> {}
 
   protected override openDBAdapter(): DBAdapter {
     return openDatabase(this.options, (database) => {
+      // Lazily require the op-sqlite adapter so that importing this module does not load
+      // op-sqlite. This allows custom database factories (e.g. SQL.js in Expo Go) in
+      // environments where the op-sqlite native module is not available.
+      const { OPSqliteOpenFactory } =
+        require('./adapters/op-sqlite/OPSqliteDBOpenFactory') as typeof import('./adapters/op-sqlite/OPSqliteDBOpenFactory');
       const defaultFactory = new OPSqliteOpenFactory(database);
       return defaultFactory.openDB();
     });
@@ -47,7 +57,7 @@ class ReactNativePowerSyncDatabase extends BasePowerSyncDatabase<ReactNativeData
   }
 
   protected generateSyncStreamImplementation(
-    connector: PowerSyncBackendConnector,
+    connector: InternalConnector,
     options: CreateSyncImplementationOptions
   ): AbstractStreamingSyncImplementation {
     const remote = new ReactNativeRemote(connector, this.logger, this.options.remote);

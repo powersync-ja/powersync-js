@@ -99,7 +99,7 @@ describe('Schema', () => {
       tables: [
         {
           name: 'users',
-          view_name: 'users',
+          view_name: undefined,
           local_only: false,
           insert_only: false,
           ignore_empty_update: false,
@@ -114,7 +114,7 @@ describe('Schema', () => {
         },
         {
           name: 'posts',
-          view_name: 'posts',
+          view_name: undefined,
           local_only: false,
           insert_only: false,
           ignore_empty_update: false,

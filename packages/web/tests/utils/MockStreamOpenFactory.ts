@@ -9,7 +9,7 @@ import {
   AbstractStreamingSyncImplementation,
   CreateSyncImplementationOptions,
   SimpleAsyncIterator,
-  RemoteConnector,
+  InternalConnector,
   SyncStreamOptions,
   SqliteBucketStorage
 } from '@powersync/shared-internals';
@@ -36,7 +36,7 @@ export class MockRemote extends AbstractRemote {
   generateCheckpoint: MockedFunction<() => any>;
 
   constructor(
-    connector: RemoteConnector,
+    connector: InternalConnector,
     logger: PowerSyncLogger,
     protected onStreamRequested: () => void
   ) {
@@ -135,23 +135,27 @@ export class MockedStreamPowerSync extends PowerSyncDatabase {
   }
 
   protected generateSyncStreamImplementation(
-    connector: PowerSyncBackendConnector,
+    connector: InternalConnector,
     options: CreateSyncImplementationOptions
   ): AbstractStreamingSyncImplementation {
     return new WebStreamingSyncImplementation({
       logger: this.logger,
       adapter: new SqliteBucketStorage(this.database, this.logger),
       remote: this.remote,
-      uploadCrud: async () => {
-        await this.waitForReady();
-        await connector.uploadData(this);
-      },
-      postCheckpointRequest: (clientId, requestId) => {
-        if (connector.postCheckpointRequest) {
-          return this.waitForReady().then((_) => connector.postCheckpointRequest!(clientId, requestId));
-        }
+      connector: {
+        fetchCredentials: () => this.remote.fetchCredentials(),
+        invalidateCredentials: () => this.remote.invalidateCredentials(),
+        uploadCrud: async () => {
+          await this.waitForReady();
+          await connector.uploadCrud!();
+        },
+        postCheckpointRequest: (clientId, requestId) => {
+          if (connector.postCheckpointRequest) {
+            return this.waitForReady().then((_) => connector.postCheckpointRequest!(clientId, requestId));
+          }
 
-        return null;
+          return null;
+        }
       },
       identifier: this.database.name,
       subscriptions: [],

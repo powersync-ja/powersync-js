@@ -37,6 +37,7 @@ pub struct PowerSync<R: Runtime> {
     app: PhantomData<AppHandle<R>>,
     databases: Mutex<HashMap<String, Weak<TauriDatabaseState>>>,
     event_id_counter: AtomicI32,
+    http_client: reqwest::Client,
     pub(crate) handles: JavaScriptHandles,
 }
 
@@ -66,14 +67,12 @@ impl<R: Runtime> PowerSync<R> {
         };
 
         let env = PowerSyncEnvironment::custom(
-            reqwest::Client::new(),
+            self.http_client.clone(),
             pool,
-            PowerSyncEnvironment::tokio_timer(),
+            PowerSyncEnvironment::tokio(),
         );
 
         let database = PowerSyncDatabase::new(env, schema);
-        database.async_tasks().spawn_with_tokio();
-
         let event_id = self.event_id_counter.fetch_add(1, Ordering::SeqCst);
         let db = Arc::new(TauriDatabaseState::new(app, event_id, database));
         entry.insert_entry(Arc::downgrade(&db));
@@ -89,16 +88,43 @@ impl<R: Runtime> PowerSync<R> {
     }
 }
 
-/// Initializes the plugin.
+/// Options to customize the PowerSync plugin, passed to [init_with_options].
+#[derive(Default)]
+pub struct PowerSyncOptions {
+    http_client: Option<reqwest::Client>,
+}
+
+impl PowerSyncOptions {
+    /// Uses the given [reqwest::Client] for all HTTP requests the PowerSync SDK makes (including
+    /// the sync stream), e.g. to configure TLS, timeouts, proxies or a user agent.
+    ///
+    /// The client is shared between all databases opened through this plugin.
+    pub fn with_http_client(mut self, client: reqwest::Client) -> Self {
+        self.http_client = Some(client);
+        self
+    }
+}
+
+/// Initializes the plugin with default options.
+///
+/// To customize the plugin, use [init_with_options] instead.
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
+    init_with_options(PowerSyncOptions::default())
+}
+
+/// Initializes the plugin with the given [PowerSyncOptions].
+pub fn init_with_options<R: Runtime>(options: PowerSyncOptions) -> TauriPlugin<R> {
+    let http_client = options.http_client.unwrap_or_default();
+
     Builder::new("powersync")
         .invoke_handler(tauri::generate_handler![commands::powersync])
-        .setup(|app, _api| {
+        .setup(move |app, _api| {
             let powersync = PowerSync {
                 app: PhantomData::<AppHandle<R>>,
                 databases: Default::default(),
                 handles: Default::default(),
                 event_id_counter: Default::default(),
+                http_client,
             };
             app.manage(powersync);
             Ok(())

@@ -31,7 +31,7 @@ const appIsReady = ref(false)
 provide('appIsReady', readonly(appIsReady))
 
 const powerSync = usePowerSync()
-const syncStatus = usePowerSyncStatus()
+const syncStatus = useStatus()
 
 const user = useSupabaseUser()
 const { logger: powerSyncLogger } = useDiagnosticsLogger()

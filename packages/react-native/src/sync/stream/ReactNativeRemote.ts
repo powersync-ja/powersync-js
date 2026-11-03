@@ -1,5 +1,5 @@
 import { LogLevels, PowerSyncLogger } from '@powersync/common';
-import { AbstractRemote, FetchOptions, RemoteConnector } from '@powersync/shared-internals';
+import { AbstractRemote, FetchOptions, InternalConnector } from '@powersync/shared-internals';
 import { Platform } from 'react-native';
 import { WebSocketSupport, WebSocketSyncStreamPlatform } from '@powersync/shared-internals/websockets';
 import { defaultFetchImplementation, PowerSyncFetchImplementation } from './fetch';
@@ -12,7 +12,7 @@ export interface ReactNativeRemoteOptions {
 
 export class ReactNativeRemote extends AbstractRemote {
   constructor(
-    protected connector: RemoteConnector,
+    protected connector: InternalConnector,
     logger: PowerSyncLogger,
     readonly options?: ReactNativeRemoteOptions
   ) {
@@ -58,6 +58,28 @@ export class ReactNativeRemote extends AbstractRemote {
 
   protected loadWebSocketSupport(platform: WebSocketSyncStreamPlatform): Promise<WebSocketSupport> {
     return Promise.resolve((websockets ??= new WebSocketSupport(platform)));
+  }
+
+  createSocket(url: string): WebSocket {
+    /**
+     * React Native's WebSocket implementation accepts a third options argument
+     * supporting custom request headers, which is not part of the DOM type.
+     *
+     * Setting a `User-Agent` header is required to connect to PowerSync service
+     * deployments sitting behind proxies or WAFs that reject requests without
+     * one.
+     */
+    const WebSocketWithHeaders = WebSocket as unknown as new (
+      url: string,
+      protocols: null,
+      options: { headers: Record<string, string> }
+    ) => WebSocket;
+
+    return new WebSocketWithHeaders(url, null, {
+      headers: {
+        'User-Agent': this.getUserAgent()
+      }
+    });
   }
 
   getUserAgent(): string {

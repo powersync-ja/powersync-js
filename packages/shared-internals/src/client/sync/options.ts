@@ -8,6 +8,11 @@ export type ResolvedSyncOptions = Required<SyncOptions>;
 /**
  * @internal
  */
+export const DEFAULT_CONNECT_TIMEOUT_MS = 30_000;
+
+/**
+ * @internal
+ */
 export function resolveSyncOptions(
   options: SyncOptions,
   defaultConnectionMethod: SyncStreamConnectionMethod
@@ -20,6 +25,8 @@ export function resolveSyncOptions(
     includeDefaultStreams: options.includeDefaultStreams ?? true,
     retryDelayMs: options.retryDelayMs ?? 5000,
     crudUploadThrottleMs: options.crudUploadThrottleMs ?? 1000,
-    checkpointMode: options.checkpointMode ?? 'legacy'
+    checkpointMode: options.checkpointMode ?? 'legacy',
+    connectTimeoutMs: options.connectTimeoutMs ?? DEFAULT_CONNECT_TIMEOUT_MS,
+    diagnostics: options.diagnostics ?? false
   };
 }

@@ -89,12 +89,9 @@ export class TimedPowerSyncDatabase extends WebPowerSyncDatabase {
     return { elapsedTime, result };
   }
 
-  async connect(connector: PowerSyncBackendConnector) {
-    // We toggle this localStorage key to indicate that we are currently connecting
-    // This will fire a `onStorage` event in other tabs, triggering a reconnect if needed
-    // We don't need the same for disconnect, as it is triggered with an Abort Signal
+  connect(connector: unknown, options?: unknown): Promise<void> {
     localStorage.setItem(this.localKey, 'true');
-    return super.connect(connector).finally(() => {
+    return super.connect(connector as any, options as any).finally(() => {
       localStorage.removeItem(this.localKey);
     });
   }

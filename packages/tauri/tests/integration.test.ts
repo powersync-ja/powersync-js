@@ -21,7 +21,6 @@ async function installTauriInTestFrameHack() {
   // don't currently use binary responses in the PowerSync plugin, but it serves as an
   // example for general integration tests with Tauri.
   current.ArrayBuffer = root.ArrayBuffer;
-
 }
 
 const schema = new Schema({
@@ -55,6 +54,25 @@ test('stream subscriptions', async () => {
   await vi.waitFor(() => {
     expect(db.currentStatus.syncStreams).toHaveLength(1);
   });
+});
+
+test('reports priority sync status', async () => {
+  const db = openDatabase({ schema });
+  await db.init();
+  expect(db.currentStatus.hasSynced).toBe(false);
+
+  // Pretend that a full sync has completed before. The core extension stores this in ps_sync_state,
+  // with timestamps in microseconds since the epoch.
+  const lastSyncedAt = new Date('2026-01-01T00:00:00Z');
+  await db.execute('INSERT INTO ps_sync_state (priority, last_synced_at) VALUES (?, ?)', [
+    2147483647,
+    lastSyncedAt.getTime() * 1000
+  ]);
+
+  // While offline, subscribing to a stream makes the SDK reload the sync status from the database.
+  await db.syncStream('foo').subscribe();
+  await db.waitForFirstSync();
+  expect(db.currentStatus.lastSyncedAt).toStrictEqual(lastSyncedAt);
 });
 
 test('watch smoke test', async () => {
@@ -112,4 +130,16 @@ test('can bind integers', async () => {
 
   const row = await db.get<{ a: string; b: string }>('SELECT typeof(?) as a, typeof(?) as b', [123, 1.23]);
   expect(row).toStrictEqual({ a: 'integer', b: 'real' });
+});
+
+test('can bind booleans', async () => {
+  const db = openDatabase({ schema });
+  await db.init();
+
+  const row = await db.get<{ a: string; b: number; c: number }>('SELECT typeof(?) as a, ? as b, ? as c', [
+    true,
+    true,
+    false
+  ]);
+  expect(row).toStrictEqual({ a: 'integer', b: 1, c: 0 });
 });

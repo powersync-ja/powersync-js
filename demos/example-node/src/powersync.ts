@@ -1,4 +1,4 @@
-import { AbstractPowerSyncDatabase, column, PowerSyncBackendConnector, Schema, Table } from '@powersync/node';
+import { CommonPowerSyncDatabase, column, PowerSyncBackendConnector, Schema, Table } from '@powersync/node';
 
 export class DemoConnector implements PowerSyncBackendConnector {
   async fetchCredentials() {
@@ -22,7 +22,7 @@ export class DemoConnector implements PowerSyncBackendConnector {
     };
   }
 
-  async uploadData(database: AbstractPowerSyncDatabase) {
+  async uploadData(database: CommonPowerSyncDatabase) {
     const batch = await database.getCrudBatch();
     if (batch == null) {
       return;

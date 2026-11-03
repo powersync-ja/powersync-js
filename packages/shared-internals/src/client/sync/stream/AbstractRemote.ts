@@ -9,16 +9,9 @@ import {
   SimpleAsyncIterator
 } from '../../../utils/stream_transform.js';
 import { WebSocketSupport, WebSocketSyncStreamPlatform } from './WebSocketSupport.js';
-import { EventQueue } from '../../../utils/async.js';
+import { EventQueue, runWithTimeout } from '../../../utils/async.js';
 import { POWERSYNC_JS_VERSION } from '../../../version.js';
-
-/**
- * @internal
- */
-export type RemoteConnector = {
-  fetchCredentials: () => Promise<PowerSyncCredentials | null>;
-  invalidateCredentials?: () => void;
-};
+import { InternalConnector } from '../../InternalConnector.js';
 
 const POWERSYNC_TRAILING_SLASH_MATCH = /\/+$/;
 
@@ -35,6 +28,10 @@ export type SyncStreamOptions = {
   path: string;
   data: unknown;
   abortSignal: AbortSignal;
+  /**
+   * How long to wait for the response to start. Without it, only {@link abortSignal} ends a pending request.
+   */
+  connectTimeoutMs?: number;
 };
 
 /**
@@ -81,7 +78,7 @@ export abstract class AbstractRemote {
   protected credentials: PowerSyncCredentials | null = null;
 
   constructor(
-    protected connector: RemoteConnector,
+    protected connector: InternalConnector,
     readonly logger: PowerSyncLogger
   ) {}
 
@@ -96,12 +93,12 @@ export abstract class AbstractRemote {
    *
    * These credentials may have expired already.
    */
-  async getCredentials(): Promise<PowerSyncCredentials | null> {
+  async getCredentials(signal?: AbortSignal): Promise<PowerSyncCredentials | null> {
     if (this.credentials) {
       return this.credentials;
     }
 
-    return this.prefetchCredentials();
+    return this.prefetchCredentials(signal);
   }
 
   /**
@@ -112,8 +109,8 @@ export abstract class AbstractRemote {
    *
    * This may be called before the current credentials have expired.
    */
-  async prefetchCredentials() {
-    this.credentials = await this.fetchCredentials();
+  async prefetchCredentials(signal?: AbortSignal) {
+    this.credentials = await this.fetchCredentials(signal);
 
     return this.credentials;
   }
@@ -124,8 +121,13 @@ export abstract class AbstractRemote {
    * This should always fetch a fresh set of credentials - don't use cached
    * values.
    */
-  async fetchCredentials() {
-    const credentials = await this.connector.fetchCredentials();
+  async fetchCredentials(signal?: AbortSignal) {
+    const fetchCredentials = this.connector.fetchCredentials;
+    if (!fetchCredentials) {
+      throw new Error('No connector configured for downloads');
+    }
+
+    const credentials = await fetchCredentials(signal);
     if (credentials?.endpoint.match(POWERSYNC_TRAILING_SLASH_MATCH)) {
       throw new Error(
         `A trailing forward slash "/" was found in the fetchCredentials endpoint: "${credentials.endpoint}". Remove the trailing forward slash "/" to fix this error.`
@@ -149,8 +151,8 @@ export abstract class AbstractRemote {
     return `powersync-js/${POWERSYNC_JS_VERSION}`;
   }
 
-  protected async buildRequest(path: string): Promise<PreparedRequest> {
-    const credentials = await this.getCredentials();
+  protected async buildRequest(path: string, signal?: AbortSignal): Promise<PreparedRequest> {
+    const credentials = await this.getCredentials(signal);
     if (credentials != null && (credentials.endpoint == null || credentials.endpoint == '')) {
       throw new Error('PowerSync endpoint not configured');
     } else if (credentials?.token == null || credentials?.token == '') {
@@ -186,7 +188,7 @@ export abstract class AbstractRemote {
     body?: string;
     signal?: AbortSignal;
   }): Promise<any> {
-    const request = await this.buildRequest(path);
+    const request = await this.buildRequest(path, signal);
     const res = await this.fetch({
       resource: request.url,
       request: {
@@ -240,7 +242,7 @@ export abstract class AbstractRemote {
   async socketStreamRaw(options: SocketSyncStreamOptions): Promise<SimpleAsyncIterator<Uint8Array>> {
     const support = await this.loadWebSocketSupport(webSocketPlatform);
 
-    const request = await this.buildRequest(options.path);
+    const request = await this.buildRequest(options.path, options.abortSignal);
     request.url = request.url.replace(/^https?:\/\//, function (match) {
       return match === 'https://' ? 'wss://' : 'ws://';
     });
@@ -264,8 +266,8 @@ export abstract class AbstractRemote {
   protected async fetchStreamRaw(
     options: SyncStreamOptions
   ): Promise<{ isBson: boolean; stream: SimpleAsyncIterator<Uint8Array> }> {
-    const { data, path, abortSignal } = options;
-    const request = await this.buildRequest(path);
+    const { data, path, abortSignal, connectTimeoutMs } = options;
+    const request = await this.buildRequest(path, abortSignal);
 
     /**
      * This abort controller will abort pending fetch requests.
@@ -304,20 +306,26 @@ export abstract class AbstractRemote {
       const ndJson = 'application/x-ndjson';
       const bson = 'application/vnd.powersync.bson-stream';
 
-      res = await this.fetch({
-        resource: request.url,
-        request: {
-          method: 'POST',
-          headers: {
-            ...request.headers,
-            accept: `${bson};q=0.9,${ndJson};q=0.8`
+      const postStream = (signal: AbortSignal) =>
+        this.fetch({
+          resource: request.url,
+          request: {
+            method: 'POST',
+            headers: {
+              ...request.headers,
+              accept: `${bson};q=0.9,${ndJson};q=0.8`
+            },
+            body: JSON.stringify(data),
+            signal,
+            cache: 'no-store'
           },
-          body: JSON.stringify(data),
-          signal: controller.signal,
-          cache: 'no-store'
-        },
-        expectStreamingResponse: true
-      });
+          expectStreamingResponse: true
+        });
+
+      // The timeout ends once the response starts, so it never aborts the response body.
+      res = await (connectTimeoutMs == null
+        ? postStream(controller.signal)
+        : runWithTimeout(controller.signal, connectTimeoutMs, 'Sync stream connection', postStream));
 
       if (!res.ok || !res.body) {
         const text = await res.text();

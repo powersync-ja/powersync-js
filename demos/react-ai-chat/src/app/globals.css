@@ -1,0 +1,137 @@
+@import 'tailwindcss';
+@plugin '@tailwindcss/typography';
+
+@theme {
+  /* Bundled with the app (see app/index.tsx), so they load offline too. */
+  --font-sans: 'Figtree Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Width of the conversation and the composer (`max-w-chat`). */
+  --container-chat: 52rem;
+
+  /* Cool neutrals with a hint of PowerSync blue, so the logo sits naturally. Dark values are below. */
+  --color-surface: #f6f7fb;
+  --color-sidebar: #eef0f6;
+  --color-raised: #ffffff;
+  --color-bubble: #e6ebfa;
+  --color-ink: #151826;
+  --color-muted: #6a7086;
+  --color-line: #dfe3ee;
+  --color-hover: rgb(21 24 38 / 0.05);
+  --color-code: #12162a;
+
+  /* PowerSync blue, for actions. */
+  --color-brand: #0055ff;
+  --color-brand-soft: rgb(0 85 255 / 0.08);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-surface: #151823;
+    --color-sidebar: #10131b;
+    --color-raised: #1d2130;
+    --color-bubble: #252c42;
+    --color-ink: #e9ecf5;
+    --color-muted: #8f96ab;
+    --color-line: #2a3042;
+    --color-hover: rgb(233 236 245 / 0.06);
+    --color-code: #0c0f19;
+    --color-brand: #4f8cff;
+    --color-brand-soft: rgb(79 140 255 / 0.14);
+  }
+}
+
+:root {
+  /* The PowerSync logo's gradient. It only marks a reply that is generating right now. */
+  --live-gradient: linear-gradient(90deg, #aa00ff, #0055ff, #00d5ff);
+  color-scheme: light dark;
+}
+
+/* In the base layer, so utilities such as `outline-none` still override these. */
+@layer base {
+  body {
+    margin: 0;
+    background: var(--color-surface);
+    color: var(--color-ink);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection {
+    background: var(--color-brand-soft);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
+  }
+}
+
+/* The pulsing dot at the end of a reply that is still streaming. */
+.streaming > :is(p, h1, h2, h3, h4, h5, h6):last-child::after,
+.streaming > :is(ul, ol):last-child > li:last-child:not(:has(> p))::after,
+.streaming > :is(ul, ol):last-child > li:last-child > p:last-child::after {
+  content: '';
+  display: inline-block;
+  width: 0.6em;
+  height: 0.6em;
+  margin-left: 0.35em;
+  border-radius: 9999px;
+  background: var(--live-gradient);
+  vertical-align: middle;
+  animation: streaming-dot 1.1s ease-in-out infinite;
+}
+
+@keyframes streaming-dot {
+  50% {
+    transform: scale(0.65);
+    opacity: 0.6;
+  }
+}
+
+/* The rotating "Thinking" label while waiting for the first token: the logo gradient sweeps through each word. */
+.shimmer {
+  background: linear-gradient(
+      90deg,
+      var(--color-muted) 0%,
+      var(--color-muted) 35%,
+      #aa00ff 45%,
+      #0055ff 50%,
+      #00d5ff 55%,
+      var(--color-muted) 65%,
+      var(--color-muted) 100%
+    )
+    0 0 / 300% 100%;
+  background-clip: text;
+  color: transparent;
+  animation:
+    shimmer 2.2s linear infinite,
+    word-in 0.35s ease-out;
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: 0% 0;
+  }
+}
+
+@keyframes word-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.3em);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shimmer {
+    animation: none;
+    color: var(--color-muted);
+  }
+
+  .streaming > *::after,
+  .streaming li::after {
+    animation: none !important;
+  }
+}

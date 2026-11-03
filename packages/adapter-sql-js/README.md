@@ -31,6 +31,11 @@ const powersync = new PowerSyncDatabase({
 
 ## Persister examples
 
+> [!WARNING]
+> The `persister` option is deprecated and doesn't work while the PowerSync database is connected.
+> If you need persistence support, follow [installation instructions](https://docs.powersync.com/client-sdks/reference/react-native-and-expo#installation)
+> to configure the default database adapter (incompatible with Expo Go).
+
 ### Expo
 
 We can use the [Expo File System](https://docs.expo.dev/versions/latest/sdk/filesystem/) to persist the database in an Expo app.

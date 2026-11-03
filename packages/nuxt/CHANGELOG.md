@@ -1,5 +1,91 @@
 # @powersync/nuxt
 
+## 2.1.0
+
+### Minor Changes
+
+- 109de2c: Add `Authenticator` and `MutationUploader` types, and overloads of `connect()` allowing to connect in download-only and upload-only mode.
+
+### Patch Changes
+
+- Updated dependencies [bf54805]
+- Updated dependencies [325cb95]
+- Updated dependencies [109de2c]
+- Updated dependencies [7600425]
+- Updated dependencies [d1cec54]
+- Updated dependencies [6f05fc7]
+- Updated dependencies [9be90b3]
+- Updated dependencies [7bb0f27]
+- Updated dependencies [11a6bf3]
+- Updated dependencies [7d5255f]
+- Updated dependencies [d6a9cb4]
+- Updated dependencies [d30ad72]
+- Updated dependencies [7d5255f]
+- Updated dependencies [325cb95]
+- Updated dependencies [59f1618]
+- Updated dependencies [9fe7e5f]
+  - @powersync/web@2.6.0
+  - @powersync/shared-internals@1.5.0
+  - @powersync/diagnostics@0.0.3
+  - @powersync/kysely-driver@2.0.3
+  - @powersync/vue@0.7.0
+
+## 2.0.0
+
+### Major Changes
+
+- fe8ad22: **Breaking:** `NuxtPowerSyncDatabase` is removed; use `PowerSyncDatabase` with `connect(connector, { diagnostics: true })`. Diagnostics now come from `@powersync/diagnostics`: a PowerSync tab on Nuxt DevTools 3, the devframe dock with MCP tools on Nuxt DevTools 4.
+
+### Patch Changes
+
+- Updated dependencies [544c9ba]
+- Updated dependencies [255456b]
+- Updated dependencies [fe8ad22]
+- Updated dependencies [20ea996]
+- Updated dependencies [fe8ad22]
+- Updated dependencies [5a8ed5e]
+- Updated dependencies [1a209a0]
+  - @powersync/web@2.5.0
+  - @powersync/diagnostics@0.0.2
+  - @powersync/shared-internals@1.4.0
+  - @powersync/kysely-driver@2.0.2
+  - @powersync/vue@0.7.0
+
+## 1.0.0
+
+### Patch Changes
+
+- 9c8f1e3: Add `DisconnectAndClearOptions.soft` to clear data from public tables while keeping an internal sync for a faster next sync.
+- Updated dependencies [9c8f1e3]
+- Updated dependencies [7c80576]
+- Updated dependencies [de0879c]
+- Updated dependencies [59212f1]
+- Updated dependencies [7c80576]
+- Updated dependencies [7c80576]
+  - @powersync/shared-internals@1.3.0
+  - @powersync/vue@0.7.0
+  - @powersync/web@2.4.0
+  - @powersync/kysely-driver@2.0.2
+
+## 0.1.0
+
+### Minor Changes
+
+- a07998d: Add `requestCheckpoint()` to `PowerSyncDatabase` to request an explicit sync acknowledgement.
+  This feature requires a new `checkpointMode: 'requests'` option on `ConnectOptions` switching to a more
+  efficient way to request checkpoints from the PowerSync service.
+
+  For more details on this feature, see [Sync Catch-Up](https://docs.powersync.com/client-sdks/advanced/checkpoint-requests).
+
+### Patch Changes
+
+- Updated dependencies [aa1f171]
+- Updated dependencies [a07998d]
+  - @powersync/shared-internals@1.2.0
+  - @powersync/web@2.3.0
+  - @powersync/vue@0.6.0
+  - @powersync/kysely-driver@2.0.1
+
 ## 0.0.9
 
 ### Patch Changes

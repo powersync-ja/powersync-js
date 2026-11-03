@@ -7,6 +7,8 @@ import type { AttachmentRecord, AttachmentTransportAdapter, LocatedAttachmentRec
 /**
  * Describes the HTTP request used to upload a file's bytes to remote storage.
  * Typically points at a presigned URL.
+ *
+ * @alpha
  */
 export interface NodeUploadRequest {
   /** Destination URL (e.g. a presigned upload URL). */
@@ -22,6 +24,8 @@ export interface NodeUploadRequest {
 /**
  * Describes the HTTP request used to download a file's bytes from remote storage.
  * Typically points at a presigned URL.
+ *
+ * @alpha
  */
 export interface NodeDownloadRequest {
   /** Source URL (e.g. a presigned download URL). */
@@ -35,6 +39,8 @@ export interface NodeDownloadRequest {
  *
  * The resolvers map an attachment to the request that transfers its bytes, keeping
  * the transport agnostic of the remote storage backend (S3, Supabase, etc.).
+ *
+ * @alpha
  */
 export interface NodeFileSystemTransportAdapterOptions {
   /** Resolves the upload request (e.g. a presigned URL) for an attachment. */

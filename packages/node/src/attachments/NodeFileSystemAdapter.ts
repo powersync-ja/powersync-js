@@ -1,6 +1,11 @@
 import { promises as fs } from 'fs';
 import * as path from 'path';
-import { AttachmentData, AttachmentTransportAdapter, EncodingType, StreamingLocalStorageAdapter } from '@powersync/common';
+import {
+  AttachmentData,
+  AttachmentTransportAdapter,
+  EncodingType,
+  StreamingLocalStorageAdapter
+} from '@powersync/common';
 
 import {
   NodeFileSystemTransportAdapter,
@@ -10,6 +15,8 @@ import {
 /**
  * NodeFileSystemAdapter implements LocalStorageAdapter using Node.js filesystem.
  * Suitable for Node.js environments and Electron applications.
+ *
+ * @public
  */
 export class NodeFileSystemAdapter implements StreamingLocalStorageAdapter {
   constructor(private storageDirectory: string = './user_data') {}
@@ -29,7 +36,7 @@ export class NodeFileSystemAdapter implements StreamingLocalStorageAdapter {
 
   async clear(): Promise<void> {
     const dir = path.resolve(this.storageDirectory);
-    await fs.rmdir(dir, { recursive: true });
+    await fs.rm(dir, { recursive: true, force: true });
   }
 
   getLocalUri(filename: string): string {
@@ -103,6 +110,6 @@ export class NodeFileSystemAdapter implements StreamingLocalStorageAdapter {
   }
 
   async rmDir(path: string): Promise<void> {
-    await fs.rmdir(path, { recursive: true });
+    await fs.rm(path, { recursive: true, force: true });
   }
 }

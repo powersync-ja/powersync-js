@@ -67,6 +67,12 @@ export class CheckpointStateSignals {
    */
   async waitForCheckpointRequestsReady(abort: AbortSignal, wakeDownloadLoop = true): Promise<boolean> {
     return new Promise((resolve, reject) => {
+      // A retry can reach this waiter after disconnect has already aborted its signal.
+      if (abort.aborted) {
+        resolve(false);
+        return;
+      }
+
       // Resolves the promise from the current state if possible, returning true if it was.
       const handleState = () => {
         const state = this.currentState;

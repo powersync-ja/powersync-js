@@ -8,8 +8,13 @@ import {
   WebStreamingSyncImplementation,
   WebStreamingSyncImplementationOptions
 } from './WebStreamingSyncImplementation.js';
-import { generateTabCloseSignal } from '../../shared/tab_close_signal.js';
-import { SubscribedStream, SyncStatusJson, ResolvedSyncOptions } from '@powersync/shared-internals';
+import { generateTabCloseSignal } from '../../shared/locks.js';
+import {
+  SubscribedStream,
+  SyncStatusJson,
+  ResolvedSyncOptions,
+  serializeErrorForRelay
+} from '@powersync/shared-internals';
 import { connectToExistingWorker, connectToWorker, WorkerConnection } from '../../worker/client.js';
 
 /**
@@ -30,12 +35,25 @@ class SharedSyncClientProvider extends AbstractSharedSyncClientProvider {
     return Comlink.transfer(port, [port]);
   }
 
+  async #relay<T>(action: () => Promise<T>): Promise<T> {
+    try {
+      return await action();
+    } catch (ex) {
+      /**
+       * Connector callbacks run in this tab and their rejection crosses the
+       * MessagePort to the sync worker, so serialize it here, where the error
+       * originates, before Comlink's error transfer can drop custom fields.
+       */
+      throw serializeErrorForRelay(ex);
+    }
+  }
+
   invalidateCredentials() {
     this.options.remote.invalidateCredentials();
   }
 
   async fetchCredentials(): Promise<PowerSyncCredentials | null> {
-    const credentials = await this.options.remote.getCredentials();
+    const credentials = await this.#relay(() => this.options.remote.getCredentials());
     if (credentials == null) {
       return null;
     }
@@ -56,11 +74,13 @@ class SharedSyncClientProvider extends AbstractSharedSyncClientProvider {
      * Don't return anything here, just incase something which is not
      * serializable is returned from the `uploadCrud` function.
      */
-    await this.options.uploadCrud();
+    await this.#relay(() => this.options.connector.uploadCrud!());
   }
 
   override async postCheckpointRequest(clientId: string, requestId: string): Promise<string | null> {
-    return await this.options.postCheckpointRequest(clientId, requestId);
+    return await this.#relay(
+      async () => (await this.options.connector.postCheckpointRequest!(clientId, requestId)) ?? null
+    );
   }
 
   get logger() {
@@ -159,10 +179,14 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
      * - The client sends the params to the shared worker after locks have been registered.
      */
     const closeSignal = await generateTabCloseSignal(this.abortOnClose.signal);
-    // Awaiting here ensures the worker is waiting for the lock
-    await this.syncManager.addLockBasedCloseSignal(closeSignal);
+    const { identifier, connector } = this.options;
 
-    const { identifier } = this.options;
+    // Awaiting here ensures the worker is waiting for the lock
+    await this.syncManager.initialize(closeSignal, {
+      hasFetchCredentials: !!connector.fetchCredentials,
+      hasPostCheckpointRequest: !!connector.postCheckpointRequest,
+      hasUploadCrud: !!connector.uploadCrud
+    });
 
     await this.syncManager.setParams(
       {
@@ -192,9 +216,30 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
   }
 
   async dispose(): Promise<void> {
-    await this.waitForReady();
+    let registeredWithWorker = true;
+    try {
+      await this.waitForReady();
+    } catch {
+      // The worker rejected this client (e.g. because it connects in a mode incompatible with other tabs), so it won't
+      // acknowledge a close request either.
+      registeredWithWorker = false;
+    }
 
-    await new Promise<void>((resolve) => {
+    if (registeredWithWorker) {
+      await this.#closeWorkerClient();
+    }
+
+    await super.dispose();
+
+    this.abortOnClose.abort();
+
+    // Release the proxy
+    this.syncManager[Comlink.releaseProxy]();
+    this.worker.close();
+  }
+
+  #closeWorkerClient() {
+    return new Promise<void>((resolve) => {
       // This will always be a message port since we use shared workers.
       const messagePort = this.worker.endpoint as MessagePort;
 
@@ -213,14 +258,6 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
       };
       messagePort.postMessage(closeMessagePayload);
     });
-
-    await super.dispose();
-
-    this.abortOnClose.abort();
-
-    // Release the proxy
-    this.syncManager[Comlink.releaseProxy]();
-    this.worker.close();
   }
 
   async waitForReady() {

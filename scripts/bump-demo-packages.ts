@@ -57,7 +57,7 @@ const displayResults = (results: ProcessResult[]) => {
 };
 
 const workspacePackages = await findWorkspacePackages(path.resolve('.'), {
-  patterns: ['./packages/*']
+  patterns: ['./packages/*', './tools/diagnostics', './tools/diagnostics-core', './tools/diagnostics-ui']
 });
 
 const resolveDemos = async (): Promise<string[]> => {

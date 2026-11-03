@@ -69,6 +69,7 @@ Demo applications are located in the [`demos/`](./demos/) directory. Also see ou
 - [demos/react-supabase-todolist](./demos/react-supabase-todolist/README.md): A React to-do list example app using the PowerSync Web SDK and a Supabase backend.
 - [demos/react-supabase-todolist-tanstackdb](./demos/react-supabase-todolist-tanstackdb/README.md): A React to-do list example app using the PowerSync Web SDK and a Supabase backend + [TanStackDB](https://tanstack.com/db/latest) collections.
 - [demos/react-supabase-time-based-sync](./demos/react-supabase-time-based-sync/README.md): A React demo using Sync Streams to subscribe to date-filtered data dynamically, with a Supabase backend.
+- [demos/react-ai-chat](./demos/react-ai-chat/README.md): A React AI chat app whose replies stream to every device through PowerSync, with a Postgres database, a Node.js backend API and the AI SDK.
 - [demos/react-multi-client](./demos/react-multi-client/README.md): A React widget that illustrates how data flows from one PowerSync client to another.
 - [demos/yjs-react-supabase-text-collab](./demos/yjs-react-supabase-text-collab/README.md): A React real-time text editing collaboration example app powered by [Yjs](https://github.com/yjs/yjs) CRDTs and [Tiptap](https://tiptap.dev/), using the PowerSync Web SDK and a Supabase backend.
 - [demos/vue-supabase-todolist](./demos/vue-supabase-todolist/README.md): A Vue to-do list example app using the PowerSync Web SDK and a Supabase backend.

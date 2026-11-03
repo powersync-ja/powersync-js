@@ -8,11 +8,63 @@ import { SharedWorkerConnectionRequest } from './SharedWorkerConnectionRequest.j
 import { WorkerClient } from './sync/WorkerClient.js';
 
 const server = new MultiDatabaseServer(createConsoleLogger({ prefix: 'db-worker', minLevel: LogLevels.trace }));
+let nestedWorker: Promise<Comlink.Remote<OpenWorkerConnection>> | null = null;
 
 const exposedDatabaseFunctions: OpenWorkerConnection = {
+  ping: async () => {},
   connect: (config) => server.handleConnection(config),
-  connectToExisting: ({ identifier, lockName }) => server.connectToExisting(identifier, lockName)
+  connectToExisting: ({ identifier, lockName }) => server.connectToExisting(identifier, lockName),
+  featureDetection: async () => {
+    let supportsNestedWorkers = false;
+    if ('Worker' in globalThis) {
+      try {
+        await (nestedWorker ??= trySpawningNestedWorker());
+        supportsNestedWorkers = true;
+      } catch (e) {
+        // We don't support nested workers.
+      }
+    }
+
+    return {
+      worker: supportsNestedWorkers,
+      openWithMode: fileSystemSupportsOpenMode()
+    };
+  },
+  spawnNested: async () => {
+    const worker = await (nestedWorker ??= trySpawningNestedWorker());
+
+    const port = await worker[Comlink.createEndpoint]();
+    return Comlink.transfer(port, [port]);
+  }
 };
+
+function trySpawningNestedWorker(): Promise<Comlink.Remote<OpenWorkerConnection>> {
+  const fork = new Worker(location.href, { type: 'module' });
+
+  return new Promise((resolve, reject) => {
+    let done = false;
+    const wrapped = Comlink.wrap<OpenWorkerConnection>(fork);
+
+    wrapped.ping().finally(() => {
+      done = true;
+      resolve(wrapped);
+    });
+
+    fork.addEventListener('error', (e) => {
+      if (!done) {
+        done = true;
+        reject(e);
+      } else {
+        console.error('Nested worker error', e);
+      }
+    });
+  });
+}
+
+function fileSystemSupportsOpenMode(): boolean {
+  // Credits: https://github.com/whatwg/fs/issues/34#issuecomment-1780168010
+  return 'FileSystemSyncAccessHandle' in globalThis && FileSystemSyncAccessHandle.prototype.hasOwnProperty('mode');
+}
 
 if (isSharedWorker) {
   const sharedSyncImplementation = new SharedSyncImplementation();

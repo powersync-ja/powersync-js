@@ -1,5 +1,24 @@
 # @powersync/kysely-driver
 
+## 2.0.3
+
+### Patch Changes
+
+- 9be90b3: Fix recovery from failing commits.
+- Updated dependencies [109de2c]
+- Updated dependencies [9be90b3]
+- Updated dependencies [d6a9cb4]
+- Updated dependencies [59f1618]
+  - @powersync/common@2.5.0
+
+## 2.0.2
+
+### Patch Changes
+
+- de0879c: Release the PowerSync write lock when a Kysely transaction's COMMIT or ROLLBACK fails, instead of leaving every later write waiting forever.
+- Updated dependencies [9c8f1e3]
+  - @powersync/common@2.3.0
+
 ## 2.0.1
 
 ### Patch Changes

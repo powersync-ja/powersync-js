@@ -258,17 +258,19 @@ class TransactionImplementation extends LockContext {
   static async runWith<T>(ctx: LockContext, fn: (tx: Transaction) => Promise<T>): Promise<T> {
     let tx = new TransactionImplementation(ctx);
 
-    try {
-      await ctx.execute('BEGIN IMMEDIATE');
+    await ctx.execute('BEGIN IMMEDIATE');
 
+    try {
       const result = await fn(tx);
       await tx.commit();
       return result;
     } catch (ex) {
+      tx.finalized = true;
+
       try {
-        await tx.rollback();
+        await ctx.execute('ROLLBACK');
       } catch (ex2) {
-        // In rare cases, a rollback may fail.
+        // In rare cases, a rollback may fail (e.g. if user code invoked commit() and then threw afterwards).
         // Safe to ignore.
       }
       throw ex;

@@ -1,14 +1,17 @@
 import { beforeEach, describe, expect, vi } from 'vitest';
 
 import {
+  column,
   CommonPowerSyncDatabase,
+  DownloadOptions,
   LogRecord,
   PowerSyncLogger,
   ProgressWithOperations,
   Schema,
   SyncOptions,
   SyncStatus,
-  SyncStreamConnectionMethod
+  SyncStreamConnectionMethod,
+  Table
 } from '@powersync/common';
 import {
   bucket,
@@ -18,11 +21,19 @@ import {
   mockSyncServiceTest,
   stream,
   TestConnector,
-  waitForSyncStatus
+  waitForSyncStatus,
+  databaseTest
 } from './utils.js';
 import { BucketChecksum, OplogEntryJSON } from '@powersync/shared-internals/internal/sync_protocol';
-import { BasePowerSyncDatabase } from '@powersync/shared-internals';
+import {
+  AbstractStreamingSyncImplementation,
+  BasePowerSyncDatabase,
+  InternalConnector,
+  resolveSyncOptions,
+  SqliteBucketStorage
+} from '@powersync/shared-internals';
 import { asyncNotifier } from '../../shared-internals/src/utils/async.js';
+import { NodeRemote } from '../src/sync/stream/NodeRemote.js';
 
 const defaultConnectOptions: SyncOptions = {
   // This might help with test stability/timeouts if a retry is needed.
@@ -104,8 +115,7 @@ describe('Sync', () => {
       });
 
       database.connect(new TestConnector(), { checkpointMode: 'requests' });
-      await database.waitForStatus((s) => s.downloadError != null);
-      expect(database.currentStatus.connected).toBeFalsy();
+      await database.waitForStatus((s) => s.downloadError != null && !s.connected);
     });
 
     mockSyncServiceTest('reposts current checkpoint until applied', async ({ syncService }) => {
@@ -215,6 +225,75 @@ describe('Sync', () => {
       completeInitialRequest.resolve();
     });
 
+    databaseTest(
+      'checkpoint retry cancellation',
+      async ({ database }) => {
+        await database.init();
+
+        class TestSync extends AbstractStreamingSyncImplementation {
+          obtainLock<T>({ callback }: any): Promise<T> {
+            return callback();
+          }
+
+          async startCheckpointRetry() {
+            const controller = new AbortController();
+            this.abortController = controller;
+            await this['checkpoints'].markCheckpointsReady(Promise.resolve());
+            this.streamingSyncPromise = Promise.all([
+              Promise.resolve(),
+              Promise.resolve(),
+              this['repostUnacknowledgedCheckpointRequests'](
+                controller.signal,
+                resolveSyncOptions({ checkpointMode: 'requests' }, SyncStreamConnectionMethod.HTTP)
+              )
+            ]);
+          }
+
+          endDownloadIteration() {
+            this['checkpoints'].downloadIterationEnded();
+          }
+        }
+
+        const firstRead = Promise.withResolvers<void>();
+        const logger: PowerSyncLogger = { log: vi.fn() };
+        const adapter = new SqliteBucketStorage(database.database, logger);
+
+        const readCheckpointRequestId = vi.spyOn(adapter, 'readCheckpointRequestId');
+        readCheckpointRequestId.mockImplementation(async (_) => {
+          firstRead.resolve();
+          return '1';
+        });
+
+        const connector: InternalConnector = {
+          fetchCredentials: vi.fn(),
+          postCheckpointRequest: vi.fn()
+        };
+
+        const sync = new TestSync({
+          subscriptions: [],
+          serializedSchema: new Schema([]).toJSON(),
+          logger,
+          adapter,
+          connector,
+          remote: new NodeRemote(connector, logger, {
+            customFetch: () => {
+              throw new Error(`Unexpected HTTP request`);
+            }
+          })
+        });
+
+        await sync.startCheckpointRetry();
+        await firstRead.promise;
+        // The download loop resets checkpoint readiness as it exits. Disconnect wakes the
+        // retry delay, which used to wait again on the already-aborted signal forever.
+        sync.endDownloadIteration();
+        await sync.disconnect();
+
+        expect(sync.isConnected).toBe(false);
+      },
+      500
+    );
+
     describe('requestCheckpoint', () => {
       mockSyncServiceTest('fails when disconnected', async ({ syncService }) => {
         const db = await syncService.createDatabase();
@@ -290,6 +369,83 @@ describe('Sync', () => {
         controller.abort('custom abort reason');
         await failureExpectation;
       });
+
+      mockSyncServiceTest('times out when the service does not respond', async ({ syncService }) => {
+        const db = await syncService.createDatabase();
+        await db.connect(new TestConnector(), { checkpointMode: 'requests', connectTimeoutMs: 100 });
+        await vi.waitFor(() => expect(syncService.checkpointRequests).toHaveLength(1));
+
+        syncService.installRequestInterceptor(async (request) => {
+          if (request.url.includes('/sync/checkpoint-request')) {
+            return respondNever(request);
+          }
+          return undefined;
+        });
+        await expect(db.requestCheckpoint()).rejects.toThrow(/timed out/);
+      });
+    });
+  });
+
+  describe('connect timeouts', () => {
+    mockSyncServiceTest('retries a write checkpoint request that times out', async ({ syncService }) => {
+      let writeCheckpointRequests = 0;
+      syncService.installRequestInterceptor(async (request) => {
+        if (request.url.includes('/write-checkpoint2.json') && writeCheckpointRequests++ == 0) {
+          return respondNever(request);
+        }
+        return undefined;
+      });
+
+      const db = await syncService.createDatabase();
+      const connector = new TestConnector();
+      await db.connect(connector, { ...defaultConnectOptions, connectTimeoutMs: 100 });
+      await db.execute('INSERT INTO lists (id, name) VALUES (uuid(), ?)', ['local write']);
+
+      await vi.waitFor(() => expect(writeCheckpointRequests).toBe(2), { timeout: 2000 });
+      expect(connector.uploadDataInvocations).toBe(1);
+
+      // The upload loop recovered, so new local writes are uploaded again.
+      await db.execute('INSERT INTO lists (id, name) VALUES (uuid(), ?)', ['second write']);
+      await vi.waitFor(() => expect(connector.uploadDataInvocations).toBe(2), { timeout: 2000 });
+    });
+
+    mockSyncServiceTest('disconnect cancels a pending write checkpoint request', async ({ syncService }) => {
+      let pendingRequest: Request | undefined;
+      syncService.installRequestInterceptor(async (request) => {
+        if (request.url.includes('/write-checkpoint2.json')) {
+          pendingRequest = request;
+          return respondNever(request);
+        }
+        return undefined;
+      });
+
+      const db = await syncService.createDatabase();
+      await db.connect(new TestConnector(), defaultConnectOptions);
+      await db.execute('INSERT INTO lists (id, name) VALUES (uuid(), ?)', ['local write']);
+      await vi.waitFor(() => expect(pendingRequest).toBeDefined(), { timeout: 2000 });
+
+      await db.disconnect();
+      expect(pendingRequest!.signal.aborted).toBeTruthy();
+    });
+
+    mockSyncServiceTest('reconnects when the sync stream does not respond', async ({ syncService }) => {
+      let streamRequests = 0;
+      syncService.installRequestInterceptor(async (request) => {
+        if (request.url.endsWith('/sync/stream') && streamRequests++ == 0) {
+          return respondNever(request);
+        }
+        return undefined;
+      });
+
+      const db = await syncService.createDatabase();
+      db.connect(new TestConnector(), {
+        ...defaultConnectOptions,
+        connectionMethod: SyncStreamConnectionMethod.HTTP,
+        connectTimeoutMs: 100
+      });
+
+      await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1), { timeout: 2000 });
+      expect(streamRequests).toBe(2);
     });
   });
 
@@ -411,6 +567,138 @@ describe('Sync', () => {
     await database.waitForStatus((s) => !s.connected);
     await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
   });
+
+  describe('split connectors', () => {
+    const downloadOptions: DownloadOptions = {
+      powerSyncEndpoint: 'https://powersync.example.org',
+      authenticator: {
+        async resolveCredentials() {
+          return 'test';
+        }
+      }
+    };
+
+    mockSyncServiceTest('can connect download-only', async ({ syncService }) => {
+      const database = await syncService.createDatabase();
+      await database.connect({ ...defaultConnectOptions, ...downloadOptions });
+      await database.waitForStatus((s) => s.connected);
+
+      // Create a local mutation, which is never uploaded.
+      await database.execute('INSERT INTO lists (id, name) VALUES (uuid(), ?)', ['local mutation']);
+
+      // A new checkpoint can't be applied in this state, and should report an error.
+      syncService.pushLine(checkpoint({ last_op_id: 0 }));
+      syncService.pushLine({ checkpoint_complete: { last_op_id: '0' } });
+      await database.waitForStatus(
+        (s) => s.downloadError?.message.includes('blocked on local mutations, but no uploader is set') == true
+      );
+
+      // Upgrade to a full connection, which should upload.
+      const didUpload = Promise.withResolvers<void>();
+      await database.connect({
+        ...defaultConnectOptions,
+        ...downloadOptions,
+        async upload({ database }) {
+          const tx = await database.getNextCrudTransaction();
+          if (tx) {
+            didUpload.resolve();
+            await tx.complete();
+          }
+        }
+      });
+      await didUpload.promise;
+    });
+
+    mockSyncServiceTest('can connect upload-only', async ({ syncService }) => {
+      // Connecting in upload-only mode should make no SDK-initiated HTTP requests.
+      syncService.installRequestInterceptor(async (request) => {
+        throw new Error(`Unexpected HTTP request: ${request.url}`);
+      });
+
+      const database = await syncService.createDatabase();
+      await database.execute('INSERT INTO lists (id, name) VALUES (?, ?)', ['test1', 'local mutation']);
+
+      const didUpload = Promise.withResolvers<void>();
+      let isFirstUpload = true;
+      await database.connect({
+        ...defaultConnectOptions,
+        async upload({ database }) {
+          const tx = await database.getNextCrudTransaction();
+          if (tx) {
+            if (isFirstUpload) {
+              // Verify that uploads are retried in upload-only mode too.
+              isFirstUpload = false;
+              throw new Error('expected upload error');
+            }
+
+            await tx.complete();
+            didUpload.resolve();
+          }
+        }
+      });
+      await didUpload.promise;
+
+      // Reconnect in download-only mode. This should request a checkpoint because the upload-only mode can't.
+      syncService.installRequestInterceptor(async () => {});
+      const targetCheckpointRequest = Promise.withResolvers<string>();
+      const releaseCheckpointRequest = Promise.withResolvers<void>();
+      let isSeedRequest = true;
+
+      await database.connect({
+        ...defaultConnectOptions,
+        checkpointMode: 'requests',
+        powerSyncEndpoint: downloadOptions.powerSyncEndpoint,
+        authenticator: {
+          ...downloadOptions.authenticator,
+          async postCheckpointRequest(_clientId, requestId) {
+            if (isSeedRequest) {
+              isSeedRequest = false;
+            } else {
+              targetCheckpointRequest.resolve(requestId);
+              await releaseCheckpointRequest.promise;
+            }
+            return requestId;
+          }
+        }
+      });
+      await database.waitForStatus((s) => s.connected);
+
+      const watched = database.watch('SELECT name FROM lists ORDER BY name')[Symbol.asyncIterator]();
+      expect((await watched.next()).value.array).toStrictEqual([{ name: 'local mutation' }]);
+
+      const requestId = await targetCheckpointRequest.promise;
+      syncService.pushLine({
+        checkpoint: {
+          last_op_id: '1',
+          buckets: [bucket('a', 1)],
+          write_checkpoint: requestId
+        }
+      });
+      syncService.pushLine({
+        data: {
+          bucket: 'a',
+          data: [
+            {
+              checksum: 0,
+              op_id: '1',
+              object_id: 'test1',
+              object_type: 'lists',
+              op: 'PUT',
+              data: '{"name": "from server"}'
+            }
+          ]
+        }
+      });
+      syncService.pushLine({ checkpoint_complete: { last_op_id: '1' } });
+
+      // The checkpoint can't be applied before the local target is updated.
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      expect(await database.getAll('SELECT name FROM lists')).toStrictEqual([{ name: 'local mutation' }]);
+
+      releaseCheckpointRequest.resolve();
+      expect((await watched.next()).value.array).toStrictEqual([{ name: 'from server' }]);
+    });
+  });
 });
 
 function defineSyncTests(bson: boolean) {
@@ -420,6 +708,17 @@ function defineSyncTests(bson: boolean) {
   };
 
   const mockSyncServiceTest = createMockSyncServiceTest(bson);
+
+  mockSyncServiceTest('a requested disconnect is not recorded as a download error', async ({ syncService }) => {
+    const database = await syncService.createDatabase();
+    await database.connect(new TestConnector(), options);
+    await database.waitForStatus((status) => status.connected);
+
+    await database.disconnect();
+
+    expect(database.currentStatus.connected).toBe(false);
+    expect(database.currentStatus.downloadError).toBeUndefined();
+  });
 
   mockSyncServiceTest('sets last sync time', async ({ syncService }) => {
     const db = await syncService.createDatabase();
@@ -1338,6 +1637,56 @@ function defineSyncTests(bson: boolean) {
     expect((await query.next()).value.rows._array).toStrictEqual([]);
   });
 
+  mockSyncServiceTest('direct tables', async ({ syncService }) => {
+    // This is mostly a smoke test, the core extension manages direct tables and covers things like migrations.
+    const customSchema = new Schema({
+      users: new Table({ name: column.text }, { direct: true })
+    });
+
+    const powersync = await syncService.createDatabase({ schema: customSchema });
+    const { type } = await powersync.get<{ type: string }>('pragma table_list(users)');
+    expect(type).toBe('table');
+
+    powersync.connect(new TestConnector(), options);
+    await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
+
+    syncService.pushLine({
+      checkpoint: {
+        last_op_id: '1',
+        buckets: [bucket('a', 1)]
+      }
+    });
+    syncService.pushLine({
+      data: {
+        bucket: 'a',
+        data: [
+          {
+            checksum: 0,
+            op_id: '1',
+            op: 'PUT',
+            object_id: 'user',
+            object_type: 'users',
+            data: '{"name": "synced user"}'
+          }
+        ]
+      }
+    });
+    syncService.pushLine({ checkpoint_complete: { last_op_id: '1' } });
+    await powersync.waitForFirstSync();
+
+    expect(await powersync.getAll('SELECT id, name FROM users')).toStrictEqual([{ id: 'user', name: 'synced user' }]);
+    await powersync.disconnect();
+
+    await powersync.execute('UPDATE users SET name = ?', ['local user']);
+    expect(await powersync.getAll('SELECT id, name FROM users')).toStrictEqual([{ id: 'user', name: 'local user' }]);
+
+    const tx = await powersync.getNextCrudTransaction();
+    expect(tx?.crud).toHaveLength(1);
+    const entry = tx!.crud[0];
+    expect(entry.table).toBe('users');
+    expect(entry.opData).toStrictEqual({ name: 'local user' });
+  });
+
   mockSyncServiceTest('can reconnect based on query changes', async ({ syncService }) => {
     // Test for https://discord.com/channels/1138230179878154300/1399340612435710034/1399340612435710034
     const logMessages: string[] = [];
@@ -1473,5 +1822,15 @@ async function waitForProgress(
     }
 
     return true;
+  });
+}
+
+/**
+ * Simulates a service that accepts a request but never responds. Like a real `fetch`, the request only fails once its
+ * signal aborts.
+ */
+function respondNever(request: Request): Promise<Response> {
+  return new Promise((_, reject) => {
+    request.signal.addEventListener('abort', () => reject(request.signal.reason), { once: true });
   });
 }

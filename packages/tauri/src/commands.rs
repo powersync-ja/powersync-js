@@ -2,7 +2,6 @@ use crate::database::SerializableSyncStatus;
 use crate::error::PowerSyncTauriError;
 use crate::handle::{Handle, SharedWithJavaScript};
 use crate::{PowerSync, Result};
-use http_client::http_types::convert::Serialize;
 use powersync::error::PowerSyncError;
 use powersync::schema::SchemaOrCustom;
 use powersync::{StreamPriority, StreamSubscriptionOptions};
@@ -10,7 +9,7 @@ use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSqlOutput, ValueRe
 use rusqlite::{params_from_iter, Connection, ToSql};
 use serde::de::{Error, SeqAccess, Visitor};
 use serde::ser::SerializeSeq;
-use serde::{Deserialize, Deserializer, Serializer};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::value::RawValue;
 use std::fmt::Formatter;
 use std::sync::Arc;
@@ -96,7 +95,7 @@ impl ExecuteBatch {
         let mut stmt = connection.prepare(&self.sql)?;
         for instantiation in &self.params {
             let mut cursor = stmt.query(params_from_iter(instantiation.iter()))?;
-            while let Some(_) = cursor.next()? {}
+            while cursor.next()?.is_some() {}
         }
 
         Ok(CommandResult::ExecuteBatchResult {
@@ -127,8 +126,16 @@ impl<'de> Deserialize<'de> for SqliteValue {
             fn expecting(&self, formatter: &mut Formatter) -> std::fmt::Result {
                 write!(
                     formatter,
-                    "Expected a SQLite value (string, number, array of bytes, null)"
+                    "Expected a SQLite value (string, number, boolean, array of bytes, null)"
                 )
+            }
+
+            fn visit_bool<E>(self, v: bool) -> std::result::Result<Self::Value, E>
+            where
+                E: Error,
+            {
+                // SQLite has no boolean type, bind like the web SDK does (true = 1, false = 0).
+                Ok(SqliteValue::Integer(i64::from(v)))
             }
 
             fn visit_i64<E>(self, v: i64) -> std::result::Result<Self::Value, E>
@@ -332,14 +339,14 @@ pub(crate) async fn powersync<R: Runtime>(
             let connection = handle.as_connection()?;
             let connection = connection.lock().await;
 
-            CommandResult::ExecuteSqlResult(stmt.run(&*connection)?)
+            CommandResult::ExecuteSqlResult(stmt.run(&connection)?)
         }
         Command::ExecuteBatch(batch) => {
             let handle = powersync.handles.lookup(batch.connection)?;
             let connection = handle.as_connection()?;
             let connection = connection.lock().await;
 
-            batch.run(&*connection)?
+            batch.run(&connection)?
         }
         Command::Disconnect(handle) => {
             let handle = powersync.handles.lookup(handle)?;

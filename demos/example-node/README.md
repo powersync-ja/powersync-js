@@ -15,6 +15,8 @@ Results from the query are printed every time it changes. Try:
 1. Updating a row in the backend database and see changes reflected in the running client.
 2. Enter `add('my list')` and see the new list show up in the backend database.
 
+The demo also starts [PowerSync DevTools](https://docs.powersync.com/tools/devtools-overview) and prints its link. Open the link to see the sync status, buckets, local data and logs of this client.
+
 ## Encryption
 
 This demo can use encrypted databases with the `better-sqlite3-multiple-ciphers` package.

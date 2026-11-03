@@ -1,5 +1,50 @@
 # @powersync/react
 
+## 2.2.0
+
+### Minor Changes
+
+- 8327200: Add `usePowerSyncOrNull()` and `useStatusOrNull()` hooks returning null instead of throwing when no database is in context.
+
+### Patch Changes
+
+- Updated dependencies [109de2c]
+- Updated dependencies [9be90b3]
+- Updated dependencies [d6a9cb4]
+- Updated dependencies [59f1618]
+  - @powersync/common@2.5.0
+
+## 2.1.0
+
+### Minor Changes
+
+- 582babe: Passing sync streams to suspending hooks now causes a deprecation warning. This was already non-functional before.
+- 2a62930: Add `fetchReason` to the `useQuery` result. While `isFetching` is true it is `'initial'`, `'tables-changed'` or `'settings-changed'`, so a parameter change (the previous query's rows are still returned) can be told apart from a refetch of the same query.
+
+### Patch Changes
+
+- 582babe: Calling `refresh` on a `useQuery` with `runQueryOnce` no longer resets `isLoading`, it only sets `isFetching` while the query runs again.
+- 774ecf9: Refactor `useQuery` hook to react to parameter changes more consistently.
+- Updated dependencies [fe8ad22]
+  - @powersync/common@2.4.0
+
+## 2.0.2
+
+### Patch Changes
+
+- 7bae50c: Fix watched `useQuery` hook leaking listeners in strict mode.
+- Updated dependencies [3d0d5c4]
+- Updated dependencies [7bae50c]
+  - @powersync/common@2.3.1
+
+## 2.0.1
+
+### Patch Changes
+
+- 3d0e2a3: Forward `throttleMs` from `useQuery` to the underlying watched query. It was accepted by the options type but never passed on, so the default 30ms throttle always applied.
+- Updated dependencies [a07998d]
+  - @powersync/common@2.2.0
+
 ## 2.0.0
 
 ### Major Changes

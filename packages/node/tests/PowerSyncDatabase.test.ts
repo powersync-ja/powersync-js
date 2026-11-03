@@ -7,6 +7,7 @@ import { describe, expect, test, vi } from 'vitest';
 import { CrudEntry, CrudTransaction, PowerSyncDatabase } from '../lib/index.js';
 import { WorkerOpener } from '../src/db/options.js';
 import { AppSchema, databaseTest, tempDirectoryTest } from './utils.js';
+import { BasePowerSyncDatabase } from '@powersync/shared-internals';
 
 test('validates options', async () => {
   await expect(async () => {
@@ -129,6 +130,81 @@ databaseTest('can watch tables', async ({ database }) => {
   await expect.poll(() => fn).toHaveBeenCalledTimes(2);
 });
 
+databaseTest('onChangeWithCallback initially aborted', async ({ database }) => {
+  await database.init();
+  function countUpdateListeners() {
+    let found = 0;
+    database.database.iterateListeners((l) => {
+      if (l.tablesUpdated) {
+        found++;
+      }
+    });
+
+    return found;
+  }
+
+  // There is a permanent update listener for the bucket storage.
+  const baseline = countUpdateListeners();
+
+  // Registering onChange with an aborted signal should not register update listeners.
+  const disposeWatch = database.onChangeWithCallback(
+    {
+      onChange: () => {}
+    },
+    { tables: ['todos'], throttleMs: 0, signal: AbortSignal.abort() }
+  );
+
+  expect(countUpdateListeners()).toStrictEqual(baseline);
+  disposeWatch();
+  expect(countUpdateListeners()).toStrictEqual(baseline);
+});
+
+databaseTest('closing a query processor while it is initializing does not leak listeners', async ({ database }) => {
+  await database.init();
+
+  function countLifecycleListeners() {
+    let found = 0;
+    (database as BasePowerSyncDatabase).iterateListeners((l) => {
+      if (l.closing || l.schemaChanged) {
+        found++;
+      }
+    });
+    return found;
+  }
+
+  const baseline = countLifecycleListeners();
+
+  const watchedQuery = database.query({ sql: 'SELECT * FROM todos' }).watch({ throttleMs: 0 });
+  watchedQuery.close();
+
+  await expect.poll(() => countLifecycleListeners()).toStrictEqual(baseline);
+});
+
+databaseTest('watch with initially aborted signal does not leak listeners', async ({ database }) => {
+  await database.init();
+
+  function countLifecycleListeners() {
+    let found = 0;
+    (database as BasePowerSyncDatabase).iterateListeners((l) => {
+      if (l.closing || l.schemaChanged) {
+        found++;
+      }
+    });
+    return found;
+  }
+
+  const baseline = countLifecycleListeners();
+
+  database.watch('SELECT * FROM todos', [], { onResult: () => {} }, { signal: AbortSignal.abort() });
+  expect(countLifecycleListeners()).toStrictEqual(baseline);
+
+  const iterator = database.watch('SELECT * FROM todos', [], { signal: AbortSignal.abort() });
+  for await (const _ of iterator) {
+    expect.fail('Should not emit results for an aborted watch');
+  }
+  expect(countLifecycleListeners()).toStrictEqual(baseline);
+});
+
 tempDirectoryTest('throws error if target directory does not exist', async ({ tmpdir }) => {
   const directory = path.join(tmpdir, 'some', 'nested', 'location', 'that', 'does', 'not', 'exist');
 
@@ -246,6 +322,37 @@ databaseTest('clear raw tables', async ({ database }) => {
   expect(await database.getAll('SELECT * FROM lists')).toHaveLength(1);
   await database.disconnectAndClear();
   expect(await database.getAll('SELECT * FROM lists')).toHaveLength(0);
+});
+
+databaseTest('soft clear', async ({ database }) => {
+  await database.init();
+  await database.execute('INSERT INTO lists (id, name) VALUES (uuid(), ?)', ['list']);
+  await database.execute('INSERT INTO ps_buckets (name, last_applied_op) VALUES (?, ?)', ['bkt', 10]);
+
+  // Doing a soft-clear should delete data but keep the bucket around.
+  await database.disconnectAndClear({ soft: true });
+  expect(await database.get('SELECT name FROM ps_buckets')).toStrictEqual({ name: 'bkt' });
+
+  // Doing a default clear also deletes buckets.
+  await database.disconnectAndClear();
+  expect(await database.getAll('SELECT name FROM ps_buckets')).toStrictEqual([]);
+});
+
+databaseTest('rolls back failing transactions', async ({ database }) => {
+  // Regression test for https://github.com/powersync-ja/powersync-js/issues/1176.
+  await database.writeLock((tx) => tx.execute('PRAGMA foreign_keys = ON'));
+  await database.execute('CREATE TABLE parent (id TEXT PRIMARY KEY)');
+  await database.execute('CREATE TABLE child (id TEXT REFERENCES parent(id) DEFERRABLE INITIALLY DEFERRED)');
+
+  await expect(() =>
+    database.writeTransaction((tx) => tx.execute("INSERT INTO child VALUES ('missing')"))
+  ).rejects.toThrow();
+
+  // Transaction should have been rolled back, so the row should not exist.
+  expect(await database.writeLock((tx) => tx.getAll('SELECT * FROM child'))).toHaveLength(0);
+
+  // We should still be able to issue transactions.
+  await database.writeTransaction((tx) => tx.execute('SELECT 1'));
 });
 
 describe('onChangeWithAsyncGenerator', () => {

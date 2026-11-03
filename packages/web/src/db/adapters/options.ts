@@ -65,6 +65,17 @@ export interface WebSpecificOpenOptions {
   vfs: WASQLiteVFS;
 
   /**
+   * Names of additional no-argument WebAssembly exports to call after the PowerSync core initializer and before
+   * opening each SQLite connection, in array order. Each must register a statically linked extension, return
+   * SQLITE_OK (0) on success, and be safe to call more than once for a module.
+   *
+   * Requires a custom wa-sqlite build exporting these functions and a worker bundled against its matching JavaScript.
+   * Use exported names without Emscripten's leading underscore, e.g. `decimal_init_static`.
+   * Defaults to no additional initialization functions.
+   */
+  additionalInitializationFunctions?: readonly string[];
+
+  /**
    * If the {@link vfs} supports it, an additional amount of read-only connections to open. Using additional read
    * connections can speed up queries by dispatching them to multiple workers running them concurrently.
    *
@@ -81,7 +92,7 @@ export interface WebSpecificOpenOptions {
    * You can either provide a path to the worker script
    * or a factory method that returns a worker.
    */
-  worker?: string | URL | ((options: ResolvedWebSQLOpenOptions) => Worker | SharedWorker);
+  worker?: string | URL | ((options: CustomWorkerOptions) => Worker | SharedWorker);
 
   /**
    * Use an existing port to an initialized worker.
@@ -96,6 +107,37 @@ export interface WebSpecificOpenOptions {
    * Defaults to 0 (disabling the cache).
    */
   preparedStatementsCache?: number;
+
+  /**
+   * The name of a [Storage Bucket](https://wicg.github.io/storage-buckets/) to keep the database files in,
+   * instead of the default bucket of the origin private file system.
+   *
+   * Only supported by the OPFS-based VFS implementations: {@link WASQLiteVFS.OPFSCoopSyncVFS},
+   * {@link WASQLiteVFS.OPFSWriteAheadVFS} and {@link WASQLiteVFS.AccessHandlePoolVFS}. Opening the database fails in
+   * a browser without the Storage Buckets API, so set this option only when `'storageBuckets' in navigator`.
+   *
+   * The SDK forwards the name to `navigator.storageBuckets.open()` unchanged, so the browser reports a name it does not
+   * accept. The bucket is opened by name, with the browser's default options. To configure options for the bucket,
+   * call and await `navigator.storageBuckets.open()` before opening a PowerSync database.
+   *
+   * A database in a bucket is a different database from one of the same name in the default bucket: setting this
+   * option for an existing database starts with an empty database, and the files in the default bucket are not
+   * moved. The SDK groups database resources by database name, without taking the storage bucket into account. To
+   * avoid lock contention and wrong update notifications, use unique database names even across buckets.
+   *
+   * Uses the default bucket when no option is given.
+   */
+  storageBucket?: string;
+
+  /** @internal Only used internally for testing */
+  simpleMode?: unknown;
+}
+
+export interface CustomWorkerOptions extends ResolvedWebSQLOpenOptions {
+  /**
+   * Whether the SDK intends to spawn a shared worker for this call.
+   */
+  readonly shared: boolean;
 }
 
 export interface ResolvedWebSQLOpenOptions extends SQLOpenOptions, WebSpecificOpenOptions {}

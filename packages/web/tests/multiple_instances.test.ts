@@ -7,7 +7,7 @@ import { TEST_SCHEMA } from './utils/test-schema.js';
 import { generateTestDb } from './utils/testDb.js';
 import { DatabaseClient, OpenWorkerConnection } from '../src/db/adapters/wa-sqlite/DatabaseClient.js';
 import { ClientConnectionView } from '../src/db/adapters/wa-sqlite/DatabaseServer.js';
-import { generateTabCloseSignal } from '../src/shared/tab_close_signal.js';
+import { generateTabCloseSignal } from '../src/shared/locks.js';
 import { PowerSyncDatabase } from '../src/index.js';
 import { MockSyncService } from './utils/MockSyncServiceWorker.js';
 
@@ -92,9 +92,12 @@ describe('Multiple Instances', { sequential: true }, () => {
         }
       );
 
-      // The connection should fail with an error
+      // The connection should fail with an error, relayed from the worker in serialized form
       await vi.waitFor(
-        () => expect(logLines.map((l) => l.error)).toEqual(expect.arrayContaining([expect.any(Error)])),
+        () =>
+          expect(logLines.map((l) => l.error)).toEqual(
+            expect.arrayContaining([expect.objectContaining({ __powersyncError: true, message: expect.any(String) })])
+          ),
         {
           timeout: 2000
         }
@@ -345,6 +348,26 @@ describe('Multiple Instances', { sequential: true }, () => {
 
       // It should now upload from the first client
       await vi.waitFor(() => expect(connector.uploadData.mock.calls.length).greaterThanOrEqual(2), { timeout: 3000 });
+    }
+  );
+
+  sharedMockSyncServiceTest(
+    'should reject clients connecting in a different mode',
+    async ({ context: { database, openDatabase, defaultSyncOptions } }) => {
+      // Upload-only connections don't need the sync service, so this completes immediately.
+      await database.connect({ ...defaultSyncOptions, upload: vi.fn().mockResolvedValue(undefined) });
+
+      const secondDatabase = openDatabase();
+      await expect(
+        secondDatabase.connect({
+          ...defaultSyncOptions,
+          powerSyncEndpoint: 'http://localhost:3000',
+          authenticator: { resolveCredentials: vi.fn().mockResolvedValue('test-token') }
+        })
+      ).rejects.toThrow('Different tabs connecting in different modes');
+
+      // The failed attempt should not prevent connecting in a compatible mode.
+      await secondDatabase.connect({ ...defaultSyncOptions, upload: vi.fn().mockResolvedValue(undefined) });
     }
   );
 

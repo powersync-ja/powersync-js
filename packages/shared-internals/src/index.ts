@@ -11,6 +11,7 @@ export * from './db/crud/SyncStatus.js';
 export * from './client/ConnectionManager.js';
 export * from './client/sync/options.js';
 
+export * from './client/InternalConnector.js';
 export { MEMORY_TRIGGER_CLAIM_MANAGER } from './client/triggers/MemoryTriggerClaimManager.js';
 export * from './client/triggers/TriggerManagerImpl.js';
 export * from './client/watched/DifferentialQueryProcessor.js';
@@ -18,6 +19,8 @@ export * from './client/watched/OnChangeQueryProcessor.js';
 
 export * from './utils/AbortOperation.js';
 export * from './utils/compatibility.js';
+export { serializeErrorForRelay } from './utils/error-serialization.js';
+export type { SerializedRelayError, ErrorRelayState } from './utils/error-serialization.js';
 export * from './utils/ControlledExecutor.js';
 export * from './utils/mutex.js';
 export * from './utils/parseQuery.js';

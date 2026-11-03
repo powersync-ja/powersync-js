@@ -24,7 +24,7 @@ export const db = new PowerSyncDatabase({
   schema: AppSchema,
   database: {
     dbFilename: 'example.db',
-    vfs: WASQLiteVFS.OPFSCoopSyncVFS,
+    vfs: WASQLiteVFS.SimpleOpfsVFS,
     databaseWorkerLogLevel: LogLevels.debug,
     enableMultiTabs: typeof SharedWorker !== 'undefined'
   },
@@ -47,7 +47,9 @@ export const syncOptions: SyncOptions = {
   appMetadata: {
     app_version: APP_VERSION
   },
-  checkpointMode: useCheckpointRequests ? 'requests' : 'legacy'
+  checkpointMode: useCheckpointRequests ? 'requests' : 'legacy',
+  // Per-bucket totals in the PowerSync DevTools Buckets tab.
+  diagnostics: true
 };
 
 const QueryStore = React.createContext<QueryStore | null>(null);

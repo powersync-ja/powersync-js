@@ -11,6 +11,7 @@ import {
 import { onTestFinished, test } from 'vitest';
 import {
   NodePowerSyncDatabaseOptions,
+  NodeRemoteOptions,
   PowerSyncBackendConnector,
   PowerSyncCredentials,
   PowerSyncDatabase,
@@ -216,7 +217,8 @@ export function createMockSyncServiceTest(bson: boolean) {
         set lastWriteCheckpoint(value: number) {
           lastWriteCheckpoint = value;
         },
-        checkpointRequests
+        checkpointRequests,
+        remoteOptions: { customFetch: inMemoryFetch }
       });
     }
   });
@@ -230,6 +232,7 @@ export interface MockSyncService {
   connectedListeners: any[];
   lastWriteCheckpoint: number;
   readonly checkpointRequests: number[];
+  readonly remoteOptions: NodeRemoteOptions;
 
   createDatabase: (options?: Partial<NodePowerSyncDatabaseOptions>) => Promise<PowerSyncDatabase>;
 }

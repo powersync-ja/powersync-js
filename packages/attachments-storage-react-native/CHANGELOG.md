@@ -1,5 +1,13 @@
 # @powersync/attachments-storage-react-native
 
+## 0.1.1
+
+### Patch Changes
+
+- 08b125c: Fix `ExpoFileSystemStorageAdapter.moveFile` returning a stale size.
+- Updated dependencies [a07998d]
+  - @powersync/common@2.2.0
+
 ## 0.1.0
 
 ### Minor Changes

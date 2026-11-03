@@ -3,7 +3,7 @@ import { contextBridge, ipcRenderer } from 'electron';
 
 contextBridge.exposeInMainWorld('powersync', {
   get: (sql: string, variables: any[]) => ipcRenderer.invoke('get', sql, variables),
-  getAll: (sql: string, variables: any[]) => ipcRenderer.invoke('get', sql, variables),
+  getAll: (sql: string, variables: any[]) => ipcRenderer.invoke('getAll', sql, variables),
   syncStatus: (cb: (status: SyncStatus) => void) => {
     const channel = new MessageChannel();
     channel.port1.onmessage = (event) => cb(event.data);

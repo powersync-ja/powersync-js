@@ -9,10 +9,9 @@ import {
 import {
   BasePowerSyncDatabase,
   AbstractStreamingSyncImplementation,
-  BucketStorageAdapter,
   CreateSyncImplementationOptions,
-  SqliteBucketStorage,
-  openDatabase
+  openDatabase,
+  InternalConnector
 } from '@powersync/shared-internals';
 
 import { NodeRemote, NodeRemoteOptions } from '../sync/stream/NodeRemote.js';
@@ -21,6 +20,11 @@ import { NodeStreamingSyncImplementation } from '../sync/stream/NodeStreamingSyn
 import { WorkerConnectionPool } from './WorkerConnectionPool.js';
 import { NodeSQLOpenOptions } from './options.js';
 
+/**
+ * Database options specific to the PowerSync Node.js SDK.
+ *
+ * @public
+ */
 export type NodePowerSyncDatabaseOptions = BasePowerSyncDatabaseOptions &
   DatabaseSource<NodeSQLOpenOptions> & {
     /**
@@ -34,6 +38,10 @@ class NodePowerSyncDatabase extends BasePowerSyncDatabase<NodePowerSyncDatabaseO
     super(options);
   }
 
+  get sdkName(): string {
+    return '@powersync/node';
+  }
+
   async _initialize(): Promise<void> {
     if ('initialize' in this.database) {
       await (this.database as WorkerConnectionPool).initialize();
@@ -45,7 +53,7 @@ class NodePowerSyncDatabase extends BasePowerSyncDatabase<NodePowerSyncDatabaseO
   }
 
   protected generateSyncStreamImplementation(
-    connector: PowerSyncBackendConnector,
+    connector: InternalConnector,
     options: CreateSyncImplementationOptions
   ): AbstractStreamingSyncImplementation {
     const logger = this.logger;
@@ -71,8 +79,13 @@ class NodePowerSyncDatabase extends BasePowerSyncDatabase<NodePowerSyncDatabaseO
  *  }
  * });
  * ```
+ *
+ * @public
  */
 // Typed constructor to avoid leaking AbstractPowerSyncDatabase into the public interface
 export const PowerSyncDatabase: PowerSyncDatabaseConstructor<NodePowerSyncDatabaseOptions> = NodePowerSyncDatabase;
 
+/**
+ * @public
+ */
 export interface PowerSyncDatabase extends CommonPowerSyncDatabase {}

@@ -26,14 +26,18 @@ const processPackageJson = (packageJsonPath: string) => {
   fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
 };
 
-// Get all subdirectories in the packages directory
-const packageDirs = fs.readdirSync(packagesDir).filter((file) => {
-  return fs.statSync(path.join(packagesDir, file)).isDirectory();
-});
+// Every directory in packages/, plus the published packages that live in tools/
+const packageDirs = [
+  ...fs
+    .readdirSync(packagesDir)
+    .map((dir) => path.join(packagesDir, dir))
+    .filter((dir) => fs.statSync(dir).isDirectory()),
+  ...['diagnostics', 'diagnostics-core', 'diagnostics-ui'].map((dir) => path.resolve('tools', dir))
+];
 
-// Process each package.json in the packages directory
+// Process each package.json
 const promises = packageDirs.map((dir) => {
-  const packageJsonPath = path.join(packagesDir, dir, 'package.json');
+  const packageJsonPath = path.join(dir, 'package.json');
   return processPackageJson(packageJsonPath);
 });
 

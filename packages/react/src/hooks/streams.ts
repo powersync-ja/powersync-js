@@ -1,13 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
-import { usePowerSync } from './PowerSyncContext.js';
-import {
-  AbstractPowerSyncDatabase,
-  SyncStatus,
-  SyncStreamStatus,
-  SyncStreamSubscribeOptions,
-  SyncStreamSubscription
-} from '@powersync/common';
-import { useStatus } from './useStatus.js';
+import { useEffect, useMemo } from 'react';
+import { usePowerSyncOrNull } from './PowerSyncContext.js';
+import { SyncStreamStatus, SyncStreamSubscribeOptions, SyncStreamSubscription } from '@powersync/common';
+import { useStatusOrNull } from './useStatus.js';
 import { QuerySyncStreamOptions } from './watched/watch-types.js';
 
 /**
@@ -44,20 +38,20 @@ export function useSyncStream(options: UseSyncStreamOptions): SyncStreamStatus |
  * React component calling this function. When it unmounts, or when the streams array contents
  * change, all previous subscriptions are unsubscribed before new ones are created.
  */
-export function useSyncStreams(streamOptions: UseSyncStreamOptions[]): SyncStreamStatus[] {
-  const db = usePowerSync();
-  const status = useStatus();
+export function useSyncStreams(streamOptions: UseSyncStreamOptions[]): (SyncStreamStatus | null)[] {
+  const db = usePowerSyncOrNull();
+  const status = useStatusOrNull();
 
   const stringifiedOptions = useMemo(() => JSON.stringify(streamOptions), [streamOptions]);
   const syncStreams = useMemo(
     () =>
       streamOptions.map((options) => {
         return {
-          stream: db.syncStream(options.name, options.parameters ?? undefined),
+          stream: db?.syncStream(options.name, options.parameters ?? undefined),
           options
         };
       }),
-    [stringifiedOptions]
+    [db, stringifiedOptions]
   );
 
   useEffect(() => {
@@ -65,7 +59,7 @@ export function useSyncStreams(streamOptions: UseSyncStreamOptions[]): SyncStrea
     const resolvedSubs: SyncStreamSubscription[] = [];
 
     for (const entry of syncStreams) {
-      entry.stream.subscribe(entry.options).then((sub) => {
+      entry.stream?.subscribe(entry.options).then((sub) => {
         if (active) {
           resolvedSubs.push(sub);
         } else {
@@ -81,11 +75,11 @@ export function useSyncStreams(streamOptions: UseSyncStreamOptions[]): SyncStrea
         sub.unsubscribe();
       }
     };
-  }, [stringifiedOptions]);
+  }, [db, stringifiedOptions]);
 
   return useMemo(
-    () => syncStreams.map((entry) => status.forStream(entry.stream) ?? null),
-    [status, stringifiedOptions]
+    () => syncStreams.map((entry) => (entry.stream && status?.forStream(entry.stream)) ?? null),
+    [status, syncStreams]
   );
 }
 
@@ -93,7 +87,7 @@ export function useSyncStreams(streamOptions: UseSyncStreamOptions[]): SyncStrea
  * Returns `true` once all streams in the array have synced at least once.
  */
 export function useAllSyncStreamsHaveSynced(
-  db: AbstractPowerSyncDatabase,
+  _db: unknown, // TODO (breaking): Remove
   streams: QuerySyncStreamOptions[] | undefined
 ): boolean {
   const statuses = useSyncStreams(streams ?? []);

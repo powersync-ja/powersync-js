@@ -66,7 +66,13 @@ const mainConfig: Configuration = {
   entry: './src/main/index.ts',
   // Put your normal webpack config below here
   module: {
-    rules: defaultWebpackRules()
+    rules: defaultWebpackRules(),
+    parser: {
+      javascript: {
+        // Webpack's default worker matcher only recognizes the unprefixed worker_threads import.
+        worker: ['...', 'Worker from node:worker_threads']
+      }
+    }
   },
   plugins: [
     ...webpackPlugins,
@@ -83,6 +89,10 @@ const mainConfig: Configuration = {
       POWERSYNC_TOKEN: JSON.stringify(process.env.POWERSYNC_TOKEN)
     })
   ],
+  // Leave the optional driver to Node's runtime resolution; this example uses node:sqlite.
+  externals: {
+    'better-sqlite3': 'commonjs better-sqlite3'
+  },
   resolve: {
     extensions: ['.js', '.ts', '.jsx', '.tsx', '.css', '.json']
   },

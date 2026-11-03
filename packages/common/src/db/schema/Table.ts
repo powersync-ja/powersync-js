@@ -24,6 +24,21 @@ export interface TableOrRawTableOptions {
 
 interface SharedTableOptions extends TableOrRawTableOptions {
   viewName?: string;
+  /**
+   * Marks this table as a direct, managed table.
+   *
+   * Enabling this flag makes PowerSync store data directly as SQLite rows instead of using an intermediate view around
+   * a JSON store.
+   *
+   * The table is still managed by the PowerSync SDK, which is responsible for creating, altering and dropping them.
+   * You can query managed tables like JSON-based views, and mutations are consistently tracked as pending uploads.
+   * For more information on managed tables, see [the documentation](https://docs.powersync.com/client-sdks/advanced/performance-optimization#managed-views-vs-managed-tables).
+   *
+   * Direct tables can't use a {@link ResolvedTableOptions.viewName}.
+   *
+   * @alpha Direct tables are currently in alpha.
+   */
+  direct?: boolean;
 }
 
 /** Whether to include previous column values when PowerSync tracks local changes.
@@ -135,6 +150,10 @@ export class ResolvedTable {
     return this.options.ignoreEmptyUpdates!;
   }
 
+  get direct() {
+    return this.options.direct;
+  }
+
   get internalName() {
     if (this.options.localOnly) {
       return `ps_data_local__${this.name}`;
@@ -206,14 +225,19 @@ export class ResolvedTable {
 
       indexNames.add(index.name);
     }
+
+    if (this.direct && this.viewNameOverride != null) {
+      throw new Error(`Direct table ${this.name} can't use a view name override`);
+    }
   }
 
   toJSON() {
     return {
       name: this.name,
-      view_name: this.viewName,
+      view_name: this.viewNameOverride,
       columns: this.columns.map((c) => c.toJSON()),
       indexes: this.indexes.map((e) => e.toJSON(this)),
+      direct: this.direct,
       ...encodeTableOptions(this)
     };
   }
@@ -303,7 +327,8 @@ export class Table<Columns extends ColumnsType = ColumnsType> extends ResolvedTa
       localOnly: options?.localOnly,
       trackPrevious: options?.trackPrevious,
       trackMetadata: options?.trackMetadata,
-      ignoreEmptyUpdates: options?.ignoreEmptyUpdates
+      ignoreEmptyUpdates: options?.ignoreEmptyUpdates,
+      direct: options?.direct
     };
   }
 }

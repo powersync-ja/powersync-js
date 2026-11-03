@@ -1,5 +1,93 @@
 # @powersync/capacitor
 
+## 0.10.0
+
+### Minor Changes
+
+- 109de2c: Add `Authenticator` and `MutationUploader` types, and overloads of `connect()` allowing to connect in download-only and upload-only mode.
+
+### Patch Changes
+
+- 325cb95: Add an `sdkName` getter to the database that names the SDK package, for development tooling.
+- 325cb95: Forward core diagnostics events on native platforms so PowerSync DevTools shows per-bucket download totals.
+- 7d5255f: Update PowerSync SQLite core extension version to 0.5.4 ([release notes](https://github.com/powersync-ja/powersync-sqlite-core/releases/tag/v0.5.4)).
+- Updated dependencies [bf54805]
+- Updated dependencies [325cb95]
+- Updated dependencies [109de2c]
+- Updated dependencies [7600425]
+- Updated dependencies [d1cec54]
+- Updated dependencies [11a6bf3]
+- Updated dependencies [7d5255f]
+- Updated dependencies [d6a9cb4]
+- Updated dependencies [d30ad72]
+- Updated dependencies [7d5255f]
+- Updated dependencies [59f1618]
+- Updated dependencies [9fe7e5f]
+  - @powersync/web@2.6.0
+  - @powersync/shared-internals@1.5.0
+
+## 0.9.4
+
+### Patch Changes
+
+- bb7bf4a: Internal optimization: Use text format to receive sync lines from PowerSync service.
+- Updated dependencies [544c9ba]
+- Updated dependencies [fe8ad22]
+- Updated dependencies [20ea996]
+- Updated dependencies [fe8ad22]
+- Updated dependencies [5a8ed5e]
+- Updated dependencies [1a209a0]
+  - @powersync/web@2.5.0
+  - @powersync/shared-internals@1.4.0
+
+## 0.9.3
+
+### Patch Changes
+
+- Updated dependencies [7bae50c]
+  - @powersync/shared-internals@1.3.1
+  - @powersync/web@2.4.2
+
+## 0.9.2
+
+### Patch Changes
+
+- 30ca5b6: Fix "database is locked (code 5)" on Android after the webview reloads (for example a live reload) while a write transaction was open.
+- 9c8f1e3: Add `DisconnectAndClearOptions.soft` to clear data from public tables while keeping an internal sync for a faster next sync.
+- Updated dependencies [9c8f1e3]
+- Updated dependencies [7c80576]
+- Updated dependencies [59212f1]
+- Updated dependencies [7c80576]
+- Updated dependencies [7c80576]
+  - @powersync/shared-internals@1.3.0
+  - @powersync/web@2.4.0
+
+## 0.9.1
+
+### Patch Changes
+
+- eaeb6a4: Update PowerSync SQLite core extension to version 0.5.3.
+- Updated dependencies [eaeb6a4]
+  - @powersync/web@2.3.1
+  - @powersync/shared-internals@1.2.0
+
+## 0.9.0
+
+### Minor Changes
+
+- a07998d: Add `requestCheckpoint()` to `PowerSyncDatabase` to request an explicit sync acknowledgement.
+  This feature requires a new `checkpointMode: 'requests'` option on `ConnectOptions` switching to a more
+  efficient way to request checkpoints from the PowerSync service.
+
+  For more details on this feature, see [Sync Catch-Up](https://docs.powersync.com/client-sdks/advanced/checkpoint-requests).
+
+### Patch Changes
+
+- Updated dependencies [aa1f171]
+- Updated dependencies [a07998d]
+  - @powersync/shared-internals@1.2.0
+  - @powersync/web@2.3.0
+
 ## 0.8.2
 
 ### Patch Changes

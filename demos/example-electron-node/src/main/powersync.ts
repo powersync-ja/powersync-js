@@ -1,7 +1,7 @@
-import { AbstractPowerSyncDatabase, column, PowerSyncBackendConnector, Schema, Table } from '@powersync/node';
+import { column, CommonPowerSyncDatabase, PowerSyncBackendConnector, Schema, Table } from '@powersync/node';
 
-declare const POWERSYNC_URL: string|null;
-declare const POWERSYNC_TOKEN: string|null;
+declare const POWERSYNC_URL: string | undefined;
+declare const POWERSYNC_TOKEN: string | undefined;
 
 export class BackendConnector implements PowerSyncBackendConnector {
   private powersyncUrl: string | undefined;
@@ -16,7 +16,7 @@ export class BackendConnector implements PowerSyncBackendConnector {
 
   async fetchCredentials() {
     // TODO: Use an authentication service or custom implementation here.
-    if (this.powersyncToken == null || this.powersyncUrl == null) {
+    if (!this.powersyncToken || !this.powersyncUrl) {
       return null;
     }
 
@@ -26,7 +26,7 @@ export class BackendConnector implements PowerSyncBackendConnector {
     };
   }
 
-  async uploadData(database: AbstractPowerSyncDatabase): Promise<void> {
+  async uploadData(database: CommonPowerSyncDatabase): Promise<void> {
     const transaction = await database.getNextCrudTransaction();
 
     if (!transaction) {
@@ -59,7 +59,6 @@ function shouldDiscardDataOnError(error: any) {
   // TODO: Ignore non-retryable errors here
   return false;
 }
-
 
 export const LIST_TABLE = 'lists';
 export const TODO_TABLE = 'todos';

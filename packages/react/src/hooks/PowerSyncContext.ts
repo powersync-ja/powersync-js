@@ -1,7 +1,7 @@
-import { AbstractPowerSyncDatabase } from '@powersync/common';
+import { CommonPowerSyncDatabase } from '@powersync/common';
 import React from 'react';
 
-export const PowerSyncContext = React.createContext<AbstractPowerSyncDatabase | null>(null);
+export const PowerSyncContext = React.createContext<CommonPowerSyncDatabase | null>(null);
 /**
  * Custom hook that provides access to the PowerSync context.
  * @returns The PowerSync Database instance.
@@ -19,4 +19,17 @@ export const PowerSyncContext = React.createContext<AbstractPowerSyncDatabase | 
  *   </ul>
  * };
  */
-export const usePowerSync = () => React.useContext(PowerSyncContext);
+export function usePowerSync() {
+  const db = usePowerSyncOrNull();
+  if (db == null) throw new Error('PowerSync not configured.');
+  return db;
+}
+
+/**
+ * A variant of {@link usePowerSync} that returns null when no PowerSync database is in context (instead of throwing).
+ *
+ * @returns The PowerSync database instance, or null.
+ */
+export function usePowerSyncOrNull(): CommonPowerSyncDatabase | null {
+  return React.useContext(PowerSyncContext);
+}

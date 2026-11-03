@@ -1,6 +1,8 @@
+import { BroadcastChannel } from 'node:worker_threads';
 import {
   AbstractStreamingSyncImplementation,
   AbstractStreamingSyncImplementationOptions,
+  DiagnosticsEvent,
   LockOptions,
   LockType,
   Mutex
@@ -14,6 +16,7 @@ const LOCKS = new Map<string, Map<LockType, Mutex>>();
 
 export class NodeStreamingSyncImplementation extends AbstractStreamingSyncImplementation {
   locks!: Map<LockType, Mutex>; // initialized by initLocks()
+  private diagnosticsChannel?: BroadcastChannel;
 
   constructor(options: AbstractStreamingSyncImplementationOptions) {
     super(options);
@@ -37,6 +40,24 @@ export class NodeStreamingSyncImplementation extends AbstractStreamingSyncImplem
     if (identifier) {
       LOCKS.set(identifier, this.locks);
     }
+  }
+
+  /**
+   * Broadcasts a core diagnostics event on a channel for diagnostics tooling in this process to
+   * consume. The channel does not keep the process alive.
+   */
+  protected override emitDiagnostics(event: DiagnosticsEvent): void {
+    if (!this.diagnosticsChannel) {
+      this.diagnosticsChannel = new BroadcastChannel('powersync-diagnostics-events');
+      this.diagnosticsChannel.unref();
+    }
+    this.diagnosticsChannel.postMessage(event);
+  }
+
+  override async dispose(): Promise<void> {
+    await super.dispose();
+    this.diagnosticsChannel?.close();
+    this.diagnosticsChannel = undefined;
   }
 
   obtainLock<T>(lockOptions: LockOptions<T>): Promise<T> {

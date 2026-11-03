@@ -1,6 +1,17 @@
 packages:
   - .
 
+nodeLinker: hoisted
+
+minimumReleaseAgeExclude:
+  - 'electron@44.4.3'
+
+trustPolicyExclude:
+  - 'vite@5.4.21'
+  - '@swc/core@1.6.13'
+  - 'undici-types@6.21.0'
+  - 'semver@6.3.1||5.7.2'
+
 overrides:
   # @electron-forge depends on an older version of this using git dependency, which pnpm blocks.
   # The only breaking change is that this requires node 22 or later.

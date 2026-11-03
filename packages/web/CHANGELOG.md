@@ -1,5 +1,110 @@
 # @powersync/web
 
+## 2.6.0
+
+### Minor Changes
+
+- bf54805: Add `additionalInitializationFunctions` to web database open options. Custom wa-sqlite builds can export no-argument initialization functions for statically linked extensions, which are called after the PowerSync core initializer and before opening SQLite connections. A nonzero result aborts initialization.
+- 109de2c: Add `Authenticator` and `MutationUploader` types, and overloads of `connect()` allowing to connect in download-only and upload-only mode.
+- d30ad72: Add the `storageBucket` option, to keep an OPFS database in a Storage Bucket instead of the default bucket of the origin private file system.
+
+### Patch Changes
+
+- 325cb95: Add an `sdkName` getter to the database that names the SDK package, for development tooling.
+- 7d5255f: Update PowerSync SQLite core extension version to 0.5.4 ([release notes](https://github.com/powersync-ja/powersync-sqlite-core/releases/tag/v0.5.4)).
+- Updated dependencies [325cb95]
+- Updated dependencies [109de2c]
+- Updated dependencies [7600425]
+- Updated dependencies [d1cec54]
+- Updated dependencies [9be90b3]
+- Updated dependencies [11a6bf3]
+- Updated dependencies [7d5255f]
+- Updated dependencies [d6a9cb4]
+- Updated dependencies [59f1618]
+- Updated dependencies [9fe7e5f]
+  - @powersync/shared-internals@1.5.0
+  - @powersync/common@2.5.0
+
+## 2.5.0
+
+### Minor Changes
+
+- fe8ad22: Add a `@powersync/web/devtools` subpath that lists the page's open databases for development tooling, and broadcast core diagnostics events to it.
+
+### Patch Changes
+
+- 544c9ba: OPFS WriteAhead VFS: Improve performance of checkpoints.
+- 1a209a0: Preserve error details across Web worker boundaries, including error codes, HTTP status, causes, and missing rejection reasons.
+- Updated dependencies [20ea996]
+- Updated dependencies [fe8ad22]
+- Updated dependencies [fe8ad22]
+- Updated dependencies [5a8ed5e]
+- Updated dependencies [1a209a0]
+  - @powersync/shared-internals@1.4.0
+  - @powersync/common@2.4.0
+
+## 2.4.2
+
+### Patch Changes
+
+- Updated dependencies [3d0d5c4]
+- Updated dependencies [7bae50c]
+  - @powersync/common@2.3.1
+  - @powersync/shared-internals@1.3.1
+
+## 2.4.1
+
+### Patch Changes
+
+- a5c3959: Fix a regression from `@powersync/web` version `2.4.0` where `WASQLiteVFS.OPFSWriteAheadVFS` would use larger write-ahead logs than intended.
+
+## 2.4.0
+
+### Minor Changes
+
+- 9c8f1e3: Add `DisconnectAndClearOptions.soft` to clear data from public tables while keeping an internal sync for a faster next sync.
+
+### Patch Changes
+
+- 59212f1: Fix race conditions in `WASQLiteVFS.OPFSWriteAheadVFS`.
+- 7c80576: Fix `disconnect()` and subsequent `connect()` calls hanging on pending shared-worker upload or checkpoint connector calls.
+
+  The worker now stops waiting for `uploadCrud` and `postCheckpointRequest` when their sync abort signal fires.
+
+- 7c80576: Fix a stale `downloadError` of "Disconnect has been requested" being reported after a normal disconnect.
+- Updated dependencies [9c8f1e3]
+- Updated dependencies [7c80576]
+- Updated dependencies [7c80576]
+- Updated dependencies [7c80576]
+  - @powersync/shared-internals@1.3.0
+  - @powersync/common@2.3.0
+
+## 2.3.1
+
+### Patch Changes
+
+- eaeb6a4: Update PowerSync SQLite core extension to version 0.5.3.
+- Updated dependencies [7223ab2]
+  - @powersync/common@2.2.1
+  - @powersync/shared-internals@1.2.0
+
+## 2.3.0
+
+### Minor Changes
+
+- a07998d: Add `requestCheckpoint()` to `PowerSyncDatabase` to request an explicit sync acknowledgement.
+  This feature requires a new `checkpointMode: 'requests'` option on `ConnectOptions` switching to a more
+  efficient way to request checkpoints from the PowerSync service.
+
+  For more details on this feature, see [Sync Catch-Up](https://docs.powersync.com/client-sdks/advanced/checkpoint-requests).
+
+### Patch Changes
+
+- Updated dependencies [aa1f171]
+- Updated dependencies [a07998d]
+  - @powersync/shared-internals@1.2.0
+  - @powersync/common@2.2.0
+
 ## 2.2.0
 
 ### Minor Changes
