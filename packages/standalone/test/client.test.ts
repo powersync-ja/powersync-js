@@ -306,6 +306,49 @@ test('confirms writes if the checkpoint is synced before the checkpoint request 
   await client.confirmWrites();
 });
 
+test('does not apply checkpoints while local writes are pending', async ({ client, service, acquireStreams }) => {
+  const ready = acquireStreams([{ name: 'tasks' }]).waitForSync();
+  await service.waitForRequest(1);
+  service.sync('a', 'tasks', { '1': { title: 'before' } });
+  await ready;
+
+  const first = client.markLocalWrite();
+  const second = client.markLocalWrite();
+  service.sync('a', 'tasks', { '1': { title: 'after' } });
+  await new Promise((r) => setTimeout(r, 10));
+  expect(client.tableSnapshot('tasks').get('1')).toStrictEqual({ title: 'before' });
+
+  // Apps would request a checkpoint first, we ignore that here.
+  first.release();
+  first.release();
+  await new Promise((r) => setTimeout(r, 10));
+  expect(client.tableSnapshot('tasks').get('1')).toStrictEqual({ title: 'before' });
+
+  // Releasing the last write applies the checkpoint received in the meantime.
+  second.release();
+  await vi.waitFor(() => expect(client.tableSnapshot('tasks').get('1')).toStrictEqual({ title: 'after' }));
+});
+
+test('confirms writes after releasing local writes', async ({ client, service, acquireStreams }) => {
+  const ready = acquireStreams([{ name: 'tasks' }]).waitForSync();
+  await service.waitForRequest(1);
+  service.sync('a', 'tasks', { '1': { title: 'before' } });
+  await ready;
+
+  const write = client.markLocalWrite();
+  let confirmed = false;
+  const confirmation = client.confirmWrites().then(() => (confirmed = true));
+  await vi.waitFor(() => expect(service.checkpointRequests).toHaveLength(1));
+  service.sync('a', 'tasks', { '1': { title: 'after' } }, { writeCheckpoint: '1' });
+  await new Promise((r) => setTimeout(r, 10));
+  expect(confirmed).toBe(false);
+  expect(client.tableSnapshot('tasks').get('1')).toStrictEqual({ title: 'before' });
+
+  write.release();
+  await confirmation;
+  expect(client.tableSnapshot('tasks').get('1')).toStrictEqual({ title: 'after' });
+});
+
 test('rejects confirmWrites when not syncing', async ({ client }) => {
   await expect(client.confirmWrites()).rejects.toThrow('not syncing');
 });

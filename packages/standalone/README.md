@@ -4,8 +4,9 @@
 > This package is in an early alpha stage. Its API may change without notice.
 
 This package implements a [PowerSync](https://powersync.com/) client without a SQLite database.
-Rows are stored in memory and exposed directly as JavaScript objects. This library is mainly intended
-as a building block for state management packages like TanStack DB.
+Rows are stored in memory and exposed directly as JavaScript objects. Rather than for direct
+consumption in an application, this library is mainly intended as a building block for state
+management packages like TanStack DB.
 
 ## Comparison to `@powersync/web`
 
@@ -16,11 +17,11 @@ and workers for SQLite may not be a good fit for lightweight web applications.
 
 For web apps, this package may be an alternative to `@powersync/web` when all of the following apply:
 
-- You're syncing small data sizes that can be fetched on every load.
+- You're syncing small data sizes that can be fetched every time the page is opened.
 - You don't need offline persistence for local mutations.
 - You don't need local multi-tab support (other tabs see mutations after they've been uploaded and synced down again).
 - You don't need to run multiple queries in parallel across workers.
-- Fast load times and reducing code size is critical.
+- Fast load times and minimal code size is critical.
 
 In these cases, a pure-JavaScript implementation can outperform SQLite compiled to WebAssembly.
 On native and mobile platforms, using a SQLite-based PowerSync SDK is still recommended for all apps.
@@ -73,173 +74,74 @@ export const powerSync = new PowerSyncClient({
 
 The client connects when the first collection starts syncing, and disconnects when no collection needs it anymore.
 
-## Defining collections
+## Subscribing to Sync Streams
 
-Each collection holds the rows of one PowerSync table. Use `streams` to choose which
-[Sync Streams](https://docs.powersync.com/sync/streams/overview) to subscribe to while the collection is in use:
+To subscribe to streams, use `client.acquireStreams()`:
 
 ```ts
-import { createCollection } from '@tanstack/db';
-import { powerSyncCollectionOptions } from '@powersync/tanstack-db-lite';
-import { z } from 'zod';
+// Pass the name and parameters of the Stream, along with additional options.
+const options: StreamLeaseOptions = {
+  // TODO: Consider implementing onError to get notified about errors specific to this Stream
+};
+const lease = powerSync.acquireStreams([{ name: 'tasks', parameters: { board: 'work' } }], option);
+await lease.waitForSync();
 
-const Todo = z.object({
-  id: z.string(),
-  list_id: z.string(),
-  description: z.string(),
-  completed: z.coerce.boolean()
+// Once the stream is no longer used (once all leases are returned, the client will unsubscribe or disconnect).
+lease.release();
+```
+
+To observe the sync status, use the `status` getter and `subscribeStatus` to get notified on updates:
+
+```ts
+console.log('current sync status', powerSync.status);
+const unsubscribe = powerSync.subscribeStatus(() => {
+  console.log('updated sync status', powerSync.status);
 });
-type Todo = z.infer<typeof Todo>;
 
-export const todos = createCollection(
-  powerSyncCollectionOptions<Todo>({
-    client: powerSync,
-    table: 'todos',
-    streams: [{ name: 'user_todos' }],
-    // Converts synced JSON rows into your application type.
-    parse: (row) => Todo.parse(row)
-  })
-);
+// ...
+unsubscribe();
 ```
 
-`parse` receives each synced row, including its `id`. It must return a value with the same `id`. Use it to validate rows
-and convert values, for example to turn integers into booleans or ISO strings into dates.
+You can also import `@powersync/standalone-client/react` for the `usePowerSyncStatus()` hook.
 
-Streams can take [parameters](https://docs.powersync.com/sync/streams/parameters), and an optional [priority override](https://docs.powersync.com/sync/streams/client-usage#priority-override):
+## Reading rows
+
+As the client starts syncing after subscribing to Sync Streams, you can read materialized rows as JavaScript objects.
 
 ```ts
-streams: [{ name: 'list_todos', parameters: { list_id: listId }, priority: 1 }];
-```
-
-A collection includes **all** synced rows of its table, whichever collection requested the stream they came from. A
-collection that only displays rows synced through other collections can leave `streams` empty. Filtering happens in
-your queries.
-
-## Querying
-
-Collections work with all TanStack DB query APIs. In React:
-
-```tsx
-import { useLiveQuery, eq } from '@tanstack/react-db';
-
-function TodoList({ listId }: { listId: string }) {
-  const { data, isLoading } = useLiveQuery(
-    (q) =>
-      q
-        .from({ todo: todos })
-        .where(({ todo }) => eq(todo.list_id, listId))
-        .orderBy(({ todo }) => todo.description),
-    [listId]
-  );
-
-  if (isLoading) return <p>Loading…</p>;
-  return (
-    <ul>
-      {data.map((todo) => (
-        <li key={todo.id}>{todo.description}</li>
-      ))}
-    </ul>
-  );
+for (const [key, data] of powerSync.tableSnapshot('tasks')) {
+  console.log('tasks row', key, data);
 }
 ```
 
-A collection becomes ready once the PowerSync Service has sent a complete, consistent snapshot of its streams. Updates
-are then applied as they arrive.
-
-## Syncing data on demand
-
-For large datasets, you can subscribe to streams only for data that live queries actually need. Pass `getSubscriptions`
-instead of `streams`. TanStack DB calls it with each query's filters, and the subscription lasts as long as the query
-is active:
+To get notified when the snapshot of a table changes, use `listen`:
 
 ```ts
-import { createCollection, parseLoadSubsetOptions } from '@tanstack/db';
-
-export const todos = createCollection(
-  powerSyncCollectionOptions<Todo>({
-    client: powerSync,
-    table: 'todos',
-    parse: (row) => Todo.parse(row),
-    getSubscriptions: (options) => {
-      const { filters } = parseLoadSubsetOptions(options);
-      const list = filters.find((f) => f.field.join('.') === 'list_id' && f.operator === 'eq');
-      return list ? [{ name: 'list_todos', parameters: { list_id: list.value } }] : [];
+const unsubscribe = powerSync.listen('tasks', {
+  onChanges(changes) {
+    for (const [key, changed] of changes) {
+      if (changed == null) {
+        console.log('task deleted', key);
+      } else {
+        console.log('task updated or inserted', key, changed);
+      }
     }
-  })
-);
-```
-
-A live query on an on-demand collection is ready once the streams it requested have synced. Queries using the same
-stream and parameters share one subscription.
-
-## Writing data
-
-PowerSync syncs data from your backend database to clients. Writes are your responsibility: Tanstack DB applies
-them optimistically, and calls your mutation handlers to upload them to your backend. After your backend has
-committed a write to the source database, call `confirmWrites()`.
-It waits until PowerSync has synced the change back, so the optimistic state is replaced with
-confirmed data without flickering:
-
-```ts
-export const todos = createCollection(
-  powerSyncCollectionOptions<Todo>({
-    client: powerSync,
-    table: 'todos',
-    streams: [{ name: 'user_todos' }],
-    parse: (row) => Todo.parse(row),
-    onInsert: async ({ transaction, collection }) => {
-      await api.createTodos(transaction.mutations.map((m) => m.modified));
-      await collection.utils.confirmWrites();
-    },
-    onUpdate: async ({ transaction, collection }) => {
-      await api.updateTodos(transaction.mutations.map((m) => ({ id: m.key, ...m.changes })));
-      await collection.utils.confirmWrites();
-    },
-    onDelete: async ({ transaction, collection }) => {
-      await api.deleteTodos(transaction.mutations.map((m) => m.key));
-      await collection.utils.confirmWrites();
-    }
-  })
-);
-
-// Then, anywhere in your app:
-todos.insert({ id: crypto.randomUUID(), list_id: listId, description: 'Buy milk', completed: false });
-```
-
-`confirmWrites()` is also available as `powerSync.confirmWrites()`. Both accept an `AbortSignal` to stop waiting:
-`confirmWrites({ signal: AbortSignal.timeout(10_000) })`.
-
-## Connection status
-
-`powerSync.status` describes the connection. Its `state` is one of `idle`, `connecting`, `syncing`, `ready` or
-`retrying`, and `error` holds the last error while retrying. In React, use `usePowerSyncStatus`:
-
-```tsx
-import { usePowerSyncStatus } from '@powersync/tanstack-db-lite/react';
-
-function ConnectionIndicator() {
-  const status = usePowerSyncStatus(powerSync);
-  return status.state === 'retrying' ? <p>Reconnecting… ({status.error?.message})</p> : null;
-}
-```
-
-The status describes the connection, not whether a collection has usable data. Use TanStack DB's readiness flags, such
-as `isLoading` from `useLiveQuery`, for that.
-
-## Errors
-
-- If the PowerSync Service rejects a stream subscription, for example because of invalid parameters, the affected
-  collection receives a `StreamError` through its `onError` option. Its `stream` and `messages` fields describe the
-  problem. A collection whose stream fails before it becomes ready moves to TanStack DB's error state. An on-demand
-  query depending on the stream fails to load.
-- Connection errors are reported through `onError` as well, and the client keeps retrying with exponential backoff.
-- Errors thrown by `parse` are reported through `onError`, and the affected rows are skipped.
-
-```ts
-powerSyncCollectionOptions<Todo>({
-  // ...
-  onError: (error) => {
-    if (error instanceof StreamError) console.error(`Stream ${error.stream.name} failed`, error.messages);
   }
 });
 ```
+
+## Local mutations
+
+To ensure consistency, PowerSync buffers pending sync downloads until local mutations have been uploaded and synced.
+SQLite-based PowerSync SDKs store pending writes as CRUD entries and keep an internal counter to request a sync
+checkpoint after uploading them. The checkpoint is referenced in downloaded data, allowing clients to know when their
+writes have synced back down.
+
+For the standalone client, handling mutations depends on the state management library in use. But the process mostly looks like this:
+
+1. Render local mutations as an optimistic overlay over synced changes.
+2. Call `markLocalWrite()` to stop the client from applying more changes. You can skip this part if the integration has this check built in (which is the case for Tanstack DB).
+3. Upload the local mutation to your backend.
+4. Call `confirmWrites()` to request a sync checkpoint.
+5. Call `release()` on the value returned by `markLocalWrite()`, allowing the client to resume sync once the checkpoint has been downloaded.
+6. Await the promise returned by `confirmWrites` and remove the local overlay.

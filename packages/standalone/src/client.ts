@@ -58,6 +58,16 @@ export interface ConfirmWritesOptions {
   signal?: AbortSignal;
 }
 
+/** A local write registered through {@link PowerSyncClient.markLocalWrite}. */
+export interface LocalWrite {
+  /**
+   * Marks the write as uploaded, allowing checkpoints to be applied again once no other local writes are pending.
+   *
+   * Calling this more than once has no effect.
+   */
+  release: () => void;
+}
+
 /** A row change for one table: a row value, or `null` for deleted rows. */
 export type TableChanges = ReadonlyMap<string, Record<string, unknown> | null>;
 
@@ -129,6 +139,8 @@ export class PowerSyncClient {
   readonly #syncWaiters = new Set<SyncWaiter>();
   readonly #checkpointWaiters = new Set<CheckpointWaiter>();
   #lastCheckpointRequest = 0n;
+  // Local writes registered with markLocalWrite that haven't been released yet.
+  #pendingWrites = 0;
 
   #request?: AbortController;
   #scheduled = false;
@@ -234,14 +246,41 @@ export class PowerSyncClient {
   }
 
   /**
+   * Registers a local write that hasn't been uploaded to the app's backend yet.
+   *
+   * While local writes are pending, the client doesn't apply new checkpoints, since they could revert optimistic
+   * state applied locally. Call this before uploading a write, and release the returned {@link LocalWrite} once the
+   * upload has completed (or failed).
+   *
+   * This is independent of {@link confirmWrites}, which resolves only after all local writes have been released.
+   */
+  markLocalWrite = (): LocalWrite => {
+    let pending = true;
+    this.#pendingWrites++;
+    this.#localWrites.hasLocalWrites = true;
+
+    return {
+      release: () => {
+        if (!pending) return;
+        pending = false;
+        if (--this.#pendingWrites == 0) {
+          this.#localWrites.hasLocalWrites = false;
+          // A checkpoint may have been blocked on local writes, try applying it now.
+          this.#client.retryCheckpoint();
+        }
+      }
+    };
+  };
+
+  /**
    * Call after the app's backend write commits.
    *
    * This requests a checkpoint from the PowerSync service. As this happens _after_ the write has made it into the
    * source database, PowerSync can determine when data including the write has synced back down.
    *
-   * This waits for the checkpoint to be requested _and_ to have been downloaded, validated and applied locally.
-   * Awaiting this in an `onInsert`, `onUpdate` or `onDelete` callback ensures the optimistic state is replaced with
-   * confirmed data without flickering.
+   * This waits for the checkpoint to be requested _and_ to have been downloaded, validated and applied locally, which
+   * also requires all writes registered with {@link markLocalWrite} to be released. Awaiting this in an `onInsert`,
+   * `onUpdate` or `onDelete` callback ensures the optimistic state is replaced with confirmed data without flickering.
    */
   confirmWrites = async ({ signal }: ConfirmWritesOptions = {}): Promise<void> => {
     if (!this.#active) {

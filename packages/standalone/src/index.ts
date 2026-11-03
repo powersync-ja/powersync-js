@@ -1,6 +1,7 @@
 export { PowerSyncClient, StreamError } from './client.js';
 export type {
   ConfirmWritesOptions,
+  LocalWrite,
   PowerSyncClientOptions,
   StreamLease,
   StreamLeaseOptions,
