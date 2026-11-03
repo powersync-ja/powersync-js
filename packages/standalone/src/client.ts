@@ -457,8 +457,9 @@ export class PowerSyncClient {
                 break;
               case 'rows':
                 this.#applyRows(event.changes.updatedRows);
-                if (event.priority == null) {
-                  // Full checkpoint, notify wakers.
+                if (event.priority == null && !signal.aborted) {
+                  // Full checkpoint, notify wakers (but don't set the status to ready if the sync request was
+                  // superseeded).
                   failures = 0;
                   this.#syncedGeneration = generation;
                   for (const waiter of this.#syncWaiters) {
