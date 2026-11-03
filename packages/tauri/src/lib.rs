@@ -88,19 +88,34 @@ impl<R: Runtime> PowerSync<R> {
     }
 }
 
-/// Initializes the plugin with a default HTTP client.
-///
-/// To customize the HTTP client used to connect to the PowerSync Service (e.g. to configure TLS,
-/// timeouts, proxies or a user agent), use [init_with_client] instead.
-pub fn init<R: Runtime>() -> TauriPlugin<R> {
-    init_with_client(reqwest::Client::new())
+/// Options to customize the PowerSync plugin, passed to [init_with_options].
+#[derive(Default)]
+pub struct PowerSyncOptions {
+    http_client: Option<reqwest::Client>,
 }
 
-/// Initializes the plugin, using the given [reqwest::Client] for all HTTP requests the PowerSync
-/// SDK makes (including the sync stream).
+impl PowerSyncOptions {
+    /// Uses the given [reqwest::Client] for all HTTP requests the PowerSync SDK makes (including
+    /// the sync stream), e.g. to configure TLS, timeouts, proxies or a user agent.
+    ///
+    /// The client is shared between all databases opened through this plugin.
+    pub fn with_http_client(mut self, client: reqwest::Client) -> Self {
+        self.http_client = Some(client);
+        self
+    }
+}
+
+/// Initializes the plugin with default options.
 ///
-/// The client is shared between all databases opened through this plugin.
-pub fn init_with_client<R: Runtime>(client: reqwest::Client) -> TauriPlugin<R> {
+/// To customize the plugin, use [init_with_options] instead.
+pub fn init<R: Runtime>() -> TauriPlugin<R> {
+    init_with_options(PowerSyncOptions::default())
+}
+
+/// Initializes the plugin with the given [PowerSyncOptions].
+pub fn init_with_options<R: Runtime>(options: PowerSyncOptions) -> TauriPlugin<R> {
+    let http_client = options.http_client.unwrap_or_default();
+
     Builder::new("powersync")
         .invoke_handler(tauri::generate_handler![commands::powersync])
         .setup(move |app, _api| {
@@ -109,7 +124,7 @@ pub fn init_with_client<R: Runtime>(client: reqwest::Client) -> TauriPlugin<R> {
                 databases: Default::default(),
                 handles: Default::default(),
                 event_id_counter: Default::default(),
-                http_client: client,
+                http_client,
             };
             app.manage(powersync);
             Ok(())
