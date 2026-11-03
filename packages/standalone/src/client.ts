@@ -1,4 +1,5 @@
 import {
+  type DownloadEvent,
   LocalWriteState,
   PowerSyncClient as StandaloneClient,
   type RequestedStreamSubscription,
@@ -108,9 +109,16 @@ export class StreamError extends Error {
   }
 }
 
-type Lease = { keys: Set<string>; includeDefaults: boolean; options: StreamLeaseOptions };
-type SyncWaiter = { generation: number; keys: Set<string>; resolve: () => void; reject: (error: unknown) => void };
+type Lease = {
+  keys: Set<string>;
+  includeDefaults: boolean;
+  options: StreamLeaseOptions;
+  // Message of the last error passed to onError, to avoid reporting the same error on every checkpoint.
+  reportedError?: string;
+};
+type SyncWaiter = { generation: number; lease: Lease; resolve: () => void; reject: (error: unknown) => void };
 type CheckpointWaiter = { resolve: () => void; reject: (error: unknown) => void };
+type RowsEvent = Extract<DownloadEvent, { type: 'rows' }>;
 
 export const idle: SyncStatus = Object.freeze({ state: 'idle' });
 
@@ -134,8 +142,9 @@ export class PowerSyncClient {
   // Bumped whenever the requested streams change, a connection iteration serves the generation at which it started.
   #generation = 0;
   #syncedGeneration = -1;
-  // Errors reported for stream keys by the latest checkpoint.
-  #streamErrors = new Map<string, string[]>();
+  // Errors reported for stream keys and default streams by the latest checkpoint.
+  #streamErrors = new Map<string, StreamError>();
+  #defaultStreamErrors: StreamError[] = [];
   readonly #syncWaiters = new Set<SyncWaiter>();
   readonly #checkpointWaiters = new Set<CheckpointWaiter>();
   #lastCheckpointRequest = 0n;
@@ -302,6 +311,8 @@ export class PowerSyncClient {
     if (target > this.#lastCheckpointRequest) this.#lastCheckpointRequest = target;
     const current = this.#localWrites.targetCheckpoint;
     if (current == null || target > current) this.#localWrites.targetCheckpoint = target;
+    // The client may have stopped while the checkpoint was requested, in which case no checkpoint would resolve this.
+    if (!this.#active) throw stoppedError();
 
     // Complete checkpoints are only applied once their write checkpoint reaches the target, so the next one resolves
     // this.
@@ -316,15 +327,11 @@ export class PowerSyncClient {
     if (!this.#leases.has(lease)) return Promise.reject(stoppedError());
     if (!lease.keys.size && !lease.includeDefaults) return Promise.resolve();
     if (this.#syncedGeneration >= this.#generation) {
-      const error = this.#errorFor(lease.keys);
+      const error = this.#errorFor(lease);
       return error ? Promise.reject(error) : Promise.resolve();
     }
 
-    return this.#wait(
-      this.#syncWaiters,
-      (waiter) => ({ ...waiter, generation: this.#generation, keys: lease.keys }),
-      signal
-    );
+    return this.#wait(this.#syncWaiters, (waiter) => ({ ...waiter, generation: this.#generation, lease }), signal);
   }
 
   #wait<W extends CheckpointWaiter>(
@@ -349,12 +356,12 @@ export class PowerSyncClient {
     });
   }
 
-  #errorFor(keys: Iterable<string>): StreamError | undefined {
+  #errorFor({ keys, includeDefaults }: Lease): StreamError | undefined {
     for (const key of keys) {
-      const messages = this.#streamErrors.get(key);
-      if (messages) return new StreamError(this.#streams.get(key)?.stream ?? { name: key }, messages);
+      const error = this.#streamErrors.get(key);
+      if (error) return error;
     }
-    return undefined;
+    return includeDefaults ? this.#defaultStreamErrors[0] : undefined;
   }
 
   #setStatus(status: SyncStatus) {
@@ -440,7 +447,6 @@ export class PowerSyncClient {
           while (true) {
             next ??= events.next();
             const result = await (refreshingToken ? Promise.race([next, refreshingToken]) : next);
-            if (signal.aborted) break;
             if ('token' in result) {
               // Reconnect with the new token.
               prefetchedToken = result.token;
@@ -448,6 +454,11 @@ export class PowerSyncClient {
             }
 
             next = undefined;
+            if (signal.aborted) {
+              // Rows have already been applied to the client state and won't be sent again, so they must not be lost.
+              if (!result.done && result.value.type == 'rows') this.#handleRows(result.value, generation, signal);
+              break;
+            }
             if (result.done) throw new Error('Sync stream ended; reconnecting');
             const event = result.value;
             switch (event.type) {
@@ -458,21 +469,7 @@ export class PowerSyncClient {
                 this.#handleStreamErrors(requested, event.streams);
                 break;
               case 'rows':
-                this.#applyRows(event.changes.updatedRows);
-                if (event.priority == null && !signal.aborted) {
-                  // Full checkpoint, notify wakers (but don't set the status to ready if the sync request was
-                  // superseeded).
-                  failures = 0;
-                  this.#syncedGeneration = generation;
-                  for (const waiter of this.#syncWaiters) {
-                    if (waiter.generation > generation) continue;
-                    const error = this.#errorFor(waiter.keys);
-                    if (error) waiter.reject(error);
-                    else waiter.resolve();
-                  }
-                  for (const waiter of this.#checkpointWaiters) waiter.resolve();
-                  this.#setStatus({ state: 'ready' });
-                }
+                if (this.#handleRows(event, generation, signal)) failures = 0;
                 break;
               case 'keepalive':
                 if (event.keepalive.token_expires_in <= 30 && !refreshingToken) {
@@ -488,7 +485,11 @@ export class PowerSyncClient {
         } finally {
           // Aborting first lets a pending next() call settle, which return() would otherwise wait for.
           request.abort();
-          next?.catch(() => {});
+          // A pending event may have applied rows already, e.g. if the token refresh won the race above.
+          const pending = await next?.catch(() => undefined);
+          if (pending && !pending.done && pending.value.type == 'rows') {
+            if (this.#handleRows(pending.value, generation, signal)) failures = 0;
+          }
           await events.return(undefined).catch(() => {});
         }
       } catch (cause) {
@@ -514,10 +515,11 @@ export class PowerSyncClient {
     descriptions: readonly StreamDescription[]
   ) {
     const errors = new Map<string, string[]>();
+    const defaultErrors = new Map<string, string[]>();
     for (const description of descriptions) {
       for (const { subscription, message } of description.errors) {
         if (subscription === 'default') {
-          console.warn(`PowerSync default stream "${description.name}" failed: ${message}`);
+          defaultErrors.set(description.name, [...(defaultErrors.get(description.name) ?? []), message]);
         } else {
           const key = requested[subscription]?.[0];
           if (key != null) errors.set(key, [...(errors.get(key) ?? []), message]);
@@ -529,11 +531,43 @@ export class PowerSyncClient {
         errors.set(key, [`Stream "${stream.name}" was not resolved`]);
     }
 
-    this.#streamErrors = errors;
+    const streams = new Map(requested.map(([key, { stream }]) => [key, stream]));
+    this.#streamErrors = new Map(
+      [...errors].map(([key, messages]) => [key, new StreamError(streams.get(key)!, messages)])
+    );
+    this.#defaultStreamErrors = [...defaultErrors].map(([name, messages]) => new StreamError({ name }, messages));
     for (const lease of this.#leases) {
-      const error = this.#errorFor(lease.keys);
+      const error = this.#errorFor(lease);
+      if (error?.message === lease.reportedError) continue;
+      lease.reportedError = error?.message;
       if (error) lease.options.onError?.(error);
     }
+  }
+
+  /**
+   * Applies rows and, for complete checkpoints, notifies waiters.
+   *
+   * @returns Whether a complete checkpoint has been applied on an active connection.
+   */
+  #handleRows(event: RowsEvent, generation: number, signal: AbortSignal): boolean {
+    this.#applyRows(event.changes.updatedRows);
+    if (event.priority != null) return false;
+
+    // Complete checkpoints are only applied once they include the requested write checkpoint, so this is valid even if
+    // the sync request has been superseded.
+    for (const waiter of this.#checkpointWaiters) waiter.resolve();
+    // Don't mark streams as synced or set the status to ready if the sync request was superseded.
+    if (signal.aborted) return false;
+
+    this.#syncedGeneration = generation;
+    for (const waiter of this.#syncWaiters) {
+      if (waiter.generation > generation) continue;
+      const error = this.#errorFor(waiter.lease);
+      if (error) waiter.reject(error);
+      else waiter.resolve();
+    }
+    this.#setStatus({ state: 'ready' });
+    return true;
   }
 
   /**

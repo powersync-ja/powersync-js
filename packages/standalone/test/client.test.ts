@@ -349,6 +349,35 @@ test('confirms writes after releasing local writes', async ({ client, service, a
   expect(client.tableSnapshot('tasks').get('1')).toStrictEqual({ title: 'after' });
 });
 
+test('rejects confirmWrites if the client stops while requesting a checkpoint', async ({ client, service }) => {
+  const lease = client.acquireStreams([{ name: 'tasks' }]);
+  const ready = lease.waitForSync();
+  await service.waitForRequest(1);
+  service.sync('a', 'tasks', {});
+  await ready;
+
+  service.beforeCheckpointResponse = async () => lease.release();
+  await expect(client.confirmWrites()).rejects.toThrow('PowerSync client stopped');
+});
+
+test('keeps rows applied while the connection is superseded', async ({ client, service, acquireStreams }) => {
+  const ready = acquireStreams([{ name: 'tasks' }]).waitForSync();
+  await service.waitForRequest(1);
+  service.sync('a', 'tasks', { '1': { title: 'before' } });
+  await ready;
+
+  const write = client.markLocalWrite();
+  service.sync('a', 'tasks', { '1': { title: 'after' } });
+  await new Promise((r) => setTimeout(r, 10));
+  expect(client.tableSnapshot('tasks').get('1')).toStrictEqual({ title: 'before' });
+
+  // Releasing the write applies the checkpoint, while acquiring another stream restarts the connection in the same turn.
+  write.release();
+  acquireStreams([{ name: 'other' }]);
+  await service.waitForRequest(2);
+  await vi.waitFor(() => expect(client.tableSnapshot('tasks').get('1')).toStrictEqual({ title: 'after' }));
+});
+
 test('rejects confirmWrites when not syncing', async ({ client }) => {
   await expect(client.confirmWrites()).rejects.toThrow('not syncing');
 });
@@ -530,4 +559,23 @@ test('includes default streams while a lease requests them', async ({ client, se
   second.release();
   await service.waitForRequest(3);
   expect(service.lastRequest.streams.include_defaults).toBe(false);
+});
+
+test('reports default stream errors once to leases including them', async ({ service, acquireStreams }) => {
+  const errors: StreamError[] = [];
+  const lease = acquireStreams([], { includeDefaultStreams: true, onError: (e) => errors.push(e) });
+  const failed = lease.waitForSync();
+  await service.waitForRequest(1);
+
+  const streams = [{ name: 'defaults', is_default: true, errors: [{ subscription: 'default', message: 'bad' }] }];
+  service.checkpoint([], { streams });
+  service.complete();
+  await expect(failed).rejects.toThrow('bad');
+  expect(errors.map((e) => e.stream.name)).toEqual(['defaults']);
+
+  // The same error is not reported again on later checkpoints.
+  service.checkpoint([], { streams });
+  service.complete();
+  await new Promise((r) => setTimeout(r, 10));
+  expect(errors).toHaveLength(1);
 });
