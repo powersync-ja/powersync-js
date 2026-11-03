@@ -4,6 +4,7 @@ import {
   CommonPowerSyncDatabase,
   DifferentialWatchedQuery,
   DifferentialWatchedQueryComparator,
+  LogLevels,
   WatchedQueryState
 } from '@powersync/common';
 import {
@@ -352,6 +353,8 @@ class SingleQueryWork<RowType> implements QueryWork<RowType> {
       this.setResult({ isLoading: false, isFetching: false, data, error: undefined, fetchReason: undefined });
     } catch (error) {
       if (isAborted()) return;
+      // Matches the logging done by watched queries, so that `runQueryOnce` failures are just as discoverable.
+      db.logger.log({ level: LogLevels.error, message: `Error in watched query: ${sql}`, error });
       this.setResult({ isLoading: false, isFetching: false, data: [], error: error as Error, fetchReason: undefined });
     }
   }

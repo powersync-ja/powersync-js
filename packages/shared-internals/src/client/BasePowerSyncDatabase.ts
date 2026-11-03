@@ -716,10 +716,7 @@ SELECT * FROM crud_entries;
   }
 
   watchWithCallback(sql: string, parameters?: any[], handler?: WatchHandler, options?: SQLWatchOptions): void {
-    const {
-      onResult,
-      onError = (e: Error) => this.logger.log({ level: LogLevels.error, message: 'Error in watch', error: e })
-    } = handler ?? {};
+    const { onResult, onError } = handler ?? {};
     if (!onResult) {
       throw new Error('onResult is required');
     }
@@ -754,9 +751,7 @@ SELECT * FROM crud_entries;
         }
         onResult(data);
       },
-      onError: (error) => {
-        onError(error);
-      }
+      onError
     });
 
     signal?.addEventListener('abort', () => {
