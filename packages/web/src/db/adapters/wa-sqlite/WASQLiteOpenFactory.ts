@@ -4,7 +4,7 @@ import { ResolvedWebSQLOpenOptions, WebSQLOpenOptions } from '../options.js';
 import { SSRDBAdapter } from '../SSRDBAdapter.js';
 import { vfsRequiresDedicatedWorkers, WASQLiteVFS } from './vfs.js';
 import { MultiDatabaseServer } from '../../../worker/db/MultiDatabaseServer.js';
-import { DatabaseClient, OpenWorkerConnection } from './DatabaseClient.js';
+import { DatabaseClient, DedicatedFeatureDetectionResult, OpenWorkerConnection } from './DatabaseClient.js';
 import { generateTabCloseSignal } from '../../../shared/locks.js';
 import { AsyncDbAdapter, PoolConnection } from '../AsyncWebAdapter.js';
 import { RawWaSqliteDatabaseOptions, SimpleOpfsMode } from './RawSqliteConnection.js';
@@ -67,10 +67,223 @@ export class WASQLiteOpenFactory implements SQLOpenFactory {
   }
 
   async openConnection(): Promise<PoolConnection> {
+    const { enableMultiTabs, useWebWorker, vfs } = this.options;
+
+    if (!enableMultiTabs) {
+      this.logger.log({ level: LogLevels.warn, message: 'Multiple tabs are not enabled in this browser' });
+    }
+
+    if (!useWebWorker) {
+      return { writer: await this.#openInCurrentContext(), additionalReaders: [] };
+    }
+
+    switch (vfs) {
+      case 'auto':
+        return { writer: await this.#openAuto(), additionalReaders: [] };
+      case WASQLiteVFS.SimpleOpfsVFS:
+        return { writer: await this.#openSimpleOpfs(), additionalReaders: [] };
+      case WASQLiteVFS.OPFSWriteAheadVFS: {
+        // This VFS supports concurrent reads, so we can open additional workers to host read-only connections for
+        // concurrent reads / writes.
+        const writer = await this.#openInWorker({ vfs, readonly: false });
+        const additionalReadersCount = this.options.additionalReaders ?? 1;
+        const additionalReaders = await Promise.all(
+          Array.from({ length: additionalReadersCount }, () => this.#openInWorker({ vfs, readonly: true }))
+        );
+        return { writer, additionalReaders };
+      }
+      default:
+        return { writer: await this.#openInWorker({ vfs, readonly: false }), additionalReaders: [] };
+    }
+  }
+
+  /**
+   * Picks the best available storage for the `'auto'` VFS option. In order of preference, that is:
+   *
+   *  1. {@link WASQLiteVFS.SimpleOpfsVFS} through a shared worker spawning a nested dedicated worker.
+   *  2. {@link WASQLiteVFS.SimpleOpfsVFS} in a dedicated worker.
+   *  3. {@link WASQLiteVFS.InMemoryVfs} in a shared worker.
+   *  4. {@link WASQLiteVFS.InMemoryVfs} in a dedicated worker.
+   */
+  async #openAuto(): Promise<DatabaseClient> {
+    const shared = this.options.enableMultiTabs ? await this.#openSharedWorker() : null;
+    if (shared) {
+      // This doens't close the shared worker if it fails, so we can still use it for an in-memory fallback.
+      const client = await this.#tryOpenSimpleOpfsNested(shared);
+      if (client) return client;
+    }
+
+    const dedicated = this.#openWorker(false);
+    const features = await dedicated.source.dedicatedFeatureDetection();
+    if (features.opfs) {
+      if (shared) closeWorker(shared);
+      return this.#openSimpleOpfsDedicated(dedicated, features);
+    }
+
+    this.logger.log({ level: LogLevels.debug, message: `Falling back to in-memory because OPFS is unavailable.` });
+
+    if (shared) {
+      closeWorker(dedicated);
+      return this.#connect(shared, { vfs: WASQLiteVFS.InMemoryVfs, readonly: false });
+    }
+    return this.#connect(dedicated, { vfs: WASQLiteVFS.InMemoryVfs, readonly: false });
+  }
+
+  /**
+   * Opens a {@link WASQLiteVFS.SimpleOpfsVFS} database.
+   *
+   * This VFS has three different modes (shared workers, readwrite-unsafe, re-open fallback), see the doc comment on it.
+   * We start a feature detection to check what the current browser supports.
+   */
+  async #openSimpleOpfs(): Promise<DatabaseClient> {
+    if (this.options.enableMultiTabs) {
+      const shared = await this.#openSharedWorker();
+      if (shared) {
+        const client = await this.#tryOpenSimpleOpfsNested(shared);
+        if (client) {
+          return client;
+        } else {
+          closeWorker(shared);
+        }
+      }
+    }
+
+    // We'll have to use a dedicated worker directly.
+    const dedicated = this.#openWorker(false);
+    return this.#openSimpleOpfsDedicated(dedicated, await dedicated.source.dedicatedFeatureDetection());
+  }
+
+  /**
+   * Attempts to open a {@link WASQLiteVFS.SimpleOpfsVFS} database in a dedicated worker spawned by the shared worker.
+   *
+   * Returns `null` if the shared worker can't spawn nested workers with OPFS access. The shared worker is not closed in
+   * that case.
+   */
+  async #tryOpenSimpleOpfsNested(shared: OpenedWorker): Promise<DatabaseClient | null> {
+    try {
+      const sharedFeatures = await shared.source.sharedFeatureDetection();
+      if (sharedFeatures.nestedOpfs) {
+        // Shared workers can open dedicated workers. Perfect, we'll have the shared worker spawn a nested worker and
+        // connect to that.
+        const inner = Comlink.wrap<OpenWorkerConnection>(await shared.source.spawnNested());
+        return await this.#connect(
+          { source: inner, connection: shared.connection },
+          { vfs: WASQLiteVFS.SimpleOpfsVFS, readonly: false, simpleMode: 'shared' }
+        );
+      }
+    } catch (error) {
+      this.logger.log({ level: LogLevels.error, error, message: 'Could not connect to nested worker' });
+    }
+
+    return null;
+  }
+
+  #openSimpleOpfsDedicated(
+    dedicated: OpenedWorker,
+    features: DedicatedFeatureDetectionResult
+  ): Promise<DatabaseClient> {
+    // See if we can at least use readwrite-unsafe, as that is more efficient than the fallback of closing and
+    // re-opening files on contention.
+    const simpleMode =
+      (this.options.simpleMode as SimpleOpfsMode | undefined) ?? (features.openWithMode ? 'rw-unsafe' : 'fallback');
+
+    return this.#connect(dedicated, { vfs: WASQLiteVFS.SimpleOpfsVFS, readonly: false, simpleMode });
+  }
+
+  /**
+   * Opens a database with a VFS that doesn't need feature detection, using a shared worker when the VFS and options
+   * allow that.
+   */
+  async #openInWorker(options: ResolvedDatabaseOptions): Promise<DatabaseClient> {
+    const useShared = !vfsRequiresDedicatedWorkers(options.vfs) && this.options.enableMultiTabs;
+    return this.#connect(this.#openWorker(useShared), options);
+  }
+
+  /**
+   * Don't use a web worker. Instead, open the MultiDatabaseServer a worker would use locally.
+   *
+   * Without workers, the only storage the `'auto'` option can pick is an in-memory database.
+   */
+  async #openInCurrentContext(): Promise<DatabaseClient> {
+    const vfs = this.options.vfs == 'auto' ? WASQLiteVFS.InMemoryVfs : this.options.vfs;
+    const localServer = new MultiDatabaseServer(this.logger);
+    const connection = await localServer.openConnectionLocally(
+      this.logger,
+      this.#resolveRawWaSqliteDatabaseOptions({ vfs, readonly: false })
+    );
+
+    return new DatabaseClient(
+      { connection, source: null, remoteCanCloseUnexpectedly: false },
+      { ...this.options, vfs, requiresPersistentTriggers: true }
+    );
+  }
+
+  async #connect(worker: OpenedWorker, options: ResolvedDatabaseOptions): Promise<DatabaseClient> {
+    const { source, connection: workerConnection } = worker;
+    const closeSignal = new AbortController();
+    const connection = await source.connect({
+      database: this.#resolveRawWaSqliteDatabaseOptions(options),
+      logLevel: this.options.databaseWorkerLogLevel,
+      lockName: await generateTabCloseSignal(closeSignal.signal)
+    });
+
+    return new DatabaseClient(
+      {
+        connection,
+        source,
+        // This tab owns the worker, so we're guaranteed to outlive it.
+        remoteCanCloseUnexpectedly: false,
+        onClose: () => {
+          closeSignal.abort();
+          workerConnection.close();
+        }
+      },
+      {
+        ...this.options,
+        vfs: options.vfs,
+        requiresPersistentTriggers: vfsRequiresDedicatedWorkers(options.vfs)
+      }
+    );
+  }
+
+  async #openSharedWorker(): Promise<OpenedWorker | null> {
+    const shared = this.#openWorker(true);
+    if (!isSharedWorker(shared.connection.worker)) {
+      // A custom worker factory might not respect the `shared` option, and dedicated workers can't share the
+      // database across tabs. Fall back to the modes relying on navigator locks.
+      closeWorker(shared);
+      return null;
+    }
+
+    return shared;
+  }
+
+  #openWorker(shared: boolean): OpenedWorker {
+    const optionsDbWorker = this.options.worker;
+    let connection: WorkerConnection;
+
+    if (typeof optionsDbWorker == 'function') {
+      const worker = optionsDbWorker({ ...this.options, shared });
+      connection = connectToExistingWorker(worker, this.logger, 'database');
+    } else {
+      connection = connectToWorker({
+        service: 'database',
+        databaseIdentifier: this.options.dbFilename,
+        shared: shared,
+        customWorker: optionsDbWorker,
+        loggerForErrors: this.logger
+      });
+    }
+
+    return { connection, source: Comlink.wrap<OpenWorkerConnection>(connection.endpoint) };
+  }
+
+  #resolveRawWaSqliteDatabaseOptions({
+    vfs,
+    readonly,
+    simpleMode
+  }: ResolvedDatabaseOptions): RawWaSqliteDatabaseOptions {
     const {
-      enableMultiTabs,
-      useWebWorker,
-      vfs,
       dbFilename,
       encryptionKey,
       temporaryStorage,
@@ -80,168 +293,41 @@ export class WASQLiteOpenFactory implements SQLOpenFactory {
       storageBucket
     } = this.options;
 
-    if (!enableMultiTabs) {
-      this.logger.log({ level: LogLevels.warn, message: 'Multiple tabs are not enabled in this browser' });
-    }
-
-    let client: DatabaseClient;
-    let additionalReaders: DatabaseClient[] = [];
-    let requiresPersistentTriggers = vfsRequiresDedicatedWorkers(vfs);
-    let simpleMode: SimpleOpfsMode | undefined;
-
-    function resolveRawWaSqliteDatabaseOptions(readonly: boolean): RawWaSqliteDatabaseOptions {
-      return {
-        filename: dbFilename,
-        readonly,
-        vfs,
-        encryptionKey,
-        temporaryStorage,
-        cacheSizeKb,
-        // TODO: Enable prepared statement cache by default?
-        preparedStatementsCache: preparedStatementsCache ?? 0,
-        additionalInitializationFunctions,
-        storageBucket,
-        simpleMode
-      };
-    }
-
-    if (useWebWorker) {
-      const optionsDbWorker = this.options.worker;
-
-      const connect = async (
-        source: Comlink.Remote<OpenWorkerConnection>,
-        workerConnection: WorkerConnection,
-        readonly: boolean
-      ) => {
-        const closeSignal = new AbortController();
-        const connection = await source.connect({
-          database: resolveRawWaSqliteDatabaseOptions(readonly),
-          logLevel: this.options.databaseWorkerLogLevel,
-          lockName: await generateTabCloseSignal(closeSignal.signal)
-        });
-        const clientOptions = {
-          connection,
-          source,
-          // This tab owns the worker, so we're guaranteed to outlive it.
-          remoteCanCloseUnexpectedly: false,
-          onClose: () => {
-            closeSignal.abort();
-            workerConnection.close();
-          }
-        };
-
-        return new DatabaseClient(clientOptions, {
-          ...this.options,
-          requiresPersistentTriggers
-        });
-      };
-
-      const openRawWorker = async (shared: boolean) => {
-        if (typeof optionsDbWorker == 'function') {
-          const worker = optionsDbWorker({ ...this.options, shared });
-          return connectToExistingWorker(worker, this.logger, 'database');
-        } else {
-          return connectToWorker({
-            service: 'database',
-            databaseIdentifier: this.options.dbFilename,
-            shared: shared,
-            customWorker: optionsDbWorker,
-            loggerForErrors: this.logger
-          });
-        }
-      };
-
-      const openDatabaseWorker = async (readonly: boolean): Promise<DatabaseClient> => {
-        const needsDedicated = vfsRequiresDedicatedWorkers(vfs);
-        const useShared = !needsDedicated && enableMultiTabs;
-
-        const workerConnection = await openRawWorker(useShared);
-        const source = Comlink.wrap<OpenWorkerConnection>(workerConnection.endpoint);
-        return connect(source, workerConnection, readonly);
-      };
-
-      const tryOpenSimpleShared = async (): Promise<DatabaseClient | null> => {
-        const shared = await openRawWorker(true);
-        if (!isSharedWorker(shared.worker)) {
-          // A custom worker factory might not respect the `shared` option, and dedicated workers can't share the
-          // database across tabs. Fall back to the modes relying on navigator locks.
-          shared.close();
-          return null;
-        }
-
-        const sharedSource = Comlink.wrap<OpenWorkerConnection>(shared.endpoint);
-        const sharedFeatures = await sharedSource.featureDetection();
-
-        try {
-          if (sharedFeatures.worker) {
-            // Shared workers can open dedicated workers. Perfect, we'll have the shared worker spawn a nested worker
-            // and connect to that.
-            simpleMode = 'shared';
-            const inner = Comlink.wrap<OpenWorkerConnection>(await sharedSource.spawnNested());
-            return await connect(inner, shared, false);
-          }
-        } catch (error) {
-          this.logger.log({ level: LogLevels.error, error, message: 'Could not connect to nested worker' });
-        }
-
-        sharedSource[Comlink.releaseProxy]();
-        shared.close();
-        return null;
-      };
-
-      if (vfs == WASQLiteVFS.SimpleOpfsVFS) {
-        // This VFS has three different modes (shared workers, readwrite-unsafe, re-open fallback), see the doc comment
-        // on it. We start a feature detection to check what the current browser supports.
-        const shared = enableMultiTabs ? await tryOpenSimpleShared() : null;
-        if (shared) {
-          client = shared;
-        } else {
-          // We'll have to use a dedicated worker directly. See if we can at least use readwrite-unsafe, as that is more
-          // efficient than the fallback of closing and re-opening files on contention.
-          const worker = await openRawWorker(false);
-          const source = Comlink.wrap<OpenWorkerConnection>(worker.endpoint);
-
-          simpleMode = this.options.simpleMode as SimpleOpfsMode | undefined;
-          if (!simpleMode) {
-            const features = await source.featureDetection();
-            simpleMode = features.openWithMode ? 'rw-unsafe' : 'fallback';
-          }
-
-          client = await connect(source, worker, false);
-        }
-      } else {
-        client = await openDatabaseWorker(false);
-
-        if (vfs == WASQLiteVFS.OPFSWriteAheadVFS) {
-          // This VFS supports concurrent reads, so we can open additional workers to host read-only connections for
-          // concurrent reads / writes.
-          const additionalReadersCount = this.options.additionalReaders ?? 1;
-
-          const additionalReaderPromises: Promise<DatabaseClient>[] = [];
-          for (let i = 0; i < additionalReadersCount; i++) {
-            additionalReaderPromises.push(openDatabaseWorker(true));
-          }
-          additionalReaders.push(...(await Promise.all(additionalReaderPromises)));
-        }
-      }
-    } else {
-      // Don't use a web worker. Instead, open the MultiDatabaseServer a worker would use locally.
-      const localServer = new MultiDatabaseServer(this.logger);
-      requiresPersistentTriggers = true;
-
-      const connection = await localServer.openConnectionLocally(this.logger, resolveRawWaSqliteDatabaseOptions(false));
-      client = new DatabaseClient(
-        { connection, source: null, remoteCanCloseUnexpectedly: false },
-        {
-          ...this.options,
-          requiresPersistentTriggers
-        }
-      );
-    }
-
     return {
-      writer: client,
-      additionalReaders
+      filename: dbFilename,
+      readonly,
+      vfs,
+      encryptionKey,
+      temporaryStorage,
+      cacheSizeKb,
+      // TODO: Enable prepared statement cache by default?
+      preparedStatementsCache: preparedStatementsCache ?? 0,
+      additionalInitializationFunctions,
+      storageBucket,
+      simpleMode
     };
   }
+}
+
+/**
+ * Options for a database connection after the `'auto'` VFS option and the {@link SimpleOpfsMode} have been
+ * resolved.
+ */
+interface ResolvedDatabaseOptions {
+  vfs: WASQLiteVFS;
+  readonly: boolean;
+  simpleMode?: SimpleOpfsMode;
+}
+
+/**
+ * A worker we're connected to, but haven't necessarily opened a database in yet.
+ */
+interface OpenedWorker {
+  connection: WorkerConnection;
+  source: Comlink.Remote<OpenWorkerConnection>;
+}
+
+function closeWorker(worker: OpenedWorker) {
+  worker.source[Comlink.releaseProxy]();
+  worker.connection.close();
 }

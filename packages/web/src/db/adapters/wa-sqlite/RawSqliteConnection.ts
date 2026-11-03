@@ -1,6 +1,6 @@
 import { Factory as WaSqliteFactory, SQLITE_ROW } from '@journeyapps/wa-sqlite';
 
-import { loadModuleAndVfs, WASQLiteVFS } from './vfs.js';
+import { WASQLiteVFS } from './vfs.js';
 import { TemporaryStorageOption } from '../options.js';
 import { RawQueryResult, SqliteValue } from '@powersync/common';
 import { maxPathNameLength } from '../resolveAndValidateOptions.js';

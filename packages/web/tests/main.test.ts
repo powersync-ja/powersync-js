@@ -95,6 +95,25 @@ describe('Simple OPFS', () => {
   });
 });
 
+describe('Basic - With auto VFS', () => {
+  describe.for([[true], [false]])('useWebWorker: %s', ([useWebWorker]) => {
+    describeBasicTests(() =>
+      generateTestDb({
+        factory: new WASQLiteOpenFactory({
+          logger: defaultTestLogger,
+          open: {
+            dbFilename: `basic-auto-${useWebWorker}.sqlite`,
+            vfs: 'auto',
+            useWebWorker,
+            databaseWorkerLogLevel: defaultLogLevel
+          }
+        }),
+        schema: TEST_SCHEMA
+      })
+    )();
+  });
+});
+
 describe('Basic - with in-memory', () => {
   const defaultOptions = {
     dbFilename: 'in-memory.db',
