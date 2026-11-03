@@ -138,8 +138,9 @@ describe('useQuery', () => {
         // The tables of this query resolve successfully, the failure only happens once the query is
         // executed. This is the path a query builder such as Kysely takes when the generated SQL is
         // valid but execution fails at runtime.
+        const sql = 'SELECT * from lists WHERE name = ?';
         const query: commonSdk.CompilableQuery<any> = {
-          compile: () => ({ sql: 'SELECT * from lists', parameters: [] }),
+          compile: () => ({ sql, parameters: ['a name'] }),
           execute: async () => {
             throw new Error('simulated execute failure');
           }
@@ -153,21 +154,6 @@ describe('useQuery', () => {
           timeout: 2000,
           interval: 100
         });
-      });
-
-      it('should include the generated SQL when a runQueryOnce query fails to execute', async () => {
-        const db = openPowerSync();
-        const spies = spyOnErrorLogs(db);
-
-        // `compile` succeeds here, only `execute` fails. The compiled SQL is the interesting part of such
-        // a failure, since the caller only ever supplied a query builder.
-        const sql = 'SELECT * from lists WHERE name = ?';
-        const query: commonSdk.CompilableQuery<any> = {
-          compile: () => ({ sql, parameters: ['a name'] }),
-          execute: async () => {
-            throw new Error('simulated execute failure');
-          }
-        };
 
         renderHook(() => useQuery(query, [], { runQueryOnce: true }), {
           wrapper: ({ children }) => testWrapper({ children, db })

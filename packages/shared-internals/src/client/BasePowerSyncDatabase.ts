@@ -706,8 +706,6 @@ SELECT * FROM crud_entries;
   }
 
   watchWithCallback(sql: string, parameters?: any[], handler?: WatchHandler, options?: SQLWatchOptions): void {
-    // `onError` is deliberately left undefined when the caller did not supply one: the watched query logs
-    // unhandled errors with this database's logger, and registering a handler here would suppress that.
     const { onResult, onError } = handler ?? {};
     if (!onResult) {
       throw new Error('onResult is required');
