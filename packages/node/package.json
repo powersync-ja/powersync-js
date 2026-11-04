@@ -68,6 +68,8 @@
     "bson": "catalog:",
     "drizzle-orm": "catalog:",
     "js-logger": "catalog:",
+    "rsocket-core": "1.0.0-alpha.3",
+    "rsocket-websocket-server": "1.0.0-alpha.3",
     "typescript": "catalog:",
     "vitest": "catalog:"
   },

@@ -339,9 +339,12 @@ export abstract class AbstractRemote {
       }
     });
     let didClose = false;
-    let connectionEstablished = false;
     let pendingEventsCount = syncQueueRequestSize;
     let res: Requestable | null = null;
+
+    // Function to reject the promise returned by this method. Set to null while initializing the socket, and after the
+    // promise was resolved.
+    let rejectPendingQueue: ((e: Error) => void) | null = null;
 
     const abortRequest = () => {
       if (didClose) {
@@ -357,6 +360,11 @@ export abstract class AbstractRemote {
 
       if (rsocket) {
         rsocket.close();
+      }
+
+      if (rejectPendingQueue) {
+        rejectPendingQueue(new Error('Connection aborted'));
+        rejectPendingQueue = null;
       }
 
       // Send a bogus event to the queue to ensure a pending listener gets woken up. We check for didClose and would
@@ -439,6 +447,8 @@ export abstract class AbstractRemote {
     rsocket.onClose(() => (rsocket = null));
 
     return await new Promise((resolve, reject) => {
+      rejectPendingQueue = reject;
+
       const queueAsIterator: SimpleAsyncIterator<Uint8Array> = {
         next: async () => {
           if (didClose) return doneResult;
@@ -481,14 +491,15 @@ export abstract class AbstractRemote {
             // Close the downstream stream as well - this will close the RSocket connection and WebSocket
             abortRequest();
             // Handles cases where the connection failed e.g. auth error or connection error
-            if (!connectionEstablished) {
+            if (rejectPendingQueue) {
               reject(e);
+              rejectPendingQueue = null;
             }
           },
           onNext: (payload) => {
             // The connection is active
-            if (!connectionEstablished) {
-              connectionEstablished = true;
+            if (rejectPendingQueue) {
+              rejectPendingQueue = null;
               resolve(queueAsIterator);
             }
             const { data } = payload;
@@ -504,6 +515,13 @@ export abstract class AbstractRemote {
             requestMore();
           },
           onComplete: () => {
+            console.log('onComplete', rejectPendingQueue);
+            if (rejectPendingQueue) {
+              // Closed without ever emitting an event? Still emit an empty queue.
+              rejectPendingQueue = null;
+              resolve(queueAsIterator);
+            }
+
             abortRequest(); // this will also emit a done event
           },
           onExtension: () => {}
