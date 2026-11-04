@@ -460,7 +460,7 @@ importers:
   packages/drizzle-driver:
     dependencies:
       '@powersync/common':
-        specifier: workspace:^1.57.2
+        specifier: workspace:^1.58.0
         version: link:../common
       tslib:
         specifier: ^2.8.1
@@ -500,7 +500,7 @@ importers:
   packages/kysely-driver:
     dependencies:
       '@powersync/common':
-        specifier: workspace:^1.57.2
+        specifier: workspace:^1.58.0
         version: link:../common
       kysely:
         specifier: 'catalog:'
@@ -567,6 +567,12 @@ importers:
       js-logger:
         specifier: 'catalog:'
         version: 1.6.1
+      rsocket-core:
+        specifier: 1.0.0-alpha.3
+        version: 1.0.0-alpha.3
+      rsocket-websocket-server:
+        specifier: 1.0.0-alpha.3
+        version: 1.0.0-alpha.3
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
@@ -8403,10 +8409,12 @@ packages:
   '@xmldom/xmldom@0.8.13':
     resolution: {integrity: sha512-KRYzxepc14G/CEpEGc3Yn+JKaAeT63smlDr+vjB8jRfgTBBI9wRj/nkQEO+ucV8p8I9bfKLWp37uHgFrbntPvw==}
     engines: {node: '>=10.0.0'}
+    deprecated: this version has critical issues, please update to the latest version
 
   '@xmldom/xmldom@0.9.10':
     resolution: {integrity: sha512-A9gOqLdi6cV4ibazAjcQufGj0B1y/vDqYrcuP6d/6x8P27gRS8643Dj9o1dEKtB6O7fwxb2FgBmJS2mX7gpvdw==}
     engines: {node: '>=14.6'}
+    deprecated: this version has critical issues, please update to the latest version
 
   '@xtuc/ieee754@1.2.0':
     resolution: {integrity: sha512-DX8nKgqcGwsc0eJSqYt5lwP4DH5FlHnmuWWBRy7X0NcaGR0ZtuyeESgMwTYVEtxmsNGY+qit4QYT/MIYTOTPeA==}
@@ -15780,6 +15788,9 @@ packages:
   rsocket-websocket-client@1.0.0-alpha.3:
     resolution: {integrity: sha512-CwTwTNMGa8BKvrWde/kM3q8IHuzO8RCIfzuj25BsVe9y8eehDQHt4fXk0g1i/wpsxTm+RY6DxE6Vr5snozKVOg==}
 
+  rsocket-websocket-server@1.0.0-alpha.3:
+    resolution: {integrity: sha512-x1Z4lZTEO+Fjt3xDfEDLPrP76Lmw2AW50UZynHEsB9PX1uDhTG5QDzPATiGbNoT7ihJVtb7YQftRIGUG8cC1aQ==}
+
   rtlcss@4.3.0:
     resolution: {integrity: sha512-FI+pHEn7Wc4NqKXMXFM+VAYKEj/mRIcW4h24YVwVtyjI+EqGrLc2Hx/Ny0lrZ21cBWU2goLy36eqMcNj3AQJig==}
     engines: {node: '>=12.0.0'}
@@ -18064,6 +18075,18 @@ packages:
     peerDependencies:
       bufferutil: ^4.0.1
       utf-8-validate: '>=5.0.2'
+    peerDependenciesMeta:
+      bufferutil:
+        optional: true
+      utf-8-validate:
+        optional: true
+
+  ws@8.2.3:
+    resolution: {integrity: sha512-wBuoj1BDpC6ZQ1B7DWQBYVLphPWkm8i9Y0/3YdHjHKHiohOJ1ws+3OccDWtH+PoC9DZD5WOTrJvNbWvjS6JWaA==}
+    engines: {node: '>=10.0.0'}
+    peerDependencies:
+      bufferutil: ^4.0.1
+      utf-8-validate: ^5.0.2
     peerDependenciesMeta:
       bufferutil:
         optional: true
@@ -38184,6 +38207,14 @@ snapshots:
     dependencies:
       rsocket-core: 1.0.0-alpha.3
 
+  rsocket-websocket-server@1.0.0-alpha.3:
+    dependencies:
+      rsocket-core: 1.0.0-alpha.3
+      ws: 8.2.3
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+
   rtlcss@4.3.0:
     dependencies:
       escalade: 3.2.0
@@ -40908,6 +40939,8 @@ snapshots:
   ws@7.5.11: {}
 
   ws@8.19.0: {}
+
+  ws@8.2.3: {}
 
   ws@8.21.0: {}
 

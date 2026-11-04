@@ -1,5 +1,15 @@
 # @powersync/common
 
+## 1.58.0
+
+### Minor Changes
+
+- e56c084: Add `connectTimeoutMs` (default 30s) to time out write checkpoints and HTTP sync stream connections, and cancel write checkpoints on disconnect.
+
+### Patch Changes
+
+- af2c0c0: Fix `connect()` and `disconnect()` hanging on React Native when a WebSocket sync connection is closed or aborted before it has opened.
+
 ## 1.57.3
 
 ### Patch Changes

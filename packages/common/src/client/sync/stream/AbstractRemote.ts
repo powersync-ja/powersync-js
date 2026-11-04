@@ -12,7 +12,7 @@ import {
   SimpleAsyncIterator,
   valueResult
 } from '../../../utils/stream_transform.js';
-import { EventQueue } from '../../../utils/async.js';
+import { EventQueue, runWithTimeout } from '../../../utils/async.js';
 
 /**
  * @internal
@@ -53,6 +53,13 @@ export type SyncStreamOptions = {
   headers?: Record<string, string>;
   abortSignal: AbortSignal;
   fetchOptions?: Request;
+  /**
+   * How long to wait for the response to start. Without it, only {@link SyncStreamOptions.abortSignal} ends a pending
+   * request.
+   *
+   * Ignored for WebSocket connections, which have their own timeout.
+   */
+  connectTimeoutMs?: number;
 };
 
 /**
@@ -269,14 +276,15 @@ export abstract class AbstractRemote {
     return res.json();
   }
 
-  async get(path: string, headers?: Record<string, string>): Promise<any> {
+  async get(path: string, headers?: Record<string, string>, signal?: AbortSignal): Promise<any> {
     const request = await this.buildRequest(path);
     const res = await this.fetch(request.url, {
       method: 'GET',
       headers: {
         ...headers,
         ...request.headers
-      }
+      },
+      signal
     });
 
     if (res.status === 401) {
@@ -339,9 +347,12 @@ export abstract class AbstractRemote {
       }
     });
     let didClose = false;
-    let connectionEstablished = false;
     let pendingEventsCount = syncQueueRequestSize;
     let res: Requestable | null = null;
+
+    // Function to reject the promise returned by this method. Set to null while initializing the socket, and after the
+    // promise was resolved.
+    let rejectPendingQueue: ((e: Error) => void) | null = null;
 
     const abortRequest = () => {
       if (didClose) {
@@ -357,6 +368,11 @@ export abstract class AbstractRemote {
 
       if (rsocket) {
         rsocket.close();
+      }
+
+      if (rejectPendingQueue) {
+        rejectPendingQueue(new Error('Connection aborted'));
+        rejectPendingQueue = null;
       }
 
       // Send a bogus event to the queue to ensure a pending listener gets woken up. We check for didClose and would
@@ -439,6 +455,8 @@ export abstract class AbstractRemote {
     rsocket.onClose(() => (rsocket = null));
 
     return await new Promise((resolve, reject) => {
+      rejectPendingQueue = reject;
+
       const queueAsIterator: SimpleAsyncIterator<Uint8Array> = {
         next: async () => {
           if (didClose) return doneResult;
@@ -481,14 +499,15 @@ export abstract class AbstractRemote {
             // Close the downstream stream as well - this will close the RSocket connection and WebSocket
             abortRequest();
             // Handles cases where the connection failed e.g. auth error or connection error
-            if (!connectionEstablished) {
+            if (rejectPendingQueue) {
               reject(e);
+              rejectPendingQueue = null;
             }
           },
           onNext: (payload) => {
             // The connection is active
-            if (!connectionEstablished) {
-              connectionEstablished = true;
+            if (rejectPendingQueue) {
+              rejectPendingQueue = null;
               resolve(queueAsIterator);
             }
             const { data } = payload;
@@ -504,6 +523,13 @@ export abstract class AbstractRemote {
             requestMore();
           },
           onComplete: () => {
+            console.log('onComplete', rejectPendingQueue);
+            if (rejectPendingQueue) {
+              // Closed without ever emitting an event? Still emit an empty queue.
+              rejectPendingQueue = null;
+              resolve(queueAsIterator);
+            }
+
             abortRequest(); // this will also emit a done event
           },
           onExtension: () => {}
@@ -531,7 +557,7 @@ export abstract class AbstractRemote {
   protected async fetchStreamRaw(
     options: SyncStreamOptions
   ): Promise<{ isBson: boolean; stream: SimpleAsyncIterator<Uint8Array> }> {
-    const { data, path, headers, abortSignal } = options;
+    const { data, path, headers, abortSignal, connectTimeoutMs } = options;
     const request = await this.buildRequest(path);
 
     /**
@@ -571,19 +597,25 @@ export abstract class AbstractRemote {
       const ndJson = 'application/x-ndjson';
       const bson = 'application/vnd.powersync.bson-stream';
 
-      res = await this.fetch(request.url, {
-        method: 'POST',
-        headers: {
-          ...headers,
-          ...request.headers,
-          accept: this.supportsStreamingBinaryResponses ? `${bson};q=0.9,${ndJson};q=0.8` : ndJson
-        },
-        body: JSON.stringify(data),
-        signal: controller.signal,
-        cache: 'no-store',
-        ...(this.options.fetchOptions ?? {}),
-        ...options.fetchOptions
-      });
+      const postStream = (signal: AbortSignal) =>
+        this.fetch(request.url, {
+          method: 'POST',
+          headers: {
+            ...headers,
+            ...request.headers,
+            accept: this.supportsStreamingBinaryResponses ? `${bson};q=0.9,${ndJson};q=0.8` : ndJson
+          },
+          body: JSON.stringify(data),
+          signal,
+          cache: 'no-store',
+          ...(this.options.fetchOptions ?? {}),
+          ...options.fetchOptions
+        });
+
+      // The timeout ends once the response starts, so it never aborts the response body.
+      res = await (connectTimeoutMs == null
+        ? postStream(controller.signal)
+        : runWithTimeout(controller.signal, connectTimeoutMs, 'Sync stream connection', postStream));
 
       if (!res.ok || !res.body) {
         const text = await res.text();

@@ -1,6 +1,6 @@
 {
   "name": "@powersync/node",
-  "version": "0.19.5",
+  "version": "0.19.6",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
@@ -47,7 +47,7 @@
   },
   "homepage": "https://docs.powersync.com/",
   "peerDependencies": {
-    "@powersync/common": "workspace:^1.57.3",
+    "@powersync/common": "workspace:^1.58.0",
     "better-sqlite3": "12.x"
   },
   "peerDependenciesMeta": {
@@ -68,6 +68,8 @@
     "bson": "catalog:",
     "drizzle-orm": "catalog:",
     "js-logger": "catalog:",
+    "rsocket-core": "1.0.0-alpha.3",
+    "rsocket-websocket-server": "1.0.0-alpha.3",
     "typescript": "catalog:",
     "vitest": "catalog:"
   },
