@@ -245,7 +245,7 @@ export abstract class AbstractRemote {
         stream: SimpleAsyncIterator<Uint8Array>;
     }>;
     // (undocumented)
-    get(path: string, headers?: Record<string, string>): Promise<any>;
+    get(path: string, headers?: Record<string, string>, signal?: AbortSignal): Promise<any>;
     getCredentials(): Promise<PowerSyncCredentials | null>;
     // (undocumented)
     getUserAgent(): string;
@@ -287,7 +287,7 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
     // (undocumented)
     dispose(): Promise<void>;
     // (undocumented)
-    getWriteCheckpoint(): Promise<string>;
+    getWriteCheckpoint(abort?: AbortSignal): Promise<string>;
     // (undocumented)
     get isConnected(): boolean;
     // (undocumented)
@@ -540,6 +540,7 @@ export interface BaseConnectionOptions {
     // @deprecated (undocumented)
     clientImplementation?: SyncClientImplementation;
     connectionMethod?: SyncStreamConnectionMethod;
+    connectTimeoutMs?: number;
     fetchStrategy?: FetchStrategy;
     includeDefaultStreams?: boolean;
     params?: Record<string, StreamingSyncRequestParameterType>;
@@ -1828,7 +1829,7 @@ export interface StreamingSyncImplementation extends BaseObserverInterface<Strea
     connect(options?: InternalConnectionOptions): Promise<void>;
     disconnect(): Promise<void>;
     // (undocumented)
-    getWriteCheckpoint: () => Promise<string>;
+    getWriteCheckpoint: (abort?: AbortSignal) => Promise<string>;
     // (undocumented)
     isConnected: boolean;
     // (undocumented)
@@ -1990,6 +1991,7 @@ export type SyncStreamOptions = {
     headers?: Record<string, string>;
     abortSignal: AbortSignal;
     fetchOptions?: Request;
+    connectTimeoutMs?: number;
 };
 
 // @public

@@ -12,7 +12,7 @@ import {
   SimpleAsyncIterator,
   valueResult
 } from '../../../utils/stream_transform.js';
-import { EventQueue } from '../../../utils/async.js';
+import { EventQueue, runWithTimeout } from '../../../utils/async.js';
 
 /**
  * @internal
@@ -53,6 +53,13 @@ export type SyncStreamOptions = {
   headers?: Record<string, string>;
   abortSignal: AbortSignal;
   fetchOptions?: Request;
+  /**
+   * How long to wait for the response to start. Without it, only {@link SyncStreamOptions.abortSignal} ends a pending
+   * request.
+   *
+   * Ignored for WebSocket connections, which have their own timeout.
+   */
+  connectTimeoutMs?: number;
 };
 
 /**
@@ -269,14 +276,15 @@ export abstract class AbstractRemote {
     return res.json();
   }
 
-  async get(path: string, headers?: Record<string, string>): Promise<any> {
+  async get(path: string, headers?: Record<string, string>, signal?: AbortSignal): Promise<any> {
     const request = await this.buildRequest(path);
     const res = await this.fetch(request.url, {
       method: 'GET',
       headers: {
         ...headers,
         ...request.headers
-      }
+      },
+      signal
     });
 
     if (res.status === 401) {
@@ -549,7 +557,7 @@ export abstract class AbstractRemote {
   protected async fetchStreamRaw(
     options: SyncStreamOptions
   ): Promise<{ isBson: boolean; stream: SimpleAsyncIterator<Uint8Array> }> {
-    const { data, path, headers, abortSignal } = options;
+    const { data, path, headers, abortSignal, connectTimeoutMs } = options;
     const request = await this.buildRequest(path);
 
     /**
@@ -589,19 +597,25 @@ export abstract class AbstractRemote {
       const ndJson = 'application/x-ndjson';
       const bson = 'application/vnd.powersync.bson-stream';
 
-      res = await this.fetch(request.url, {
-        method: 'POST',
-        headers: {
-          ...headers,
-          ...request.headers,
-          accept: this.supportsStreamingBinaryResponses ? `${bson};q=0.9,${ndJson};q=0.8` : ndJson
-        },
-        body: JSON.stringify(data),
-        signal: controller.signal,
-        cache: 'no-store',
-        ...(this.options.fetchOptions ?? {}),
-        ...options.fetchOptions
-      });
+      const postStream = (signal: AbortSignal) =>
+        this.fetch(request.url, {
+          method: 'POST',
+          headers: {
+            ...headers,
+            ...request.headers,
+            accept: this.supportsStreamingBinaryResponses ? `${bson};q=0.9,${ndJson};q=0.8` : ndJson
+          },
+          body: JSON.stringify(data),
+          signal,
+          cache: 'no-store',
+          ...(this.options.fetchOptions ?? {}),
+          ...options.fetchOptions
+        });
+
+      // The timeout ends once the response starts, so it never aborts the response body.
+      res = await (connectTimeoutMs == null
+        ? postStream(controller.signal)
+        : runWithTimeout(controller.signal, connectTimeoutMs, 'Sync stream connection', postStream));
 
       if (!res.ok || !res.body) {
         const text = await res.text();
