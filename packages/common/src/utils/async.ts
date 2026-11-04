@@ -183,3 +183,39 @@ export class EventQueue<T> {
     };
   }
 }
+
+/**
+ * Runs `action` with a signal that aborts once `signal` aborts or after `timeoutMs`, whichever comes first.
+ *
+ * @param description Names the operation in the error thrown when it times out.
+ */
+export async function runWithTimeout<T>(
+  signal: AbortSignal | undefined,
+  timeoutMs: number,
+  description: string,
+  action: (signal: AbortSignal) => Promise<T>
+): Promise<T> {
+  const controller = new AbortController();
+  const timeoutError = new Error(`${description} timed out after ${timeoutMs}ms`);
+  const onAbort = () => controller.abort(signal?.reason);
+
+  if (signal?.aborted) {
+    onAbort();
+  } else {
+    signal?.addEventListener('abort', onAbort, { once: true });
+  }
+  const timeout = setTimeout(() => controller.abort(timeoutError), timeoutMs);
+
+  try {
+    return await action(controller.signal);
+  } catch (error) {
+    // Some fetch implementations reject with a generic abort error instead of the signal's reason.
+    if (controller.signal.reason === timeoutError) {
+      throw timeoutError;
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+    signal?.removeEventListener('abort', onAbort);
+  }
+}

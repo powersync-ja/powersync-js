@@ -19,7 +19,7 @@ import {
   SimpleAsyncIterator,
   valueResult
 } from '../../../utils/stream_transform.js';
-import { asyncNotifier } from '../../../utils/async.js';
+import { asyncNotifier, runWithTimeout } from '../../../utils/async.js';
 import { StreamingSyncRequestParameterType } from './JsonValue.js';
 
 /**
@@ -162,6 +162,17 @@ export interface BaseConnectionOptions {
   includeDefaultStreams?: boolean;
 
   /**
+   * How long to wait for the PowerSync Service to respond, in milliseconds. This defaults to 30 seconds.
+   *
+   * For checkpoint requests, this limits the whole request. For the sync stream over HTTP, this limits the time until
+   * the response starts, not how long the stream stays open. WebSocket connections use their own timeouts and ignore
+   * this option.
+   *
+   * A request that takes longer fails and is retried after {@link AdditionalConnectionOptions.retryDelayMs}.
+   */
+  connectTimeoutMs?: number;
+
+  /**
    * The serialized schema - mainly used to forward information about raw tables to the sync client.
    */
   serializedSchema?: any;
@@ -201,7 +212,7 @@ export interface StreamingSyncImplementation
    * @throws if not connected or if abort is not controlled internally
    */
   disconnect(): Promise<void>;
-  getWriteCheckpoint: () => Promise<string>;
+  getWriteCheckpoint: (abort?: AbortSignal) => Promise<string>;
   isConnected: boolean;
   syncStatus: SyncStatus;
   triggerCrudUpload: () => void;
@@ -244,7 +255,8 @@ export const DEFAULT_STREAM_CONNECTION_OPTIONS: RequiredPowerSyncConnectionOptio
   fetchStrategy: FetchStrategy.Buffered,
   params: {},
   serializedSchema: undefined,
-  includeDefaultStreams: true
+  includeDefaultStreams: true,
+  connectTimeoutMs: 30_000
 };
 
 /**
@@ -270,6 +282,7 @@ export abstract class AbstractStreamingSyncImplementation
   private activeStreams: SubscribedStream[];
   private connectionMayHaveChanged = false;
   private crudUploadNotifier = asyncNotifier();
+  private connectTimeoutMs = DEFAULT_STREAM_CONNECTION_OPTIONS.connectTimeoutMs;
 
   private notifyCompletedUploads?: () => void;
   private handleActiveStreamsChange?: () => void;
@@ -355,10 +368,12 @@ export abstract class AbstractStreamingSyncImplementation
 
   abstract obtainLock<T>(lockOptions: LockOptions<T>): Promise<T>;
 
-  async getWriteCheckpoint(): Promise<string> {
+  async getWriteCheckpoint(abort?: AbortSignal): Promise<string> {
     const clientId = await this.options.adapter.getClientId();
     let path = `/write-checkpoint2.json?client_id=${clientId}`;
-    const response = await this.options.remote.get(path);
+    const response = await runWithTimeout(abort, this.connectTimeoutMs, 'Write checkpoint request', (signal) =>
+      this.options.remote.get(path, undefined, signal)
+    );
     const checkpoint = response['data']['write_checkpoint'] as string;
     this.logger.debug(`Created write checkpoint: ${checkpoint}`);
     return checkpoint;
@@ -416,7 +431,7 @@ The next upload iteration will be delayed.`);
               });
             } else {
               // Uploading is completed
-              const neededUpdate = await this.options.adapter.updateLocalTarget(() => this.getWriteCheckpoint());
+              const neededUpdate = await this.options.adapter.updateLocalTarget(() => this.getWriteCheckpoint(signal));
               if (neededUpdate) {
                 this.notifyCompletedUploads?.();
               } else if (checkedCrudItem != null) {
@@ -460,6 +475,7 @@ The next upload iteration will be delayed.`);
 
     const controller = new AbortController();
     this.abortController = controller;
+    this.connectTimeoutMs = options?.connectTimeoutMs ?? DEFAULT_STREAM_CONNECTION_OPTIONS.connectTimeoutMs;
     this.streamingSyncPromise = Promise.all([
       this.crudUploadLoop(controller.signal).catch((ex) => this.logger.error('Error in crud upload loop', ex)),
       this.streamingSync(controller.signal, options)
@@ -838,7 +854,8 @@ The next upload iteration will be delayed.`);
           const syncOptions: SyncStreamOptions = {
             path: '/sync/stream',
             abortSignal: signal,
-            data: startInstruction.EstablishSyncStream.request
+            data: startInstruction.EstablishSyncStream.request,
+            connectTimeoutMs: resolvedOptions.connectTimeoutMs
           };
 
           controlInvocations = injectable(
