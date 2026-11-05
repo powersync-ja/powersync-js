@@ -4,13 +4,9 @@ import type { CommonPowerSyncDatabase } from '@powersync/common';
 import type { SdkIntegration, Unsubscribe } from '@powersync/diagnostics-core';
 import { createIntegration } from '../agent.js';
 import { usePowerSyncAgentTools } from './agent-tools.js';
-import { ensureBroadcastChannel } from './broadcast-channel.js';
 import { EVENT_MESSAGE, PLUGIN_ID, type AppMethods, type DevToolsEventMap } from './protocol.js';
 
 const SDK = '@powersync/react-native';
-
-// Before any database emits: the sync client and the agent exchange core diagnostics events over it.
-ensureBroadcastChannel();
 
 /**
  * Serves `database` to the PowerSync panel in React Native DevTools (through Rozenite), and to coding

@@ -13,12 +13,18 @@ import { Mutex } from '@powersync/shared-internals';
  */
 const LOCKS = new Map<string, Map<LockType, Mutex>>();
 
+export interface ReactNativeStreamingSyncImplementationOptions extends AbstractStreamingSyncImplementationOptions {
+  /** Receives core diagnostics events, emitted when the connection has diagnostics enabled. */
+  onDiagnostics?: (event: DiagnosticsEvent) => void;
+}
+
 export class ReactNativeStreamingSyncImplementation extends AbstractStreamingSyncImplementation {
   locks!: Map<LockType, Mutex>;
-  private diagnosticsChannel?: BroadcastChannel;
+  private onDiagnostics?: (event: DiagnosticsEvent) => void;
 
-  constructor(options: AbstractStreamingSyncImplementationOptions) {
+  constructor(options: ReactNativeStreamingSyncImplementationOptions) {
     super(options);
+    this.onDiagnostics = options.onDiagnostics;
     this.initLocks();
   }
 
@@ -41,20 +47,8 @@ export class ReactNativeStreamingSyncImplementation extends AbstractStreamingSyn
     }
   }
 
-  /**
-   * Broadcasts a core diagnostics event for diagnostics tooling in the app to consume. Hermes has no
-   * `BroadcastChannel`; the tooling provides one in development, so without it this does nothing.
-   */
   protected override emitDiagnostics(event: DiagnosticsEvent): void {
-    if (typeof BroadcastChannel !== 'function') return;
-    this.diagnosticsChannel ??= new BroadcastChannel('powersync-diagnostics-events');
-    this.diagnosticsChannel.postMessage(event);
-  }
-
-  override async dispose(): Promise<void> {
-    await super.dispose();
-    this.diagnosticsChannel?.close();
-    this.diagnosticsChannel = undefined;
+    this.onDiagnostics?.(event);
   }
 
   obtainLock<T>(lockOptions: LockOptions<T>): Promise<T> {
