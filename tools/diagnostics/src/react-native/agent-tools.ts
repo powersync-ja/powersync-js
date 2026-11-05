@@ -7,19 +7,19 @@ import type {
   SyncState,
   UploadQueueState
 } from '@powersync/diagnostics-core';
+import { ACTION_NAMES, ARGUMENT_DESCRIPTIONS, TOOL_DESCRIPTIONS } from '../tools.js';
 import { PLUGIN_ID } from './protocol.js';
 
 // The same tools the MCP endpoint offers on the web, for Rozenite's agent CLI and SDK.
 
 const queryTool: AgentTool = {
   name: 'query',
-  description:
-    'Run SQL against the PowerSync SQLite database of the app. App tables are views; the sync client state is in the ps_* tables (ps_buckets, ps_oplog, ps_crud, ps_stream_subscriptions). Returns columns and rows.',
+  description: TOOL_DESCRIPTIONS.query,
   inputSchema: {
     type: 'object',
     properties: {
-      sql: { type: 'string', description: 'The SQL statement.' },
-      params: { type: 'array', description: 'Values for `?` placeholders.' }
+      sql: { type: 'string', description: ARGUMENT_DESCRIPTIONS.sql },
+      params: { type: 'array', description: ARGUMENT_DESCRIPTIONS.params }
     },
     required: ['sql']
   }
@@ -27,47 +27,45 @@ const queryTool: AgentTool = {
 
 const schemaTool: AgentTool = {
   name: 'schema',
-  description: 'The client schema as the PowerSync SQLite core receives it: tables, columns, indexes.',
+  description: TOOL_DESCRIPTIONS.schema,
   inputSchema: { type: 'object', properties: {} },
   readOnly: true
 };
 
 const infoTool: AgentTool = {
   name: 'info',
-  description: 'Connection info of the PowerSync client: endpoint, user id, client id, connection method, core version.',
+  description: TOOL_DESCRIPTIONS.info,
   inputSchema: { type: 'object', properties: {} },
   readOnly: true
 };
 
 const statusTool: AgentTool = {
   name: 'status',
-  description:
-    'The latest sync status the PowerSync client reported: connected, downloading, progress, last sync, errors. Null until it has reported.',
+  description: TOOL_DESCRIPTIONS.status,
   inputSchema: { type: 'object', properties: {} },
   readOnly: true
 };
 
 const uploadQueueTool: AgentTool = {
   name: 'upload-queue',
-  description: 'Pending local changes waiting to upload, as last reported: count and size. Null until reported.',
+  description: TOOL_DESCRIPTIONS['upload-queue'],
   inputSchema: { type: 'object', properties: {} },
   readOnly: true
 };
 
 const actionTool: AgentTool = {
   name: 'action',
-  description:
-    'Run a control action on the PowerSync client: reconnect, disconnect, clearData (wipes local data and re-syncs), requestCheckpoint, subscribeStream, unsubscribeStream.',
+  description: TOOL_DESCRIPTIONS.action,
   inputSchema: {
     type: 'object',
     properties: {
       action: {
         type: 'string',
-        enum: ['reconnect', 'disconnect', 'clearData', 'requestCheckpoint', 'subscribeStream', 'unsubscribeStream']
+        enum: ACTION_NAMES
       },
       args: {
         type: 'object',
-        description: 'For subscribeStream and unsubscribeStream: { name, params?, ttl?, priority? }.'
+        description: ARGUMENT_DESCRIPTIONS.actionArgs
       }
     },
     required: ['action']
