@@ -25,6 +25,7 @@ import type {
 } from '@powersync/diagnostics-core';
 import { DEVFRAME_ID, HEARTBEAT_MS, UI_ROUTE } from './constants.js';
 import type { SetupSdk, SourceInfo } from './rpc-types.js';
+import { ACTION_NAMES, ARGUMENT_DESCRIPTIONS, TOOL_DESCRIPTIONS } from './tools.js';
 
 export type { SetupSdk, SourceInfo } from './rpc-types.js';
 
@@ -250,20 +251,13 @@ const sourceIdArg = z
   .describe('Id of the attached database, from powersync_sources. Null for the first one.');
 const queryParamsArg = z
   .object({
-    sql: z.string().describe('SQL to run against the local SQLite database.'),
-    params: z.array(z.unknown()).optional().describe('Positional parameters for `?` placeholders.')
+    sql: z.string().describe(ARGUMENT_DESCRIPTIONS.sql),
+    params: z.array(z.unknown()).optional().describe(ARGUMENT_DESCRIPTIONS.params)
   })
   .describe('The query.');
 const actionRequestArg = z
   .object({
-    action: z.enum([
-      'reconnect',
-      'disconnect',
-      'clearData',
-      'requestCheckpoint',
-      'subscribeStream',
-      'unsubscribeStream'
-    ]),
+    action: z.enum(ACTION_NAMES),
     args: z
       .object({
         name: z.string(),
@@ -272,7 +266,7 @@ const actionRequestArg = z
         priority: z.union([z.literal(0), z.literal(1), z.literal(2), z.literal(3)]).optional()
       })
       .optional()
-      .describe('Stream name and options, for the stream actions only.')
+      .describe(ARGUMENT_DESCRIPTIONS.actionArgs)
   })
   .describe('The action to run.');
 const anyResult = z.unknown();
@@ -391,7 +385,7 @@ export const definition = defineDevframe({
         returns: anyResult,
         agent: {
           description:
-            'Run SQL against the attached PowerSync SQLite database. App tables are views; the sync client state is in the ps_* tables (ps_buckets, ps_oplog, ps_crud, ps_stream_subscriptions). Returns columns and rows. Arguments: arg0 = { sql, params? }, arg1 = database id or null for the first one.',
+            `${TOOL_DESCRIPTIONS.query} Arguments: arg0 = { sql, params? }, arg1 = database id or null for the first one.`,
           safety: 'action'
         },
         handler: (params, sourceId) => pickSource(sourceId).integration.runQuery(params as QueryParams)
@@ -406,7 +400,7 @@ export const definition = defineDevframe({
         returns: anyResult,
         agent: {
           description:
-            'The client schema as the PowerSync SQLite core receives it: tables, columns, indexes. Argument: arg0 = database id or null for the first one.'
+            `${TOOL_DESCRIPTIONS.schema} Argument: arg0 = database id or null for the first one.`
         },
         handler: (sourceId) => pickSource(sourceId).integration.getSchema()
       })
@@ -420,7 +414,7 @@ export const definition = defineDevframe({
         returns: anyResult,
         agent: {
           description:
-            'Connection info of the PowerSync client: endpoint, user id, client id, connection method, core version. Argument: arg0 = database id or null for the first one.'
+            `${TOOL_DESCRIPTIONS.info} Argument: arg0 = database id or null for the first one.`
         },
         handler: (sourceId) => pickSource(sourceId).integration.getInfo()
       })
@@ -434,7 +428,7 @@ export const definition = defineDevframe({
         returns: anyResult,
         agent: {
           description:
-            'The latest sync status the PowerSync client reported: connected, downloading, progress, last sync, errors. Null until it has reported. Argument: arg0 = database id or null for the first one.'
+            `${TOOL_DESCRIPTIONS.status} Argument: arg0 = database id or null for the first one.`
         },
         handler: async (sourceId) => latestSnapshot(sourceId, 'status')
       })
@@ -448,7 +442,7 @@ export const definition = defineDevframe({
         returns: anyResult,
         agent: {
           description:
-            'Pending local changes waiting to upload, as last reported: count and size. Null until reported. Argument: arg0 = database id or null for the first one.'
+            `${TOOL_DESCRIPTIONS['upload-queue']} Argument: arg0 = database id or null for the first one.`
         },
         handler: async (sourceId) => latestSnapshot(sourceId, 'uploadQueue')
       })
@@ -462,7 +456,7 @@ export const definition = defineDevframe({
         returns: anyResult,
         agent: {
           description:
-            'Run a control action on the PowerSync client: reconnect, disconnect, clearData (wipes local data and re-syncs), requestCheckpoint, subscribeStream, unsubscribeStream. Arguments: arg0 = { action, args? }, arg1 = database id or null for the first one.',
+            `${TOOL_DESCRIPTIONS.action} Arguments: arg0 = { action, args? }, arg1 = database id or null for the first one.`,
           safety: 'destructive'
         },
         handler: (request, sourceId) => pickSource(sourceId).integration.action(request as ActionRequest)

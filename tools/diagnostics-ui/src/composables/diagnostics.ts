@@ -17,10 +17,10 @@ import { createDiagnosticsStores, type DiagnosticsStores } from './stores';
 import { setHostTheme, type DiagnosticsTheme } from './theme';
 
 /** An SDK the "no database" screens can explain how to set up. */
-export type SetupSdk = 'web' | 'nuxt' | 'node' | 'dart';
+export type SetupSdk = 'web' | 'nuxt' | 'node' | 'react-native' | 'dart';
 
 /** Every {@link SetupSdk}, in the order the setup screen lists them. */
-export const SETUP_SDKS: readonly SetupSdk[] = ['web', 'nuxt', 'node', 'dart'];
+export const SETUP_SDKS: readonly SetupSdk[] = ['web', 'nuxt', 'node', 'react-native', 'dart'];
 
 interface DiagnosticsContext {
   /** Set once the integration is available. Null while a promised integration is still pending. */

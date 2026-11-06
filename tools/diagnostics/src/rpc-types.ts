@@ -22,7 +22,7 @@ export interface SourceInfo {
 }
 
 /** An SDK the UI's "no database" screens can explain, the same names the UI takes as `sdks`. */
-export type SetupSdk = 'web' | 'nuxt' | 'node' | 'dart';
+export type SetupSdk = 'web' | 'nuxt' | 'node' | 'react-native' | 'dart';
 
 declare module 'devframe/types' {
   /** Functions the node side serves; called by the UI, by agents over MCP, and by pages announcing a database. */

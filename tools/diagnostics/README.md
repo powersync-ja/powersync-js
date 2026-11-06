@@ -9,8 +9,9 @@ One implementation runs in several hosts:
 | A Vite app (React, Vue, Svelte, …) with Vite DevTools | `@powersync/diagnostics/vite`                                                                                         | A **PowerSync** dock in Vite DevTools, and MCP tools at `/__devtools/__mcp` |
 | A Nuxt app                                            | [`@powersync/nuxt`](https://github.com/powersync-ja/powersync-js/tree/main/packages/nuxt) with `useDiagnostics: true` | A **PowerSync** tab or dock in Nuxt DevTools                                |
 | A node app (`@powersync/node`)                        | `@powersync/diagnostics/node`                                                                                         | A DevTools window served by your process, and MCP tools at `/__mcp`         |
+| A React Native app (`@powersync/react-native`)        | `@powersync/diagnostics/react-native` with [Rozenite](https://www.rozenite.dev/)                                      | A **PowerSync** panel in React Native DevTools, and Rozenite agent tools    |
 
-The process that runs your app also serves the DevTools window. You start nothing else.
+The process that runs your app (or Metro, for React Native) also serves the DevTools window. You start nothing else.
 
 The hosts above run in development only, and nothing from them goes into a production build.
 
@@ -71,6 +72,50 @@ Your process serves the DevTools window on a random free port. Open the printed 
 
 Options: `port` (default: a random free port), `host`, `auth` (default `true`), `open` (open the browser, default `false`), `sdk` and `id` (labels in the UI), `mcp` (see [MCP](#mcp)).
 
+## React Native
+
+PowerSync DevTools run as a [Rozenite](https://www.rozenite.dev/) plugin, a panel in React Native DevTools. Install:
+
+```bash
+pnpm add -D @powersync/diagnostics @rozenite/metro @rozenite/plugin-bridge @rozenite/agent-bridge
+```
+
+Install them as direct dependencies of the app. Rozenite finds the plugin among those.
+
+Enable Rozenite in Metro:
+
+```js
+// metro.config.js
+const { getDefaultConfig } = require('expo/metro-config'); // or '@react-native/metro-config'
+const { withRozenite } = require('@rozenite/metro');
+
+module.exports = withRozenite(getDefaultConfig(__dirname), {
+  enabled: process.env.WITH_ROZENITE === 'true',
+  projectType: 'expo' // for Expo apps with app.config.ts or app.config.js
+});
+```
+
+Rozenite detects Expo only from an `app.json`. Without `projectType`, an Expo app with `app.config.ts` gets React Native DevTools without the Rozenite tab.
+
+Call the hook once, in a component that stays mounted, such as the root layout:
+
+```tsx
+import { usePowerSyncDevTools } from '@powersync/diagnostics/react-native';
+
+usePowerSyncDevTools(db);
+```
+
+The hook is a no-op in production builds, and bundlers leave its code out. For per-bucket download totals, connect with `db.connect(connector, { diagnostics: __DEV__ })`.
+
+Start the app with `WITH_ROZENITE=true` (for example `WITH_ROZENITE=true npx expo run:ios`), open React Native DevTools (press `j` in the Metro terminal), select **Rozenite**, then **PowerSync**.
+
+Coding agents use the same tools through Rozenite's agent CLI, under the `powersync/diagnostics` domain:
+
+```bash
+npx rozenite agent powersync/diagnostics status
+npx rozenite agent powersync/diagnostics query --sql "SELECT * FROM ps_buckets"
+```
+
 ## Your own host
 
 A page that opens the database itself and shows DevTools in its own iframe, such as the PowerSync Dashboard, builds the integration and hands it to the frame:
@@ -94,7 +139,7 @@ The port can run any SQL and read the sync token, so `attachIframe` only hands i
 
 ## MCP
 
-Every host exposes the same tools. Names are `powersync_<function>`. Arguments are positional, `arg0` first:
+Every host exposes the same tools. Names are `powersync_<function>`. Arguments are positional, `arg0` first. React Native has no MCP endpoint: the same tools are Rozenite agent tools (`query`, `schema`, `info`, `status`, `upload-queue`, `action`) with named arguments, for the one database passed to the hook. See [React Native](#react-native).
 
 | Tool                     | Arguments                                           | Returns                                                                                      |
 | ------------------------ | --------------------------------------------------- | -------------------------------------------------------------------------------------------- |
@@ -129,6 +174,7 @@ curl -X POST http://localhost:<port>/__mcp \
 - `@powersync/web >= 2.5` for browser apps and the `agent` entry, and `@powersync/node >= 1.2` for node apps. Earlier versions drop the connector once the database connects, so DevTools cannot reconnect the client.
 - Vite DevTools for the dock: Vite `>= 8.3` with `devtools: true`, or the `@vitejs/devtools` plugin on Vite 7.
 - Node `>= 20.16` for the node entry.
+- React Native `>= 0.76` and Rozenite `>= 2.5` for the `react-native` entry.
 
 ## Related packages
 

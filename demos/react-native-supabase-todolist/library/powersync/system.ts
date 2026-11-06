@@ -91,7 +91,9 @@ export class System {
   async init() {
     await this.powersync.init();
     await this.powersync.connect(this.supabaseConnector, {
-      checkpointMode: AppConfig.usePowerSyncCheckpointRequests ? 'requests' : 'legacy'
+      checkpointMode: AppConfig.usePowerSyncCheckpointRequests ? 'requests' : 'legacy',
+      // Per-bucket download totals for PowerSync DevTools.
+      diagnostics: __DEV__
     });
 
     if (this.photoAttachmentQueue) {

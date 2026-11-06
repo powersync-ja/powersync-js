@@ -23,6 +23,9 @@ import type {
 import { toStreamStates, toSyncState } from './sync-state.js';
 import type { BasePowerSyncDatabase, InternalConnector } from '@powersync/shared-internals';
 
+/** SQL that only reads, so it can run on a read connection. */
+const READ_STATEMENT = /^\s*(select|explain)\b/i;
+
 /** Delivers the SQLite core's diagnostics events to the agent. How they arrive is runtime-specific. */
 export interface CoreEventSource {
   onEvent(handler: (event: CoreDiagnosticsEvent) => void): Unsubscribe;
@@ -65,9 +68,17 @@ export class JsAgent implements SdkIntegration {
   // --- SdkIntegration ---
 
   async runQuery({ sql, params }: QueryParams): Promise<QueryResult> {
-    const records = await this.db.getAll<Record<string, unknown>>(sql, params);
+    const records = await this.queryRecords(sql, params);
     const columns = records.length > 0 ? Object.keys(records[0]) : [];
     return { columns, rows: records.map((record) => columns.map((column) => record[column])) };
+  }
+
+  // Node and React Native open their read connections read-only, so only plain reads go to one.
+  // Everything else (INSERT, UPDATE, DELETE, WITH, PRAGMA, …) runs on the write connection.
+  private async queryRecords(sql: string, params?: unknown[]): Promise<Record<string, unknown>[]> {
+    if (READ_STATEMENT.test(sql)) return this.db.getAll<Record<string, unknown>>(sql, params);
+    const result = await this.db.execute(sql, params);
+    return (result.rows?._array ?? []) as Record<string, unknown>[];
   }
 
   async getSchema(): Promise<SchemaPayload> {

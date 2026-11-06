@@ -12,6 +12,7 @@ import {
   AbstractStreamingSyncImplementation,
   BucketStorageAdapter,
   CreateSyncImplementationOptions,
+  DiagnosticsEvent,
   openDatabase,
   InternalConnector
 } from '@powersync/shared-internals';
@@ -30,6 +31,8 @@ export interface ReactNativeSpecificOptions {
 }
 
 class ReactNativePowerSyncDatabase extends BasePowerSyncDatabase<ReactNativeDatabaseOptions> {
+  private readonly diagnosticsListeners = new Set<(event: DiagnosticsEvent) => void>();
+
   constructor(options: ReactNativeDatabaseOptions) {
     super(options);
   }
@@ -39,6 +42,17 @@ class ReactNativePowerSyncDatabase extends BasePowerSyncDatabase<ReactNativeData
   }
 
   async _initialize(): Promise<void> {}
+
+  /**
+   * Calls `listener` with each core diagnostics event, emitted while connected with `diagnostics: true`.
+   * Used by PowerSync DevTools. Returns a function that removes the listener.
+   *
+   * @internal
+   */
+  registerDiagnosticsListener(listener: (event: DiagnosticsEvent) => void): () => void {
+    this.diagnosticsListeners.add(listener);
+    return () => this.diagnosticsListeners.delete(listener);
+  }
 
   protected override openDBAdapter(): DBAdapter {
     return openDatabase(this.options, (database) => {
@@ -64,7 +78,10 @@ class ReactNativePowerSyncDatabase extends BasePowerSyncDatabase<ReactNativeData
 
     return new ReactNativeStreamingSyncImplementation({
       ...this.commonSyncOptions(connector, options),
-      remote
+      remote,
+      onDiagnostics: (event) => {
+        for (const listener of this.diagnosticsListeners) listener(event);
+      }
     });
   }
 
