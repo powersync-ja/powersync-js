@@ -1,5 +1,11 @@
 # tauri-plugin-powersync
 
+## 0.2.0
+
+### Minor Changes
+
+- c5c0619: Add `init_with_options` with `PowerSyncOptions`, allowing apps to configure the `reqwest::Client` used for sync requests (e.g. for custom TLS settings, timeouts or proxies).
+
 ## 0.1.1
 
 ### Patch Changes

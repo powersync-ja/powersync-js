@@ -1,5 +1,15 @@
 # @powersync/shared-internals
 
+## 1.6.0
+
+### Minor Changes
+
+- a73f3a6: Add internal JavaScript-based sync client.
+
+### Patch Changes
+
+- 7098ed1: Log errors from watched queries with the PowerSync database's logger. Failures such as invalid SQL or a missing table previously only surfaced on the query state, so `useQuery` appeared to silently do nothing. Queries whose listeners register an `onError` handler are left alone, since those report errors themselves.
+
 ## 1.5.0
 
 ### Minor Changes

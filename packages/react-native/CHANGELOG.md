@@ -1,5 +1,15 @@
 # @powersync/react-native
 
+## 2.4.1
+
+### Patch Changes
+
+- 36c071a: Configure the op-sqlite read connections concurrently during initialization instead of one after another, reducing time to database readiness on cold start.
+- Updated dependencies [a73f3a6]
+- Updated dependencies [7098ed1]
+  - @powersync/shared-internals@1.6.0
+  - @powersync/react@2.2.1
+
 ## 2.4.0
 
 ### Minor Changes
