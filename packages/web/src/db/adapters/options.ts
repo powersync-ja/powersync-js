@@ -62,7 +62,22 @@ export interface WebSpecificOpenOptions {
    */
   encryptionKey: string | undefined;
 
-  vfs: WASQLiteVFS;
+  /**
+   * The virtual file system used to store the database.
+   *
+   * For a discussion of different options and which one to use, see {@link https://docs.powersync.com/client-sdks/reference/javascript-web#sqlite-virtual-file-systems}.
+   *
+   * In addition to a concrete {@link WASQLiteVFS}, this can be set to `'auto'` to pick a suitable storage
+   * implementation depending on browser features. Currently, this uses {@link WASQLiteVFS.SimpleOpfsVFS} when OPFS is
+   * available and falls back to an in-memory database otherwise. In the future, this might add additional checks to use
+   * {@link WASQLiteVFS.OPFSWriteAheadVFS} where available or {@link WASQLiteVFS.IDBBatchAtomicVFS} instead of an
+   * in-memory fallback.
+   *
+   * You can rely on `'auto'` being _stable_: Once it persists data, that data won't be lost later. Once this option
+   * supports multiple persistence options, it will check for existing data instead of picking the best one (to avoid
+   * e.g. a browser update unlocking a new VFS causing lost data).
+   */
+  vfs: WASQLiteVFS | 'auto';
 
   /**
    * Names of additional no-argument WebAssembly exports to call after the PowerSync core initializer and before

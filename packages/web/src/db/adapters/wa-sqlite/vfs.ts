@@ -56,19 +56,25 @@ export enum WASQLiteVFS {
   SimpleOpfsVFS = 'SimpleOpfsVFS'
 }
 
-export function vfsRequiresDedicatedWorkers(vfs: WASQLiteVFS) {
+export function vfsRequiresDedicatedWorkers(vfs: WASQLiteVFS | 'auto') {
+  if (vfs === 'auto') {
+    // Falls back to an in-memory database when workers aren't available.
+    return false;
+  }
+
   return vfs != WASQLiteVFS.IDBBatchAtomicVFS && vfs != WASQLiteVFS.InMemoryVfs;
 }
 
 /**
  * Whether the VFS can keep its files in a Storage Bucket, see {@link WebSpecificOpenOptions.storageBucket}.
  */
-export function vfsSupportsStorageBuckets(vfs: WASQLiteVFS) {
+export function vfsSupportsStorageBuckets(vfs: WASQLiteVFS | 'auto') {
   switch (vfs) {
     case WASQLiteVFS.OPFSCoopSyncVFS:
     case WASQLiteVFS.OPFSWriteAheadVFS:
     case WASQLiteVFS.AccessHandlePoolVFS:
     case WASQLiteVFS.SimpleOpfsVFS:
+    case 'auto': // auto mode can resolve to opfs, in which case it supports storage buckets
       return true;
     default:
       return false;
