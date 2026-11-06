@@ -339,7 +339,7 @@ importers:
         specifier: workspace:*
         version: link:../shared-internals
       '@powersync/web':
-        specifier: workspace:^2.6.0
+        specifier: workspace:^2.7.0
         version: link:../web
     devDependencies:
       '@capacitor-community/sqlite':
@@ -526,7 +526,7 @@ importers:
         specifier: workspace:*
         version: link:../../tools/diagnostics
       '@powersync/shared-internals':
-        specifier: workspace:^1.5.0
+        specifier: workspace:^1.6.0
         version: link:../shared-internals
       '@vueuse/core':
         specifier: ^14.2.1
@@ -754,7 +754,7 @@ importers:
         specifier: workspace:*
         version: link:../react
       '@powersync/shared-internals':
-        specifier: workspace:^1.5.0
+        specifier: workspace:^1.6.0
         version: link:../shared-internals
       '@tanstack/react-query':
         specifier: ^5.70.0
@@ -809,7 +809,7 @@ importers:
   packages/vue:
     dependencies:
       '@powersync/shared-internals':
-        specifier: workspace:^1.5.0
+        specifier: workspace:^1.6.0
         version: link:../shared-internals
     devDependencies:
       '@powersync/common':
@@ -12113,6 +12113,7 @@ packages:
   image-size@2.0.2:
     resolution: {integrity: sha512-IRqXKlaXwgSMAMtpNzZa1ZAe8m+Sa1770Dhk8VkSsP9LS+iHD62Zd8FQKs8fbPiagBE7BzoFX23cxFnwshpV6w==}
     engines: {node: '>=16.x'}
+    deprecated: Use latest 2.x please
     hasBin: true
 
   immediate@3.0.6:

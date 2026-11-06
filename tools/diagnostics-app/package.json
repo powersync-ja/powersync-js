@@ -1,6 +1,6 @@
 {
   "name": "@powersync/diagnostics-app",
-  "version": "0.13.25",
+  "version": "0.13.26",
   "private": true,
   "type": "module",
   "scripts": {

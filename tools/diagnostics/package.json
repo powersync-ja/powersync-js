@@ -58,7 +58,7 @@
   },
   "peerDependencies": {
     "@powersync/common": "workspace:^2.5.0",
-    "@powersync/web": "workspace:^2.6.0",
+    "@powersync/web": "workspace:^2.7.0",
     "@vitejs/devtools-kit": ">=0.7.5",
     "vite": ">=7.0.0"
   },
