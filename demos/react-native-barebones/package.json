@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@op-engineering/op-sqlite": "^18.1.1",
-    "@powersync/react-native": "^2.4.0",
+    "@powersync/react-native": "^2.4.1",
     "@powersync/common": "^2.5.0",
     "@react-native/new-app-screen": "0.87.0",
     "react": "19.2.3",
@@ -21,7 +21,7 @@
     "@babel/core": "^7.25.2",
     "@babel/preset-env": "^7.25.3",
     "@babel/runtime": "^7.25.0",
-    "@powersync/diagnostics": "^0.0.3",
+    "@powersync/diagnostics": "^0.1.0",
     "@react-native-community/cli": "20.2.0",
     "@react-native-community/cli-platform-android": "20.2.0",
     "@react-native-community/cli-platform-ios": "20.2.0",

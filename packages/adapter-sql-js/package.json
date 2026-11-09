@@ -1,6 +1,6 @@
 {
   "name": "@powersync/adapter-sql-js",
-  "version": "0.0.27",
+  "version": "0.0.28",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
