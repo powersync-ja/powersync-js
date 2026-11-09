@@ -8,7 +8,6 @@ import {
   LogLevels,
   DifferentialWatchedQuery,
   PowerSyncDatabase,
-  WASQLiteVFS,
   SyncOptions
 } from '@powersync/web';
 import React, { Suspense } from 'react';
@@ -24,7 +23,7 @@ export const db = new PowerSyncDatabase({
   schema: AppSchema,
   database: {
     dbFilename: 'example.db',
-    vfs: WASQLiteVFS.SimpleOpfsVFS,
+    vfs: 'auto',
     databaseWorkerLogLevel: LogLevels.debug,
     enableMultiTabs: typeof SharedWorker !== 'undefined'
   },

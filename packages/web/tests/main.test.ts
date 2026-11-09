@@ -1,4 +1,4 @@
-import { LogRecord, PowerSyncDatabase, WASQLiteOpenFactory, WASQLiteVFS } from '@powersync/web';
+import { LogRecord, PowerSyncDatabase, WASQLiteOpenFactory, WASQLiteVFS, WebDBAdapter } from '@powersync/web';
 import { InMemoryWriteAheadLogPool } from '../lib/db/adapters/memory-pool/client.js';
 import { v4 as uuid } from 'uuid';
 import { describe, expect, it, vi } from 'vitest';
@@ -74,8 +74,11 @@ describe('Simple OPFS', () => {
       await db.execute('CREATE TEMP TABLE foo (bar TEXT)');
       const data = 'new row'.repeat(100);
 
-      for (let i = 0; i < 10_000; i++) {
-        await db.execute('INSERT INTO foo VALUES (?)', [data]);
+      const params = new Array(1000);
+      params.fill([data]);
+
+      for (let i = 0; i < 10; i++) {
+        await db.executeBatch('INSERT INTO foo VALUES (?)', params);
       }
     });
 
@@ -91,6 +94,42 @@ describe('Simple OPFS', () => {
 
       db = openDatabase(name);
       expect(await db.getAll('SELECT name FROM customers')).toEqual([{ name: 'test' }]);
+    });
+  });
+});
+
+describe('Basic - With auto VFS', () => {
+  describe.for([[true], [false]])('useWebWorker: %s', ([useWebWorker]) => {
+    function openDatabase(name: string) {
+      return generateTestDb({
+        factory: new WASQLiteOpenFactory({
+          logger: defaultTestLogger,
+          open: {
+            dbFilename: name,
+            vfs: 'auto',
+            useWebWorker,
+            databaseWorkerLogLevel: defaultLogLevel
+          }
+        }),
+        schema: TEST_SCHEMA
+      });
+    }
+
+    describeBasicTests(() => openDatabase(`basic-auto-${useWebWorker}.sqlite`))();
+
+    it('selects OPFS if available', async () => {
+      const name = crypto.randomUUID();
+      let db = openDatabase(name);
+      await db.execute('INSERT INTO customers (id, name, email) VALUES (uuid(), ?, ?)', ['test', 'test@example.org']);
+
+      // Without workers, we can only use an in-memory database. Tests run in Chromium, which supports OPFS in workers.
+      const expectedVfs = useWebWorker ? WASQLiteVFS.SimpleOpfsVFS : WASQLiteVFS.InMemoryVfs;
+      expect((db.database as WebDBAdapter).getConfiguration().vfs).toBe(expectedVfs);
+      await db.close();
+
+      db = openDatabase(name);
+      const expectedRows = useWebWorker ? [{ name: 'test' }] : [];
+      expect(await db.getAll('SELECT name FROM customers')).toEqual(expectedRows);
     });
   });
 });

@@ -17,12 +17,11 @@ import type { ConnectToMultiDatabaseServerOptions } from '../../../worker/db/Mul
 import { ConnectionClosedError } from '@powersync/shared-internals';
 
 export interface OpenWorkerConnection {
-  ping(): Promise<void>;
-
   connect(config: ConnectToMultiDatabaseServerOptions): Promise<ClientConnectionView>;
   connectToExisting(options: { identifier: string; lockName: string }): Promise<ClientConnectionView>;
 
-  featureDetection(): Promise<FeatureDetectionResult>;
+  sharedFeatureDetection(): Promise<SharedFeatureDetectionResult>;
+  dedicatedFeatureDetection(): Promise<DedicatedFeatureDetectionResult>;
   spawnNested(): Promise<MessagePort>;
 }
 
@@ -45,11 +44,16 @@ export interface ClientOptions {
   onClose?: () => void;
 }
 
-export interface FeatureDetectionResult {
-  /** Whether this context can spawn dedicated workers. */
-  readonly worker: boolean;
+export interface SharedFeatureDetectionResult {
+  /** When this shared worker can spawn nested dedicated workers, features available in that worker. */
+  readonly worker: DedicatedFeatureDetectionResult | null;
+}
+
+export interface DedicatedFeatureDetectionResult {
   /** Whether the browser supports the `mode:` parameter when opening file handles. */
   readonly openWithMode: boolean;
+  /** Whether this browser supports `navigator.storage.getDirectory()` */
+  readonly opfs: boolean;
 }
 
 /**
