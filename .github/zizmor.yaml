@@ -12,6 +12,6 @@ rules:
   adhoc-packages:
     ignore:
       # This install verdaccio. Should potentially be something we depend on properly?
-      - test-isolated.yaml:54
+      - test-isolated.yaml:58
       # This install detox-cli. Should potentially be something we depend on properly?
-      - test-simulators.yaml:210
+      - test-simulators.yaml:220
