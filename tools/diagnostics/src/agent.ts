@@ -41,11 +41,44 @@ class BroadcastCoreEvents implements CoreEventSource {
   }
 }
 
+/** A database that hands core diagnostics events to listeners directly (React Native). */
+interface DiagnosticsListenerDatabase {
+  registerDiagnosticsListener(listener: (event: CoreDiagnosticsEvent) => void): () => void;
+}
+
+function hasDiagnosticsListener(database: object): database is DiagnosticsListenerDatabase {
+  return typeof (database as Partial<DiagnosticsListenerDatabase>).registerDiagnosticsListener === 'function';
+}
+
+/** Consumes the core diagnostics events a database hands to its listeners. */
+class ListenerCoreEvents implements CoreEventSource {
+  private removers = new Set<Unsubscribe>();
+
+  constructor(private readonly database: DiagnosticsListenerDatabase) {}
+
+  onEvent(handler: (event: CoreDiagnosticsEvent) => void): Unsubscribe {
+    const remove = this.database.registerDiagnosticsListener(handler);
+    this.removers.add(remove);
+    return () => {
+      this.removers.delete(remove);
+      remove();
+    };
+  }
+
+  dispose(): void {
+    for (const remove of this.removers) remove();
+    this.removers.clear();
+  }
+}
+
+function coreEventSource(database: object): CoreEventSource | undefined {
+  if (hasDiagnosticsListener(database)) return new ListenerCoreEvents(database);
+  if (typeof BroadcastChannel === 'function') return new BroadcastCoreEvents();
+  return undefined;
+}
+
 /** Builds the JavaScript integration over a live database. The agent reads the connection from the database itself. */
 export function createIntegration(database: CommonPowerSyncDatabase, sdk: string): SdkIntegration {
   const db = database as BasePowerSyncDatabase;
-  return new JsAgent(db, {
-    sdk,
-    coreEvents: typeof BroadcastChannel === 'function' ? new BroadcastCoreEvents() : undefined
-  });
+  return new JsAgent(db, { sdk, coreEvents: coreEventSource(db) });
 }

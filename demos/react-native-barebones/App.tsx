@@ -19,6 +19,7 @@ import {
   createConsoleLogger,
   LogLevels
 } from '@powersync/react-native';
+import { usePowerSyncDevTools } from '@powersync/diagnostics/react-native';
 
 const Colors = {
   primary: '#0a7ea4',
@@ -74,6 +75,10 @@ function App(): React.JSX.Element {
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [database, setDatabase] = useState<PowerSyncDatabase | null>(null);
+
+  // PowerSync DevTools in React Native DevTools (Rozenite). A no-op in production builds.
+  usePowerSyncDevTools(database);
 
   const backgroundStyle = {
     backgroundColor: isDarkMode ? Colors.darker : Colors.lighter
@@ -99,6 +104,7 @@ function App(): React.JSX.Element {
       try {
         const db = await setupDatabase();
         //await db.connect(new DummyConnector());
+        if (mounted) setDatabase(db);
         if (mounted) await loadCustomers();
       } catch (error) {
         console.error('Database initialization error:', error);
