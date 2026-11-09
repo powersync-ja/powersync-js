@@ -20,6 +20,57 @@ const versionHashes = {
 };
 
 const assets = Object.keys(versionHashes);
+const repository = 'powersync-ja/powersync-sqlite-core';
+
+// Optional, used to avoid rate limits (e.g. on shared CI runners). The token doesn't need any special permissions.
+const githubToken = process.env.GITHUB_TOKEN;
+let releaseAssets = null;
+
+async function authenticatedFindReleaseAssets() {
+  const response = await fetch(`https://api.github.com/repos/${repository}/releases/tags/v${version}`, {
+    headers: {
+      Accept: 'application/vnd.github+json',
+      Authorization: `Bearer ${githubToken}`
+    }
+  });
+  if (response.status != 200) {
+    throw `Could not fetch release v${version} of ${repository}: ${response.status}`;
+  }
+
+  const release = await response.json();
+  return Object.fromEntries(release.assets.map((asset) => [asset.name, asset.url]));
+}
+
+const fetchAsset = async (asset) => {
+  if (!githubToken) {
+    const url = `https://github.com/${repository}/releases/download/v${version}/${asset}`;
+    console.log(`Downloading ${url}`);
+    const response = await fetch(url);
+    if (response.status != 200) {
+      throw `Could not download ${url}`;
+    }
+    return response;
+  }
+
+  // With a token, use the API (which respects authentication for rate limits) instead of the browser download URL.
+  releaseAssets ??= authenticatedFindReleaseAssets();
+  const url = (await releaseAssets)[asset];
+  if (url == null) {
+    throw `Release v${version} of ${repository} has no asset ${asset}`;
+  }
+
+  console.log(`Downloading ${asset} from ${url}`);
+  const response = await fetch(url, {
+    headers: {
+      Accept: 'application/octet-stream',
+      Authorization: `Bearer ${githubToken}`
+    }
+  });
+  if (response.status != 200) {
+    throw `Could not download ${url}: ${response.status}`;
+  }
+  return response;
+};
 
 const hashStream = async (input) => {
   for await (const chunk of input.pipe(createHash('sha256')).setEncoding('hex')) {
@@ -51,13 +102,7 @@ const downloadAsset = async (asset) => {
     return;
   }
 
-  const url = `https://github.com/powersync-ja/powersync-sqlite-core/releases/download/v${version}/${asset}`;
-  console.log(`Downloading ${url}`);
-  const response = await fetch(url);
-  if (response.status != 200) {
-    throw `Could not download ${url}`;
-  }
-
+  const response = await fetchAsset(asset);
   const file = await fs.open(destinationPath, 'w');
   await finished(Readable.fromWeb(response.body).pipe(file.createWriteStream()));
   await file.close();
@@ -127,8 +172,7 @@ const download = async () => {
 
 const updateReferenceHashes = async () => {
   for (const asset of Object.keys(versionHashes)) {
-    const url = `https://github.com/powersync-ja/powersync-sqlite-core/releases/download/v${version}/${asset}`;
-    const response = await fetch(url);
+    const response = await fetchAsset(asset);
     const hash = await hashStream(Readable.fromWeb(response.body));
 
     console.log(`  '${asset}': '${hash}',`);

@@ -54,6 +54,10 @@ jobs:
 
       - name: Build
         run: pnpm build:packages
+        env:
+          # Only used to avoid rate limits when downloading the core extension in @powersync/node.
+          # The workflow only grants contents: read, so this token cannot write anything.
+          GITHUB_TOKEN: ${{ github.token }}
 
       - name: Test
         run: pnpm test
