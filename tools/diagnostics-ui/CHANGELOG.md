@@ -1,5 +1,11 @@
 # @powersync/diagnostics-ui
 
+## 0.0.4
+
+### Patch Changes
+
+- cd6f786: Show React Native setup steps in the DevTools panel.
+
 ## 0.0.3
 
 ### Patch Changes

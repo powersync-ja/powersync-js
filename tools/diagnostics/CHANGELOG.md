@@ -1,5 +1,20 @@
 # @powersync/diagnostics
 
+## 0.1.0
+
+### Minor Changes
+
+- cd6f786: Add `@powersync/diagnostics/react-native`: PowerSync DevTools in React Native DevTools as a Rozenite plugin, with agent tools.
+
+### Patch Changes
+
+- cd6f786: Run DevTools SQL that changes data on the write connection, so writes work on Node and React Native.
+- Updated dependencies [d937e80]
+- Updated dependencies [cd6f786]
+- Updated dependencies [aba3d4a]
+  - @powersync/web@2.7.0
+  - @powersync/diagnostics-ui@0.0.4
+
 ## 0.0.3
 
 ### Patch Changes

@@ -1,5 +1,16 @@
 # @powersync/capacitor
 
+## 0.10.1
+
+### Patch Changes
+
+- Updated dependencies [d937e80]
+- Updated dependencies [a73f3a6]
+- Updated dependencies [7098ed1]
+- Updated dependencies [aba3d4a]
+  - @powersync/web@2.7.0
+  - @powersync/shared-internals@1.6.0
+
 ## 0.10.0
 
 ### Minor Changes

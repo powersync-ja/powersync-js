@@ -1,5 +1,18 @@
 # @powersync/web
 
+## 2.7.0
+
+### Minor Changes
+
+- d937e80: Add `WASQLiteVFS.SimpleOpfsVFS`, fast and simple OPFS-based file system supported on all major browsers.
+- aba3d4a: Allow `vfs: 'auto'`, which automatically picks a suitable VFS depending on browser features.
+
+### Patch Changes
+
+- Updated dependencies [a73f3a6]
+- Updated dependencies [7098ed1]
+  - @powersync/shared-internals@1.6.0
+
 ## 2.6.0
 
 ### Minor Changes
