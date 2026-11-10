@@ -29,7 +29,7 @@ export function useStatusOrNull(): SyncStatus | null {
   return useStatusOf(usePowerSyncOrNull());
 }
 
-function useStatusOf(powerSync: CommonPowerSyncDatabase | null): SyncStatus | null {
+export function useStatusOf(powerSync: CommonPowerSyncDatabase | null): SyncStatus | null {
   const subscribe = useCallback(
     (listener: () => void) => {
       const dispose = powerSync?.registerListener({ statusChanged: listener });
