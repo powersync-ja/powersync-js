@@ -14,8 +14,10 @@ import {
   RemoteStorageAdapter,
   WatchedAttachmentItem,
   AttachmentErrorHandler,
-  AttachmentTransportAdapter
+  AttachmentTransportAdapter,
+  SyncStatus
 } from '../lib/index.js';
+import { BasePowerSyncDatabase } from '@powersync/shared-internals';
 
 const MOCK_JPEG_U8A = [
   0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01, 0x01, 0x01, 0x00, 0x00, 0x01, 0x00, 0x01,
@@ -756,6 +758,61 @@ describe('attachment queue', () => {
       await queuedSync;
     }
   );
+});
+
+describe('attachment queue - connection status', () => {
+  // Sends a status change to the database's listeners, as the sync client does while connecting and syncing.
+  const emitStatus = (connected: boolean) =>
+    (db as BasePowerSyncDatabase).iterateListeners((listener) => listener.statusChanged?.({ connected } as SyncStatus));
+
+  const startQueue = async (syncIntervalMs: number) => {
+    const statusQueue = new AttachmentQueue({
+      db,
+      watchAttachments,
+      remoteStorage: mockRemoteStorage,
+      localStorage: mockLocalStorage,
+      syncIntervalMs,
+      archivedCacheLimit: 0
+    });
+    onTestFinished(() => statusQueue.stopSync());
+    await statusQueue.startSync();
+    return statusQueue;
+  };
+
+  it('starts one pass when the connection comes up, not one per status change while connected', async () => {
+    // A long interval keeps the periodic timer out of this test.
+    const statusQueue = await startQueue(60_000);
+    const syncStorage = vi.spyOn(statusQueue, 'syncStorage');
+
+    emitStatus(true);
+    emitStatus(true);
+    emitStatus(true);
+    emitStatus(true);
+    expect(syncStorage).toHaveBeenCalledTimes(1);
+  });
+
+  it('starts another pass when the connection comes up again', async () => {
+    const statusQueue = await startQueue(60_000);
+    const syncStorage = vi.spyOn(statusQueue, 'syncStorage');
+
+    emitStatus(true);
+    emitStatus(true);
+    emitStatus(false);
+    emitStatus(false);
+    expect(syncStorage).toHaveBeenCalledTimes(1);
+
+    emitStatus(true);
+    emitStatus(true);
+    expect(syncStorage).toHaveBeenCalledTimes(2);
+  });
+
+  it('still starts passes from the periodic timer while connected', async () => {
+    const statusQueue = await startQueue(100);
+    emitStatus(true);
+    const syncStorage = vi.spyOn(statusQueue, 'syncStorage');
+
+    await vi.waitFor(() => expect(syncStorage.mock.calls.length).toBeGreaterThanOrEqual(2), { timeout: 2000 });
+  });
 });
 
 describe('attachment queue - transport', () => {
