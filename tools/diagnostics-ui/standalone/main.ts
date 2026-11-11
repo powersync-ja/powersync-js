@@ -1,18 +1,19 @@
 import { createApp, h, ref } from 'vue';
-import { awaitIntegration, type SdkIntegration } from '@powersync/diagnostics-core';
+import { awaitIntegration as receiveFromIframe, type SdkIntegration } from '@powersync/diagnostics-core';
 import { DiagnosticsPanel, provideDiagnostics } from '../src';
-import { connectDevframeIntegration, DevframeIntegration } from './devframeIntegration';
+import { tryAppServer } from './appIntegration';
+import { DevframeIntegration, tryDevframe } from './devframeIntegration';
 import { useHostTheme } from './hostTheme';
 import { sdksFromUrl } from './hostSdks';
 import '../src/style.css';
 
-// Embed contract: this page runs in an iframe and drives everything through one `SdkIntegration`.
-// Two hosts provide it. A devframe host (Vite DevTools dock, standalone window) answers over RPC.
-// Any other host (Flutter DevTools, a plain page) serves it on a `MessagePort` and hands it over.
-// Both arrive asynchronously, so the promise is provided during setup and the panel renders once
-// it resolves.
+// Embed contract: this page drives everything through one `SdkIntegration`. Three hosts provide it.
+// A native app (Swift, Kotlin) serves this page itself and answers over HTTP (`appIntegration.ts`).
+// A devframe host (Vite DevTools dock, standalone window) answers over RPC. Any other host (Flutter
+// DevTools, a plain page) serves it on a `MessagePort` and hands it over. All arrive asynchronously,
+// so the promise is provided during setup and the panel renders once it resolves.
 async function resolveIntegration(): Promise<SdkIntegration> {
-  return (await connectDevframeIntegration()) ?? (await awaitIntegration());
+  return (await tryAppServer()) ?? (await tryDevframe()) ?? (await receiveFromIframe());
 }
 
 // A host that owns the theme says so through the page URL or a theme message (see `hostTheme.ts`).
