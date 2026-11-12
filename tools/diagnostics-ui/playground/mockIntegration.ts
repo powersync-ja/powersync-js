@@ -218,7 +218,12 @@ export class MockIntegration implements SdkIntegration {
       connected: this.connected,
       sqliteCoreVersion: '0.4.2 (mock core)',
       sdk: '@powersync/web (mock)',
-      databasePath: '/foo/bar.db'
+      databasePath: '/foo/bar.db',
+      streamDefinitions: [
+        { name: 'user_tasks', parameters: [] },
+        { name: 'project_docs', parameters: ['project_id'] },
+        { name: 'list_todos', parameters: ['list_id'] }
+      ]
     };
   }
 

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import type { ProtocolInfo } from '@powersync/diagnostics-core';
-import { useDiagnostics } from '../../composables/diagnostics';
+import { useDiagnostics, useHiddenActions } from '../../composables/diagnostics';
 import { useSyncActions } from '../../composables/actions';
 import { formatBytes, formatCompact, formatPrecise, progressFraction } from '../../lib/format';
 import { jwtSubject } from '../../lib/jwt';
@@ -23,6 +23,10 @@ import IconLayers from '~icons/carbon/layers';
 
 const { client, connected, status, uploadQueue } = useDiagnostics();
 const { syncing, actionError, syncNow, reconnect, disconnect } = useSyncActions();
+const hiddenActions = useHiddenActions();
+const showsConnectionActions = computed(
+  () => !hiddenActions.value.includes('reconnect') || !hiddenActions.value.includes('disconnect')
+);
 
 const info = ref<ProtocolInfo | null>(null);
 const pendingOps = ref<CrudOp[]>([]);
@@ -109,7 +113,13 @@ const priorityRows = computed(() =>
             </span>
             {{ Math.round(downloadFraction * 100) }}%
           </span>
-          <Button size="sm" variant="outline" :disabled="syncing || !status.connected" @click="syncNow">
+          <Button
+            v-if="!hiddenActions.includes('requestCheckpoint')"
+            size="sm"
+            variant="outline"
+            :disabled="syncing || !status.connected"
+            @click="syncNow"
+          >
             <IconRenew :class="['size-3.5', syncing && 'animate-spin']" /> {{ syncing ? 'Syncing…' : 'Sync now' }}
           </Button>
         </span>
@@ -201,9 +211,13 @@ const priorityRows = computed(() =>
     </section>
 
     <!-- Actions -->
-    <div class="flex flex-wrap gap-2">
-      <Button size="sm" variant="outline" @click="reconnect()"><IconRenew class="size-3.5" /> Reconnect</Button>
-      <Button size="sm" variant="outline" @click="disconnect()"><IconDisconnect class="size-3.5" /> Disconnect</Button>
+    <div v-if="showsConnectionActions" class="flex flex-wrap gap-2">
+      <Button v-if="!hiddenActions.includes('reconnect')" size="sm" variant="outline" @click="reconnect()"
+        ><IconRenew class="size-3.5" /> Reconnect</Button
+      >
+      <Button v-if="!hiddenActions.includes('disconnect')" size="sm" variant="outline" @click="disconnect()"
+        ><IconDisconnect class="size-3.5" /> Disconnect</Button
+      >
     </div>
   </div>
 </template>
