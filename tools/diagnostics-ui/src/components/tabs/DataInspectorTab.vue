@@ -110,8 +110,8 @@ onMounted(() => {
       </div>
     </aside>
 
-    <!-- Editor + results -->
-    <div class="flex min-h-0 flex-1 flex-col">
+    <!-- Editor + results. min-w-0 keeps a wide result scrolling inside its table instead of widening the panel. -->
+    <div class="flex min-h-0 min-w-0 flex-1 flex-col">
       <div class="space-y-2 border-b p-2">
         <SqlEditor v-model="sql" placeholder="Enter SQL — ⌘/Ctrl+Enter to run" @run="run" />
         <div class="flex items-center gap-3 text-xs">

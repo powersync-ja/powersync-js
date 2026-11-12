@@ -136,15 +136,7 @@ async function unsubscribe(s: StreamState) {
           <Badge :variant="s.active ? 'success' : 'muted'" class="shrink-0">{{
             s.active ? 'active' : 'inactive'
           }}</Badge>
-          <Button
-            v-if="s.explicitlySubscribed"
-            size="sm"
-            variant="ghost"
-            class="shrink-0"
-            :disabled="!s.active"
-            :title="s.active ? undefined : 'Inactive — nothing to unsubscribe'"
-            @click="unsubscribe(s)"
-          >
+          <Button v-if="s.explicitlySubscribed" size="sm" variant="ghost" class="shrink-0" @click="unsubscribe(s)">
             <IconUnlink class="size-3.5" /> Unsubscribe
           </Button>
         </div>
