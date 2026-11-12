@@ -230,7 +230,7 @@ async function unsubscribe(s: StreamState) {
             Priority
             <select
               v-model="priorityInput"
-              class="h-7 rounded-md border bg-background px-1.5 text-xs text-foreground outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              class="h-7 rounded-md border bg-transparent px-1 text-xs outline-none focus-visible:ring-1 focus-visible:ring-ring"
             >
               <option value="">default</option>
               <option value="0">0</option>
