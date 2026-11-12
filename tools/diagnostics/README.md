@@ -137,6 +137,8 @@ The port can run any SQL and read the sync token, so `attachIframe` only hands i
 
 **Clear & re-sync** in DevTools deletes the local rows, which is slow on a large database. A host with a throwaway client, like the PowerSync Dashboard, can pass `attachIframe` a wrapper whose `action` handles `clearData` itself and whose other methods call the integration's. Write each method out, because `{ ...integration }` copies none of them and TypeScript does not catch it. Do not delete a real app's database files, because the client would get a new client id. `disconnectAndClear()` keeps the existing one.
 
+A host that has the deployed Sync Config, like the PowerSync Dashboard, can add its Sync Streams to what its wrapper's `getInfo` returns, as `streamDefinitions: [{ name, parameters }]`. The Streams tab then suggests them in its subscribe form and shows the parameters each one reads.
+
 ## MCP
 
 Every host exposes the same tools. Names are `powersync_<function>`. Arguments are positional, `arg0` first. React Native has no MCP endpoint: the same tools are Rozenite agent tools (`query`, `schema`, `info`, `status`, `upload-queue`, `action`) with named arguments, for the one database passed to the hook. See [React Native](#react-native).

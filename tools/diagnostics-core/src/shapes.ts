@@ -78,6 +78,13 @@ export interface StreamState {
   lastSyncedAt: number | null;
 }
 
+/** A Sync Stream in the deployed Sync Config, as a host reports it. */
+export interface StreamDefinition {
+  name: string;
+  /** The subscription parameters the host found in the stream's queries, such as `['list_id']`. Can be incomplete. */
+  parameters: string[];
+}
+
 // --- buckets / upload queue / logs ---
 
 /** Per-bucket download stats, read from the core `ps_buckets` table. */
@@ -131,6 +138,11 @@ export interface ProtocolInfo {
   sdk: string | null;
   /** Full path to the database on the device the app is running on. */
   databasePath: string | null;
+  /**
+   * Sync Streams to suggest in the Streams tab's subscribe form, from a host that has the deployed
+   * Sync Config. SDK agents leave it out.
+   */
+  streamDefinitions?: StreamDefinition[];
 }
 
 // --- schema ---

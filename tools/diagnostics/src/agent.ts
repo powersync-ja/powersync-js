@@ -14,7 +14,9 @@ export type {
   ActionRequest,
   AttachIframeOptions,
   DiagnosticsEvent,
+  ProtocolInfo,
   SdkIntegration,
+  StreamDefinition,
   SyncState
 } from '@powersync/diagnostics-core';
 
