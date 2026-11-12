@@ -159,7 +159,11 @@ export class JsAgent implements SdkIntegration {
         const { name, params, ttl, priority } = request.args as StreamActionArgs;
         // TTL defaults to 0 so a forgotten debug subscription is evicted as soon as it is released.
         const handle = await this.db.syncStream(name, params).subscribe({ ttl: ttl ?? 0, priority });
-        this.streamHandles.set(streamKey(name, params), handle);
+        const key = streamKey(name, params);
+        // Subscribing again returns another handle. Releasing the old one after the new one holds the stream
+        // keeps a single handle, so Unsubscribe releases the subscription.
+        this.streamHandles.get(key)?.unsubscribe();
+        this.streamHandles.set(key, handle);
         break;
       }
       case 'unsubscribeStream': {
