@@ -267,7 +267,8 @@ export class MockIntegration implements SdkIntegration {
             name,
             params: params ?? null,
             priority: priority ?? 3,
-            expiresAt: ttl ? Date.now() + ttl * 1000 : null
+            // Like the SDK, which reports a subscribed stream's expiry as now plus its TTL.
+            expiresAt: Date.now() + (ttl ?? 0) * 1000
           })
         );
         this.pushStatus();
