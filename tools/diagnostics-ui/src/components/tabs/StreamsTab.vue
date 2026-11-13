@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue';
-import type { StreamState } from '@powersync/diagnostics-core';
-import { useDiagnostics } from '../../composables/diagnostics';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import type { StreamDefinition, StreamState } from '@powersync/diagnostics-core';
+import { useDiagnostics, useHiddenActions } from '../../composables/diagnostics';
 import { useFuzzySearch } from '../../composables/fuzzy';
 import { formatCompact, formatParams, formatPrecise, progressFraction } from '../../lib/format';
 import Badge from '../ui/Badge.vue';
@@ -14,7 +14,8 @@ import IconInformation from '~icons/carbon/information';
 import IconAdd from '~icons/carbon/add';
 import IconUnlink from '~icons/carbon/unlink';
 
-const { client, streams } = useDiagnostics();
+const { client, connected, streams } = useDiagnostics();
+const hiddenActions = useHiddenActions();
 const { query, results } = useFuzzySearch(streams, ['name']);
 
 // Ticking clock so TTL countdowns update live.
@@ -38,8 +39,28 @@ function streamKey(s: StreamState): string {
   return (s.name ?? '') + JSON.stringify(s.params);
 }
 
-// Known stream names for the subscribe field's autocomplete.
-const streamNames = computed(() => [...new Set(streams.value.map((s) => s.name).filter((n): n is string => !!n))]);
+// Sync Streams suggested by a host that has the Sync Config. Other hosts send none, and the form takes any name.
+const definitions = ref<StreamDefinition[]>([]);
+watch(
+  connected,
+  async (isConnected) => {
+    if (!isConnected) return;
+    try {
+      definitions.value = (await client.getInfo()).streamDefinitions ?? [];
+    } catch {
+      // Only suggestions, so the form works without them.
+    }
+  },
+  { immediate: true }
+);
+
+// Known stream names for the subscribe field's autocomplete: the suggested ones, then any other subscribed.
+const streamNames = computed(() => [
+  ...new Set([
+    ...definitions.value.map((d) => d.name),
+    ...streams.value.map((s) => s.name).filter((n): n is string => !!n)
+  ])
+]);
 
 // --- subscribe form ---
 const name = ref('');
@@ -47,6 +68,12 @@ const paramsText = ref('');
 const ttlInput = ref(0);
 const priorityInput = ref('');
 const error = ref('');
+
+// The parameters the chosen stream reads, shown as the params field's placeholder.
+const paramsPlaceholder = computed(() => {
+  const keys = definitions.value.find((d) => d.name === name.value)?.parameters;
+  return keys?.length ? `{${keys.map((key) => `${JSON.stringify(key)}: …`).join(', ')}}` : 'params JSON e.g. {"id":1}';
+});
 
 async function subscribe() {
   error.value = '';
@@ -134,7 +161,13 @@ async function unsubscribe(s: StreamState) {
           <Badge :variant="s.active ? 'success' : 'muted'" class="shrink-0">{{
             s.active ? 'active' : 'inactive'
           }}</Badge>
-          <Button v-if="s.explicitlySubscribed" size="sm" variant="ghost" class="shrink-0" @click="unsubscribe(s)">
+          <Button
+            v-if="s.explicitlySubscribed && !hiddenActions.includes('unsubscribeStream')"
+            size="sm"
+            variant="ghost"
+            class="shrink-0"
+            @click="unsubscribe(s)"
+          >
             <IconUnlink class="size-3.5" /> Unsubscribe
           </Button>
         </div>
@@ -165,7 +198,7 @@ async function unsubscribe(s: StreamState) {
     </div>
 
     <!-- Subscribe (debug) -->
-    <section class="rounded-lg border bg-card">
+    <section v-if="!hiddenActions.includes('subscribeStream')" class="rounded-lg border bg-card">
       <header class="flex items-center gap-1.5 border-b px-3 py-1.5 text-xs font-medium text-muted-foreground">
         <IconAdd class="size-3.5" /> Subscribe (debug)
       </header>
@@ -179,7 +212,7 @@ async function unsubscribe(s: StreamState) {
           />
           <input
             v-model="paramsText"
-            placeholder='params JSON e.g. {"id":1}'
+            :placeholder="paramsPlaceholder"
             class="h-7 min-w-40 flex-1 rounded-md border bg-transparent px-2 font-mono text-xs outline-none focus-visible:ring-1 focus-visible:ring-ring"
           />
           <label class="inline-flex items-center gap-1 text-xs text-muted-foreground">
@@ -206,8 +239,9 @@ async function unsubscribe(s: StreamState) {
           </label>
           <Button size="sm" :disabled="!name" @click="subscribe"><IconAdd class="size-3.5" /> Subscribe</Button>
         </div>
-        <div v-if="error" class="text-xs text-destructive">{{ error }}</div>
       </div>
     </section>
+    <!-- Outside the form, so an Unsubscribe error still shows when the host hides Subscribe. -->
+    <div v-if="error" class="text-xs text-destructive">{{ error }}</div>
   </div>
 </template>

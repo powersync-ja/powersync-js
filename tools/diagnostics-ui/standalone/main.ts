@@ -4,6 +4,7 @@ import { DiagnosticsPanel, provideDiagnostics } from '../src';
 import { connectDevframeIntegration, DevframeIntegration } from './devframeIntegration';
 import { useHostTheme } from './hostTheme';
 import { sdksFromUrl } from './hostSdks';
+import { hiddenActionsFromUrl } from './hostActions';
 import '../src/style.css';
 
 // Embed contract: this page runs in an iframe and drives everything through one `SdkIntegration`.
@@ -21,12 +22,14 @@ async function resolveIntegration(): Promise<SdkIntegration> {
 // The SDKs the host can reach narrow the "no database" screens. An embedder names them on the URL
 // (`?sdks=dart`); a devframe host knows which entry point mounted it and answers over RPC.
 
+// An embedder can hide some action buttons on the URL (`?hiddenActions=reconnect,disconnect`).
+
 createApp({
   setup() {
     const pending = resolveIntegration();
     const ready = ref(false);
     const sdks = ref(sdksFromUrl());
-    provideDiagnostics(pending, { theme: useHostTheme(), sdks });
+    provideDiagnostics(pending, { theme: useHostTheme(), sdks, hiddenActions: hiddenActionsFromUrl() });
     void pending.then(async (integration) => {
       ready.value = true;
       if (!sdks.value && integration instanceof DevframeIntegration) sdks.value = await integration.getSetupSdks();
