@@ -10,7 +10,7 @@ import SearchInput from '../ui/SearchInput.vue';
 import AutocompleteInput from '../ui/AutocompleteInput.vue';
 import IconStream from '~icons/carbon/flow-stream';
 import IconTime from '~icons/carbon/time';
-import IconWarning from '~icons/carbon/warning-alt';
+import IconInformation from '~icons/carbon/information';
 import IconAdd from '~icons/carbon/add';
 import IconUnlink from '~icons/carbon/unlink';
 
@@ -126,10 +126,8 @@ async function unsubscribe(s: StreamState) {
 
 <template>
   <div class="space-y-3">
-    <div
-      class="flex items-start gap-2 rounded-lg border border-warning/40 bg-warning/10 px-2.5 py-2 text-xs text-warning"
-    >
-      <IconWarning class="mt-0.5 size-3.5 shrink-0" />
+    <div class="flex items-start gap-2 rounded-lg border bg-muted/40 px-2.5 py-2 text-xs text-muted-foreground">
+      <IconInformation class="mt-0.5 size-3.5 shrink-0" />
       <span
         >Subscribing here syncs the stream into this client's local database. Other devices aren't affected. With the
         default TTL of 0, the stream's data is removed soon after you unsubscribe.</span
