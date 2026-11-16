@@ -1,10 +1,10 @@
+use std::sync::{Arc, Mutex};
+
 use async_trait::async_trait;
 use futures_lite::StreamExt;
 use log::warn;
 use powersync::error::PowerSyncError;
-use powersync::{
-    BackendConnector, PowerSyncCredentials, PowerSyncDatabase, SyncOptions, UpdateType,
-};
+use powersync::{Authenticator, MutationUploader, PowerSyncDatabase, SyncOptions, UpdateType};
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
@@ -19,9 +19,13 @@ async fn connect<R: Runtime>(
     let ps = app.powersync();
     let database = ps.database_from_javascript_handle(handle)?;
 
-    let options = SyncOptions::new(MyRustConnector {
-        db: database.clone(),
-    });
+    let options = SyncOptions::new(
+        "http://localhost:8080",
+        SelfHostedAuthenticator::default(),
+        SelfHostedUploader {
+            db: database.clone(),
+        },
+    );
     database.connect(options).await;
 
     Ok(())
@@ -38,13 +42,22 @@ pub fn run() {
 
 /// A backend connector implementation based on the
 /// [self-hosted demo](https://github.com/powersync-ja/self-host-demo/tree/main/demos/nodejs).
-struct MyRustConnector {
-    db: PowerSyncDatabase,
+
+#[derive(Default)]
+struct SelfHostedAuthenticator {
+    cached_token: Mutex<Option<Arc<String>>>,
 }
 
 #[async_trait]
-impl BackendConnector for MyRustConnector {
-    async fn fetch_credentials(&self) -> Result<PowerSyncCredentials, PowerSyncError> {
+impl Authenticator for SelfHostedAuthenticator {
+    async fn resolve_credentials(&self) -> Result<Arc<String>, PowerSyncError> {
+        {
+            let cached = self.cached_token.lock().unwrap();
+            if let Some(cached) = &*cached {
+                return Ok(cached.clone());
+            }
+        }
+
         let response = reqwest::get("http://localhost:6060/api/auth/token").await?;
 
         #[derive(Deserialize)]
@@ -53,13 +66,26 @@ impl BackendConnector for MyRustConnector {
         }
 
         let token: TokenResponse = response.json().await?;
-        Ok(PowerSyncCredentials {
-            endpoint: "http://localhost:8080".to_string(),
-            token: token.token,
-        })
+        let token = Arc::new(token.token);
+
+        let mut cache_slot = self.cached_token.lock().unwrap();
+        *cache_slot = Some(token.clone());
+        Ok(token)
     }
 
-    async fn upload_data(&self) -> Result<(), PowerSyncError> {
+    fn invalidate_credentials(&self) {
+        let mut cached = self.cached_token.lock().unwrap();
+        *cached = None;
+    }
+}
+
+struct SelfHostedUploader {
+    db: PowerSyncDatabase,
+}
+
+#[async_trait]
+impl MutationUploader for SelfHostedUploader {
+    async fn upload(&self) -> Result<(), PowerSyncError> {
         let mut transactions = self.db.crud_transactions();
         let mut last_tx = None;
 
