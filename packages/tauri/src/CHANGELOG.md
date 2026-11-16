@@ -1,5 +1,11 @@
 # tauri-plugin-powersync
 
+## 0.3.0
+
+### Minor Changes
+
+- a54a3f8: Update to version 0.2 of the `powersync` crate.
+
 ## 0.2.0
 
 ### Minor Changes
