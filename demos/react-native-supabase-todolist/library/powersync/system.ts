@@ -90,7 +90,10 @@ export class System {
 
   async init() {
     await this.powersync.init();
-    await this.powersync.connect(this.supabaseConnector, {
+    await this.powersync.connect({
+      powerSyncEndpoint: AppConfig.powersyncUrl,
+      authenticator: this.supabaseConnector,
+      upload: this.supabaseConnector.upload,
       checkpointMode: AppConfig.usePowerSyncCheckpointRequests ? 'requests' : 'legacy',
       // Per-bucket download totals for PowerSync DevTools.
       diagnostics: __DEV__
