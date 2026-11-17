@@ -145,7 +145,12 @@ export default function ViewsLayout({ children }: { children: React.ReactNode })
               <MenuItem
                 onClick={(event) => {
                   setConnectionAnchor(null);
-                  powerSync.connect(supabase, syncOptions);
+                  powerSync.connect({
+                    ...syncOptions,
+                    powerSyncEndpoint: import.meta.env.VITE_POWERSYNC_URL,
+                    authenticator: supabase,
+                    upload: supabase.upload
+                  });
                 }}>
                 Connect
               </MenuItem>

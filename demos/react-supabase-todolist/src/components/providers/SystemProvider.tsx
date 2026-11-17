@@ -8,7 +8,7 @@ import {
   LogLevels,
   DifferentialWatchedQuery,
   PowerSyncDatabase,
-  SyncOptions
+  type SyncOptions
 } from '@powersync/web';
 import React, { Suspense } from 'react';
 import { NavigationPanelContextProvider } from '../navigation/NavigationPanelContext';
@@ -90,10 +90,17 @@ export const SystemProvider = ({ children }: { children: React.ReactNode }) => {
     (window as any)._powersync = powerSync;
 
     powerSync.init();
+
+    const connectionOptions = {
+      ...syncOptions,
+      powerSyncEndpoint: import.meta.env.VITE_POWERSYNC_URL,
+      authenticator: connector,
+      upload: connector.upload
+    };
     const l = connector.registerListener({
       initialized: () => {},
       sessionStarted: () => {
-        powerSync.connect(connector, syncOptions);
+        powerSync.connect(connectionOptions);
       }
     });
 

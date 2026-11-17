@@ -1,18 +1,10 @@
-import {
-  AbstractPowerSyncDatabase,
-  BaseObserver,
-  CrudEntry,
-  PowerSyncBackendConnector,
-  UpdateType,
-  type PowerSyncCredentials
-} from '@powersync/web';
+import { BaseObserver, UpdateType, type Authenticator, type CrudEntry, type MutationUploader } from '@powersync/web';
 
-import { Session, SupabaseClient, createClient } from '@supabase/supabase-js';
+import { createClient, type Session, type SupabaseClient } from '@supabase/supabase-js';
 
 export type SupabaseConfig = {
   supabaseUrl: string;
   supabaseAnonKey: string;
-  powersyncUrl: string;
 };
 
 /// Postgres Response codes that we cannot recover from by retrying.
@@ -32,19 +24,19 @@ export type SupabaseConnectorListener = {
   sessionStarted: (session: Session) => void;
 };
 
-export class SupabaseConnector extends BaseObserver<SupabaseConnectorListener> implements PowerSyncBackendConnector {
+export class SupabaseConnector extends BaseObserver<SupabaseConnectorListener> implements Authenticator {
   readonly client: SupabaseClient;
   readonly config: SupabaseConfig;
 
   ready: boolean;
-
   currentSession: Session | null;
+
+  private cachedToken: string | null = null;
 
   constructor() {
     super();
     this.config = {
       supabaseUrl: import.meta.env.VITE_SUPABASE_URL,
-      powersyncUrl: import.meta.env.VITE_POWERSYNC_URL,
       supabaseAnonKey: import.meta.env.VITE_SUPABASE_ANON_KEY
     };
 
@@ -85,7 +77,21 @@ export class SupabaseConnector extends BaseObserver<SupabaseConnectorListener> i
     this.updateSession(session);
   }
 
-  async fetchCredentials() {
+  updateSession(session: Session | null) {
+    this.currentSession = session;
+    this.invalidateCredentials();
+    if (!session) {
+      return;
+    }
+    this.iterateListeners((cb) => cb.sessionStarted?.(session));
+  }
+
+  /** Returns a cached token until the SDK invalidates it or the session changes. */
+  async resolveCredentials(): Promise<string> {
+    if (this.cachedToken) {
+      return this.cachedToken;
+    }
+
     const {
       data: { session },
       error
@@ -95,15 +101,16 @@ export class SupabaseConnector extends BaseObserver<SupabaseConnectorListener> i
       throw new Error(`Could not fetch Supabase credentials: ${error}`);
     }
 
-    console.debug('session expires at', session.expires_at);
-
-    return {
-      endpoint: this.config.powersyncUrl,
-      token: session.access_token ?? ''
-    } satisfies PowerSyncCredentials;
+    this.cachedToken = session.access_token;
+    return this.cachedToken;
   }
 
-  async uploadData(database: AbstractPowerSyncDatabase): Promise<void> {
+  // Called by the SDK before token expiry or when the PowerSync service rejects it.
+  invalidateCredentials(): void {
+    this.cachedToken = null;
+  }
+
+  readonly upload: MutationUploader = async ({ database }) => {
     const transaction = await database.getNextCrudTransaction();
 
     if (!transaction) {
@@ -158,13 +165,5 @@ export class SupabaseConnector extends BaseObserver<SupabaseConnectorListener> i
         throw ex;
       }
     }
-  }
-
-  updateSession(session: Session | null) {
-    this.currentSession = session;
-    if (!session) {
-      return;
-    }
-    this.iterateListeners((cb) => cb.sessionStarted?.(session));
-  }
+  };
 }
