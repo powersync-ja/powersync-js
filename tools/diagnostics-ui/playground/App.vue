@@ -5,6 +5,7 @@ import { DiagnosticsPanel, provideDiagnostics, useTheme } from '../src';
 import { MockIntegration } from './mockIntegration';
 import { useHostTheme } from '../standalone/hostTheme';
 import { sdksFromUrl } from '../standalone/hostSdks';
+import { hiddenActionsFromUrl } from '../standalone/hostActions';
 
 // The panel owns the theme (toggle lives in its header); the harness follows the same shared state.
 const { isDark } = useTheme();
@@ -17,6 +18,8 @@ const noClient = params.has('noclient');
 const theme = useHostTheme();
 // Preview the setup screens for the SDKs one host can reach: open http://localhost:5199/?noclient&sdks=nuxt,web
 const sdks = sdksFromUrl();
+// Preview hidden action buttons: open http://localhost:5199/?hiddenActions=reconnect,disconnect
+const hiddenActions = hiddenActionsFromUrl();
 
 // The harness plays the SDK side: a fake integration that answers the protocol with canned data.
 const mock = new MockIntegration();
@@ -27,7 +30,7 @@ const channel = new MessageChannel();
 const stopServing = noClient ? () => {} : exposeIntegration(mock, channel.port1);
 const integration = connectIntegration(channel.port2);
 
-provideDiagnostics(integration, { theme, sdks });
+provideDiagnostics(integration, { theme, sdks, hiddenActions });
 
 onMounted(() => {
   if (!noClient) {

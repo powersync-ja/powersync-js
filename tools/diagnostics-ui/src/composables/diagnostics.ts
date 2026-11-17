@@ -12,7 +12,7 @@ import {
 } from 'vue';
 import { atom } from 'nanostores';
 import { useStore } from '@nanostores/vue';
-import type { SdkIntegration } from '@powersync/diagnostics-core';
+import type { ActionName, SdkIntegration } from '@powersync/diagnostics-core';
 import { createDiagnosticsStores, type DiagnosticsStores } from './stores';
 import { setHostTheme, type DiagnosticsTheme } from './theme';
 
@@ -28,6 +28,8 @@ interface DiagnosticsContext {
   stores: ShallowRef<DiagnosticsStores | null>;
   /** The SDKs the host can reach, or `null` for all of them. */
   sdks: ComputedRef<SetupSdk[] | null>;
+  /** The actions whose buttons the host hid. */
+  hiddenActions: ComputedRef<ActionName[]>;
 }
 
 const KEY: InjectionKey<DiagnosticsContext> = Symbol('powersync-diagnostics');
@@ -46,6 +48,12 @@ export interface ProvideDiagnosticsOptions {
    * `null` or an empty list, and the screens cover every SDK.
    */
   sdks?: MaybeRefOrGetter<SetupSdk[] | null | undefined>;
+  /**
+   * Actions whose buttons the panel hides, for example `['reconnect', 'disconnect']` for a host with its
+   * own Disconnect button. Leave it out, or pass `null` or an empty list, to show every button. Hiding a
+   * button does not block its action.
+   */
+  hiddenActions?: MaybeRefOrGetter<ActionName[] | null | undefined>;
 }
 
 /**
@@ -80,7 +88,9 @@ export function provideDiagnostics(
     return list?.length ? list : null;
   });
 
-  provide(KEY, { integration, stores, sdks });
+  const hiddenActions = computed(() => toValue(options.hiddenActions) ?? []);
+
+  provide(KEY, { integration, stores, sdks, hiddenActions });
   onScopeDispose(() => {
     disposed = true;
     stores.value?.dispose();
@@ -108,6 +118,11 @@ export function useIntegration(): SdkIntegration {
 /** The SDKs the host can reach, or `null` when it did not say. */
 export function useSetupSdks(): ComputedRef<SetupSdk[] | null> {
   return useContext().sdks;
+}
+
+/** The actions whose buttons the host hid. Empty when it hid none. */
+export function useHiddenActions(): ComputedRef<ActionName[]> {
+  return useContext().hiddenActions;
 }
 
 // Placeholder atoms let the UI render its "connecting" state before the integration arrives.

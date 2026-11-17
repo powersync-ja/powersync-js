@@ -8,7 +8,7 @@ import CodeTabs, { type CodeTab } from './ui/CodeTabs.vue';
 import Tooltip from './ui/Tooltip.vue';
 import HoldButton from './ui/HoldButton.vue';
 import { useTheme } from '../composables/theme';
-import { SETUP_SDKS, useDiagnostics, useSetupSdks, type SetupSdk } from '../composables/diagnostics';
+import { SETUP_SDKS, useDiagnostics, useHiddenActions, useSetupSdks, type SetupSdk } from '../composables/diagnostics';
 import { useSyncActions } from '../composables/actions';
 import SyncStatusTab from './tabs/SyncStatusTab.vue';
 import DataInspectorTab from './tabs/DataInspectorTab.vue';
@@ -32,6 +32,10 @@ import IconTabLogs from '~icons/carbon/terminal';
 const { isDark, hostControlled, toggle } = useTheme();
 const { connected, sources, activeSource, selectSource } = useDiagnostics();
 const { syncing, clearing, syncNow, clearAndResync } = useSyncActions();
+const hiddenActions = useHiddenActions();
+const showsHeaderActions = computed(
+  () => !hiddenActions.value.includes('requestCheckpoint') || !hiddenActions.value.includes('clearData')
+);
 
 // Brief grace period so a normal handshake doesn't flash the "no client" screen.
 const waiting = ref(true);
@@ -207,8 +211,11 @@ watch(activeTab, (value) => {
             </option>
           </select>
           <!-- Global sync actions, available from every tab -->
-          <template v-if="connected">
-            <Tooltip text="Sync now (request a checkpoint and wait until caught up)">
+          <template v-if="connected && showsHeaderActions">
+            <Tooltip
+              v-if="!hiddenActions.includes('requestCheckpoint')"
+              text="Sync now (request a checkpoint and wait until caught up)"
+            >
               <button
                 type="button"
                 class="rounded p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-50"
@@ -220,7 +227,10 @@ watch(activeTab, (value) => {
               </button>
             </Tooltip>
             <!-- Destructive: wipes local data. Fires only after a one-second hold. -->
-            <Tooltip text="Clear & re-sync (wipes local data and download again) Hold to wipe">
+            <Tooltip
+              v-if="!hiddenActions.includes('clearData')"
+              text="Clear & re-sync (wipes local data and download again) Hold to wipe"
+            >
               <HoldButton
                 aria-label="Clear and re-sync (hold to confirm)"
                 hint="Hold to wipe"

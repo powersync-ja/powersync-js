@@ -41,10 +41,12 @@ provideDiagnostics(integration);
 
 A host that owns the theme passes it as an option: `provideDiagnostics(integration, { theme: 'dark' })`. The value can be a string, a ref or a getter. The panel then follows it, hides its own toggle and stores nothing. The standalone page takes the theme in two ways: `?theme=dark|light` on its URL, or a `message` event `{ type: 'powersync-diagnostics:theme', theme: 'dark' | 'light' }` posted to its window. Use the message when the host learns the theme later or changes it at runtime.
 
+A host can hide the buttons for some actions with the `hiddenActions` option, for example `{ hiddenActions: ['reconnect', 'disconnect'] }` when it has its own Disconnect button. The standalone page reads the same list from `?hiddenActions=reconnect,disconnect` on its URL. Hiding a button does not block its action.
+
 ## Development
 
 ```bash
 pnpm --filter @powersync/diagnostics-ui dev
 ```
 
-This opens a playground at `http://localhost:5199`. It runs the panel over a mock integration, with no backend. Add `?noclient` to see the screen shown when no client is found, or `?theme=dark` to see a host-controlled theme.
+This opens a playground at `http://localhost:5199`. It runs the panel over a mock integration, with no backend. Add `?noclient` to see the screen shown when no client is found, `?theme=dark` to see a host-controlled theme, or `?hiddenActions=reconnect,disconnect` to see buttons hidden.
