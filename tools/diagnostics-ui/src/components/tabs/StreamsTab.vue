@@ -10,7 +10,7 @@ import SearchInput from '../ui/SearchInput.vue';
 import AutocompleteInput from '../ui/AutocompleteInput.vue';
 import IconStream from '~icons/carbon/flow-stream';
 import IconTime from '~icons/carbon/time';
-import IconWarning from '~icons/carbon/warning-alt';
+import IconInformation from '~icons/carbon/information';
 import IconAdd from '~icons/carbon/add';
 import IconUnlink from '~icons/carbon/unlink';
 
@@ -25,9 +25,9 @@ onUnmounted(() => timer && clearInterval(timer));
 
 function ttl(expiresAt: number | null): string {
   if (expiresAt == null || !Number.isFinite(expiresAt)) return 'no expiry';
-  const ms = expiresAt - now.value;
-  if (ms <= 0) return 'expired';
-  const s = Math.floor(ms / 1000);
+  // The client keeps moving a subscribed stream's expiry to now plus its TTL, so with a TTL of 0 it is always
+  // in the past while the stream still syncs. Stop at 0s instead of calling it expired.
+  const s = Math.max(0, Math.floor((expiresAt - now.value) / 1000));
   if (s < 60) return `${s}s`;
   const m = Math.floor(s / 60);
   if (m < 60) return `${m}m ${s % 60}s`;
@@ -99,13 +99,11 @@ async function unsubscribe(s: StreamState) {
 
 <template>
   <div class="space-y-3">
-    <div
-      class="flex items-start gap-2 rounded-lg border border-warning/40 bg-warning/10 px-2.5 py-2 text-xs text-warning"
-    >
-      <IconWarning class="mt-0.5 size-3.5 shrink-0" />
+    <div class="flex items-start gap-2 rounded-lg border bg-muted/40 px-2.5 py-2 text-xs text-muted-foreground">
+      <IconInformation class="mt-0.5 size-3.5 shrink-0" />
       <span
-        >Subscriptions are shared across all tabs and affect the app's real sync. Debug subscriptions default to TTL 0
-        (evicted on unsubscribe).</span
+        >Subscribing here syncs the stream into this client's local database. Other devices aren't affected. With the
+        default TTL of 0, the stream's data is removed soon after you unsubscribe.</span
       >
     </div>
 
