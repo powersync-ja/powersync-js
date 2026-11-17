@@ -12,7 +12,7 @@
     "@nuxt/ui": "^4.0.0",
     "@nuxtjs/supabase": "2.0.1",
     "@powersync/kysely-driver": "^2.0.3",
-    "@powersync/nuxt": "^2.1.1",
+    "@powersync/nuxt": "^2.1.2",
     "@powersync/vue": "^0.7.0",
     "@powersync/web": "^2.7.0",
     "@supabase/supabase-js": "2.75.0",
