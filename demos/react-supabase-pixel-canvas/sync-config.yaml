@@ -1,0 +1,14 @@
+# PowerSync sync rules for the pixel canvas.
+# Paste into the PowerSync Cloud dashboard's sync-streams editor and deploy.
+#
+# The canvas is a single shared surface that every client sees in full, so there
+# is one unfiltered, auto-subscribed stream over all pixels (no auth filter, no
+# per-user parameter).
+config:
+  edition: 3
+
+streams:
+  canvas:
+    auto_subscribe: true
+    queries:
+      - SELECT * FROM pixels
