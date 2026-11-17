@@ -1,5 +1,11 @@
 # @powersync/diagnostics-core
 
+## 0.0.4
+
+### Patch Changes
+
+- b65cec1: A host that has the deployed Sync Config can pass its Sync Streams as `streamDefinitions` in `getInfo`. The Streams tab suggests them in its subscribe form and shows the parameters each one reads.
+
 ## 0.0.3
 
 ### Patch Changes

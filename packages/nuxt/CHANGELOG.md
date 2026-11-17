@@ -1,5 +1,16 @@
 # @powersync/nuxt
 
+## 2.1.2
+
+### Patch Changes
+
+- Updated dependencies [b65cec1]
+- Updated dependencies [567c46d]
+- Updated dependencies [b65cec1]
+- Updated dependencies [70ee2eb]
+- Updated dependencies [567c46d]
+  - @powersync/diagnostics@0.1.1
+
 ## 2.1.1
 
 ### Patch Changes
