@@ -2,7 +2,9 @@ import {
   PowerSyncDBListener,
   Transaction,
   WebPowerSyncDatabaseOptions,
-  PowerSyncBackendConnector,
+  type SyncOptions,
+  type DownloadOptions,
+  type UploadOptions,
   LockContext,
   WebPowerSyncDatabase
 } from '@powersync/web';
@@ -89,9 +91,9 @@ export class TimedPowerSyncDatabase extends WebPowerSyncDatabase {
     return { elapsedTime, result };
   }
 
-  connect(connector: unknown, options?: unknown): Promise<void> {
+  connectWithTiming(options: SyncOptions & (DownloadOptions | UploadOptions)): Promise<void> {
     localStorage.setItem(this.localKey, 'true');
-    return super.connect(connector as any, options as any).finally(() => {
+    return super.connect(options).finally(() => {
       localStorage.removeItem(this.localKey);
     });
   }

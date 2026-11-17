@@ -27,7 +27,7 @@ const SystemProvider: React.FC<PropsWithChildren<SystemProviderProps>> = (props)
     })
   );
 
-  const [connector] = React.useState(new SupabaseConnector(client, powersync));
+  const [connector] = React.useState(() => new SupabaseConnector(client, powersync));
 
   React.useEffect(() => {
     powersync.init();
@@ -35,10 +35,16 @@ const SystemProvider: React.FC<PropsWithChildren<SystemProviderProps>> = (props)
     const l = connector.registerListener({
       initialized: () => {},
       sessionStarted: async () => {
-        await powersync.connect(connector);
+        await powersync.connectWithTiming({
+          powerSyncEndpoint: import.meta.env.VITE_POWERSYNC_URL,
+          authenticator: connector,
+          upload: connector.upload
+        });
       }
     });
     connector.init();
+
+    return () => l();
   }, [powersync, connector]);
 
   return (

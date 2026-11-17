@@ -52,7 +52,11 @@ export const UserComponent: React.FC<UserComponentProps> = (props) => {
         if (!!e.oldValue && !e.newValue) {
           if (!connecting && !status.connected) {
             setConnecting(true);
-            await powersync.connect(connector);
+            await powersync.connectWithTiming({
+              powerSyncEndpoint: import.meta.env.VITE_POWERSYNC_URL,
+              authenticator: connector,
+              upload: connector.upload
+            });
           }
         }
       }
@@ -188,7 +192,11 @@ export const UserComponent: React.FC<UserComponentProps> = (props) => {
       await powersync.disconnect();
     } else {
       setConnecting(true);
-      await powersync.connect(connector);
+      await powersync.connectWithTiming({
+        powerSyncEndpoint: import.meta.env.VITE_POWERSYNC_URL,
+        authenticator: connector,
+        upload: connector.upload
+      });
     }
   }, [status.connected, connecting]);
 

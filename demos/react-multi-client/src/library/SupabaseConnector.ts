@@ -1,27 +1,30 @@
 import {
-  CommonPowerSyncDatabase,
-  BaseListener,
+  type CommonPowerSyncDatabase,
+  type BaseListener,
   BaseObserver,
-  CrudEntry,
-  PowerSyncBackendConnector,
+  type CrudEntry,
+  type Authenticator,
+  type MutationUploader,
   UpdateType,
-  Mutex
+  type Mutex
 } from '@powersync/web';
 
-import { Session, SupabaseClient } from '@supabase/supabase-js';
+import type { Session, SupabaseClient } from '@supabase/supabase-js';
 import { isFatalPostgresResponseCode } from './Postgres';
 
 export interface SupabaseConnectorListener extends BaseListener {
   onCRUDEvent: (event: { crudType: UpdateType; elapsedTimeMs: number }) => void;
 }
 
-export class SupabaseConnector extends BaseObserver<SupabaseConnectorListener> implements PowerSyncBackendConnector {
+export class SupabaseConnector extends BaseObserver<SupabaseConnectorListener> implements Authenticator {
   static SHARED_MUTEX: Mutex | null = null;
   readonly client: SupabaseClient;
 
   ready: boolean;
 
   currentSession: Session | null;
+
+  private cachedToken: string | null = null;
 
   constructor(client: SupabaseClient, db: CommonPowerSyncDatabase) {
     super();
@@ -30,6 +33,10 @@ export class SupabaseConnector extends BaseObserver<SupabaseConnectorListener> i
     this.client = client;
     this.currentSession = null;
     this.ready = false;
+
+    this.client.auth.onAuthStateChange(() => {
+      this.invalidateCredentials();
+    });
   }
 
   async init() {
@@ -58,22 +65,27 @@ export class SupabaseConnector extends BaseObserver<SupabaseConnectorListener> i
     });
   }
 
-  async fetchCredentials() {
+  async resolveCredentials(): Promise<string> {
+    if (this.cachedToken) {
+      return this.cachedToken;
+    }
+
     const authRes = await this.client.auth.getSession();
 
     if (authRes.error || !authRes.data || !authRes.data.session) {
       throw new Error(`Failed to get PowerSync Token, code=${authRes.error}`);
     }
 
-    const { access_token: token, expires_at } = authRes.data.session;
-
-    return {
-      token: token,
-      endpoint: import.meta.env.VITE_POWERSYNC_URL
-    };
+    this.cachedToken = authRes.data.session.access_token;
+    return this.cachedToken;
   }
 
-  async uploadData(database: CommonPowerSyncDatabase): Promise<void> {
+  // Called by the SDK before token expiry or when the PowerSync service rejects it.
+  invalidateCredentials(): void {
+    this.cachedToken = null;
+  }
+
+  readonly upload: MutationUploader = async ({ database }) => {
     const transaction = await database.getNextCrudTransaction();
     if (!transaction) {
       return;
@@ -127,10 +139,11 @@ export class SupabaseConnector extends BaseObserver<SupabaseConnectorListener> i
         throw ex;
       }
     }
-  }
+  };
 
   updateSession(session: Session | null) {
     this.currentSession = session;
+    this.invalidateCredentials();
     if (!session) {
       return;
     }
