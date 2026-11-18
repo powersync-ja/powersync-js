@@ -6,7 +6,8 @@
     "test:browser": "vitest",
     "test:cjs": "node src/cjs-test.cjs",
     "test:esm": "node src/esm-test.mjs",
-    "test": "pnpm test:cjs && pnpm test:esm && pnpm test:browser"
+    "test:types": "tsc -p types/tsconfig.json",
+    "test": "pnpm test:types && pnpm test:cjs && pnpm test:esm && pnpm test:browser"
   },
   "dependencies": {},
   "devDependencies": {
@@ -16,6 +17,7 @@
     "@powersync/node": "workspace:*",
     "@powersync/capacitor": "workspace:*",
     "@powersync/web": "workspace:*",
-    "@powersync/common": "workspace:*"
+    "@powersync/common": "workspace:*",
+    "typescript": "catalog:"
   }
 }

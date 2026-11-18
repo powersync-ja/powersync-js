@@ -1,9 +1,11 @@
 // @ts-expect-error
-import { FacadeVFS } from '@journeyapps/wa-sqlite/src/FacadeVFS.js';
+import { FacadeVFS as UntypedFacadeVFS } from '@journeyapps/wa-sqlite/src/FacadeVFS.js';
 import { MemoryVFS } from '@journeyapps/wa-sqlite/src/examples/MemoryVFS.js';
 import * as VFS from '@journeyapps/wa-sqlite/src/VFS.js';
 
 type DirectoryResolver = () => Promise<{ dir: FileSystemDirectoryHandle; readWriteUnsafe: boolean }>;
+
+const FacadeVFS = UntypedFacadeVFS as new (name: string, module: object) => SQLiteVFS;
 
 export class SimpleOpfsFileSystem extends FacadeVFS {
   #files: OpfsFiles | null = null;
