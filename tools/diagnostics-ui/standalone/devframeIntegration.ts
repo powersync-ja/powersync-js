@@ -137,7 +137,7 @@ const TRUST_TIMEOUT_MS = 10 * 60 * 1000;
  * within `timeoutMs`, so the caller can fall back to another transport. Trust is a separate, much
  * longer wait: on a standalone window the host asks for a one-time code here, and a person types it.
  */
-export async function connectDevframeIntegration(timeoutMs = 4000): Promise<SdkIntegration | null> {
+export async function tryDevframe(timeoutMs = 4000): Promise<SdkIntegration | null> {
   try {
     const rpc = await Promise.race([
       connectDevframe(),
