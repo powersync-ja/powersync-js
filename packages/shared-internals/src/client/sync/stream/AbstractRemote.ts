@@ -316,8 +316,7 @@ export abstract class AbstractRemote {
               accept: `${bson};q=0.9,${ndJson};q=0.8`
             },
             body: JSON.stringify(data),
-            signal,
-            cache: 'no-store'
+            signal
           },
           expectStreamingResponse: true
         });
