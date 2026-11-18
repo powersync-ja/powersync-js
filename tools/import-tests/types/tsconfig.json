@@ -1,0 +1,17 @@
+{
+  // Type-checks our published declaration files the way a strict consumer would, i.e. without
+  // skipLibCheck. Unlike the other tests here, this doesn't extend tsconfig.base.json so that
+  // options we use internally don't hide issues consumers would see.
+  "compilerOptions": {
+    "target": "esnext",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "lib": ["esnext", "DOM"],
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": false,
+    // Don't pull in unrelated @types packages from the workspace.
+    "types": []
+  },
+  "include": ["index.ts"]
+}

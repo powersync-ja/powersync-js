@@ -1165,6 +1165,9 @@ importers:
       '@powersync/web':
         specifier: workspace:*
         version: link:../../packages/web
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
 
   tools/local-linking:
     devDependencies:

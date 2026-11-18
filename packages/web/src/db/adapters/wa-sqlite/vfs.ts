@@ -194,7 +194,6 @@ export async function loadModuleAndVfs({
       const getRoot = vfsOptionsForStorageBucket(storageBucket).getRoot;
       const resolver = SimpleOpfsFileSystem.directoryResolver(filename, simpleMode === 'rw-unsafe', getRoot);
 
-      // @ts-expect-error It conforms to SQLiteVFS, but an intermediate type is missing so tsc can't know
       resolveVfs = async (module) => {
         const vfs = new SimpleOpfsFileSystem(filename, module, resolver);
         await vfs.open();
