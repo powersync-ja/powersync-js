@@ -513,6 +513,26 @@ describe('Sync', () => {
     ]);
   });
 
+  mockSyncServiceTest('requests the HTTP stream with the default cache mode', async ({ syncService }) => {
+    // With 'no-store', Chromium and Firefox skip the CORS preflight cache, so that every connect sends an OPTIONS
+    // request first.
+    // See https://github.com/powersync-ja/powersync-js/issues/1212.
+    const cacheModes: RequestCache[] = [];
+    syncService.installRequestInterceptor(async (request) => {
+      if (request.url.endsWith('/sync/stream')) {
+        cacheModes.push(request.cache);
+      }
+    });
+
+    const database = await syncService.createDatabase();
+    database.connect(new TestConnector(), {
+      ...defaultConnectOptions,
+      connectionMethod: SyncStreamConnectionMethod.HTTP
+    });
+    await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
+    expect(cacheModes).toEqual(['default']);
+  });
+
   mockSyncServiceTest('refetches credentials when HTTP stream returns 401', async ({ syncService }) => {
     // The /sync/stream 401 should invalidate the cached credentials so the retry fetches a fresh token.
     let fetchCredentialsCount = 0;
