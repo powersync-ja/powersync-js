@@ -5,7 +5,7 @@ import { CommonPowerSyncDatabase } from '@powersync/common';
 import { BasePowerSyncDatabase, ConnectionManager, SyncStatusSnapshot } from '@powersync/shared-internals';
 import { openPowerSync } from './utils';
 import { PowerSyncContext } from '../src/hooks/PowerSyncContext';
-import { useSyncStream, useSyncStreams, UseSyncStreamOptions } from '../src/hooks/streams';
+import { useAllSyncStreamsHaveSynced, useSyncStream, useSyncStreams, UseSyncStreamOptions } from '../src/hooks/streams';
 import { useQuery } from '../src/hooks/watched/useQuery';
 import { QuerySyncStreamOptions } from '../src/hooks/watched/watch-types';
 
@@ -96,6 +96,26 @@ describe('stream hooks', () => {
 
         // Which should eventually run the query.
         await waitFor(() => expect(result.current.data).toHaveLength(1), { timeout: 1000, interval: 100 });
+      });
+
+      it('useQuery without streams does not re-render on status changes', async () => {
+        let renders = 0;
+        const { result } = renderHook(
+          () => {
+            renders++;
+            return useQuery('SELECT 1', []);
+          },
+          { wrapper: testWrapper }
+        );
+        await waitFor(() => expect(result.current.data).toHaveLength(1), { timeout: 1000, interval: 100 });
+        const rendersBefore = renders;
+
+        act(() => {
+          (db as unknown as BasePowerSyncDatabase).currentStatus = _testStatus;
+          (db as unknown as BasePowerSyncDatabase).iterateListeners((l) => l.statusChanged?.(_testStatus));
+        });
+
+        expect(renders).toBe(rendersBefore);
       });
 
       it('useQuery returns complete result shape during stream sync transition', async () => {
@@ -291,6 +311,33 @@ describe('stream hooks', () => {
         await waitFor(() => expect(currentStreams()).toHaveLength(0), { timeout: 1000, interval: 100 });
       });
     });
+  });
+});
+
+describe('useAllSyncStreamsHaveSynced without streams', () => {
+  it('does not subscribe to the sync status', () => {
+    const registerListener = vi.fn(() => () => {});
+    const db = { currentStatus: _testStatus, registerListener, syncStream: vi.fn() };
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <PowerSyncContext.Provider value={db as any}>{children}</PowerSyncContext.Provider>
+    );
+
+    const { result } = renderHook(() => useAllSyncStreamsHaveSynced(null, undefined), { wrapper });
+
+    expect(result.current).toBe(true);
+    expect(registerListener).not.toHaveBeenCalled();
+  });
+
+  it('subscribes once streams are given', () => {
+    const registerListener = vi.fn(() => () => {});
+    const db = { currentStatus: _testStatus, registerListener, syncStream: vi.fn() };
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <PowerSyncContext.Provider value={db as any}>{children}</PowerSyncContext.Provider>
+    );
+
+    renderHook(() => useAllSyncStreamsHaveSynced(null, [{ name: 'a', waitForStream: true }]), { wrapper });
+
+    expect(registerListener).toHaveBeenCalled();
   });
 });
 
