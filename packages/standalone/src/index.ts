@@ -1,5 +1,6 @@
 export { PowerSyncClient, StreamError } from './client.js';
 export type {
+  CheckpointListenerOptions,
   ConfirmWritesOptions,
   LocalWrite,
   PowerSyncClientOptions,

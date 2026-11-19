@@ -104,6 +104,34 @@ unsubscribe();
 
 You can also import `@powersync/standalone-client/react` for the `usePowerSyncStatus()` hook.
 
+To observe complete checkpoint applications, use `subscribeCheckpoint`. It also runs when no rows change and when
+the client stays `ready`, so integrations can detect stream recovery without waiting for a status change:
+
+```ts
+const unsubscribeCheckpoint = powerSync.subscribeCheckpoint(
+  () => {
+    void lease.waitForSync().then(
+      () => console.log('these streams are healthy'),
+      (error) => console.log('these streams still have an error', error)
+    );
+  },
+  { onError: (error) => console.error('checkpoint listener failed', error) }
+);
+
+// ...
+unsubscribeCheckpoint();
+```
+
+The callback runs after rows and current stream synchronization state are updated. It also runs for complete
+checkpoints with stream errors; use the relevant lease to check its streams. Partial checkpoints and applications
+from superseded connections do not trigger it. Subscribing does not start or keep sync running and does not invoke
+the callback immediately. Synchronous listener errors go to the optional `onError` callback; errors from that
+diagnostic callback are ignored so they cannot interrupt sync or other listeners.
+
+Subscriptions added while checkpoint observers are running begin with the next checkpoint. An observer removed before
+its turn is skipped. If a status or checkpoint observer stops or replaces the current connection, remaining checkpoint
+observers are skipped for that retired connection; rows already applied remain available.
+
 ## Reading rows
 
 As the client starts syncing after subscribing to Sync Streams, you can read materialized rows as JavaScript objects.
