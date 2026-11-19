@@ -1,4 +1,4 @@
-FROM node:24 AS builder
+FROM node:24.22.3 AS builder
 WORKDIR /app
 
 COPY . /app
@@ -10,6 +10,6 @@ RUN pnpm run --filter ./tools/diagnostics-app build
 
 # === PROD ===
 
-FROM nginx
+FROM nginx:1.31.9-alpine
 COPY ./tools/diagnostics-app/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=builder /app/tools/diagnostics-app/dist /usr/share/nginx/html
