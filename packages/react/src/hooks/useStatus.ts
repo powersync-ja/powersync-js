@@ -29,7 +29,13 @@ export function useStatusOrNull(): SyncStatus | null {
   return useStatusOf(usePowerSyncOrNull());
 }
 
-function useStatusOf(powerSync: CommonPowerSyncDatabase | null): SyncStatus | null {
+/**
+ * The status of the given database, subscribing to its changes. With `null`, it subscribes to nothing and returns
+ * `null`.
+ *
+ * @internal
+ */
+export function useStatusOf(powerSync: CommonPowerSyncDatabase | null): SyncStatus | null {
   const subscribe = useCallback(
     (listener: () => void) => {
       const dispose = powerSync?.registerListener({ statusChanged: listener });
