@@ -59,6 +59,11 @@ export interface ConfirmWritesOptions {
   signal?: AbortSignal;
 }
 
+export interface CheckpointListenerOptions {
+  /** Synchronous errors thrown by the checkpoint listener. Errors thrown by this callback are ignored. */
+  onError?: (error: Error) => void;
+}
+
 /** A local write registered through {@link PowerSyncClient.markLocalWrite}. */
 export interface LocalWrite {
   /**
@@ -156,6 +161,7 @@ export class PowerSyncClient {
 
   #status: SyncStatus = idle;
   readonly #statusListeners = new Set<() => void>();
+  readonly #checkpointListeners = new Set<() => void>();
 
   constructor(options: PowerSyncClientOptions) {
     const url = new URL(options.endpoint);
@@ -176,6 +182,35 @@ export class PowerSyncClient {
     this.#statusListeners.add(listener);
     return () => {
       this.#statusListeners.delete(listener);
+    };
+  };
+
+  /**
+   * Invokes the listener after a complete checkpoint is applied for the current sync connection, including checkpoints
+   * with no row changes and checkpoints reporting stream errors. Rows and stream synchronization state are updated
+   * before notification, so a lease's {@link StreamLease.waitForSync} can determine whether its streams are healthy.
+   *
+   * Partial checkpoints and checkpoints applied from a superseded connection do not notify this listener. Subscribing
+   * does not invoke the listener immediately, start sync, or keep sync running. The returned callback unsubscribes.
+   * Listeners added during checkpoint notification start with the next checkpoint. Listeners removed before their turn,
+   * or listeners whose connection is stopped or superseded by an earlier callback, are not invoked for that checkpoint.
+   * Synchronous listener errors are passed to `options.onError`, if supplied, without interrupting sync or other listeners.
+   */
+  readonly subscribeCheckpoint = (listener: () => void, options: CheckpointListenerOptions = {}): (() => void) => {
+    const notify = () => {
+      try {
+        listener();
+      } catch (cause) {
+        try {
+          options.onError?.(toError(cause));
+        } catch {
+          // A diagnostic callback must not interrupt checkpoint application either.
+        }
+      }
+    };
+    this.#checkpointListeners.add(notify);
+    return () => {
+      this.#checkpointListeners.delete(notify);
     };
   };
 
@@ -411,13 +446,11 @@ export class PowerSyncClient {
     const generation = this.#generation;
     const includeDefaults = this.#defaultStreamLeases > 0;
     const requested = [...this.#streams];
-    const subscriptions = requested.map(
-      ([, { stream }]): RequestedStreamSubscription => ({
-        stream: stream.name,
-        parameters: stream.parameters ?? {},
-        override_priority: stream.priority ?? null
-      })
-    );
+    const subscriptions = requested.map(([, { stream }]): RequestedStreamSubscription => ({
+      stream: stream.name,
+      parameters: stream.parameters ?? {},
+      override_priority: stream.priority ?? null
+    }));
 
     let failures = 0;
     let prefetchedToken: string | null = null;
@@ -567,7 +600,13 @@ export class PowerSyncClient {
       else waiter.resolve();
     }
     this.#setStatus({ state: 'ready' });
-    return true;
+    // Status and checkpoint callbacks may synchronously retire this connection.
+    // Snapshot registrations to prevent a new subscription from joining this dispatch.
+    for (const listener of [...this.#checkpointListeners]) {
+      if (signal.aborted) return false;
+      if (this.#checkpointListeners.has(listener)) listener();
+    }
+    return !signal.aborted;
   }
 
   /**
