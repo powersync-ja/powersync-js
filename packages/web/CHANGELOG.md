@@ -1,5 +1,11 @@
 # @powersync/web
 
+## 2.7.1
+
+### Patch Changes
+
+- ad83c64: Fix type errors with `"skipLibCheck": false`. Closes https://github.com/powersync-ja/powersync-js/issues/1215.
+
 ## 2.7.0
 
 ### Minor Changes
