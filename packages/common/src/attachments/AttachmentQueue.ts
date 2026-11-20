@@ -285,9 +285,13 @@ export class AttachmentQueue<TLocal extends LocalStorageAdapter = LocalStorageAd
       }
     });
 
+    // Status changes arrive many times a second while syncing, so act only when `connected` turns true.
+    let wasConnected = false;
     this.statusListenerDispose = this.db.registerListener({
       statusChanged: (status) => {
-        if (status.connected) {
+        const cameOnline = status.connected && !wasConnected;
+        wasConnected = status.connected;
+        if (cameOnline) {
           // Device came online, process attachments immediately
           this.syncStorage().catch((error) => {
             this.logger.log({ level: LogLevels.error, message: 'Error syncing storage on connection', error });
