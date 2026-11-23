@@ -13,6 +13,11 @@ const pending: CheckpointState = { state: 'pending' };
 export class CheckpointStateSignals {
   private currentState: CheckpointState = pending;
   private readonly stateChanged = new BaseObserver<CheckpointStateListener>();
+  /**
+   * Incremented when a download iteration ends or the client disconnects, so that a seed that settles afterwards
+   * doesn't overwrite the state of the next iteration.
+   */
+  private generation = 0;
 
   /**
    * Use to immediately restart another download iteration if it is retry delay when a new checkpoint is requested.
@@ -29,6 +34,7 @@ export class CheckpointStateSignals {
    * next iteration.
    */
   downloadIterationEnded() {
+    this.generation++;
     this.updateState(pending);
 
     // Checkpoint waiters called after this should be able to resume the download iteration.
@@ -39,6 +45,7 @@ export class CheckpointStateSignals {
    * Marks the sync client as disconnected, failing all outstanding checkpoint requests and preventing new ones.
    */
   disconnected() {
+    this.generation++;
     this.updateState({ state: 'disconnected' });
   }
 
@@ -50,10 +57,19 @@ export class CheckpointStateSignals {
   }
 
   markCheckpointsReady(completion: Promise<void>): Promise<void> {
+    const generation = this.generation;
+    // A seed of an iteration that has ended (its requests are aborted on restart) only settles its own promise.
+    const isCurrent = () => generation == this.generation;
     return completion.then(
-      (_) => this.updateState({ state: 'ready' }),
+      (_) => {
+        if (isCurrent()) {
+          this.updateState({ state: 'ready' });
+        }
+      },
       (error) => {
-        this.updateState({ state: 'error', error });
+        if (isCurrent()) {
+          this.updateState({ state: 'error', error });
+        }
         throw error;
       }
     );
