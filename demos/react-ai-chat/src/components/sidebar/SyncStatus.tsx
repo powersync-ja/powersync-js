@@ -1,4 +1,4 @@
-import { connector } from '@/components/providers/SystemProvider';
+import { connectionOptions } from '@/components/providers/SystemProvider';
 import { cn } from '@/library/cn';
 import { usePowerSync, useStatus } from '@powersync/react';
 
@@ -28,7 +28,7 @@ export function SyncStatus() {
       </span>
       <button
         type="button"
-        onClick={() => (online ? powerSync.disconnect() : powerSync.connect(connector))}
+        onClick={() => (online ? powerSync.disconnect() : powerSync.connect(connectionOptions))}
         className="rounded-lg border border-line px-2.5 py-1 text-xs text-muted transition-colors hover:bg-raised hover:text-ink"
       >
         {online ? 'Go offline' : 'Go online'}

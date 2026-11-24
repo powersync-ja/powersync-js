@@ -1,4 +1,4 @@
-import type { CommonPowerSyncDatabase, PowerSyncBackendConnector, PowerSyncCredentials } from '@powersync/web';
+import type { Authenticator, MutationUploader, ResolveCredentialsOptions } from '@powersync/web';
 
 /** Where the app keeps the user id it made up on first load. */
 const USER_ID_KEY = 'ai-chat-user-id';
@@ -16,7 +16,7 @@ type Token = { token: string; expires_at: number };
  * issues a token for whichever user id it's given. This stands in for real sign-in: anyone who knows a user id can get
  * a token for it.
  */
-export class BackendConnector implements PowerSyncBackendConnector {
+export class BackendConnector implements Authenticator {
   readonly userId: string;
 
   private token: Token | null = null;
@@ -30,28 +30,24 @@ export class BackendConnector implements PowerSyncBackendConnector {
     this.userId = userId;
   }
 
-  /** A token for the app's requests to the backend, cached until a minute before it expires. */
-  async getToken(): Promise<Token> {
+  /** A token for PowerSync and the app's backend requests, cached until a minute before it expires. */
+  async getToken(abort?: AbortSignal): Promise<Token> {
     if (!this.token || this.token.expires_at - Date.now() < TOKEN_REFRESH_MS) {
-      this.token = await this.fetchToken();
+      this.token = await this.fetchToken(abort);
     }
     return this.token;
   }
 
-  async fetchCredentials() {
-    // PowerSync asks for credentials when it connects, and again before they expire or after they're rejected, so
-    // this always fetches a new token.
-    this.token = await this.fetchToken();
+  async resolveCredentials({ abort }: ResolveCredentialsOptions): Promise<string> {
+    return (await this.getToken(abort)).token;
+  }
 
-    return {
-      endpoint: import.meta.env.VITE_POWERSYNC_URL,
-      token: this.token.token,
-      expiresAt: new Date(this.token.expires_at)
-    } satisfies PowerSyncCredentials;
+  invalidateCredentials(): void {
+    this.token = null;
   }
 
   /** Uploads one local transaction to the backend, which applies it to Postgres in one transaction. */
-  async uploadData(database: CommonPowerSyncDatabase): Promise<void> {
+  readonly upload: MutationUploader = async ({ database }) => {
     const transaction = await database.getNextCrudTransaction();
 
     if (!transaction) {
@@ -72,18 +68,19 @@ export class BackendConnector implements PowerSyncBackendConnector {
       // succeed, so discard it.
       console.error('Data upload error - discarding:', transaction.crud, await response.text());
     } else if (!response.ok) {
-      // E.g. the backend is restarting. PowerSync calls uploadData again later, with a new token if this one was
+      // E.g. the backend is restarting. PowerSync calls the uploader again later, with a new token if this one was
       // rejected.
-      if (response.status === 401) this.token = null;
+      if (response.status === 401) this.invalidateCredentials();
       throw new Error(`Could not upload changes: ${response.status} ${await response.text()}`);
     }
 
     await transaction.complete();
-  }
+  };
 
-  private async fetchToken(): Promise<Token> {
+  private async fetchToken(abort?: AbortSignal): Promise<Token> {
     const response = await fetch('/api/auth/token', {
       method: 'POST',
+      signal: abort,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ user_id: this.userId })
     });
