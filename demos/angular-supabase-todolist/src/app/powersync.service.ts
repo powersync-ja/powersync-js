@@ -1,15 +1,16 @@
 import { Injectable } from '@angular/core';
 import {
   column,
-  CommonPowerSyncDatabase,
   createConsoleLogger,
   LogLevels,
-  PowerSyncBackendConnector,
   PowerSyncDatabase,
   Schema,
   Table,
   WASQLiteOpenFactory,
-  WASQLiteVFS
+  WASQLiteVFS,
+  type CommonPowerSyncDatabase,
+  type DownloadOptions,
+  type UploadOptions
 } from '@powersync/web';
 
 export interface ListRecord {
@@ -81,10 +82,10 @@ export class PowerSyncService {
     });
   }
 
-  setupPowerSync = async (connector: PowerSyncBackendConnector) => {
+  setupPowerSync = async (options: DownloadOptions & UploadOptions) => {
     try {
       await this.db.init();
-      await this.db.connect(connector);
+      await this.db.connect(options);
     } catch (e) {
       console.log(e);
     }
