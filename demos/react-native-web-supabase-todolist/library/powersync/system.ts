@@ -137,7 +137,11 @@ export class System {
 
   async init() {
     await this.powersync.init();
-    await this.powersync.connect(this.supabaseConnector);
+    await this.powersync.connect({
+      powerSyncEndpoint: AppConfig.powersyncUrl,
+      authenticator: this.supabaseConnector,
+      upload: this.supabaseConnector.upload
+    });
 
     if (this.photoAttachmentQueue) {
       // await this.photoAttachmentQueue.localStorage.initialize();
