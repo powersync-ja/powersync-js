@@ -14,10 +14,19 @@ const powerSync = new PowerSyncDatabase({
   schema: AppSchema,
   logger: createConsoleLogger({ minLevel: LogLevels.debug })
 });
-const connector = new BackendConnector();
 
-// `diagnostics` feeds per-bucket download totals to PowerSync DevTools.
-powerSync.connect(connector, { diagnostics: import.meta.env.DEV });
+const powerSyncEndpoint = import.meta.env.VITE_POWERSYNC_URL;
+// With no endpoint configured, the database stays local-only.
+if (powerSyncEndpoint) {
+  const connector = new BackendConnector();
+  powerSync.connect({
+    powerSyncEndpoint,
+    authenticator: connector,
+    upload: connector.upload,
+    // `diagnostics` feeds per-bucket download totals to PowerSync DevTools.
+    diagnostics: import.meta.env.DEV
+  });
+}
 
 export const SystemProvider = ({ children }: { children: React.ReactNode }) => {
   return (
