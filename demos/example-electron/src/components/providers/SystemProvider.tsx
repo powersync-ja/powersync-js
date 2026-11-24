@@ -13,9 +13,17 @@ const powerSync = new PowerSyncDatabase({
   },
   logger: createConsoleLogger({ minLevel: LogLevels.debug })
 });
-const connector = new BackendConnector();
 
-powerSync.connect(connector);
+const powerSyncEndpoint = import.meta.env.VITE_POWERSYNC_URL;
+const powerSyncToken = import.meta.env.VITE_PUBLIC_POWERSYNC_TOKEN;
+if (powerSyncEndpoint && powerSyncToken) {
+  const connector = new BackendConnector(powerSyncToken);
+  powerSync.connect({
+    powerSyncEndpoint,
+    authenticator: connector,
+    upload: connector.upload
+  });
+}
 
 export const SystemProvider = ({ children }: { children: React.ReactNode }) => {
   return (
