@@ -8,14 +8,11 @@ const logger = createConsoleLogger({ minLevel: LogLevels.debug });
  * when connecting.
  */
 class DummyConnector {
-  async fetchCredentials() {
-    return {
-      endpoint: '',
-      token: ''
-    };
+  async resolveCredentials() {
+    return '';
   }
 
-  async uploadData(database) {}
+  async uploadData() {}
 }
 
 const customers = new Table({ name: column.text });
@@ -50,7 +47,12 @@ const openDatabase = async () => {
    * This will fail due to not having a valid endpoint,
    * but it will try - which is all that matters.
    */
-  await PowerSync.connect(new DummyConnector());
+  const connector = new DummyConnector();
+  await PowerSync.connect({
+    powerSyncEndpoint: '',
+    authenticator: connector,
+    upload: connector.uploadData
+  });
 };
 
 document.addEventListener('DOMContentLoaded', (event) => {
