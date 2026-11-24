@@ -20,7 +20,7 @@ npm install @powersync/web
 
 ### Encryption with Multiple Ciphers
 
-To enable encryption you need to specify an encryption key when instantiating the PowerSync database.
+To enable encryption you need to specify an encryption key in the `database` options when instantiating the PowerSync database.
 
 > The PowerSync Web SDK uses the ChaCha20 cipher algorithm by [default](https://utelle.github.io/SQLite3MultipleCiphers/docs/ciphers/cipher_chacha20/).
 
@@ -30,26 +30,14 @@ export const db = new PowerSyncDatabase({
   schema: AppSchema,
   database: {
     // Filename for the SQLite database — it's important to only instantiate one instance per file.
-    dbFilename: 'example.db'
-    // Optional. Directory where the database file is located.'
-    // dbLocation: 'path/to/directory'
-  },
-  // Encryption key for the database.
-  encryptionKey: 'your-encryption-key'
-});
-
-// If you are using a custom WASQLiteOpenFactory or WASQLiteDBAdapter, you need specify the encryption key inside the construtor
-export const db = new PowerSyncDatabase({
-  schema: AppSchema,
-  database: new WASQLiteOpenFactory({
-    //new WASQLiteDBAdapter
     dbFilename: 'example.db',
-    vfs: WASQLiteVFS.OPFSCoopSyncVFS,
     // Encryption key for the database.
     encryptionKey: 'your-encryption-key'
-  })
+  }
 });
 ```
+
+Since version 2.0, the key goes inside `database` together with the other open options, such as `vfs`. A key passed at the top level is ignored, so a new database is created without encryption.
 
 ## Webpack
 
