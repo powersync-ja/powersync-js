@@ -24,7 +24,8 @@ const main = async () => {
     enableUncidiDiagnostics();
   }
 
-  if (!('SYNC_SERVICE' in process.env)) {
+  const powerSyncEndpoint = process.env.SYNC_SERVICE;
+  if (!powerSyncEndpoint) {
     console.warn(
       'Set the BACKEND and SYNC_SERVICE environment variables to point to a sync service and a running demo backend.'
     );
@@ -56,14 +57,19 @@ const main = async () => {
     logger
   });
   console.log(await db.get('SELECT powersync_rs_version();'));
-  await db.connect(new DemoConnector(), {
+  const connector = new DemoConnector();
+  const connectionOptions = {
+    powerSyncEndpoint,
+    authenticator: connector,
+    upload: connector.upload,
     connectionMethod: SyncStreamConnectionMethod.WEB_SOCKET,
     // Per-bucket download totals for PowerSync DevTools.
     diagnostics: true,
     appMetadata: {
       app_version: process.env.npm_package_version || 'unknown'
     }
-  });
+  };
+  await db.connect(connectionOptions);
   // PowerSync DevTools: a live view of this client in the browser. Development only. Imported here so
   // an install without dev dependencies does not need the package.
   if (process.env.NODE_ENV !== 'production') {
@@ -81,8 +87,8 @@ const main = async () => {
   //     ca: '<CA for the proxy>'
   //   }
   // });
-  // await db.connect(new DemoConnector(), {
-  //   connectionMethod: SyncStreamConnectionMethod.WEB_SOCKET,
+  // await db.connect({
+  //   ...connectionOptions,
   //   dispatcher: proxyAgent
   // });
 

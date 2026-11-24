@@ -1,28 +1,29 @@
-import { CommonPowerSyncDatabase, column, PowerSyncBackendConnector, Schema, Table } from '@powersync/node';
+import {
+  column,
+  Schema,
+  Table,
+  type Authenticator,
+  type MutationUploader,
+  type ResolveCredentialsOptions
+} from '@powersync/node';
 
-export class DemoConnector implements PowerSyncBackendConnector {
-  async fetchCredentials() {
+export class DemoConnector implements Authenticator {
+  async resolveCredentials({ abort }: ResolveCredentialsOptions): Promise<string> {
     if (process.env.POWERSYNC_TOKEN) {
-      return {
-        endpoint: process.env.SYNC_SERVICE!,
-        token: process.env.POWERSYNC_TOKEN
-      };
+      return process.env.POWERSYNC_TOKEN;
     }
 
-    const response = await fetch(`${process.env.BACKEND}/api/auth/token`);
-    if (response.status != 200) {
-      throw 'Could not fetch token';
+    const response = await fetch(`${process.env.BACKEND}/api/auth/token`, { signal: abort });
+    if (response.status !== 200) {
+      throw new Error(`Could not fetch a token: HTTP ${response.status}`);
     }
 
     const { token } = await response.json();
 
-    return {
-      endpoint: process.env.SYNC_SERVICE!,
-      token: token
-    };
+    return token;
   }
 
-  async uploadData(database: CommonPowerSyncDatabase) {
+  readonly upload: MutationUploader = async ({ database }) => {
     const batch = await database.getCrudBatch();
     if (batch == null) {
       return;
@@ -48,7 +49,7 @@ export class DemoConnector implements PowerSyncBackendConnector {
     }
 
     await batch?.complete();
-  }
+  };
 }
 
 export const LIST_TABLE = 'lists';
