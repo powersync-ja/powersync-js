@@ -23,7 +23,7 @@ import { SQLJSOpenFactory } from '@powersync/adapter-sql-js';
 
 const powersync = new PowerSyncDatabase({
   schema: AppSchema,
-  database: new SQLJSOpenFactory({
+  factory: new SQLJSOpenFactory({
     dbFilename: 'powersync.db'
   })
 });
@@ -41,16 +41,9 @@ const powersync = new PowerSyncDatabase({
 We can use the [Expo File System](https://docs.expo.dev/versions/latest/sdk/filesystem/) to persist the database in an Expo app.
 
 ```tsx
-import { PowerSyncDatabase, SQLJSOpenFactory, SQLJSPersister } from '@powersync/react-native';
+import { PowerSyncDatabase } from '@powersync/react-native';
+import { SQLJSOpenFactory, SQLJSPersister } from '@powersync/adapter-sql-js';
 import * as FileSystem from 'expo-file-system';
-
-const powersync = new PowerSyncDatabase({
-  schema: AppSchema,
-  database: new SQLJSOpenFactory({
-    dbFilename: 'powersync.db',
-    persister: createSQLJSPersister('powersync.db')
-  })
-});
 
 const createSQLJSPersister = (dbFilename: string): SQLJSPersister => {
   const dbPath = `${FileSystem.documentDirectory}${dbFilename}`;
@@ -95,4 +88,12 @@ const createSQLJSPersister = (dbFilename: string): SQLJSPersister => {
     }
   };
 };
+
+const powersync = new PowerSyncDatabase({
+  schema: AppSchema,
+  factory: new SQLJSOpenFactory({
+    dbFilename: 'powersync.db',
+    persister: createSQLJSPersister('powersync.db')
+  })
+});
 ```
