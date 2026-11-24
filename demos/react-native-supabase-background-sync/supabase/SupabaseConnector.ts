@@ -1,7 +1,7 @@
-import { AbstractPowerSyncDatabase, CrudEntry, PowerSyncBackendConnector, UpdateType, type PowerSyncCredentials } from '@powersync/react-native';
-import { SupabaseClient, createClient } from '@supabase/supabase-js';
+import { UpdateType, type Authenticator, type CrudEntry, type MutationUploader } from '@powersync/react-native';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { AppConfig } from '@/supabase/AppConfig';
-import { fetch } from "expo/fetch"
+import { fetch } from 'expo/fetch';
 
 /// Postgres Response codes that we cannot recover from by retrying.
 const FATAL_RESPONSE_CODES = [
@@ -15,8 +15,9 @@ const FATAL_RESPONSE_CODES = [
   new RegExp('^42501$')
 ];
 
-export class SupabaseConnector implements PowerSyncBackendConnector {
+export class SupabaseConnector implements Authenticator {
   client: SupabaseClient;
+  private refreshRequired = false;
 
   constructor() {
     this.client = createClient(AppConfig.supabaseUrl!, AppConfig.supabaseAnonKey!, {
@@ -53,17 +54,17 @@ export class SupabaseConnector implements PowerSyncBackendConnector {
 
   async userId() {
     const {
-      data: { session },
+      data: { session }
     } = await this.client.auth.getSession();
 
     return session?.user.id;
   }
 
-  async fetchCredentials() {
+  async resolveCredentials(): Promise<string> {
     const {
       data: { session },
       error
-    } = await this.client.auth.getSession();
+    } = this.refreshRequired ? await this.client.auth.refreshSession() : await this.client.auth.getSession();
 
     if (!session || error) {
       throw new Error(`Could not fetch Supabase credentials: ${error}`);
@@ -71,13 +72,15 @@ export class SupabaseConnector implements PowerSyncBackendConnector {
 
     console.debug('session expires at', session.expires_at);
 
-    return {
-      endpoint: AppConfig.powersyncUrl!,
-      token: session.access_token ?? ''
-    } satisfies PowerSyncCredentials;
+    this.refreshRequired = false;
+    return session.access_token;
   }
 
-  async uploadData(database: AbstractPowerSyncDatabase): Promise<void> {
+  invalidateCredentials(): void {
+    this.refreshRequired = true;
+  }
+
+  readonly upload: MutationUploader = async ({ database }) => {
     const transaction = await database.getNextCrudTransaction();
 
     if (!transaction) {
@@ -133,5 +136,5 @@ export class SupabaseConnector implements PowerSyncBackendConnector {
         throw ex;
       }
     }
-  }
+  };
 }
