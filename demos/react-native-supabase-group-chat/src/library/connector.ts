@@ -1,13 +1,6 @@
-import {
-  AbstractPowerSyncDatabase,
-  CrudEntry,
-  PowerSyncBackendConnector,
-  UpdateType,
-  type PowerSyncCredentials
-} from '@powersync/react-native';
+import { UpdateType, type Authenticator, type CrudEntry, type MutationUploader } from '@powersync/react-native';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
-import { config } from './config';
 import { supabase } from './supabase';
 
 /// Postgres Response codes that we cannot recover from by retrying.
@@ -22,18 +15,21 @@ const FATAL_RESPONSE_CODES = [
   new RegExp('^42501$')
 ];
 
-export class Connector implements PowerSyncBackendConnector {
+export class Connector implements Authenticator {
   supabaseClient: SupabaseClient;
+  private refreshRequired = false;
 
   constructor() {
     this.supabaseClient = supabase;
   }
 
-  async fetchCredentials() {
+  async resolveCredentials(): Promise<string> {
     const {
       data: { session },
       error
-    } = await this.supabaseClient.auth.getSession();
+    } = this.refreshRequired
+      ? await this.supabaseClient.auth.refreshSession()
+      : await this.supabaseClient.auth.getSession();
 
     if (!session || error) {
       throw new Error(`Could not fetch Supabase credentials: ${error}`);
@@ -41,13 +37,15 @@ export class Connector implements PowerSyncBackendConnector {
 
     console.debug('session expires at', session.expires_at);
 
-    return {
-      endpoint: config.powerSyncUrl,
-      token: session.access_token ?? ''
-    } satisfies PowerSyncCredentials;
+    this.refreshRequired = false;
+    return session.access_token;
   }
 
-  async uploadData(database: AbstractPowerSyncDatabase): Promise<void> {
+  invalidateCredentials(): void {
+    this.refreshRequired = true;
+  }
+
+  readonly upload: MutationUploader = async ({ database }) => {
     const transaction = await database.getNextCrudTransaction();
 
     if (!transaction) {
@@ -69,7 +67,7 @@ export class Connector implements PowerSyncBackendConnector {
             break;
           }
           case UpdateType.PATCH:
-            result = await table.update(op.opData).eq('id', op.id);
+            result = await table.update(op.opData ?? {}).eq('id', op.id);
             break;
           case UpdateType.DELETE:
             result = await table.delete().eq('id', op.id);
@@ -107,5 +105,5 @@ export class Connector implements PowerSyncBackendConnector {
         throw ex;
       }
     }
-  }
+  };
 }
