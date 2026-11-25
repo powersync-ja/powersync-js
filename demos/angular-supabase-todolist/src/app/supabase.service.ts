@@ -8,13 +8,7 @@ import {
   type User
 } from '@supabase/supabase-js';
 import { environment } from '../environment';
-import {
-  type AbstractPowerSyncDatabase,
-  type CrudEntry,
-  UpdateType,
-  PowerSyncBackendConnector,
-  type PowerSyncCredentials
-} from '@powersync/web';
+import { UpdateType, type Authenticator, type CrudEntry, type MutationUploader } from '@powersync/web';
 
 /// Postgres Response codes that we cannot recover from by retrying.
 const FATAL_RESPONSE_CODES = [
@@ -31,8 +25,9 @@ const FATAL_RESPONSE_CODES = [
 @Injectable({
   providedIn: 'root'
 })
-export class SupabaseService implements PowerSyncBackendConnector {
+export class SupabaseService implements Authenticator {
   private supabase: SupabaseClient;
+  private refreshRequired = false;
   _session: AuthSession | null = null;
   _userId: string | null = null;
 
@@ -60,20 +55,22 @@ export class SupabaseService implements PowerSyncBackendConnector {
     this._session = session;
   }
 
-  async fetchCredentials() {
+  async resolveCredentials(): Promise<string> {
     const {
       data: { session },
       error
-    } = await this.supabase.auth.getSession();
+    } = this.refreshRequired ? await this.supabase.auth.refreshSession() : await this.supabase.auth.getSession();
 
     if (!session || error) {
       throw new Error(`Could not fetch Supabase credentials: ${error}`);
     }
 
-    return {
-      endpoint: environment.powersyncUrl,
-      token: session.access_token ?? ''
-    } satisfies PowerSyncCredentials;
+    this.refreshRequired = false;
+    return session.access_token;
+  }
+
+  invalidateCredentials(): void {
+    this.refreshRequired = true;
   }
 
   authChanges(callback: (event: AuthChangeEvent, session: Session | null) => void) {
@@ -106,7 +103,7 @@ export class SupabaseService implements PowerSyncBackendConnector {
     await this.supabase.auth.signOut();
   }
 
-  async uploadData(database: AbstractPowerSyncDatabase): Promise<void> {
+  readonly upload: MutationUploader = async ({ database }) => {
     const transaction = await database.getNextCrudTransaction();
 
     if (!transaction) {
@@ -161,5 +158,5 @@ export class SupabaseService implements PowerSyncBackendConnector {
         throw ex;
       }
     }
-  }
+  };
 }

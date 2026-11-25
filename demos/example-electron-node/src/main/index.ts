@@ -18,6 +18,9 @@ import { serializeError } from './serializeError';
 declare const MAIN_WINDOW_WEBPACK_ENTRY: string;
 declare const MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY: string;
 
+declare const POWERSYNC_URL: string | undefined;
+declare const POWERSYNC_TOKEN: string | undefined;
+
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) {
   app.quit();
@@ -138,9 +141,14 @@ app.whenReady().then(async () => {
 
   // Open the window before fetching credentials or connecting so sync cannot delay the UI.
   try {
-    const connector = new BackendConnector();
-    if (await connector.fetchCredentials()) {
-      await database.connect(connector, { connectionMethod: SyncStreamConnectionMethod.HTTP });
+    if (POWERSYNC_URL && POWERSYNC_TOKEN) {
+      const connector = new BackendConnector(POWERSYNC_TOKEN);
+      await database.connect({
+        powerSyncEndpoint: POWERSYNC_URL,
+        authenticator: connector,
+        upload: connector.upload,
+        connectionMethod: SyncStreamConnectionMethod.HTTP
+      });
     }
   } catch (error) {
     console.error('Could not connect to PowerSync', error);

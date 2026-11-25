@@ -2,6 +2,7 @@ import React from 'react';
 import { createConsoleLogger, LogLevels, PowerSyncDatabase } from '@powersync/react-native';
 import { SupabaseConnector } from '@/supabase/SupabaseConnector';
 import { AppSchema } from '@/powersync/AppSchema';
+import { AppConfig } from '@/supabase/AppConfig';
 
 const logger = createConsoleLogger({ minLevel: LogLevels.debug });
 
@@ -26,7 +27,11 @@ export class System {
 
     await this.powersync.init();
 
-    await this.powersync.connect(this.connector);
+    await this.powersync.connect({
+      powerSyncEndpoint: AppConfig.powersyncUrl!,
+      authenticator: this.connector,
+      upload: this.connector.upload
+    });
 
     this.powersync.registerListener({
       statusChanged: (status) => {

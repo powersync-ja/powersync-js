@@ -3,6 +3,7 @@ import { createConsoleLogger, LogLevels, PowerSyncContext, PowerSyncDatabase } f
 import { ReactNode, useEffect, useMemo } from 'react';
 
 import { useAuth } from './AuthProvider';
+import { config } from '@/library/config';
 import { Connector } from '@/library/connector';
 import { AppSchema } from '@/library/schema';
 
@@ -27,7 +28,11 @@ export const PowerSyncProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (isSyncEnabled) {
       powerSync
-        .connect(connector)
+        .connect({
+          powerSyncEndpoint: config.powerSyncUrl,
+          authenticator: connector,
+          upload: connector.upload
+        })
         .then(() => console.log('connected'))
         .catch(console.error);
     } else {

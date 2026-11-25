@@ -1,32 +1,15 @@
-import { column, CommonPowerSyncDatabase, PowerSyncBackendConnector, Schema, Table } from '@powersync/node';
+import { column, Schema, Table, type Authenticator, type MutationUploader } from '@powersync/node';
 
-declare const POWERSYNC_URL: string | undefined;
-declare const POWERSYNC_TOKEN: string | undefined;
+export class BackendConnector implements Authenticator {
+  constructor(private readonly powersyncToken: string) {}
 
-export class BackendConnector implements PowerSyncBackendConnector {
-  private powersyncUrl: string | undefined;
-  private powersyncToken: string | undefined;
-
-  constructor() {
-    this.powersyncUrl = POWERSYNC_URL;
+  async resolveCredentials(): Promise<string> {
     // This token is for development only.
     // For production applications, integrate with an auth provider or custom auth.
-    this.powersyncToken = POWERSYNC_TOKEN;
+    return this.powersyncToken;
   }
 
-  async fetchCredentials() {
-    // TODO: Use an authentication service or custom implementation here.
-    if (!this.powersyncToken || !this.powersyncUrl) {
-      return null;
-    }
-
-    return {
-      endpoint: this.powersyncUrl,
-      token: this.powersyncToken
-    };
-  }
-
-  async uploadData(database: CommonPowerSyncDatabase): Promise<void> {
+  readonly upload: MutationUploader = async ({ database }) => {
     const transaction = await database.getNextCrudTransaction();
 
     if (!transaction) {
@@ -52,7 +35,7 @@ export class BackendConnector implements PowerSyncBackendConnector {
         throw error;
       }
     }
-  }
+  };
 }
 
 function shouldDiscardDataOnError(error: any) {

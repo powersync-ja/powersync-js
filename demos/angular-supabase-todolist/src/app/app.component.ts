@@ -6,6 +6,7 @@ import { PowerSyncService } from './powersync.service';
 import { ListsComponent } from './lists/lists.component';
 import { Router, RouterOutlet } from '@angular/router';
 import { fromEvent, map, merge } from 'rxjs';
+import { environment } from '../environment';
 
 @Component({
   selector: 'app-root',
@@ -37,7 +38,11 @@ export class AppComponent implements OnInit {
       this.isLoggedIn = !!session?.access_token;
       if (session?.access_token) {
         if (!this.powerSync.db.connected) {
-          await this.powerSync.setupPowerSync(this.supabase);
+          await this.powerSync.setupPowerSync({
+            powerSyncEndpoint: environment.powersyncUrl,
+            authenticator: this.supabase,
+            upload: this.supabase.upload
+          });
         }
       }
     });

@@ -57,7 +57,7 @@ Postgres mode is the simpler one: the database is the only channel, and PowerSyn
 
 Everything else is shared:
 
-1. `sendMessage` in `src/library/chat.ts` writes the user's message and an empty assistant message (status `pending`) in one local transaction. PowerSync calls `uploadData` in `src/library/powersync/BackendConnector.ts`, which sends the transaction to `POST /api/upload`.
+1. `sendMessage` in `src/library/chat.ts` writes the user's message and an empty assistant message (status `pending`) in one local transaction. PowerSync calls `upload` in `src/library/powersync/BackendConnector.ts`, which sends the transaction to `POST /api/upload`.
 2. The backend (`server/upload.ts`) applies it to Postgres in one transaction. Because the new reply is `pending`, the backend then claims it (`server/replies.ts`): it sets the status to `streaming` and a new `claim_id`, loads the chat's earlier messages, and asks the model for a reply. Every later write to the reply checks that `claim_id`.
 3. The text reaches the app in the way the mode describes.
 4. The finished reply ends up in the row, and PowerSync replicates it from Postgres and syncs it to every client subscribed to that chat.

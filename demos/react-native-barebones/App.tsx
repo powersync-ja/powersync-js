@@ -14,7 +14,7 @@ import {
   column,
   Table,
   Schema,
-  type PowerSyncBackendConnector,
+  type Authenticator,
   PowerSyncDatabase,
   createConsoleLogger,
   LogLevels
@@ -36,12 +36,9 @@ const RANDOM_NAMES = ['Alex', 'Jordan', 'Sam', 'Casey', 'Riley', 'Morgan', 'Quin
 /**
  * A placeholder connector which doesn't do anything but used to confirm connect can run.
  */
-class DummyConnector implements PowerSyncBackendConnector {
-  async fetchCredentials() {
-    return {
-      endpoint: '',
-      token: ''
-    };
+class DummyConnector implements Authenticator {
+  async resolveCredentials(): Promise<string> {
+    return '';
   }
 
   async uploadData() {}
@@ -103,7 +100,12 @@ function App(): React.JSX.Element {
     const init = async () => {
       try {
         const db = await setupDatabase();
-        //await db.connect(new DummyConnector());
+        // const connector = new DummyConnector();
+        // await db.connect({
+        //   powerSyncEndpoint: '',
+        //   authenticator: connector,
+        //   upload: connector.uploadData
+        // });
         if (mounted) setDatabase(db);
         if (mounted) await loadCustomers();
       } catch (error) {

@@ -1,34 +1,24 @@
-import { AbstractPowerSyncDatabase, PowerSyncBackendConnector } from '@powersync/web';
+import type { Authenticator, MutationUploader, ResolveCredentialsOptions } from '@powersync/web';
 
-export class BackendConnector implements PowerSyncBackendConnector {
-  private powersyncUrl: string | undefined;
+export class BackendConnector implements Authenticator {
   private backendUrl: string;
 
   constructor() {
-    this.powersyncUrl = import.meta.env.VITE_POWERSYNC_URL;
     // Empty means the page's own origin; the Vite dev server proxies `/api` to the backend.
     this.backendUrl = import.meta.env.VITE_BACKEND_URL ?? '';
   }
 
-  async fetchCredentials() {
-    if (!this.powersyncUrl) {
-      // Local-only mode.
-      return null;
-    }
-
-    const response = await fetch(`${this.backendUrl}/api/auth/token`);
+  async resolveCredentials({ abort }: ResolveCredentialsOptions): Promise<string> {
+    const response = await fetch(`${this.backendUrl}/api/auth/token`, { signal: abort });
     if (response.status != 200) {
       throw new Error(`Could not fetch a token: HTTP ${response.status}`);
     }
     const { token } = await response.json();
 
-    return {
-      endpoint: this.powersyncUrl,
-      token
-    };
+    return token;
   }
 
-  async uploadData(database: AbstractPowerSyncDatabase): Promise<void> {
+  readonly upload: MutationUploader = async ({ database }) => {
     const transaction = await database.getNextCrudTransaction();
 
     if (!transaction) {
@@ -68,7 +58,7 @@ export class BackendConnector implements PowerSyncBackendConnector {
         throw error;
       }
     }
-  }
+  };
 }
 
 function shouldDiscardDataOnError(error: any) {
