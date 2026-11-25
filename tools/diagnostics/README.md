@@ -42,7 +42,10 @@ export default defineConfig({
 To get per-bucket totals in the Buckets tab, enable the core diagnostics stream when you connect:
 
 ```ts
-await db.connect(connector, { diagnostics: true });
+await db.connect({
+  ...
+  diagnostics: true
+});
 ```
 
 Start the dev server and open your app. The first time, Vite DevTools asks you to confirm the browser with a code from your terminal. Then the dock at the bottom of the page shows a **PowerSync** entry.
@@ -57,7 +60,10 @@ Option: `powersyncDevtools({ title: 'PowerSync' })` sets the dock title.
 import { PowerSyncDatabase } from '@powersync/node';
 
 const db = new PowerSyncDatabase({ schema, database: { dbFilename: 'app.db' } });
-await db.connect(connector, { diagnostics: true });
+await db.connect({
+  ...
+  diagnostics: true
+});
 
 if (process.env.NODE_ENV !== 'production') {
   const { enablePowerSyncDiagnostics } = await import('@powersync/diagnostics/node');
@@ -105,7 +111,7 @@ import { usePowerSyncDevTools } from '@powersync/diagnostics/react-native';
 usePowerSyncDevTools(db);
 ```
 
-The hook is a no-op in production builds, and bundlers leave its code out. For per-bucket download totals, connect with `db.connect(connector, { diagnostics: __DEV__ })`.
+The hook is a no-op in production builds, and bundlers leave its code out. For per-bucket download totals, pass `diagnostics: __DEV__` when you connect.
 
 Start the app with `WITH_ROZENITE=true` (for example `WITH_ROZENITE=true npx expo run:ios`), open React Native DevTools (press `j` in the Metro terminal), select **Rozenite**, then **PowerSync**.
 
