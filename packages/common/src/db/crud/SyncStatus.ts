@@ -54,8 +54,8 @@ export interface SyncStatus {
   get downloading(): boolean;
 
   /**
-   * Whether the PowerSync SDK is currently uploading local mutations through the configured
-   * {@link PowerSyncBackendConnector}.
+   * Whether the PowerSync SDK is currently uploading local mutations through the configured {@link MutationUploader}
+   * (or the `uploadData()` method of a {@link PowerSyncBackendConnector}).
    */
   get uploading(): boolean;
 

@@ -40,7 +40,7 @@ class SharedSyncClientProvider extends AbstractSharedSyncClientProvider {
       return await action();
     } catch (ex) {
       /**
-       * Connector callbacks run in this tab and their rejection crosses the
+       * Authenticator, uploader and backend connector callbacks run in this tab and their rejection crosses the
        * MessagePort to the sync worker, so serialize it here, where the error
        * originates, before Comlink's error transfer can drop custom fields.
        */

@@ -123,7 +123,7 @@ export interface LogRecord {
 export interface ProtocolInfo {
   /** The PowerSync service endpoint. */
   endpoint: string | null;
-  /** The raw JWT the connector last supplied, when the SDK exposes it. */
+  /** The raw JWT the authenticator or backend connector last supplied, when the SDK exposes it. */
   token: string | null;
   /** The PowerSync client id. */
   clientId: string | null;
@@ -216,7 +216,7 @@ export type CoreDiagnosticsEvent =
  *
  * | Action              | Args                       | Effect                                                                 |
  * | ------------------- | -------------------------- | ---------------------------------------------------------------------- |
- * | `reconnect`         |                            | Disconnect, then connect again with the last connector.                |
+ * | `reconnect`         |                            | Disconnect, then connect again with the last connection's settings.    |
  * | `disconnect`        |                            | Disconnect the client.                                                 |
  * | `clearData`         |                            | Clear the local database, then connect again.                          |
  * | `requestCheckpoint` |                            | Confirm the client is caught up. Needs checkpoint requests enabled.    |

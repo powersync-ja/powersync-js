@@ -94,8 +94,8 @@ export type WrappedSyncPort = {
 };
 
 /**
- * HACK: The shared implementation wraps and provides its own
- * PowerSyncBackendConnector when generating the streaming sync implementation.
+ * HACK: The shared implementation provides its own internal connector, which forwards to the tab's authenticator,
+ * uploader or backend connector, when generating the streaming sync implementation.
  * We provide this unused placeholder when connecting with the ConnectionManager.
  */
 const CONNECTOR_PLACEHOLDER = {} as PowerSyncBackendConnector;
@@ -396,8 +396,8 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
     const connector: InternalConnector = {};
 
     if (capabilities.hasFetchCredentials) {
-      // Always forward invalidations to the tab, since it has its own credentials cache (and potentially a
-      // connector-level invalidateCredentials callback).
+      // Always forward invalidations to the tab, since it has its own credentials cache (and potentially an
+      // invalidateCredentials callback on its authenticator).
       connector.invalidateCredentials = async () => {
         const lastPort = await this.getLastWrappedPort();
         if (!lastPort) {

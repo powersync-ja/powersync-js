@@ -10,7 +10,8 @@ export interface PostCustomCheckpoints {
    *
    * This method is optional. It only needs to be implemented when the selected {@link CheckpointMode} is `requests`
    * and [asynchronous backend uploads](https://docs.powersync.com/client-sdks/advanced/checkpoint-requests#asynchronous-upload-backends)
-   * are used. In any other case, this method should not be present on backend connectors.
+   * are used. In any other case, don't implement this method on your {@link Authenticator} or
+   * {@link PowerSyncBackendConnector}.
    *
    * @param requestId - The client-generated checkpoint request ID (a positive 64-bit integer encoded as a string).
    * @param clientId - The PowerSync client ID for the current device.
@@ -20,6 +21,13 @@ export interface PostCustomCheckpoints {
 }
 
 /**
+ * A backend connector is the previous way to connect: a single object that both provides authentication tokens and
+ * uploads local mutations.
+ *
+ * Use an {@link Authenticator} and a {@link MutationUploader} instead, and pass them to `connect()` with
+ * {@link DownloadOptions} and {@link UploadOptions}. They keep authentication and uploads separate, and you can connect
+ * for downloads or uploads only. We plan to deprecate backend connectors in a future release.
+ *
  * @public
  */
 export interface PowerSyncBackendConnector extends PostCustomCheckpoints {
@@ -54,9 +62,13 @@ export interface Authenticator extends PostCustomCheckpoints {
   /**
    * Obtain a token used to authenticate against a PowerSync service.
    *
+   * The SDK doesn't guarantee that it caches the returned token, and may call this method several times while
+   * connected. Cache the token in your authenticator, and return the cached token until
+   * {@link Authenticator.invalidateCredentials} is called.
+   *
    * @param options - Options, including an abort signal completing when the SDK is no longer interested in these
    * credentials. Supported authenticators can reject the promise with the `AbortSignal.reason` when aborted.
-   * @returns A promise resolving to PowerSync credentials. It may reject when credentials could not be resolved.
+   * @returns A promise resolving to the token (a JWT). It may reject when the token could not be resolved.
    */
   resolveCredentials(options: ResolveCredentialsOptions): Promise<string>;
 
@@ -71,6 +83,12 @@ export interface Authenticator extends PostCustomCheckpoints {
 
 /**
  * The signature of a function uploading local mutations to a backend.
+ *
+ * Use {@link CommonPowerSyncDatabase.getCrudBatch} or {@link CommonPowerSyncDatabase.getNextCrudTransaction} to get the
+ * mutations to upload.
+ *
+ * If the returned promise rejects, the SDK retries the upload after {@link SyncOptions.retryDelayMs} (default: 5
+ * seconds).
  *
  * @public
  */

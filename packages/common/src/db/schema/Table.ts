@@ -43,8 +43,8 @@ interface SharedTableOptions extends TableOrRawTableOptions {
 
 /** Whether to include previous column values when PowerSync tracks local changes.
  *
- * Including old values may be helpful for some backend connector implementations, which is
- * why it can be enabled on per-table or per-columm basis.
+ * Including old values may be helpful for some mutation uploader implementations, which is
+ * why it can be enabled on per-table or per-column basis.
  *
  * @public
  */

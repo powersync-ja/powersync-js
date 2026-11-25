@@ -113,9 +113,13 @@ export abstract class BasePowerSyncDatabase<Options extends BasePowerSyncDatabas
   }
 
   /**
-   * The connector used to connect to the PowerSync service.
+   * The internal callbacks the SDK uses for the current connection.
    *
-   * @returns The connector used to connect to the PowerSync service or null if `connect()` has not been called.
+   * This is not the backend connector, authenticator or uploader passed to `connect()`. The SDK wraps those in an
+   * internal object.
+   *
+   * @returns The internal callbacks for the current connection, or null if `connect()` has not been called or the
+   * database has disconnected.
    */
   get connector() {
     return this.connectionManager.connector;

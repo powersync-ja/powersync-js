@@ -39,15 +39,15 @@ export interface SyncOptions {
   includeDefaultStreams?: boolean;
 
   /**
-   * Delay for retrying sync streaming operations
-   * from the PowerSync backend after an error occurs.
+   * Delay, in milliseconds, for retrying sync streaming operations from the PowerSync backend or uploads of local
+   * mutations after an error occurs. This defaults to 5 seconds.
    */
   retryDelayMs?: number;
 
   /**
-   * Backend Connector CRUD operations are throttled
-   * to occur at most every `crudUploadThrottleMs`
-   * milliseconds.
+   * Uploads of local mutations are throttled to start at most every `crudUploadThrottleMs` milliseconds. Each upload
+   * calls your {@link MutationUploader} (or the `uploadData()` method of a {@link PowerSyncBackendConnector}) until the
+   * upload queue is empty. This defaults to 1 second.
    */
   crudUploadThrottleMs?: number;
 

@@ -102,7 +102,8 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
 
   private currentOptions: ResolvedSyncOptions | null;
 
-  // The connector of the active connection. Retained alongside currentOptions so `connector` reflects
+  // The internal connector of the active connection, which wraps the backend connector, authenticator or uploader
+  // passed to connect(). Retained alongside currentOptions so `connector` reflects
   // the live connection, not just the brief pending-options window before connecting starts.
   private currentConnector: InternalConnector | null;
 
