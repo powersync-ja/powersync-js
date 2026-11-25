@@ -1,5 +1,11 @@
 # @powersync/adapter-sql-js
 
+## 0.0.29
+
+### Patch Changes
+
+- 528118a: Fix the README examples to pass `SQLJSOpenFactory` as `factory` instead of `database`, and import it from `@powersync/adapter-sql-js` in the Expo example.
+
 ## 0.0.28
 
 ### Patch Changes
