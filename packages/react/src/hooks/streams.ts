@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { usePowerSyncOrNull } from './PowerSyncContext.js';
 import { SyncStreamStatus, SyncStreamSubscribeOptions, SyncStreamSubscription } from '@powersync/common';
-import { useStatusOrNull } from './useStatus.js';
+import { useStatusOf } from './useStatus.js';
 import { QuerySyncStreamOptions } from './watched/watch-types.js';
 
 /**
@@ -40,7 +40,7 @@ export function useSyncStream(options: UseSyncStreamOptions): SyncStreamStatus |
  */
 export function useSyncStreams(streamOptions: UseSyncStreamOptions[]): (SyncStreamStatus | null)[] {
   const db = usePowerSyncOrNull();
-  const status = useStatusOrNull();
+  const status = useStatusOf(streamOptions.length === 0 ? null : db);
 
   const stringifiedOptions = useMemo(() => JSON.stringify(streamOptions), [streamOptions]);
   const syncStreams = useMemo(
