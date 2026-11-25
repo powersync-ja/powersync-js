@@ -91,15 +91,19 @@ async fn connect<R: Runtime>(
     let ps = app.powersync();
     let database = ps.database_from_javascript_handle(handle)?;
 
-    let options = SyncOptions::new(MyRustConnector {
-        db: database.clone(),
-    });
+    let options = SyncOptions::new(
+        "[Your PowerSync instance URL]",
+        MyAuthenticator,
+        MyMutationUploader { db: database.clone() },
+    );
     // Connect the database opened in JavaScript using the PowerSync Rust SDK.
     database.connect(options).await;
 
     Ok(())
 }
 ```
+
+`MyAuthenticator` and `MyMutationUploader` implement the Rust SDK's `Authenticator` and `MutationUploader` traits. For examples of both, see the [Tauri SDK reference](https://docs.powersync.com/client-sdks/reference/tauri).
 
 ## Demos
 
