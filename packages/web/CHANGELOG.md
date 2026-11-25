@@ -1,5 +1,12 @@
 # @powersync/web
 
+## 2.7.1
+
+### Patch Changes
+
+- ad83c64: Fix type errors with `"skipLibCheck": false`. Closes https://github.com/powersync-ja/powersync-js/issues/1215.
+- 528118a: Fix the README encryption example, which passed `encryptionKey` at the top level. Since 2.0 the key goes inside `database`, and a key passed at the top level is ignored, so databases created with the old example aren't encrypted.
+
 ## 2.7.0
 
 ### Minor Changes
