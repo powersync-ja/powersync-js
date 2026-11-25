@@ -130,7 +130,7 @@ export abstract class AbstractRemote {
     const credentials = await fetchCredentials(signal);
     if (credentials?.endpoint.match(POWERSYNC_TRAILING_SLASH_MATCH)) {
       throw new Error(
-        `A trailing forward slash "/" was found in the PowerSync endpoint: "${credentials.endpoint}". Remove the trailing forward slash "/" from powerSyncEndpoint (or from the endpoint returned by fetchCredentials) to fix this error.`
+        `The PowerSync instance URL "${credentials.endpoint}" must not end with "/". Remove the trailing slash from powerSyncEndpoint (or the endpoint returned by fetchCredentials()).`
       );
     }
 

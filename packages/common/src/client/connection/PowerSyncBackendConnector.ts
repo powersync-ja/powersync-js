@@ -73,10 +73,9 @@ export interface Authenticator extends PostCustomCheckpoints {
   resolveCredentials(options: ResolveCredentialsOptions): Promise<string>;
 
   /**
-   * Invoked by the SDK when the PowerSync service has rejected credentials previously returned by
-   * {@link Authenticator.resolveCredentials}.
+   * Called by the SDK when the token is about to expire, has expired, or has been rejected by the PowerSync Service.
    *
-   * Subsequent calls to {@link Authenticator.resolveCredentials} should return new credentials in this case.
+   * Subsequent calls to {@link Authenticator.resolveCredentials} should return a new token.
    */
   invalidateCredentials?(): void;
 }
