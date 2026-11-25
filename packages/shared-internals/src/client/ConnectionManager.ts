@@ -167,7 +167,7 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
       this.logger.log({
         level: LogLevels.warn,
         message:
-          'The backend connector implements postCheckpointRequest, but connect() was called without checkpoint requests enabled.'
+          'The authenticator or backend connector implements postCheckpointRequest, but connect() was called without checkpoint requests enabled.'
       });
     }
 
