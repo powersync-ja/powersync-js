@@ -92,4 +92,72 @@ describe('CheckpointStateSignals', () => {
     await waiterNotified;
     expect(resolved).toBe(true);
   });
+
+  describe('a seed from an iteration that already ended', () => {
+    test('does not fail checkpoint requests of the next iteration when it rejects', async () => {
+      const signals = new CheckpointStateSignals();
+      let failOldSeed!: (error: Error) => void;
+      signals
+        .markCheckpointsReady(
+          new Promise((_, reject) => {
+            failOldSeed = reject;
+          })
+        )
+        .catch(() => {});
+      signals.downloadIterationEnded();
+
+      // The old iteration's requests are aborted after it ended.
+      failOldSeed(new Error('Closing sync stream network requests before retry.'));
+      await new Promise((resolve) => setTimeout(resolve));
+
+      let request: boolean | Error | undefined;
+      signals.waitForCheckpointRequestsReady(neverAbort).then(
+        (ready) => (request = ready),
+        (error) => (request = error)
+      );
+      await new Promise((resolve) => setTimeout(resolve));
+      expect(request).toBeUndefined();
+
+      await signals.markCheckpointsReady(Promise.resolve());
+      await new Promise((resolve) => setTimeout(resolve));
+      expect(request).toBe(true);
+    });
+
+    test('does not mark the next iteration ready when it resolves', async () => {
+      const signals = new CheckpointStateSignals();
+      let finishOldSeed!: () => void;
+      const oldSeed = signals.markCheckpointsReady(
+        new Promise((resolve) => {
+          finishOldSeed = resolve;
+        })
+      );
+      signals.downloadIterationEnded();
+
+      finishOldSeed();
+      await oldSeed;
+
+      let resolved = false;
+      signals.waitForCheckpointRequestsReady(neverAbort).then(() => (resolved = true));
+      await new Promise((resolve) => setTimeout(resolve));
+      expect(resolved).toBe(false);
+    });
+
+    test('does not undo a disconnect', async () => {
+      const signals = new CheckpointStateSignals();
+      let finishOldSeed!: () => void;
+      const oldSeed = signals.markCheckpointsReady(
+        new Promise((resolve) => {
+          finishOldSeed = resolve;
+        })
+      );
+      signals.disconnected();
+
+      finishOldSeed();
+      await oldSeed;
+
+      await expect(signals.waitForCheckpointRequestsReady(neverAbort)).rejects.toThrow(
+        cannotRequestDueToDisconnectedError().message
+      );
+    });
+  });
 });
