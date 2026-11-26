@@ -513,6 +513,67 @@ describe('Sync', () => {
     ]);
   });
 
+  mockSyncServiceTest('keeps oplog keys when reconnecting after a soft clear', async ({ syncService }) => {
+    // Regression test for https://github.com/powersync-ja/powersync-js/issues/1218.
+    const database = await syncService.createDatabase();
+    const connect = async () => {
+      database.connect(new TestConnector(), {
+        ...defaultConnectOptions,
+        connectionMethod: SyncStreamConnectionMethod.HTTP
+      });
+      await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
+    };
+
+    await connect();
+    syncService.pushLine({ checkpoint: { last_op_id: '1', buckets: [bucket('a', 1)] } });
+    syncService.pushLine({
+      data: {
+        bucket: 'a',
+        data: [
+          {
+            checksum: 0,
+            op_id: '1',
+            op: 'PUT',
+            object_id: '1',
+            object_type: 'lists',
+            subkey: 'subkey_1',
+            data: '{}'
+          }
+        ]
+      }
+    });
+    await vi.waitFor(async () => {
+      expect(await database.getAll('SELECT * FROM ps_oplog')).toHaveLength(1);
+    });
+
+    // A soft clear keeps ps_oplog but forgets that its keys have been migrated, so each connect after one runs the
+    // migration over keys that are already in the fixed format.
+    for (let i = 0; i < 2; i++) {
+      await database.disconnectAndClear({ soft: true });
+      await connect();
+      expect(await database.getAll('SELECT key FROM ps_oplog')).toEqual([{ key: 'lists/1/subkey_1' }]);
+    }
+  });
+
+  mockSyncServiceTest('connects with oplog keys an earlier migration set to null', async ({ syncService }) => {
+    // Before the fix for https://github.com/powersync-ja/powersync-js/issues/1218, connecting after a soft clear set
+    // keys to null, and the migration then failed on those.
+    const database = await syncService.createDatabase();
+    const { id: bucketId } = await database.writeLock(async (adapter) => {
+      return await adapter.get<{ id: number }>('INSERT INTO ps_buckets(name) VALUES (?) RETURNING id', ['a']);
+    });
+    await database.execute(
+      'INSERT INTO ps_oplog(bucket, op_id, key, row_type, row_id, data, hash) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [bucketId, '1', null, 'lists', '1', '{}', 0]
+    );
+
+    database.connect(new TestConnector(), {
+      ...defaultConnectOptions,
+      connectionMethod: SyncStreamConnectionMethod.HTTP
+    });
+    await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
+  });
+
   mockSyncServiceTest('refetches credentials when HTTP stream returns 401', async ({ syncService }) => {
     // The /sync/stream 401 should invalidate the cached credentials so the retry fetches a fresh token.
     let fetchCredentialsCount = 0;

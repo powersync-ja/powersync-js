@@ -191,7 +191,10 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
 
   async migrateToFixedSubkeys(): Promise<void> {
     await this.writeTransaction(async (tx) => {
-      await tx.execute('UPDATE ps_oplog SET key = powersync_remove_duplicate_key_encoding(key);');
+      // The function returns null for a key it has nothing to fix in, and fails on a null key: keep those as they are.
+      await tx.execute(
+        `UPDATE ps_oplog SET key = COALESCE(powersync_remove_duplicate_key_encoding(key), key) WHERE key LIKE '%"';`
+      );
       await tx.execute('INSERT OR REPLACE INTO ps_kv (key, value) VALUES (?, ?);', [
         SqliteBucketStorage._subkeyMigrationKey,
         '1'
