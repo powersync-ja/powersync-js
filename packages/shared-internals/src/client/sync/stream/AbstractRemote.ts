@@ -15,6 +15,10 @@ import { InternalConnector } from '../../InternalConnector.js';
 
 const POWERSYNC_TRAILING_SLASH_MATCH = /\/+$/;
 
+// The service sends a keepalive line every 20 seconds, so an HTTP sync stream that receives nothing for this long has
+// died without closing (e.g. after a network change). WebSockets use the same timeout.
+const STREAM_IDLE_TIMEOUT_MS = 30_000;
+
 const webSocketPlatform: WebSocketSyncStreamPlatform = {
   LogLevels,
   EventQueue,
@@ -362,8 +366,19 @@ export abstract class AbstractRemote {
           return doneResult;
         }
 
+        let idleTimeout: ReturnType<typeof setTimeout> | undefined;
+        const idle = new Promise<never>((_, reject) => {
+          idleTimeout = setTimeout(() => {
+            const error = new Error(`No data received on the sync stream in ${STREAM_IDLE_TIMEOUT_MS}ms`);
+            // Fail without waiting for the pending read, which may never complete on a dead connection, and close the
+            // response.
+            reject(error);
+            reader.cancel(error).catch(() => {});
+          }, STREAM_IDLE_TIMEOUT_MS);
+        });
+
         try {
-          return await reader.read();
+          return await Promise.race([reader.read(), idle]);
         } catch (ex) {
           if (controller.signal.aborted) {
             // .read() completes with an error if we cancel the reader, which we do to disconnect. So this is just
@@ -372,6 +387,8 @@ export abstract class AbstractRemote {
           }
 
           throw ex;
+        } finally {
+          clearTimeout(idleTimeout);
         }
       }
     };

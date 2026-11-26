@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, vi } from 'vitest';
+import { beforeEach, describe, expect, onTestFinished, vi } from 'vitest';
 
 import {
   column,
@@ -446,6 +446,64 @@ describe('Sync', () => {
 
       await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1), { timeout: 2000 });
       expect(streamRequests).toBe(2);
+    });
+  });
+
+  describe('HTTP stream idle timeout', () => {
+    async function connectWithFakeTimers(syncService: MockSyncService) {
+      const counter = { streamRequests: 0 };
+      syncService.installRequestInterceptor(async (request) => {
+        if (request.url.endsWith('/sync/stream')) {
+          counter.streamRequests++;
+        }
+      });
+
+      const db = await syncService.createDatabase();
+      vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+      onTestFinished(() => {
+        vi.useRealTimers();
+      });
+
+      db.connect(new TestConnector(), {
+        ...defaultConnectOptions,
+        connectionMethod: SyncStreamConnectionMethod.HTTP
+      });
+      await db.waitForStatus((s) => s.connected);
+      return { db, counter };
+    }
+
+    mockSyncServiceTest('reconnects when the sync stream stops sending data', async ({ syncService }) => {
+      const { db, counter } = await connectWithFakeTimers(syncService);
+
+      // The response stays open, but nothing arrives on it (e.g. after a network change).
+      await vi.advanceTimersByTimeAsync(29_000);
+      expect(db.currentStatus.connected).toBe(true);
+      expect(db.currentStatus.downloadError).toBeUndefined();
+      expect(counter.streamRequests).toBe(1);
+
+      await vi.advanceTimersByTimeAsync(1_000);
+      await vi.waitFor(() => {
+        expect(db.currentStatus.connected).toBe(false);
+        expect(db.currentStatus.downloadError?.message).toMatch(/No data received on the sync stream/);
+      });
+
+      // After retryDelayMs, the client opens a new stream.
+      await vi.waitFor(() => expect(counter.streamRequests).toBe(2));
+      await db.waitForStatus((s) => s.connected);
+    });
+
+    mockSyncServiceTest('keeps a sync stream that receives keepalives', async ({ syncService }) => {
+      const { db, counter } = await connectWithFakeTimers(syncService);
+
+      // The service sends a keepalive line every 20 seconds on an otherwise idle stream.
+      for (let i = 0; i < 5; i++) {
+        await vi.advanceTimersByTimeAsync(20_000);
+        syncService.pushLine({ token_expires_in: 3600 });
+      }
+
+      expect(counter.streamRequests).toBe(1);
+      expect(db.currentStatus.connected).toBe(true);
+      expect(db.currentStatus.downloadError).toBeUndefined();
     });
   });
 
