@@ -62,9 +62,7 @@ export interface Authenticator extends PostCustomCheckpoints {
   /**
    * Obtain a token used to authenticate against a PowerSync service.
    *
-   * The SDK doesn't guarantee that it caches the returned token, and may call this method several times while
-   * connected. Cache the token in your authenticator, and return the cached token until
-   * {@link Authenticator.invalidateCredentials} is called.
+   * Cache the token in your authenticator, since the SDK may call this method several times while connected.
    *
    * @param options - Options, including an abort signal completing when the SDK is no longer interested in these
    * credentials. Supported authenticators can reject the promise with the `AbortSignal.reason` when aborted.
@@ -82,12 +80,6 @@ export interface Authenticator extends PostCustomCheckpoints {
 
 /**
  * The signature of a function uploading local mutations to a backend.
- *
- * Use {@link CommonPowerSyncDatabase.getCrudBatch} or {@link CommonPowerSyncDatabase.getNextCrudTransaction} to get the
- * mutations to upload.
- *
- * If the returned promise rejects, the SDK retries the upload after {@link SyncOptions.retryDelayMs} (default: 5
- * seconds).
  *
  * @public
  */

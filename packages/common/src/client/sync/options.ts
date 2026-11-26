@@ -45,9 +45,7 @@ export interface SyncOptions {
   retryDelayMs?: number;
 
   /**
-   * Upload runs start at most once every `crudUploadThrottleMs` milliseconds. During each run, the SDK repeatedly
-   * calls your {@link MutationUploader} (or the `uploadData()` method of a {@link PowerSyncBackendConnector}) until the
-   * upload queue is empty. This defaults to 1 second.
+   * Uploads of local mutations are throttled to occur at most every `crudUploadThrottleMs` milliseconds.
    */
   crudUploadThrottleMs?: number;
 
