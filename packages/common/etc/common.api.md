@@ -785,7 +785,7 @@ export interface PostCustomCheckpoints {
     postCheckpointRequest?(clientId: string, requestId: string, signal?: AbortSignal): Promise<string>;
 }
 
-// @public (undocumented)
+// @public
 export interface PowerSyncBackendConnector extends PostCustomCheckpoints {
     fetchCredentials: () => Promise<PowerSyncCredentials | null>;
     uploadData: (database: CommonPowerSyncDatabase) => Promise<void>;
