@@ -215,7 +215,10 @@ export interface CommonPowerSyncDatabase extends BaseObserverInterface<PowerSync
   init(): Promise<void>;
 
   /**
-   * Connects to stream of events from the PowerSync instance.
+   * Connects this PowerSync database with a {@link PowerSyncBackendConnector}, the previous way to connect.
+   *
+   * Use an {@link Authenticator} and a {@link MutationUploader} instead: pass {@link DownloadOptions} and
+   * {@link UploadOptions} to `connect()`. We plan to deprecate backend connectors in a future release.
    */
   connect(connector: PowerSyncBackendConnector, options?: SyncOptions): Promise<void>;
 
@@ -299,7 +302,7 @@ export interface CommonPowerSyncDatabase extends BaseObserverInterface<PowerSync
    *
    * Returns null if there is no data to upload.
    *
-   * Use this from the {@link PowerSyncBackendConnector.uploadData} callback.
+   * Use this from your {@link MutationUploader} (or the `uploadData()` method of a {@link PowerSyncBackendConnector}).
    *
    * Once the data have been successfully uploaded, call {@link CrudBatch.complete} before
    * requesting the next batch.
@@ -321,7 +324,7 @@ export interface CommonPowerSyncDatabase extends BaseObserverInterface<PowerSync
    *
    * Returns null if there is no data to upload.
    *
-   * Use this from the {@link PowerSyncBackendConnector.uploadData} callback.
+   * Use this from your {@link MutationUploader} (or the `uploadData()` method of a {@link PowerSyncBackendConnector}).
    *
    * Once the data have been successfully uploaded, call {@link CrudTransaction.complete} before
    * requesting the next transaction.
@@ -336,7 +339,8 @@ export interface CommonPowerSyncDatabase extends BaseObserverInterface<PowerSync
   /**
    * Returns an async iterator of completed transactions with local writes against the database.
    *
-   * This is typically used from the {@link PowerSyncBackendConnector.uploadData} callback. Each entry emitted by the
+   * This is typically used from your {@link MutationUploader} (or the `uploadData()` method of a
+   * {@link PowerSyncBackendConnector}). Each entry emitted by the
    * returned iterator is a full transaction containing all local writes made while that transaction was active.
    *
    * Unlike {@link CommonPowerSyncDatabase.getNextCrudTransaction}, which always returns the oldest transaction that hasn't been

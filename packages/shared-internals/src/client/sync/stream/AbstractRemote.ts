@@ -124,13 +124,13 @@ export abstract class AbstractRemote {
   async fetchCredentials(signal?: AbortSignal) {
     const fetchCredentials = this.connector.fetchCredentials;
     if (!fetchCredentials) {
-      throw new Error('No connector configured for downloads');
+      throw new Error('No authenticator or backend connector configured for downloads');
     }
 
     const credentials = await fetchCredentials(signal);
     if (credentials?.endpoint.match(POWERSYNC_TRAILING_SLASH_MATCH)) {
       throw new Error(
-        `A trailing forward slash "/" was found in the fetchCredentials endpoint: "${credentials.endpoint}". Remove the trailing forward slash "/" to fix this error.`
+        `The PowerSync instance URL "${credentials.endpoint}" must not end with "/". Remove the trailing slash from powerSyncEndpoint (or the endpoint returned by fetchCredentials()).`
       );
     }
 

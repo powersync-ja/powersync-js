@@ -26,10 +26,13 @@ import {
 
 class CapacitorPowerSyncDatabase extends WebPowerSyncDatabase {
   /**
-   * Connects to stream of events from the PowerSync instance.
-   * {@link PowerSyncConnectionOptions#connectionMethod} defaults to WebSocket connection on Web platforms
-   * or HTTP connections if using {@link CapacitorSQLiteAdapter} - this is due to poor performance with
-   * the Capacitor Community SQLite library and binary payloads.
+   * Connects this PowerSync database for downloads, uploads, or both. Pass an authenticator, an uploader, or both. You
+   * can also pass a `PowerSyncBackendConnector`, the previous way to connect, which we plan to deprecate in a future
+   * release.
+   *
+   * The `connectionMethod` option defaults to HTTP. When you use {@link CapacitorSQLiteAdapter}, connecting over
+   * WebSocket logs a warning: the Capacitor Community SQLite library processes binary payloads slowly, which slows
+   * down sync.
    */
   connect(
     connector: PowerSyncBackendConnector | (SyncOptions & (DownloadOptions | UploadOptions)),
