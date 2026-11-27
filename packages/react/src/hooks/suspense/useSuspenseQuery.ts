@@ -72,14 +72,13 @@ export function useSuspenseQuery<RowType = any>(
 ): SuspenseQueryResult<RowType> | ReadonlySuspenseQueryResult<RowType> {
   const powerSync = useContext(PowerSyncContext);
   const parsedQuery = constructCompatibleQuery(query, parameters);
-  const config = resolveConfig(
-    powerSync,
-    parsedQuery,
-    options,
+  const config = resolveConfig(powerSync, parsedQuery, options, {
+    // `active` is a `useQuery` option, a suspending component can't render without data.
+    active: true,
     // We currently don't support sync streams here (useAllStreamsHaveSynced relies on useEffect, which don't fire in
     // suspended components).
-    true
-  );
+    streamsHaveSynced: true
+  });
   if (config.kind != 'query') {
     // Missing database or a query that failed to compile, report.
     throw configError(config);

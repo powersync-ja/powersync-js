@@ -15,6 +15,15 @@ export interface HookWatchOptions extends Omit<SQLOnChangeOptions, 'signal'> {
    */
   streams?: QuerySyncStreamOptions[];
   reportFetching?: boolean;
+  /**
+   * When set to `false`, the query is not compiled or executed and {@link streams} are not subscribed to. The hook
+   * reports `{ isLoading: false, isFetching: false, data: [] }` while inactive, and previously loaded data is discarded.
+   *
+   * Not supported by `useSuspenseQuery`.
+   *
+   * @default true
+   */
+  active?: boolean;
 }
 
 /**
@@ -56,7 +65,10 @@ export interface DifferentialHookOptions<RowType> extends HookWatchOptions {
   rowComparator?: DifferentialWatchedQueryComparator<RowType>;
 }
 
-type WithoutSyncStreams<T> = Omit<T, 'streams'> & {
+/**
+ * Adapts `useQuery` options for `useSuspenseQuery`, which doesn't support `streams` or `active`.
+ */
+type ForSuspense<T> = Omit<T, 'streams' | 'active'> & {
   /**
    * @deprecated Sync streams are not supported by `useSuspenseQuery` and are ignored. Use `useQuery` or
    * `useSyncStream` to subscribe to streams instead.
@@ -67,12 +79,12 @@ type WithoutSyncStreams<T> = Omit<T, 'streams'> & {
 /**
  * Options for `useSuspenseQuery`.
  */
-export type SuspenseQueryOptions = WithoutSyncStreams<AdditionalOptions>;
+export type SuspenseQueryOptions = ForSuspense<AdditionalOptions>;
 
 /**
  * Options for `useSuspenseQuery` with a `rowComparator`.
  */
-export type DifferentialSuspenseQueryOptions<RowType> = WithoutSyncStreams<DifferentialHookOptions<RowType>>;
+export type DifferentialSuspenseQueryOptions<RowType> = ForSuspense<DifferentialHookOptions<RowType>>;
 
 /**
  * Why a `useQuery` hook is currently fetching.

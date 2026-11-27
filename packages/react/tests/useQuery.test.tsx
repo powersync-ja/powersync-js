@@ -1264,6 +1264,128 @@ describe('useQuery', () => {
           { timeout: 500, interval: 100 }
         );
       });
+
+      it('should only run watched query when active', async () => {
+        const db = await openPowerSync();
+
+        let calledExecute = false;
+        let calledCompile = false;
+        const query = {
+          execute: () => {
+            calledExecute = true;
+            return [] as any;
+          },
+          compile: () => {
+            calledCompile = true;
+            return { sql: 'SELECT * FROM lists', parameters: [] };
+          }
+        };
+
+        const { result } = renderHook(() => useQuery(query, [], { active: false }), {
+          wrapper: ({ children }) => testWrapper({ children, db })
+        });
+        const currentResult = result.current;
+
+        expect(currentResult.isLoading).toEqual(false);
+        expect(currentResult.isFetching).toEqual(false);
+        expect(currentResult.data).toEqual([]);
+        expect(currentResult.error).toBeUndefined();
+        expect(calledExecute).toEqual(false);
+        expect(calledCompile).toEqual(false);
+      });
+
+      it('should only run differential watched query when active', async () => {
+        const db = await openPowerSync();
+
+        let calledExecute = false;
+        let calledCompile = false;
+        const query = {
+          execute: () => {
+            calledExecute = true;
+            return [] as any;
+          },
+          compile: () => {
+            calledCompile = true;
+            return { sql: 'SELECT * FROM lists', parameters: [] };
+          }
+        };
+
+        const { result } = renderHook(
+          () =>
+            useQuery(query, [], {
+              active: false,
+              rowComparator: {
+                keyBy: (item) => item.id,
+                compareBy: (item) => JSON.stringify(item)
+              }
+            }),
+          {
+            wrapper: ({ children }) => testWrapper({ children, db })
+          }
+        );
+        const currentResult = result.current;
+
+        expect(currentResult.isLoading).toEqual(false);
+        expect(currentResult.isFetching).toEqual(false);
+        expect(currentResult.data).toEqual([]);
+        expect(currentResult.error).toBeUndefined();
+        expect(calledExecute).toEqual(false);
+        expect(calledCompile).toEqual(false);
+      });
+
+      it('should start syncing when setting active from false to true', async () => {
+        const db = await openPowerSync();
+        await db.execute('INSERT INTO lists(id, name) VALUES (uuid(), ?)', ['first']);
+
+        let calledExecute = false;
+        let calledCompile = false;
+        const query = {
+          execute: () => {
+            calledExecute = true;
+            return db.getAll<{ name: string }>('SELECT name FROM lists');
+          },
+          compile: () => {
+            calledCompile = true;
+            return { sql: 'SELECT name FROM lists', parameters: [] };
+          }
+        };
+
+        const { result, rerender } = renderHook(({ active }) => useQuery(query, [], { active }), {
+          wrapper: ({ children }) => testWrapper({ children, db }),
+          initialProps: { active: false }
+        });
+
+        expect(result.current.isLoading).toEqual(false);
+        expect(result.current.isFetching).toEqual(false);
+        expect(result.current.data).toEqual([]);
+        expect(calledExecute).toEqual(false);
+        expect(calledCompile).toEqual(false);
+
+        rerender({ active: true });
+
+        // Activating the query should report a regular initial load.
+        expect(result.current.isLoading).toEqual(true);
+        expect(calledCompile).toEqual(true);
+
+        await waitFor(
+          () => {
+            expect(result.current.isLoading).toEqual(false);
+            expect(result.current.data.map((row) => row.name)).toEqual(['first']);
+          },
+          { timeout: 500, interval: 100 }
+        );
+        expect(calledExecute).toEqual(true);
+        expect(result.current.error).toBeUndefined();
+
+        // Once active, the query should behave like a regular watched query.
+        await db.execute('INSERT INTO lists(id, name) VALUES (uuid(), ?)', ['second']);
+        await waitFor(
+          () => {
+            expect(result.current.data.map((row) => row.name).sort()).toEqual(['first', 'second']);
+          },
+          { timeout: 500, interval: 100 }
+        );
+      });
     });
   });
 
