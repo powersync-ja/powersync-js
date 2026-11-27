@@ -59,11 +59,12 @@ export function useQuery<RowType = any>(
 ) {
   const powerSync = useContext(PowerSyncContext);
   const parsedQuery = constructCompatibleQuery(query, parameters);
-  const streamsHaveSynced = useAllSyncStreamsHaveSynced(null, options.streams);
+  const active = options.active !== false;
+  const streamsHaveSynced = useAllSyncStreamsHaveSynced(null, active ? options.streams : undefined);
 
   const runnerRef = useRef<QueryRunner<RowType> | null>(null);
   const runner = (runnerRef.current ??= new QueryRunner<RowType>());
-  const config = resolveConfig(powerSync, parsedQuery, options, streamsHaveSynced);
+  const config = resolveConfig(powerSync, parsedQuery, options, { active, streamsHaveSynced });
 
   const snapshot = useSyncExternalStore(runner.subscribe, runner.getSnapshot, runner.getSnapshot);
 

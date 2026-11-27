@@ -31,6 +31,8 @@ export type RunnerConfig<RowType> =
   | { kind: 'missing-db' }
   // Query included sync streams that have not synced yet
   | { kind: 'waiting-for-streams' }
+  // Manually disabled by user.
+  | { kind: 'inactive' }
   | { kind: 'compile-error'; error: Error }
   | QueryConfig<RowType>;
 
@@ -53,6 +55,7 @@ function configEquals<RowType>(a: RunnerConfig<RowType>, b: RunnerConfig<RowType
   switch (a.kind) {
     case 'missing-db':
     case 'waiting-for-streams':
+    case 'inactive':
       return a.kind == b.kind;
     case 'compile-error':
       // compile() runs on every render, so a failing query throws a new error each time.
@@ -90,6 +93,7 @@ export function configError<RowType>(config: Exclude<RunnerConfig<RowType>, Quer
 }
 
 const _loadingState: QueryResult<never> = { isLoading: true, isFetching: false, data: [], error: undefined };
+const _inactiveState: QueryResult<never> = { isLoading: false, isFetching: false, data: [], error: undefined };
 
 function idleResultFor<RowType>(config: RunnerConfig<RowType>): Result<RowType> {
   switch (config.kind) {
@@ -97,6 +101,8 @@ function idleResultFor<RowType>(config: RunnerConfig<RowType>): Result<RowType> 
       return { isLoading: false, isFetching: false, data: [], error: new Error('PowerSync not configured.') };
     case 'waiting-for-streams':
       return _loadingState;
+    case 'inactive':
+      return _inactiveState;
     case 'compile-error':
       return { isLoading: false, isFetching: false, data: [], error: config.error };
     case 'query':
@@ -116,17 +122,23 @@ function idleResultFor<RowType>(config: RunnerConfig<RowType>): Result<RowType> 
  * Resolves the inputs of `useQuery` into a comparable {@link RunnerConfig}.
  *
  * This is pure (apart from compiling the query) and can run while rendering.
+ *
+ * `state` is passed separately from `options` because `active` and `streams` are only supported by `useQuery`. Other
+ * hooks pass `true` for both, so stray options can't put them into a state they don't support.
  */
 export function resolveConfig<RowType>(
   db: CommonPowerSyncDatabase | null,
   query: WatchCompatibleQueryWithParams<RowType[]>,
   options: AdditionalOptions & DifferentialHookOptions<RowType>,
-  streamsHaveSynced: boolean
+  state: { active: boolean; streamsHaveSynced: boolean }
 ): RunnerConfig<RowType> {
   if (db == null) {
     return { kind: 'missing-db' };
   }
-  if (!streamsHaveSynced) {
+  if (!state.active) {
+    return { kind: 'inactive' };
+  }
+  if (!state.streamsHaveSynced) {
     return { kind: 'waiting-for-streams' };
   }
 
